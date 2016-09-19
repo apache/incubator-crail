@@ -8,7 +8,7 @@ Crail is a fast multi-tiered distributed file system for temporary data, designe
 * High-performance sequential read/write operations: For instance: read operations on large files residing in the distributed DRAM tier are typically limited only by the performance of the network
 * Very low CPU consumption: a single core sharing both application and file system client can drive sequential read/write operations at the speed of up to 100Gbps and more
 * Asynchronous file system API leveraging the asynchronous nature of RDMA-based networking hardware
-* Etensible plugin architecture: new storage tiers tailored to specific hardware can be added easily
+* Extensible plugin architecture: new storage tiers tailored to specific hardware can be added easily
  
 Crail is implemented in Java offering a Java API which integrates directly with the Java off-heap memory. Crail is designed for performance critical temporary data within a scope of a rack or two. It currently does not provide fault tolerance 
 
