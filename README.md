@@ -129,6 +129,8 @@ For the Crail shell to work properly, the HDFS configuration in crail-1.0/conf/c
       </property>
      </configuration>
 
+Note that the Crail HDFS interface currently cannot provide the full performance of Crail due to limitations of the HDFS API. In particular, the HDFS `FSDataOutputStream` API only support heap-based `byte[]` arrays which requires a data copy. Moreover, HDFS operations are synchronous preventing efficient pipelining of operations. Instead, applications that seek the best performance should use the Crail interface directly, as shown next.
+
 ## Programming against Crail
 
 The best way to program against Crail is to use Maven. Make sure you have the Crail dependency specified in your application pom.xml file:
@@ -179,6 +181,26 @@ Crail ships with the RDMA/DRAM storage tier. Currently there are two additional 
 
 * [Crail-Blkdev](https://github.com/zrlio/crail-blkdev)  is a storage tier integrating shared volume block devices such as disaggregated flash. 
 * [Crail-Netty](https://github.com/zrlio/crail-netty) is a DRAM storage tier for Crail that uses TCP, you can use it to run Crail on non-RDMA hardware. Follow the instructions in these repos to build, deploy and use these storage tiers in your Crail environmnet. 
+
+## Benchmarks
+
+Crail provides a set of benchmark tools to measure the performance. Type
+
+    ./bin/crail iobench
+
+to get an overview of the available benchmarks. For instance, to benchmark the sequential write performance, type
+
+   ./bin/crail iobench writeClusterDirect 1048576 102400 /tmp.dat
+
+This will create a file of size 100G, written sequentially in a sequence of 1MB operations. 
+
+To read a file sequentially, type
+
+    ./bin/crail iobench readSequentialDirect 1048576 102400 /tmp.dat
+
+This command issues 102400 read operations of 1MB each.
+
+The tool also contains benchmarks to read files randomly, or to measure the performance of opening files, etc.
 
 ## Applications
 
