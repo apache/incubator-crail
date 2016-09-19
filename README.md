@@ -24,12 +24,11 @@ To build Crail execute the following steps:
 
 1. Obtain a copy of [Crail](https://github.com/zrlio/crail) from Github
 2. Make sure your local maven repo contains [DiSNI](https://github.com/zrlio/disni), if not build DiSNI from Github
-
-Note: later, when deploying Crail, make sure libdisni.so is part of your LD_LIBRARY_PATH. The easiest way to make it work is to copy libdisni.so into crail-1.0/lib 
-
 3. Make sure your local maven repo contains [DaRPC](https://github.com/zrlio/darpc), if not build DaRPC from Github
 4. Run: mvn -DskipTests install
 5. Copy tarball to the cluster and unpack it using tar xvfz crail-1.0-bin.tar.gz
+
+Note: later, when deploying Crail, make sure libdisni.so is part of your LD_LIBRARY_PATH. The easiest way to make it work is to copy libdisni.so into crail-1.0/lib 
 
 ## Configuration
 
