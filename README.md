@@ -58,8 +58,8 @@ The datapath property specifies a path from which the storage nodes will allocat
 
 You want to specify how much DRAM each datanode should donate into the file system pool using the `storagelimit` property. DRAM is allocated in chunks of `allocationsize`, which needs to be a multiple of `crail.blocksize`.
 
-    crail.datanode.rdma.allocationsize      1073741824
-    crail.datanode.rdma.storagelimit        75161927680
+    crail.datanode.rdma.allocationsize    1073741824
+    crail.datanode.rdma.storagelimit      75161927680
 
 Crail supports optimized local operations via memcpy (instead of RDMA) in case a given file operation is backed by a local storage node. The indexpath specifies where Crail will store the necessary metadata that make these optimizations possible. Important: the indexpath must NOT point to a hugetlbfs mountpoint because index files will be updated which not possible in hugetlbfs.
 
