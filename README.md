@@ -190,7 +190,7 @@ Crail provides a set of benchmark tools to measure the performance. Type
 
 to get an overview of the available benchmarks. For instance, to benchmark the sequential write performance, type
 
-   ./bin/crail iobench writeClusterDirect 1048576 102400 /tmp.dat
+    ./bin/crail iobench writeClusterDirect 1048576 102400 /tmp.dat
 
 This will create a file of size 100G, written sequentially in a sequence of 1MB operations. 
 
