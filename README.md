@@ -184,15 +184,15 @@ Crail ships with the RDMA/DRAM storage tier. Currently there are two additional 
 
 Crail is used by [Spark-IO](https://github.com/zrlio/spark-io), a high-performance shuffle engine for Spark. [Crail-Terasort](https://github.com/zrlio/crail-terasort) is a fast sorting benchmark for Spark based on Crail. 
 
-
 ## Contributions
 
-PRs are always welcome. Please fork, and make necessary modifications you propose, and let us know.
+PRs are always welcome. Please fork, and make necessary modifications 
+you propose, and let us know. 
 
-## Contact
+## Contact 
 
 If you have questions or suggestions, feel free to post at:
 
-https://groups.google.com/forum/#!forum/zrlio-users (https://groups.google.com/forum/#%21forum/zrlio-users) 
+https://groups.google.com/forum/#!forum/zrlio-users
 
-or email: zrlio-users@googlegroups.com 
+or email: zrlio-users@googlegroups.com
