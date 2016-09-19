@@ -171,6 +171,18 @@ Once the stream has been obtained, there exist various ways to write a file. The
 
 Reading files works very similar to writing. There exist various examples in com.ibm.crail.tools.CrailBenchmark.
 
+## Storage Tiers
+
+Crail ships with the RDMA/DRAM storage tier. Currently there are two additional storage tiers available in separate repos:
+
+[Crail-Blkdev](https://github.com/zrlio/crail-blkdev)  is a storage tier integrating shared volume block devices such as disaggregated flash. 
+
+[Crail-Netty](https://github.com/zrlio/crail-netty) is a DRAM storage tier for Crail that uses TCP, you can use it to run Crail on non-RDMA hardware. Follow the instructions in these repos to build, deploy and use these storage tiers in your Crail environmnet. 
+
+## Applications
+
+Crail is used by [Spark-IO](https://github.com/zrlio/spark-io), a high-performance shuffle engine for Spark. [Crail-Terasort](https://github.com/zrlio/crail-terasort) is a fast sorting benchmark for Spark based on Crail. 
+
 ## Contact
 
 If you have questions feel free to post at:
