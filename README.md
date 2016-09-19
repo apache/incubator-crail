@@ -1,6 +1,6 @@
 # Crail
 
-Crail is a fast multi-tiered distributed file system for temporary data, designed from ground up for high-performance network and storage hardware. The unique features of Crail include:
+Crail is a fast multi-tiered distributed file system designed from ground up for high-performance network and storage hardware. The unique features of Crail include:
 
 * Zero-copy network access from userspace using RDMA 
 * Integration of multiple storage tiers such DRAM, flash and disaggregated shared storage
