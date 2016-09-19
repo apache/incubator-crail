@@ -43,6 +43,8 @@ There are a general file system properties and specific properties for the diffe
     crail.datanode.types                  com.ibm.crail.datanode.rdma.RdmaDataNode
     crail.cachepath                       /memory/cache
     crail.cachelimit                      12884901888
+    crail.blocksize                       1048576
+    crail.buffersize                      1048576
 
 In this configuration the namenode is configured to run using port 9060 on host 'namenode', which must be a valid host in the cluster. We further configure a single storage tier, in this case the RDMA-based DRAM tier. Cachepath points to a directory that is used by the file system to allocate memory for the client cache. Up to cachelimit size, all the memory that is used by Crail will be allocated via mmap from this location. Ideally, the directory specified in cachepath points to a hugetlbfs mountpoint. 
 
@@ -53,7 +55,12 @@ Each storage tier will have its own separate set of parameters. For the RDMA/DRA
 The datapath property specifies a path from which the storage nodes will allocate blocks of memory via mmap. Again, that path best points to a hugetlbfs mountpoint.
 
     crail.datanode.rdma.datapath          /memory/data
-  
+
+You want to specify how much DRAM each datanode should donate into the file system pool using the `storagelimit` property. DRAM is allocated in chunks of `allocationsize`, which needs to be a multiple of `crail.blocksize`.
+
+    crail.datanode.rdma.allocationsize      1073741824
+    crail.datanode.rdma.storagelimit        75161927680
+
 Crail supports optimized local operations via memcpy (instead of RDMA) in case a given file operation is backed by a local storage node. The indexpath specifies where Crail will store the necessary metadata that make these optimizations possible. Important: the indexpath must NOT point to a hugetlbfs mountpoint because index files will be updated which not possible in hugetlbfs.
 
     crail.datanode.rdma.localmap          true
