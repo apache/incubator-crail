@@ -1,0 +1,15 @@
+crail.namenode.address			crail://<namenode>:<port>
+crail.blocksize				1048576
+crail.buffersize			1048320
+crail.cachelimit			0
+caril.cachepath				<path, should be huge page mountpoint>
+crail.singleton				true
+crail.statistics 			true
+crail.datanode.types 			com.ibm.crail.datanode.rdma.RdmaDataNode
+crail.datanode.rdma.interface		eth0
+crail.datanode.rdma.port		50020
+crail.datanode.rdma.allocationsize      67108864
+crail.datanode.rdma.storagelimit        536870912
+crail.datanode.rdma.datapath            <path, should be huge page mountpoint>
+crail.datanode.rdma.indexpath		<path, cannot be huge page mountpoint>
+crail.datanode.rdma.localmap 		true
