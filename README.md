@@ -90,7 +90,7 @@ This would start the shared storage datanode. Note that configuration in crail-s
 
 ### Larger deployments
 
-For larger deployments you want to start Crail using 
+For larger deployments you want to make sure you define CRAIL_HOME on each machine to point to the top level Crail directory. Then start Crail using 
 
     ./bin/start-crail.sh
 
