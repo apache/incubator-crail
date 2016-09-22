@@ -97,11 +97,9 @@ public class CrailBenchmark {
 	public static void usage() {
 		System.out.println("Usage: ");
 		System.out.println(
-				"iobench <writeClusterHeap|writeClusterDirect|writeLocalHeap|"
-				+ "writeLocalDirect|writeAsyncCluster|writeAsyncLocal|readAsync|"
-				+ "readSequentialDirect|readSequentialHeap|readRandomDirect|"
-				+ "readRandomHeap|readMultiStream"
-				+ "enumerateDir|keyGet|getFile"
+				"iobench <writeClusterHeap|writeClusterDirect|writeLocalHeap|writeLocalDirect|writeAsyncCluster|writeAsyncLocal|"
+				+ "readSequentialHeap|readSequentialDirect|readRandomHeap|readRandomDirect|readAsync|readMultiStream|"
+				+ "enumerateDir|keyGet|createFile|getFile"
 				+ " <size> <iterations> <path>");
 	}
 
