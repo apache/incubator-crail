@@ -29,8 +29,6 @@ import java.util.Random;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.slf4j.Logger;
-
 import com.ibm.crail.CrailBufferedInputStream;
 import com.ibm.crail.CrailBufferedOutputStream;
 import com.ibm.crail.CrailFile;
@@ -39,11 +37,8 @@ import com.ibm.crail.CrailInputStream;
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.utils.CrailUtils;
 
 public class CrailBenchmark {
-	private static final Logger LOG = CrailUtils.getLogger();
-	
 	private String mode;
 	private int size;
 	private int loop;
