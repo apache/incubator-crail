@@ -113,24 +113,37 @@ public class CrailBenchmark {
 			hosthash = fs.getHostHash();
 		}
 		
-		CrailFile file = fs.createFile(filename, 0, hosthash).get().syncDir();
-		long _loop = (long) loop;
-		long _bufsize = (long) CrailConstants.BUFFER_SIZE;
-		long _capacity = _loop*_bufsize;
-		CrailBufferedOutputStream outstream = file.getBufferedOutputStream(_capacity);			
-		
 		ByteBuffer buf = null;
 		if (direct){
 			buf = ByteBuffer.allocateDirect(size);
 		} else {
 			buf = ByteBuffer.allocate(size);
 		}
-		buf.clear();
-		double sumbytes = 0;
+		buf.clear();	
+		
+		//warmup
+		CrailFile file = fs.createFile(filename, 0, hosthash).get().syncDir();
+		long _loop = (long) loop;
+		long _bufsize = (long) CrailConstants.BUFFER_SIZE;
+		long _capacity = _loop*_bufsize;
+		CrailBufferedOutputStream outstream = file.getBufferedOutputStream(_capacity);			
 		double ops = 0;
+		while (ops < loop) {
+			buf.clear();
+			outstream.write(buf);
+			ops = ops + 1.0;
+		}
+		outstream.flush();
+		outstream.close();
+		fs.delete(filename, false);
+		
+		//benchmark
+		file = fs.createFile(filename, 0, hosthash).get().syncDir();
+		outstream = file.getBufferedOutputStream(_capacity);			
+		double sumbytes = 0;
+		ops = 0;
 		System.out.println("read size " + size);
 		System.out.println("operations " + loop);
-		
 		long start = System.currentTimeMillis();
 		while (ops < loop) {
 			buf.clear();
@@ -148,14 +161,13 @@ public class CrailBenchmark {
 			throughput = sumbits / executionTime / 1000.0 / 1000.0;
 			latency = 1000000.0 * executionTime / ops;
 		}
-		
 		outstream.close();	
 		System.out.println("execution time " + executionTime);
 		System.out.println("ops " + ops);
 		System.out.println("sumbytes " + sumbytes);
 		System.out.println("throughput " + throughput);
 		System.out.println("latency " + latency);
-		System.out.println("closing stream");
+		
 		fs.printStatistics("close");
 		fs.close();		
 	}
@@ -229,9 +241,7 @@ public class CrailBenchmark {
 			throughput = sumbits / executionTime / 1000.0 / 1000.0;
 			latency = 1000000.0 * executionTime / ops;
 		}
-		
 		outstream.close();	
-		fs.close();		
 		
 		System.out.println("execution time " + executionTime);
 		System.out.println("ops " + ops);
@@ -239,7 +249,7 @@ public class CrailBenchmark {
 		System.out.println("throughput " + throughput);
 		System.out.println("latency " + latency);
 		fs.printStatistics("close");
-		System.out.println("closing stream");
+		fs.close();		
 	}
 
 	void readSequential(boolean direct) throws Exception {

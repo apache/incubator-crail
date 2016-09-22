@@ -64,6 +64,7 @@ public class DirectBufferCache {
 			}
 		} 
 		
+		buffer.clear();
 		return buffer;
 	}
 	
