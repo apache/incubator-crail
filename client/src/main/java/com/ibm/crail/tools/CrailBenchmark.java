@@ -28,7 +28,9 @@ import java.util.LinkedList;
 import java.util.Random;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+
 import org.slf4j.Logger;
+
 import com.ibm.crail.CrailBufferedInputStream;
 import com.ibm.crail.CrailBufferedOutputStream;
 import com.ibm.crail.CrailFile;
@@ -63,10 +65,6 @@ public class CrailBenchmark {
 			writeSequential(true, false);
 		} else if (mode.equals("writeLocalDirect")){
 			writeSequential(true, true);
-		} else if (mode.equals("writeTierDirect")){
-			writeSequentialTier(true, true);
-		} else if (mode.equals("writeMulitDirect")){
-			writeMultiSequential();
 		} else if (mode.equalsIgnoreCase("writeAsyncCluster")) {
 			writeSequentialAsync(false, true);
 		} else if (mode.equalsIgnoreCase("writeAsyncLocal")) {
@@ -169,30 +167,64 @@ public class CrailBenchmark {
 		fs.close();		
 	}
 	
-	void writeSequentialTier(boolean affinity, boolean direct) throws Exception {
-		System.out.println("writing sequential-tier, path " + filename + ", tier " + size + ", loop " + loop);
+	void writeSequentialAsync(boolean affinity, boolean direct) throws Exception {
+		System.out.println("writing sequential async, path " + filename + ", size " + size);
 		CrailConfiguration conf = new CrailConfiguration();
 		CrailFS fs = CrailFS.newInstance(conf);
+		int hosthash = 0;
+		if (affinity){
+			hosthash = fs.getHostHash();
+		}
 		
-		CrailFile file = fs.createFile(filename, size, 0).get().syncDir();
-		long _loop = (long) loop;
-		long _bufsize = (long) CrailConstants.BUFFER_SIZE;
-		long _capacity = _loop*_bufsize;
-		CrailBufferedOutputStream outstream = file.getBufferedOutputStream(_capacity);			
+		CrailFile file = fs.createFile(filename, hosthash, 0).get();
+		CrailBufferedOutputStream outstream = file.getBufferedOutputStream(0);			
 		
-		ByteBuffer buf = fs.allocateBuffer();
-		buf.clear();
+		LinkedBlockingQueue<ByteBuffer> bufferQueue = new LinkedBlockingQueue<ByteBuffer>();
+		LinkedBlockingQueue<Future<CrailResult>> futureQueue = new LinkedBlockingQueue<Future<CrailResult>>();
+		HashMap<Integer, ByteBuffer> futureMap = new HashMap<Integer, ByteBuffer>();
+		for (int i = 0; i < size; i++){
+			ByteBuffer buf = null;
+			if (direct){
+				buf = ByteBuffer.allocateDirect((int) CrailConstants.BUFFER_SIZE);
+			} else {
+				buf = ByteBuffer.allocate((int) CrailConstants.BUFFER_SIZE);
+			}
+			bufferQueue.add(buf);
+			System.out.println("buffer size " + buf.capacity());
+		}
 		double sumbytes = 0;
 		double ops = 0;
-		System.out.println("read size " + size);
-		System.out.println("operations " + loop);
 		
 		long start = System.currentTimeMillis();
-		while (ops < loop) {
+		for (int i = 0; i < size - 1 && ops < loop; i++){
+			ByteBuffer buf = bufferQueue.poll();
 			buf.clear();
-			outstream.write(buf);
+			Future<CrailResult> future = outstream.writeAsync(buf);
+			futureQueue.add(future);
+			futureMap.put(future.hashCode(), buf);
+			ops = ops + 1.0;
+		}
+		while (ops < loop) {
+			ByteBuffer buf = bufferQueue.poll();
+			buf.clear();
+			Future<CrailResult> future = outstream.writeAsync(buf);
+			futureQueue.add(future);
+			futureMap.put(future.hashCode(), buf);
+			
+			future = futureQueue.poll();
+			future.get();
+			buf = futureMap.get(future.hashCode());
+			bufferQueue.add(buf);
+			
 			sumbytes = sumbytes + buf.capacity();
 			ops = ops + 1.0;
+		}
+		while (!futureQueue.isEmpty()){
+			Future<CrailResult> future = futureQueue.poll();
+			future.get();
+			ByteBuffer buf = futureMap.get(future.hashCode());
+			sumbytes = sumbytes + buf.capacity();
+			ops = ops + 1.0;			
 		}
 		outstream.flush();
 		long end = System.currentTimeMillis();
@@ -206,61 +238,8 @@ public class CrailBenchmark {
 		}
 		
 		outstream.close();	
-		System.out.println("execution time " + executionTime);
-		System.out.println("ops " + ops);
-		System.out.println("sumbytes " + sumbytes);
-		System.out.println("throughput " + throughput);
-		System.out.println("latency " + latency);
-		System.out.println("closing stream");
-		fs.printStatistics("close");
-		fs.freeBuffer(buf);
 		fs.close();		
-	}	
-	
-	void writeMultiSequential() throws Exception {
-		System.out.println("writing sequential path " + filename);
-		CrailConfiguration conf = new CrailConfiguration();
-		CrailFS fs = CrailFS.newInstance(conf);
-		int hosthash = 0;
 		
-		CrailFile file = fs.createFile(filename, hosthash, 0).get();
-		CrailBufferedOutputStream outstream = file.getBufferedOutputStream(Long.MAX_VALUE);			
-		
-		ByteBuffer buf = ByteBuffer.allocateDirect(size);
-		buf.clear();
-		double sumbytes = 0;
-		double ops = 0;
-		System.out.println("read size " + size);
-		System.out.println("operations " + loop);
-		
-		long start = System.currentTimeMillis();
-		while (ops < loop) {
-			buf.clear();
-			LOG.info("### writing buf, stream pos " + outstream.getPos());
-			outstream.write(buf);
-			sumbytes = sumbytes + buf.capacity();
-			ops = ops + 1.0;
-		}
-		outstream.close();	
-		outstream = file.getBufferedOutputStream(Long.MAX_VALUE);	
-		ops = 0.0;
-		while (ops < loop) {
-			buf.clear();
-			LOG.info("### writing buf, stream pos " + outstream.getPos());
-			outstream.write(buf);
-			sumbytes = sumbytes + buf.capacity();
-			ops = ops + 1.0;
-		}
-		outstream.close();			
-		long end = System.currentTimeMillis();
-		double executionTime = ((double) (end - start)) / 1000.0;
-		double throughput = 0.0;
-		double latency = 0.0;
-		double sumbits = sumbytes * 8.0;
-		if (executionTime > 0) {
-			throughput = sumbits / executionTime / 1000.0 / 1000.0;
-			latency = 1000000.0 * executionTime / ops;
-		}
 		System.out.println("execution time " + executionTime);
 		System.out.println("ops " + ops);
 		System.out.println("sumbytes " + sumbytes);
@@ -268,9 +247,8 @@ public class CrailBenchmark {
 		System.out.println("latency " + latency);
 		fs.printStatistics("close");
 		System.out.println("closing stream");
-		fs.close();		
-	}	
-	
+	}
+
 	void readSequential(boolean direct) throws Exception {
 		System.out.println("read sequential path " + filename + ", direct " + direct);
 		CrailConfiguration conf = new CrailConfiguration();
@@ -385,6 +363,149 @@ public class CrailBenchmark {
 		fs.close();
 	}	
 	
+	void readSequentialAsync(boolean direct) throws Exception {
+		System.out.println("reading sequential async, path " + filename + ", size " + size);
+		CrailConfiguration conf = new CrailConfiguration();
+		CrailFS fs = CrailFS.newInstance(conf);
+		
+		CrailFile file = fs.lookupFile(filename, false).get();
+		CrailBufferedInputStream instream = file.getBufferedInputStream(file.getCapacity());		
+		
+		LinkedBlockingQueue<ByteBuffer> bufferQueue = new LinkedBlockingQueue<ByteBuffer>();
+		LinkedBlockingQueue<Future<CrailResult>> futureQueue = new LinkedBlockingQueue<Future<CrailResult>>();
+		HashMap<Integer, ByteBuffer> futureMap = new HashMap<Integer, ByteBuffer>();
+		for (int i = 0; i < size; i++){
+			ByteBuffer buf = null;
+			if (direct){
+				buf = ByteBuffer.allocateDirect((int) CrailConstants.BUFFER_SIZE);
+			} else {
+				buf = ByteBuffer.allocate((int) CrailConstants.BUFFER_SIZE);
+			}
+			bufferQueue.add(buf);
+			System.out.println("buffer size " + buf.capacity());
+		}
+		double sumbytes = 0;
+		double ops = 0;
+		
+		//fill the meta data cache
+		ByteBuffer preBuf = ByteBuffer.allocateDirect(CrailConstants.BUFFER_SIZE);
+		while(instream.available() > 0){
+			preBuf.clear();
+			instream.read(preBuf);
+		}
+		instream.seek(0);
+		instream.setReadahead(file.getCapacity());
+		
+		long start = System.currentTimeMillis();
+		for (int i = 0; i < size - 1 && ops < loop; i++){
+			ByteBuffer buf = bufferQueue.poll();
+			buf.clear();
+			Future<CrailResult> future = instream.readAsync(buf);
+			futureQueue.add(future);
+			futureMap.put(future.hashCode(), buf);
+			ops = ops + 1.0;
+		}
+		while (ops < loop) {
+			ByteBuffer buf = bufferQueue.poll();
+			buf.clear();
+			Future<CrailResult> future = instream.readAsync(buf);
+			futureQueue.add(future);
+			futureMap.put(future.hashCode(), buf);
+			
+			future = futureQueue.poll();
+			future.get();
+			buf = futureMap.get(future.hashCode());
+			bufferQueue.add(buf);
+			
+			sumbytes = sumbytes + buf.capacity();
+			ops = ops + 1.0;
+		}
+		while (!futureQueue.isEmpty()){
+			Future<CrailResult> future = futureQueue.poll();
+			future.get();
+			ByteBuffer buf = futureMap.get(future.hashCode());
+			sumbytes = sumbytes + buf.capacity();
+			ops = ops + 1.0;			
+		}
+		long end = System.currentTimeMillis();
+		double executionTime = ((double) (end - start)) / 1000.0;
+		double throughput = 0.0;
+		double latency = 0.0;
+		double sumbits = sumbytes * 8.0;
+		if (executionTime > 0) {
+			throughput = sumbits / executionTime / 1000.0 / 1000.0;
+			latency = 1000000.0 * executionTime / ops;
+		}
+		System.out.println("closing stream");
+		instream.close();	
+		
+		System.out.println("execution time " + executionTime);
+		System.out.println("ops " + ops);
+		System.out.println("sumbytes " + sumbytes);
+		System.out.println("throughput " + throughput);
+		System.out.println("latency " + latency);
+		fs.printStatistics("close");
+		fs.close();		
+	}
+
+	void readMultiStream() throws Exception {
+		System.out.println("reading multistream directory, path " + filename + ", size(unused) " + size + ", loop(outstanding) " + loop);
+		CrailConfiguration conf = new CrailConfiguration();
+		CrailFS fs = CrailFS.newInstance(conf);
+		
+		Iterator<String> entries = fs.listEntries(filename);
+		long totalCap = 0;
+		long totalFiles = 0;
+		while(entries.hasNext()){
+			String path = entries.next();
+			CrailFile file = fs.lookupFile(path, false).get();
+			totalCap = totalCap + file.getCapacity();
+			totalFiles++;
+		}
+		System.out.println("totalFiles " + totalFiles + ", totalCap " + totalCap);
+		
+		for (int i = 0; i < 2; i++){
+			Iterator<String> files = fs.listEntries(filename);
+			CrailInputStream multiStream = fs.getMultiStream(files, loop);
+			ByteBuffer buf = fs.allocateBuffer();
+			
+			double sumbytes = 0;
+			long _sumbytes = 0;
+			double ops = 0;
+			long start = System.currentTimeMillis();
+			int ret = multiStream.read(buf);
+			while(ret > 0){
+				sumbytes = sumbytes + ret;
+				long _ret = (long) ret;
+				_sumbytes +=  _ret;				
+				ops = ops + 1.0;
+				buf.clear();
+				ret = multiStream.read(buf);
+			}
+			long end = System.currentTimeMillis();
+			multiStream.close();	
+			
+			double executionTime = ((double) (end - start)) / 1000.0;
+			double throughput = 0.0;
+			double latency = 0.0;
+			double sumbits = sumbytes * 8.0;
+			if (executionTime > 0) {
+				throughput = sumbits / executionTime / 1000.0 / 1000.0;
+				latency = 1000000.0 * executionTime / ops;
+			}
+			System.out.println("round " + i + ":");
+			System.out.println("execution time " + executionTime);
+			System.out.println("ops " + ops);
+			System.out.println("sumbytes " + sumbytes);
+			System.out.println("_sumbytes " + _sumbytes);
+			System.out.println("throughput " + throughput);
+			System.out.println("latency " + latency);
+			System.out.println("closing stream");			
+		}
+	
+		fs.close();
+	}
+
 	void getFile() throws Exception, InterruptedException {
 		System.out.println("get file, path " + filename);
 		CrailConfiguration conf = new CrailConfiguration();
@@ -601,231 +722,6 @@ public class CrailBenchmark {
 		
 		fs.close();
 	}		
-	
-	void writeSequentialAsync(boolean affinity, boolean direct) throws Exception {
-		System.out.println("writing sequential async, path " + filename + ", size " + size);
-		CrailConfiguration conf = new CrailConfiguration();
-		CrailFS fs = CrailFS.newInstance(conf);
-		int hosthash = 0;
-		if (affinity){
-			hosthash = fs.getHostHash();
-		}
-		
-		CrailFile file = fs.createFile(filename, hosthash, 0).get();
-		CrailBufferedOutputStream outstream = file.getBufferedOutputStream(0);			
-		
-		LinkedBlockingQueue<ByteBuffer> bufferQueue = new LinkedBlockingQueue<ByteBuffer>();
-		LinkedBlockingQueue<Future<CrailResult>> futureQueue = new LinkedBlockingQueue<Future<CrailResult>>();
-		HashMap<Integer, ByteBuffer> futureMap = new HashMap<Integer, ByteBuffer>();
-		for (int i = 0; i < size; i++){
-			ByteBuffer buf = null;
-			if (direct){
-				buf = ByteBuffer.allocateDirect((int) CrailConstants.BUFFER_SIZE);
-			} else {
-				buf = ByteBuffer.allocate((int) CrailConstants.BUFFER_SIZE);
-			}
-			bufferQueue.add(buf);
-			System.out.println("buffer size " + buf.capacity());
-		}
-		double sumbytes = 0;
-		double ops = 0;
-		
-		long start = System.currentTimeMillis();
-		for (int i = 0; i < size - 1 && ops < loop; i++){
-			ByteBuffer buf = bufferQueue.poll();
-			buf.clear();
-			Future<CrailResult> future = outstream.writeAsync(buf);
-			futureQueue.add(future);
-			futureMap.put(future.hashCode(), buf);
-			ops = ops + 1.0;
-		}
-		while (ops < loop) {
-			ByteBuffer buf = bufferQueue.poll();
-			buf.clear();
-			Future<CrailResult> future = outstream.writeAsync(buf);
-			futureQueue.add(future);
-			futureMap.put(future.hashCode(), buf);
-			
-			future = futureQueue.poll();
-			future.get();
-			buf = futureMap.get(future.hashCode());
-			bufferQueue.add(buf);
-			
-			sumbytes = sumbytes + buf.capacity();
-			ops = ops + 1.0;
-		}
-		while (!futureQueue.isEmpty()){
-			Future<CrailResult> future = futureQueue.poll();
-			future.get();
-			ByteBuffer buf = futureMap.get(future.hashCode());
-			sumbytes = sumbytes + buf.capacity();
-			ops = ops + 1.0;			
-		}
-		outstream.flush();
-		long end = System.currentTimeMillis();
-		double executionTime = ((double) (end - start)) / 1000.0;
-		double throughput = 0.0;
-		double latency = 0.0;
-		double sumbits = sumbytes * 8.0;
-		if (executionTime > 0) {
-			throughput = sumbits / executionTime / 1000.0 / 1000.0;
-			latency = 1000000.0 * executionTime / ops;
-		}
-		
-		outstream.close();	
-		fs.close();		
-		
-		System.out.println("execution time " + executionTime);
-		System.out.println("ops " + ops);
-		System.out.println("sumbytes " + sumbytes);
-		System.out.println("throughput " + throughput);
-		System.out.println("latency " + latency);
-		fs.printStatistics("close");
-		System.out.println("closing stream");
-	}	
-	
-	void readSequentialAsync(boolean direct) throws Exception {
-		System.out.println("reading sequential async, path " + filename + ", size " + size);
-		CrailConfiguration conf = new CrailConfiguration();
-		CrailFS fs = CrailFS.newInstance(conf);
-		
-		CrailFile file = fs.lookupFile(filename, false).get();
-		CrailBufferedInputStream instream = file.getBufferedInputStream(file.getCapacity());		
-		
-		LinkedBlockingQueue<ByteBuffer> bufferQueue = new LinkedBlockingQueue<ByteBuffer>();
-		LinkedBlockingQueue<Future<CrailResult>> futureQueue = new LinkedBlockingQueue<Future<CrailResult>>();
-		HashMap<Integer, ByteBuffer> futureMap = new HashMap<Integer, ByteBuffer>();
-		for (int i = 0; i < size; i++){
-			ByteBuffer buf = null;
-			if (direct){
-				buf = ByteBuffer.allocateDirect((int) CrailConstants.BUFFER_SIZE);
-			} else {
-				buf = ByteBuffer.allocate((int) CrailConstants.BUFFER_SIZE);
-			}
-			bufferQueue.add(buf);
-			System.out.println("buffer size " + buf.capacity());
-		}
-		double sumbytes = 0;
-		double ops = 0;
-		
-		//fill the meta data cache
-		ByteBuffer preBuf = ByteBuffer.allocateDirect(CrailConstants.BUFFER_SIZE);
-		while(instream.available() > 0){
-			preBuf.clear();
-			instream.read(preBuf);
-		}
-		instream.seek(0);
-		instream.setReadahead(file.getCapacity());
-		
-		long start = System.currentTimeMillis();
-		for (int i = 0; i < size - 1 && ops < loop; i++){
-			ByteBuffer buf = bufferQueue.poll();
-			buf.clear();
-			Future<CrailResult> future = instream.readAsync(buf);
-			futureQueue.add(future);
-			futureMap.put(future.hashCode(), buf);
-			ops = ops + 1.0;
-		}
-		while (ops < loop) {
-			ByteBuffer buf = bufferQueue.poll();
-			buf.clear();
-			Future<CrailResult> future = instream.readAsync(buf);
-			futureQueue.add(future);
-			futureMap.put(future.hashCode(), buf);
-			
-			future = futureQueue.poll();
-			future.get();
-			buf = futureMap.get(future.hashCode());
-			bufferQueue.add(buf);
-			
-			sumbytes = sumbytes + buf.capacity();
-			ops = ops + 1.0;
-		}
-		while (!futureQueue.isEmpty()){
-			Future<CrailResult> future = futureQueue.poll();
-			future.get();
-			ByteBuffer buf = futureMap.get(future.hashCode());
-			sumbytes = sumbytes + buf.capacity();
-			ops = ops + 1.0;			
-		}
-		long end = System.currentTimeMillis();
-		double executionTime = ((double) (end - start)) / 1000.0;
-		double throughput = 0.0;
-		double latency = 0.0;
-		double sumbits = sumbytes * 8.0;
-		if (executionTime > 0) {
-			throughput = sumbits / executionTime / 1000.0 / 1000.0;
-			latency = 1000000.0 * executionTime / ops;
-		}
-		System.out.println("closing stream");
-		instream.close();	
-		
-		System.out.println("execution time " + executionTime);
-		System.out.println("ops " + ops);
-		System.out.println("sumbytes " + sumbytes);
-		System.out.println("throughput " + throughput);
-		System.out.println("latency " + latency);
-		fs.printStatistics("close");
-		fs.close();		
-	}		
-	
-	void readMultiStream() throws Exception {
-		System.out.println("reading multistream directory, path " + filename + ", size(unused) " + size + ", loop(outstanding) " + loop);
-		CrailConfiguration conf = new CrailConfiguration();
-		CrailFS fs = CrailFS.newInstance(conf);
-		
-		Iterator<String> entries = fs.listEntries(filename);
-		long totalCap = 0;
-		long totalFiles = 0;
-		while(entries.hasNext()){
-			String path = entries.next();
-			CrailFile file = fs.lookupFile(path, false).get();
-			totalCap = totalCap + file.getCapacity();
-			totalFiles++;
-		}
-		System.out.println("totalFiles " + totalFiles + ", totalCap " + totalCap);
-		
-		for (int i = 0; i < 2; i++){
-			Iterator<String> files = fs.listEntries(filename);
-			CrailInputStream multiStream = fs.getMultiStream(files, loop);
-			ByteBuffer buf = fs.allocateBuffer();
-			
-			double sumbytes = 0;
-			long _sumbytes = 0;
-			double ops = 0;
-			long start = System.currentTimeMillis();
-			int ret = multiStream.read(buf);
-			while(ret > 0){
-				sumbytes = sumbytes + ret;
-				long _ret = (long) ret;
-				_sumbytes +=  _ret;				
-				ops = ops + 1.0;
-				buf.clear();
-				ret = multiStream.read(buf);
-			}
-			long end = System.currentTimeMillis();
-			multiStream.close();	
-			
-			double executionTime = ((double) (end - start)) / 1000.0;
-			double throughput = 0.0;
-			double latency = 0.0;
-			double sumbits = sumbytes * 8.0;
-			if (executionTime > 0) {
-				throughput = sumbits / executionTime / 1000.0 / 1000.0;
-				latency = 1000000.0 * executionTime / ops;
-			}
-			System.out.println("round " + i + ":");
-			System.out.println("execution time " + executionTime);
-			System.out.println("ops " + ops);
-			System.out.println("sumbytes " + sumbytes);
-			System.out.println("_sumbytes " + _sumbytes);
-			System.out.println("throughput " + throughput);
-			System.out.println("latency " + latency);
-			System.out.println("closing stream");			
-		}
-
-		fs.close();
-	}
 	
 	public static void main(String[] args) {
 		if (args.length != 4){
