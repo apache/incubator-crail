@@ -726,9 +726,6 @@ public class CrailBenchmark {
 		System.out.println("warmUp, warmupFile " + warmupFilename + ", operations " + operations);
 		CrailFile warmupFile = fs.createFile(warmupFilename, 0, 0).get().syncDir();
 		CrailBufferedOutputStream warmupStream = warmupFile.getBufferedOutputStream(0);
-		if (operations < bufferList.size()){
-			operations = bufferList.size();
-		}
 		for (int i = 0; i < operations; i++){
 			ByteBuffer buf = bufferList.poll();
 			buf.clear();
