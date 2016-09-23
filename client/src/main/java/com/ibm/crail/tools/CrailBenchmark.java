@@ -724,19 +724,21 @@ public class CrailBenchmark {
 	private void warmUp(CrailFS fs, String filename, int operations, ConcurrentLinkedQueue<ByteBuffer> bufferList) throws Exception {
 		String warmupFilename = filename + ".warmup";
 		System.out.println("warmUp, warmupFile " + warmupFilename + ", operations " + operations);
-		CrailFile warmupFile = fs.createFile(warmupFilename, 0, 0).get().syncDir();
-		CrailBufferedOutputStream warmupStream = warmupFile.getBufferedOutputStream(0);
-		for (int i = 0; i < operations; i++){
-			ByteBuffer buf = bufferList.poll();
-			buf.clear();
-			warmupStream.write(buf);
-			if (bufferList.isEmpty()){
-				bufferList.add(buf);
+		if (operations > 0){
+			CrailFile warmupFile = fs.createFile(warmupFilename, 0, 0).get().syncDir();
+			CrailBufferedOutputStream warmupStream = warmupFile.getBufferedOutputStream(0);
+			for (int i = 0; i < operations; i++){
+				ByteBuffer buf = bufferList.poll();
+				buf.clear();
+				warmupStream.write(buf);
+				if (bufferList.isEmpty()){
+					bufferList.add(buf);
+				}
 			}
+			warmupStream.flush();
+			warmupStream.close();
+			fs.delete(warmupFilename, false).get().syncDir();			
 		}
-		warmupStream.flush();
-		warmupStream.close();
-		fs.delete(warmupFilename, false).get().syncDir();			
 	}
 	
 	public static void main(String[] args) throws Exception {
