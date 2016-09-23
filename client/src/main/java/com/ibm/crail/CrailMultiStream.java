@@ -121,6 +121,57 @@ public class CrailMultiStream extends InputStream implements CrailInputStream {
 		}
 	}	
 	
+	public CrailMultiStream(CrailFS fs, Iterator<CrailFile> paths, Iterator<ByteBuffer> outstanding) throws Exception{
+		this.virtualPosition = 0;
+		this.virtualCapacity = 0;
+		this.currentBuffer = null;
+		this.streams = new LinkedBlockingQueue<CrailInputStream>();
+		this.streamQueue = new LinkedBlockingQueue<CrailInputStream>();
+		this.bufferQueue = new LinkedBlockingQueue<ByteBuffer>();
+		this.futureQueue = new LinkedBlockingQueue<Future<CrailResult>>();
+		this.buffers = new LinkedBlockingQueue<ByteBuffer>();
+		this.isClosed = false;
+		this.currentStream = null;
+		this.closeAttempts = 0;
+		this.totalReads = 0;
+		this.totalBlocks = 0;
+		this.totalNonBlocks = 0;	
+		this.fs = fs;
+		
+		while(paths.hasNext()){
+			CrailFile file = paths.next();
+			CrailInputStream stream = file.getDirectInputStream(file.getCapacity());
+			this.virtualCapacity += file.getCapacity();
+			this.streamQueue.add(stream);
+			this.streams.add(stream);
+			
+			if (currentStream == null){
+				currentStream = this.streamQueue.poll();
+			}
+			
+			if (outstanding.hasNext()){
+				ByteBuffer buffer = outstanding.next();
+				if (triggerRead(buffer)){
+					buffers.add(buffer);
+				} 			
+			}
+		}
+		
+		if (outstanding.hasNext()){
+			ByteBuffer buffer = outstanding.next();
+			while (buffer != null){
+				if (triggerRead(buffer)){
+					buffers.add(buffer);
+				}
+				buffer = outstanding.next();
+			}
+		}
+		
+		if (CrailConstants.DEBUG){
+			LOG.info("multistream2, init, streams " + this.streamQueue.size() + ", usedBuffers " + bufferQueue.size() + ", virtualCapacity " + virtualCapacity);
+		}
+	}		
+	
 	public final synchronized int read() throws IOException {
 		int ret = read(tmpBuf);
 		return (ret <= 0) ? -1 : (tmpBuf[0] & 0xff);
