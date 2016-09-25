@@ -65,6 +65,7 @@ public class CrailHDFS extends AbstractFileSystem {
 	private static final Logger LOG = CrailUtils.getLogger();
 	private CrailFS dfs;
 	private Path workingDir;
+	private int localAffinity;
 	
 	public CrailHDFS(final URI uri, final Configuration conf) throws IOException, URISyntaxException {
 		super(uri, "crail", true, 9000);
@@ -74,6 +75,10 @@ public class CrailHDFS extends AbstractFileSystem {
 			CrailHDFSConstants.updateConstants(crailConf);
 			CrailHDFSConstants.printConf(LOG);
 			this.dfs = CrailFS.newInstance(crailConf);
+			this.localAffinity = 0;
+			if (CrailHDFSConstants.LOCAL_AFFINITY){
+				localAffinity = dfs.getHostHash();
+			}
 			Path _workingDir = new Path("/user/" + CrailConstants.USER);
 			this.workingDir = new Path("/user/" + CrailConstants.USER).makeQualified(uri, _workingDir);
 			LOG.info("CrailHDFS initialization done..");
@@ -96,7 +101,7 @@ public class CrailHDFS extends AbstractFileSystem {
 	public FSDataOutputStream createInternal(Path path, EnumSet<CreateFlag> flag, FsPermission absolutePermission, int bufferSize, short replication, long blockSize, Progressable progress, ChecksumOpt checksumOpt, boolean createParent) throws AccessControlException, FileAlreadyExistsException, FileNotFoundException, ParentNotDirectoryException, UnsupportedFileSystemException, UnresolvedLinkException, IOException {
 		CrailFile fileInfo = null;
 		try {
-			fileInfo = dfs.createFile(path.toUri().getRawPath(), CrailHDFSConstants.STORAGE_AFFINITY, 0).get();
+			fileInfo = dfs.createFile(path.toUri().getRawPath(), CrailHDFSConstants.STORAGE_AFFINITY, localAffinity).get();
 		} catch(Exception e){
 			if (e.getMessage().contains(NameNodeProtocol.messages[NameNodeProtocol.ERR_PARENT_MISSING])){
 				fileInfo = null;
@@ -109,7 +114,7 @@ public class CrailHDFS extends AbstractFileSystem {
 			Path parent = path.getParent();
 			this.mkdir(parent, FsPermission.getDirDefault(), true);
 			try {
-				fileInfo = dfs.createFile(path.toUri().getRawPath(), CrailHDFSConstants.STORAGE_AFFINITY, 0).get();
+				fileInfo = dfs.createFile(path.toUri().getRawPath(), CrailHDFSConstants.STORAGE_AFFINITY, localAffinity).get();
 			} catch(Exception e){
 				throw new IOException(e);
 			}
