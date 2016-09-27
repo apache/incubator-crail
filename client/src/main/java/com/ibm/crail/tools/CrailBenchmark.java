@@ -483,80 +483,6 @@ public class CrailBenchmark {
 		fs.close();
 	}
 	
-	void readMultiStream2(String filename, int size, int loop, int batch) throws Exception {
-		System.out.println("readMultiStream2, filename " + filename  + ", size " + size + ", loop " + loop + ", batch " + batch);
-		CrailConfiguration conf = new CrailConfiguration();
-		CrailFS fs = CrailFS.newInstance(conf);
-		
-		//warmup
-		ConcurrentLinkedQueue<ByteBuffer> warmupQueue = new ConcurrentLinkedQueue<ByteBuffer>();
-		ConcurrentLinkedQueue<ByteBuffer> freeQueue = new ConcurrentLinkedQueue<ByteBuffer>();
-		for (int i = 0; i < warmup; i++){
-			ByteBuffer buf = fs.allocateBuffer();
-			warmupQueue.add(buf);
-			freeQueue.add(buf);
-		}
-		warmUp(fs, filename, warmup, warmupQueue);
-		while(!freeQueue.isEmpty()){
-			ByteBuffer buf = freeQueue.poll();
-			fs.freeBuffer(buf);
-		}
-		Iterator<String> files = fs.listEntries(filename);
-		LinkedList<CrailFile> crailFiles = new LinkedList<CrailFile>();
-		while (files.hasNext()){
-			String path = files.next();
-			CrailFile crailFile = fs.lookupFile(path, false).get();
-			crailFiles.add(crailFile);
-		}
-		
-		LinkedList<ByteBuffer> outstanding = new LinkedList<ByteBuffer>();
-		for (int i = 0; i < batch; i++){
-			outstanding.add(fs.allocateBuffer());
-		}
-		
-		//benchmark
-		System.out.println("starting benchmark... crailFiles " + crailFiles.size() + ", outstanding " + outstanding.size());
-		fs.resetStatistics();
-		for (int i = 0; i < loop; i++){
-			CrailMultiStream multiStream = new CrailMultiStream(fs, crailFiles.iterator(), outstanding.iterator());
-			ByteBuffer buf = fs.allocateBuffer();
-			
-			double sumbytes = 0;
-			long _sumbytes = 0;
-			double ops = 0;
-			long start = System.currentTimeMillis();
-			int ret = multiStream.read(buf);
-			while(ret > 0){
-				sumbytes = sumbytes + ret;
-				long _ret = (long) ret;
-				_sumbytes +=  _ret;				
-				ops = ops + 1.0;
-				buf.clear();
-				ret = multiStream.read(buf);
-			}
-			long end = System.currentTimeMillis();
-			multiStream.close();	
-			
-			double executionTime = ((double) (end - start)) / 1000.0;
-			double throughput = 0.0;
-			double latency = 0.0;
-			double sumbits = sumbytes * 8.0;
-			if (executionTime > 0) {
-				throughput = sumbits / executionTime / 1000.0 / 1000.0;
-				latency = 1000000.0 * executionTime / ops;
-			}
-			
-			System.out.println("round " + i + ":");
-			System.out.println("execution time " + executionTime);
-			System.out.println("ops " + ops);
-			System.out.println("throughput " + throughput);
-			System.out.println("latency " + latency);
-		}
-	
-		fs.printStatistics("close");
-		fs.close();
-	}	
-
 	void getFile(String filename, int loop) throws Exception, InterruptedException {
 		System.out.println("getFile, filename " + filename  + ", loop " + loop);
 		CrailConfiguration conf = new CrailConfiguration();
@@ -877,7 +803,7 @@ public class CrailBenchmark {
 		} else if (type.equalsIgnoreCase("readAsync")) {
 			benchmark.readSequentialAsync(filename, size, loop, batch, true);
 		} else if (type.equalsIgnoreCase("readMultiStream")) {
-			benchmark.readMultiStream2(filename, size, loop, batch);
+			benchmark.readMultiStream(filename, size, loop, batch);
 		} else if (type.equals("getFile")){
 			benchmark.getFile(filename, loop);
 		} else if (type.equals("getFileAsync")){
