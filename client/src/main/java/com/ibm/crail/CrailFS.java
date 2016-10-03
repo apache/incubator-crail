@@ -92,6 +92,7 @@ public abstract class CrailFS {
 					LOG.info("Closing CrailFS singleton");
 					try {
 						closeFileSystem();
+						instance = null;
 					} catch (Exception e){
 						throw new IOException(e);
 					}
