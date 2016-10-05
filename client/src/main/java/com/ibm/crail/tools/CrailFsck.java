@@ -21,99 +21,179 @@
 
 package com.ibm.crail.tools;
 
-import org.slf4j.Logger;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import com.ibm.crail.CrailBlockLocation;
+import com.ibm.crail.CrailFS;
+import com.ibm.crail.CrailFile;
+import com.ibm.crail.conf.CrailConfiguration;
+import com.ibm.crail.conf.CrailConstants;
+import com.ibm.crail.core.CoreFileSystem;
+import com.ibm.crail.core.DirectoryRecord;
+import com.ibm.crail.core.DirectoryRecordIterator;
+import com.ibm.crail.namenode.protocol.FileName;
 import com.ibm.crail.utils.GetOpt;
 import com.ibm.crail.utils.CrailUtils;
 
 public class CrailFsck {
-	public static final Logger LOG = CrailUtils.getLogger();
 	
-	private String ipAddress = "127.0.0.1"; // of 
-	private int loop = 1;
-	private int size = 128;
-	private String path;
-	private long len;
-	private long offset;
-	
-	public void launchBenchmark(String[] args) throws Exception {
-		String _bechmarkType = "";
-		Runnable benchmarkTask = null;
+	public CrailFsck(){
 		
+	}
+	
+	public static void usage() {
+		System.out.println("Usage: ");
+		System.out.println("fsck -t <getLocation|directoryDump|namenodeDump|blockStatistics|ping> " + 
+		"-f <file/dir> -y <offset> -l <length>");
+		System.exit(1);
+	}		
+	
+	public void getLocations(String filename, int offset, int length) throws Exception {
+		System.out.println("getLocations, filename " + filename + ", offset " + offset + ", len " + length);
+		CrailConfiguration conf = new CrailConfiguration();
+		CrailFS fs = CrailFS.newInstance(conf);
+		CrailBlockLocation locations[] = fs.getBlockLocations(filename, offset, length);
+		for (int i = 0; i < locations.length; i++){
+			System.out.println("location " + i + " : " + locations[i].toString());
+		}	
+		fs.close();
+	}
+	
+	public void blockStatistics(String filename) throws Exception {
+		HashMap<String, AtomicInteger> stats = new HashMap<String, AtomicInteger>();
+		CrailConfiguration conf = new CrailConfiguration();
+		CrailFS fs = CrailFS.newInstance(conf);
+		LinkedBlockingQueue<CrailFile> fileQueue = new LinkedBlockingQueue<CrailFile>();
+		CrailFile directFile = fs.lookupFile(filename, false).get();
+		fileQueue.add(directFile);
+		
+		while (!fileQueue.isEmpty()) {
+			CrailFile file = fileQueue.poll();
+			Iterator<String> iter = fs.listEntries(file.getPath());
+			while (iter.hasNext()) {
+				String path = iter.next();
+				CrailFile child = fs.lookupFile(path, false).get();
+				fileQueue.add(child);
+			}
+			printPath(stats, fs, file.getPath(), 0, file.getCapacity());
+		}
+		printStats(stats);	
+		fs.close();
+	}
+
+	public void namenodeDump()  throws Exception {
+		CrailConfiguration conf = new CrailConfiguration();
+		CrailFS fs = CrailFS.newInstance(conf);
+		fs.dumpNameNode();
+		fs.close();
+	}
+
+	public void directoryDump(String filename) throws Exception {
+		CrailConfiguration conf = new CrailConfiguration();
+		CrailConstants.updateConstants(conf);
+		CoreFileSystem fs = new CoreFileSystem(conf);		
+		DirectoryRecordIterator iter = fs._listEntries(filename);
+		System.out.println("#hash   \t\tname\t\tfilecomponent");
+		int i = 0;
+		while(iter.hasNext()){
+			DirectoryRecord record = iter.next();
+			String path = CrailUtils.combinePath(record.getParent(), record.getFile());
+			FileName hash = new FileName(path);
+			System.out.format(i + ": " + "%08d\t\t%s\t%d\n", record.isValid() ? 1 : 0, padRight(record.getFile(), 8), hash.getFileComponent());
+			i++;
+		}
+		iter.close();
+		fs.closeFileSystem();
+	}
+	
+	private void ping() throws Exception {
+		CrailConfiguration conf = new CrailConfiguration();
+		CrailConstants.updateConstants(conf);
+		CoreFileSystem fs = new CoreFileSystem(conf);
+		fs.ping();
+		fs.closeFileSystem();		
+	}
+	
+	//-----------------
+
+	private String padRight(String s, int n) {
+		return String.format("%1$-" + n + "s", s);
+	}
+	
+	private void printStats(HashMap<String, AtomicInteger> stats) {
+		for (Iterator<String> iter = stats.keySet().iterator(); iter.hasNext(); ){
+			String key = iter.next();
+			System.out.println(key + "\t" + stats.get(key));
+		}
+	}
+
+	private void printPath(HashMap<String, AtomicInteger> stats, CrailFS fs, String filePath, long offset, long len) throws Exception {
+		System.out.println("printing locations for path " + filePath);
+		CrailBlockLocation locations[] = fs.getBlockLocations(filePath, offset, len);
+		for (int i = 0; i < locations.length; i++){
+			for (int j = 0; j < locations[i].getNames().length; j++){
+				String name = locations[i].getNames()[j];
+				String host = name.split(":")[0];
+				System.out.println("..........names " + host);
+				incStats(stats, host);
+			}
+		}
+	}
+	
+	private void incStats(HashMap<String, AtomicInteger> stats, String host) {
+		if (!stats.containsKey(host)){
+			stats.put(host, new AtomicInteger(0));
+		}
+		stats.get(host).incrementAndGet();
+	}	
+
+	
+	public static void main(String[] args) throws Exception {
 		String[] _args = args;
-		GetOpt go = new GetOpt(_args, "t:a:s:k:o:p:n:m:b:y:j:c");
+		GetOpt go = new GetOpt(_args, "t:f:y:l:");
 		go.optErr = true;
 		int ch = -1;
+		
+		if (args.length < 2){
+			usage();
+		}
+		
+		String type = "";
+		String filename = "/tmp.dat";
+		int offset = 0;
+		int length = 1;
+		
 		while ((ch = go.getopt()) != GetOpt.optEOF) {
 			if ((char) ch == 't') {
-				_bechmarkType = go.optArgGet();
-			} else if ((char) ch == 'a') {
-				ipAddress = go.optArgGet();
-			} else if ((char) ch == 's') {
-				size = Integer.parseInt(go.optArgGet());
-			} else if ((char) ch == 'k') {
-				loop = Integer.parseInt(go.optArgGet());
-			} else if ((char) ch == 'p') {
-				path = go.optArgGet();
-			} else if ((char) ch == 'b') {
-				len = Long.parseLong(go.optArgGet());
+				type = go.optArgGet();
+			} else if ((char) ch == 'f') {
+				filename = go.optArgGet();
 			} else if ((char) ch == 'y') {
-				offset = Long.parseLong(go.optArgGet());
+				offset = Integer.parseInt(go.optArgGet());
+			} else if ((char) ch == 'l') {
+				length = Integer.parseInt(go.optArgGet());
 			} else {
 				System.exit(1); // undefined option
 			}
-		}
-		
-		if (_bechmarkType.startsWith("namenode-dump")) {
-			LOG.info("starting namenode-dump");
-			benchmarkTask = new NameNodeDump();				
-		} else if (_bechmarkType.startsWith("directory-dump")) {
-			LOG.info("starting directory-dump");
-			benchmarkTask = new DirectoryDump(this);				
-		} else if (_bechmarkType.startsWith("ping")) {
-			benchmarkTask = new RpcPing();
-		} else if (_bechmarkType.startsWith("location")) {
-			benchmarkTask = new LocationTest(this);
-		} else if (_bechmarkType.startsWith("statistics")) {
-			benchmarkTask = new BlockStatistics(this);
-		} else {
-			System.out.println("No valid apptype, type " + _bechmarkType);
 		}		
 		
-		benchmarkTask.run();
-		System.exit(0);
-	}
-	
-	public static void main(String[] args) throws Exception { 
-		try {
-			CrailFsck crailTest = new CrailFsck();
-			crailTest.launchBenchmark(args);
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println(e.getCause().getMessage());
+		CrailFsck fsck = new CrailFsck();
+		if (type.equals("getLocations")){
+			fsck.getLocations(filename, offset, length);
+		} else if (type.equals("directoryDump")){
+			fsck.directoryDump(filename);
+		} else if (type.equals("namenodeDump")){
+			fsck.namenodeDump();
+		} else if (type.equals("blockStatistics")){
+			fsck.blockStatistics(filename);
+		} else if (type.equals("ping")){
+			fsck.ping();
+		} else {
+			usage();
+			System.exit(0);			
 		}
-	}	
-	
-	public String getIpAddress() {
-		return ipAddress;
 	}
-
-	public int getSize() {
-		return size;
-	}
-
-	public int getLoop() {
-		return loop;
-	}
-
-	public String getPath() {
-		return path;
-	}
-
-	public long getLen() {
-		return len;
-	}
-
-	public long getOffset() {
-		return offset;
-	}	
 }

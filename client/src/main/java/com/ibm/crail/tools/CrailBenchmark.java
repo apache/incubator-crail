@@ -22,10 +22,12 @@
 package com.ibm.crail.tools;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Random;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -39,6 +41,7 @@ import com.ibm.crail.CrailMultiStream;
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
+import com.ibm.crail.utils.CrailUtils;
 import com.ibm.crail.utils.GetOpt;
 
 public class CrailBenchmark {
@@ -53,8 +56,8 @@ public class CrailBenchmark {
 		System.out.println(
 				"iobench -t <writeClusterHeap|writeClusterDirect|writeLocalHeap|writeLocalDirect|writeAsyncCluster|writeAsyncLocal|"
 				+ "readSequentialHeap|readSequentialDirect|readRandomHeap|readRandomDirect|readAsync|readMultiStream|"
-				+ "enumerateDir|keyGet|createFile|getFile"
-				+ "-f <filename> -s <size> -k <iterations> -b batch");
+				+ "enumerateDir|keyGet|createFile|getFile>"
+				+ "-f <filename> -s <size> -k <iterations> -b <batch> -e <experiments>");
 		System.exit(1);
 	}
 
@@ -74,12 +77,11 @@ public class CrailBenchmark {
 		} else {
 			buf = ByteBuffer.allocate(size);
 		}
-		buf.clear();	
 		
 		//warmup
-		ConcurrentLinkedQueue<ByteBuffer> warmupQueue = new ConcurrentLinkedQueue<ByteBuffer>();
-		warmupQueue.add(buf);
-		warmUp(fs, filename, warmup, warmupQueue);
+		ConcurrentLinkedQueue<ByteBuffer> bufferQueue = new ConcurrentLinkedQueue<ByteBuffer>();
+		bufferQueue.add(buf);
+		warmUp(fs, filename, warmup, bufferQueue);
 		
 		//benchmark
 		System.out.println("starting benchmark...");
@@ -130,11 +132,7 @@ public class CrailBenchmark {
 			hosthash = fs.getHostHash();
 		}
 		
-		
-		ConcurrentLinkedQueue<ByteBuffer> warmupQueue = new ConcurrentLinkedQueue<ByteBuffer>(); 
-		LinkedBlockingQueue<ByteBuffer> bufferQueue = new LinkedBlockingQueue<ByteBuffer>();
-		LinkedBlockingQueue<Future<CrailResult>> futureQueue = new LinkedBlockingQueue<Future<CrailResult>>();
-		HashMap<Integer, ByteBuffer> futureMap = new HashMap<Integer, ByteBuffer>();
+		ConcurrentLinkedQueue<ByteBuffer> bufferQueue = new ConcurrentLinkedQueue<ByteBuffer>();
 		for (int i = 0; i < batch; i++){
 			ByteBuffer buf = null;
 			if (direct){
@@ -143,14 +141,15 @@ public class CrailBenchmark {
 				buf = ByteBuffer.allocate(size);
 			}
 			bufferQueue.add(buf);
-			warmupQueue.add(buf);
 		}
 		
 		//warmup
-		warmUp(fs, filename, warmup, warmupQueue);				
+		warmUp(fs, filename, warmup, bufferQueue);				
 		
 		//benchmark
 		System.out.println("starting benchmark...");
+		LinkedBlockingQueue<Future<CrailResult>> futureQueue = new LinkedBlockingQueue<Future<CrailResult>>();
+		HashMap<Integer, ByteBuffer> futureMap = new HashMap<Integer, ByteBuffer>();
 		fs.resetStatistics();
 		long _loop = (long) loop;
 		long _bufsize = (long) CrailConstants.BUFFER_SIZE;
@@ -226,9 +225,9 @@ public class CrailBenchmark {
 		buf.clear();	
 		
 		//warmup
-		ConcurrentLinkedQueue<ByteBuffer> warmupQueue = new ConcurrentLinkedQueue<ByteBuffer>();
-		warmupQueue.add(buf);
-		warmUp(fs, filename, warmup, warmupQueue);
+		ConcurrentLinkedQueue<ByteBuffer> bufferQueue = new ConcurrentLinkedQueue<ByteBuffer>();
+		bufferQueue.add(buf);
+		warmUp(fs, filename, warmup, bufferQueue);
 		
 		CrailFile file = fs.lookupFile(filename, false).get();
 		CrailBufferedInputStream instream = file.getBufferedInputStream(file.getCapacity());
@@ -288,9 +287,9 @@ public class CrailBenchmark {
 		}		
 		
 		//warmup
-		ConcurrentLinkedQueue<ByteBuffer> warmupQueue = new ConcurrentLinkedQueue<ByteBuffer>();
-		warmupQueue.add(buf);
-		warmUp(fs, filename, warmup, warmupQueue);		
+		ConcurrentLinkedQueue<ByteBuffer> bufferQueue = new ConcurrentLinkedQueue<ByteBuffer>();
+		bufferQueue.add(buf);
+		warmUp(fs, filename, warmup, bufferQueue);		
 		
 		//benchmark
 		System.out.println("starting benchmark...");
@@ -343,10 +342,7 @@ public class CrailBenchmark {
 		CrailConfiguration conf = new CrailConfiguration();
 		CrailFS fs = CrailFS.newInstance(conf);
 		
-		ConcurrentLinkedQueue<ByteBuffer> warmupQueue = new ConcurrentLinkedQueue<ByteBuffer>();
-		LinkedBlockingQueue<ByteBuffer> bufferQueue = new LinkedBlockingQueue<ByteBuffer>();
-		LinkedBlockingQueue<Future<CrailResult>> futureQueue = new LinkedBlockingQueue<Future<CrailResult>>();
-		HashMap<Integer, ByteBuffer> futureMap = new HashMap<Integer, ByteBuffer>();
+		ConcurrentLinkedQueue<ByteBuffer> bufferQueue = new ConcurrentLinkedQueue<ByteBuffer>();
 		for (int i = 0; i < batch; i++){
 			ByteBuffer buf = null;
 			if (direct){
@@ -355,19 +351,20 @@ public class CrailBenchmark {
 				buf = ByteBuffer.allocate(size);
 			}
 			bufferQueue.add(buf);
-			warmupQueue.add(buf);
 		}
-		double sumbytes = 0;
-		double ops = 0;
 
 		//warmup
-		warmUp(fs, filename, warmup, warmupQueue);	
+		warmUp(fs, filename, warmup, bufferQueue);	
 		
 		//benchmark
 		System.out.println("starting benchmark...");
+		double sumbytes = 0;
+		double ops = 0;
 		fs.resetStatistics();
 		CrailFile file = fs.lookupFile(filename, false).get();
 		CrailBufferedInputStream instream = file.getBufferedInputStream(file.getCapacity());			
+		HashMap<Integer, ByteBuffer> futureMap = new HashMap<Integer, ByteBuffer>();
+		LinkedBlockingQueue<Future<CrailResult>> futureQueue = new LinkedBlockingQueue<Future<CrailResult>>();
 		long start = System.currentTimeMillis();
 		for (int i = 0; i < batch - 1 && ops < loop; i++){
 			ByteBuffer buf = bufferQueue.poll();
@@ -385,18 +382,18 @@ public class CrailBenchmark {
 			futureMap.put(future.hashCode(), buf);
 			
 			future = futureQueue.poll();
-			future.get();
+			CrailResult result = future.get();
 			buf = futureMap.get(future.hashCode());
 			bufferQueue.add(buf);
 			
-			sumbytes = sumbytes + buf.capacity();
+			sumbytes = sumbytes + result.getLen();
 			ops = ops + 1.0;
 		}
 		while (!futureQueue.isEmpty()){
 			Future<CrailResult> future = futureQueue.poll();
-			future.get();
+			CrailResult result = future.get();
 			ByteBuffer buf = futureMap.get(future.hashCode());
-			sumbytes = sumbytes + buf.capacity();
+			sumbytes = sumbytes + result.getLen();
 			ops = ops + 1.0;			
 		}
 		long end = System.currentTimeMillis();
@@ -416,7 +413,7 @@ public class CrailBenchmark {
 		System.out.println("throughput " + throughput);
 		System.out.println("latency " + latency);
 		
-		fs.printStatistics("close");
+		fs.printStatistics("close");		
 		fs.close();		
 	}
 
@@ -426,16 +423,14 @@ public class CrailBenchmark {
 		CrailFS fs = CrailFS.newInstance(conf);
 		
 		//warmup
-		ConcurrentLinkedQueue<ByteBuffer> warmupQueue = new ConcurrentLinkedQueue<ByteBuffer>();
-		ConcurrentLinkedQueue<ByteBuffer> freeQueue = new ConcurrentLinkedQueue<ByteBuffer>();
+		ConcurrentLinkedQueue<ByteBuffer> bufferQueue = new ConcurrentLinkedQueue<ByteBuffer>();
 		for (int i = 0; i < warmup; i++){
 			ByteBuffer buf = fs.allocateBuffer();
-			warmupQueue.add(buf);
-			freeQueue.add(buf);
+			bufferQueue.add(buf);
 		}
-		warmUp(fs, filename, warmup, warmupQueue);
-		while(!freeQueue.isEmpty()){
-			ByteBuffer buf = freeQueue.poll();
+		warmUp(fs, filename, warmup, bufferQueue);
+		while(!bufferQueue.isEmpty()){
+			ByteBuffer buf = bufferQueue.poll();
 			fs.freeBuffer(buf);
 		}
 		
@@ -490,10 +485,10 @@ public class CrailBenchmark {
 		
 		
 		//warmup
-		ConcurrentLinkedQueue<ByteBuffer> warmupQueue = new ConcurrentLinkedQueue<ByteBuffer>();
+		ConcurrentLinkedQueue<ByteBuffer> bufferQueue = new ConcurrentLinkedQueue<ByteBuffer>();
 		ByteBuffer buf = fs.allocateBuffer();
-		warmupQueue.add(buf);
-		warmUp(fs, filename, warmup, warmupQueue);		
+		bufferQueue.add(buf);
+		warmUp(fs, filename, warmup, bufferQueue);		
 		fs.freeBuffer(buf);
 		
 		//benchmark
@@ -525,10 +520,10 @@ public class CrailBenchmark {
 		CrailFS fs = CrailFS.newInstance(conf);	
 		
 		//warmup
-		ConcurrentLinkedQueue<ByteBuffer> warmupQueue = new ConcurrentLinkedQueue<ByteBuffer>();
+		ConcurrentLinkedQueue<ByteBuffer> bufferQueue = new ConcurrentLinkedQueue<ByteBuffer>();
 		ByteBuffer buf = fs.allocateBuffer();
-		warmupQueue.add(buf);
-		warmUp(fs, filename, warmup, warmupQueue);		
+		bufferQueue.add(buf);
+		warmUp(fs, filename, warmup, bufferQueue);		
 		fs.freeBuffer(buf);	
 		
 		//benchmark
@@ -563,10 +558,10 @@ public class CrailBenchmark {
 		CrailFS fs = CrailFS.newInstance(conf);	
 		
 		//warmup
-		ConcurrentLinkedQueue<ByteBuffer> warmupQueue = new ConcurrentLinkedQueue<ByteBuffer>();
+		ConcurrentLinkedQueue<ByteBuffer> bufferQueue = new ConcurrentLinkedQueue<ByteBuffer>();
 		ByteBuffer buf = fs.allocateBuffer();
-		warmupQueue.add(buf);
-		warmUp(fs, filename, warmup, warmupQueue);		
+		bufferQueue.add(buf);
+		warmUp(fs, filename, warmup, bufferQueue);		
 		fs.freeBuffer(buf);	
 		
 		//benchmark
@@ -608,10 +603,10 @@ public class CrailBenchmark {
 		CrailFS fs = CrailFS.newInstance(conf);	
 		
 		//warmup
-		ConcurrentLinkedQueue<ByteBuffer> warmupQueue = new ConcurrentLinkedQueue<ByteBuffer>();
+		ConcurrentLinkedQueue<ByteBuffer> bufferQueue = new ConcurrentLinkedQueue<ByteBuffer>();
 		ByteBuffer buf = fs.allocateBuffer();
-		warmupQueue.add(buf);
-		warmUp(fs, filename, warmup, warmupQueue);		
+		bufferQueue.add(buf);
+		warmUp(fs, filename, warmup, bufferQueue);		
 		fs.freeBuffer(buf);			
 		
 		//benchmark
@@ -666,10 +661,10 @@ public class CrailBenchmark {
 		CrailFS fs = CrailFS.newInstance(conf);
 		
 		//warmup
-		ConcurrentLinkedQueue<ByteBuffer> warmupQueue = new ConcurrentLinkedQueue<ByteBuffer>();
+		ConcurrentLinkedQueue<ByteBuffer> bufferQueue = new ConcurrentLinkedQueue<ByteBuffer>();
 		ByteBuffer buf = fs.allocateBuffer();
-		warmupQueue.add(buf);
-		warmUp(fs, filename, warmup, warmupQueue);		
+		bufferQueue.add(buf);
+		warmUp(fs, filename, warmup, bufferQueue);		
 		fs.freeBuffer(buf);			
 
 		//benchmark
@@ -734,9 +729,7 @@ public class CrailBenchmark {
 				ByteBuffer buf = bufferList.poll();
 				buf.clear();
 				warmupStream.write(buf);
-				if (bufferList.isEmpty()){
-					bufferList.add(buf);
-				}
+				bufferList.add(buf);
 			}
 			warmupStream.flush();
 			warmupStream.close();
@@ -746,7 +739,7 @@ public class CrailBenchmark {
 	
 	public static void main(String[] args) throws Exception {
 		String[] _args = args;
-		GetOpt go = new GetOpt(_args, "t:f:s:k:b:w:");
+		GetOpt go = new GetOpt(_args, "t:f:s:k:b:w:e:");
 		go.optErr = true;
 		int ch = -1;
 		
@@ -760,6 +753,7 @@ public class CrailBenchmark {
 		int loop = 1;
 		int batch = 1;
 		int warmup = 32;
+		int experiments = 1;
 		
 		while ((ch = go.getopt()) != GetOpt.optEOF) {
 			if ((char) ch == 't') {
@@ -774,6 +768,8 @@ public class CrailBenchmark {
 				batch = Integer.parseInt(go.optArgGet());
 			} else if ((char) ch == 'w') {
 				warmup = Integer.parseInt(go.optArgGet());
+			} else if ((char) ch == 'e') {
+				experiments = Integer.parseInt(go.optArgGet());
 			} else {
 				System.exit(1); // undefined option
 			}
@@ -781,41 +777,95 @@ public class CrailBenchmark {
 		
 		CrailBenchmark benchmark = new CrailBenchmark(warmup);
 		if (type.equals("writeClusterHeap")){
-			benchmark.writeSequential(filename, size, loop, false, false);
+			for (int i = 0; i < experiments; i++){
+				System.out.println("experiment " + i);
+				benchmark.writeSequential(filename, size, loop, false, false);
+			}
 		} else if (type.equals("writeClusterDirect")){
-			benchmark.writeSequential(filename, size, loop, false, true);
+			for (int i = 0; i < experiments; i++){
+				System.out.println("experiment " + i);
+				benchmark.writeSequential(filename, size, loop, false, true);
+			}			
 		} else if (type.equals("writeLocalHeap")){
-			benchmark.writeSequential(filename, size, loop, true, false);
+			for (int i = 0; i < experiments; i++){
+				System.out.println("experiment " + i);
+				benchmark.writeSequential(filename, size, loop, true, false);
+			}			
 		} else if (type.equals("writeLocalDirect")){
-			benchmark.writeSequential(filename, size, loop, true, true);
+			for (int i = 0; i < experiments; i++){
+				System.out.println("experiment " + i);
+				benchmark.writeSequential(filename, size, loop, true, true);
+			}			
 		} else if (type.equalsIgnoreCase("writeAsyncCluster")) {
-			benchmark.writeSequentialAsync(filename, size, loop, batch, false, true);
+			for (int i = 0; i < experiments; i++){
+				System.out.println("experiment " + i);
+				benchmark.writeSequentialAsync(filename, size, loop, batch, false, true);
+			}			
 		} else if (type.equalsIgnoreCase("writeAsyncLocal")) {
-			benchmark.writeSequentialAsync(filename, size, loop, batch, true, true);
+			for (int i = 0; i < experiments; i++){
+				System.out.println("experiment " + i);
+				benchmark.writeSequentialAsync(filename, size, loop, batch, true, true);
+			}
 		} else if (type.equalsIgnoreCase("readSequentialDirect")){
-			benchmark.readSequential(filename, size, loop, true);
+			for (int i = 0; i < experiments; i++){
+				System.out.println("experiment " + i);
+				benchmark.readSequential(filename, size, loop, true);
+			}			
 		} else if (type.equals("readSequentialHeap")){
-			benchmark.readSequential(filename, size, loop, false);
+			for (int i = 0; i < experiments; i++){
+				System.out.println("experiment " + i);
+				benchmark.readSequential(filename, size, loop, false);
+			}
 		} else if (type.equals("readRandomDirect")){
-			benchmark.readRandom(filename, size, loop, true);
+			for (int i = 0; i < experiments; i++){
+				System.out.println("experiment " + i);
+				benchmark.readRandom(filename, size, loop, true);
+			}
 		} else if (type.equals("readRandomHeap")){
-			benchmark.readRandom(filename, size, loop, false);
+			for (int i = 0; i < experiments; i++){
+				System.out.println("experiment " + i);
+				benchmark.readRandom(filename, size, loop, false);
+			}
 		} else if (type.equalsIgnoreCase("readAsync")) {
-			benchmark.readSequentialAsync(filename, size, loop, batch, true);
+			for (int i = 0; i < experiments; i++){
+				System.out.println("experiment " + i);
+				benchmark.readSequentialAsync(filename, size, loop, batch, true);
+			}
 		} else if (type.equalsIgnoreCase("readMultiStream")) {
-			benchmark.readMultiStream(filename, size, loop, batch);
+			for (int i = 0; i < experiments; i++){
+				System.out.println("experiment " + i);
+				benchmark.readMultiStream(filename, size, loop, batch);
+			}
 		} else if (type.equals("getFile")){
-			benchmark.getFile(filename, loop);
+			for (int i = 0; i < experiments; i++){
+				System.out.println("experiment " + i);
+				benchmark.getFile(filename, loop);
+			}
 		} else if (type.equals("getFileAsync")){
-			benchmark.getFileAsync(filename, loop, batch);
+			for (int i = 0; i < experiments; i++){
+				System.out.println("experiment " + i);
+				benchmark.getFileAsync(filename, loop, batch);
+			}
 		} else if (type.equals("createFile")){
-			benchmark.createFile(filename, loop);
+			for (int i = 0; i < experiments; i++){
+				System.out.println("experiment " + i);
+				benchmark.createFile(filename, loop);
+			}
 		} else if (type.equals("createFileAsync")){
-			benchmark.createFileAsync(filename, loop, batch);
+			for (int i = 0; i < experiments; i++){
+				System.out.println("experiment " + i);
+				benchmark.createFileAsync(filename, loop, batch);
+			}
 		} else if (type.equalsIgnoreCase("enumerateDir")) {
-			benchmark.enumerateDir(filename, batch);
+			for (int i = 0; i < experiments; i++){
+				System.out.println("experiment " + i);
+				benchmark.enumerateDir(filename, batch);
+			}
 		} else if (type.equalsIgnoreCase("keyGet")) {
-			benchmark.keyGet(filename, size, loop);
+			for (int i = 0; i < experiments; i++){
+				System.out.println("experiment " + i);
+				benchmark.keyGet(filename, size, loop);
+			}
 		} else {
 			usage();
 			System.exit(0);
