@@ -68,7 +68,7 @@ public class DirectoryRecordIterator implements Iterator<DirectoryRecord> {
 	}
 	
 	private DirectoryRecord search() throws Exception{
-		DirectoryRecord record = inputStream.read(parent);
+		DirectoryRecord record = inputStream.readRecord(parent);
 		return record;
 	}
 	

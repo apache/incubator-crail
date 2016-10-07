@@ -36,27 +36,26 @@ import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.datanode.DataNodeEndpoint;
 import com.ibm.crail.datanode.DataResult;
 import com.ibm.crail.namenode.protocol.BlockInfo;
+import com.ibm.crail.utils.CrailImmediateOperation;
 import com.ibm.crail.utils.CrailUtils;
 
 public class CoreInputStream extends CoreStream implements CrailInputStream { 
 	private static final Logger LOG = CrailUtils.getLogger();
 	private AtomicLong inFlight;
 	private long readHint;
+	private CrailImmediateOperation noOp;
 	
 	public CoreInputStream(CoreFile file, long streamId, long readHint) throws Exception {
 		super(file, streamId, 0);
 		this.inFlight = new AtomicLong(0);
 		this.readHint = Math.max(0, Math.min(file.getCapacity(), readHint));
+		this.noOp = new CrailImmediateOperation(0);
 		if (CrailConstants.DEBUG){
 			LOG.info("CoreInputStream: open, path  " + file.getPath() + ", fd " + file.getFd() + ", streamId " + streamId + ", isDir " + file.isDir() + ", readHint " + this.readHint);
 		}
 	}
 	
-	public int read(ByteBuffer dataBuf) throws Exception {
-		return (int) readAsync(dataBuf).get().getLen();
-	}
-	
-	final public Future<CrailResult> readAsync(ByteBuffer dataBuf) throws Exception {
+	final public Future<CrailResult> read(ByteBuffer dataBuf) throws Exception {
 		if (!isOpen()) {
 			throw new IOException("stream already closed");
 		}
@@ -64,7 +63,7 @@ public class CoreInputStream extends CoreStream implements CrailInputStream {
 			throw new IOException("buffer not offheap");
 		}		
 		if (dataBuf.remaining() <= 0) {
-			return new CoreDataOperation(this, dataBuf);
+			return noOp;
 		}
 		if (position() >= getFile().getCapacity()) {
 			return null;

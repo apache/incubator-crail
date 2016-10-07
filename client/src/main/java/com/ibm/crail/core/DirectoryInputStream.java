@@ -45,10 +45,10 @@ public class DirectoryInputStream extends CoreInputStream {
 		this.internalBuf.position(this.internalBuf.capacity());		
 	}
 	
-	DirectoryRecord read(String name) throws Exception {
+	DirectoryRecord readRecord(String name) throws Exception {
 		if (!internalBuf.hasRemaining()){
 			internalBuf.clear();
-			Future<CrailResult> future = readAsync(internalBuf);
+			Future<CrailResult> future = read(internalBuf);
 			long res = future != null ? future.get(CrailConstants.DATA_TIMEOUT, TimeUnit.MILLISECONDS).getLen() : -1;
 			if (res >= DirectoryRecord.MaxSize){
 				internalBuf.flip();

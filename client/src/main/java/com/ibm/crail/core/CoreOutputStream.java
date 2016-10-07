@@ -34,6 +34,7 @@ import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.datanode.DataNodeEndpoint;
 import com.ibm.crail.datanode.DataResult;
 import com.ibm.crail.namenode.protocol.BlockInfo;
+import com.ibm.crail.utils.CrailImmediateOperation;
 import com.ibm.crail.utils.CrailUtils;
 
 import sun.nio.ch.DirectBuffer;
@@ -42,21 +43,19 @@ public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 	private static final Logger LOG = CrailUtils.getLogger();
 	private AtomicLong inFlight;
 	private long writeHint;
+	private CrailImmediateOperation noOp;
 	
 	public CoreOutputStream(CoreFile file, long streamId, long writeHint) throws Exception {
 		super(file, streamId, file.getCapacity());
 		this.writeHint = Math.max(0, writeHint);
 		this.inFlight = new AtomicLong(0);
+		this.noOp = new CrailImmediateOperation(0);
 		if (CrailConstants.DEBUG){
 			LOG.info("CoreOutputStream, open, path " + file.getPath() + ", fd " + file.getFd() + ", streamId " + streamId + ", isDir " + file.isDir() + ", writeHint " + this.writeHint);
 		}
 	}
 	
-	public void write(ByteBuffer dataBuf) throws Exception {
-		writeAsync(dataBuf).get();
-	}
-	
-	final public Future<CrailResult> writeAsync(ByteBuffer dataBuf) throws Exception {
+	final public Future<CrailResult> write(ByteBuffer dataBuf) throws Exception {
 		if (!isOpen()) {
 			throw new IOException("Stream closed, cannot write");
 		}
@@ -64,7 +63,7 @@ public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 			throw new IOException("buffer not offheap");
 		}
 		if (dataBuf.remaining() <= 0) {
-			return new CoreDataOperation(this, dataBuf);
+			return noOp;
 		}
 		
 		inFlight.incrementAndGet();

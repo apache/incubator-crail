@@ -34,7 +34,7 @@ import org.slf4j.Logger;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.utils.CrailUtils;
 
-public class CrailMultiStream extends InputStream implements CrailInputStream {
+public class CrailMultiStream extends InputStream {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	private LinkedBlockingQueue<CrailInputStream> streams;
@@ -123,59 +123,6 @@ public class CrailMultiStream extends InputStream implements CrailInputStream {
 			LOG.info("multistream, init, streams " + this.streamQueue.size() + ", usedBuffers " + bufferQueue.size() + ", virtualCapacity " + virtualCapacity);
 		}
 	}	
-	
-	public CrailMultiStream(CrailFS fs, Iterator<CrailFile> paths, Iterator<ByteBuffer> outstanding) throws Exception{
-		this.virtualPosition = 0;
-		this.virtualCapacity = 0;
-		this.currentBuffer = null;
-		this.streams = new LinkedBlockingQueue<CrailInputStream>();
-		this.streamQueue = new LinkedBlockingQueue<CrailInputStream>();
-		this.bufferQueue = new LinkedBlockingQueue<ByteBuffer>();
-		this.futureQueue = new LinkedBlockingQueue<Future<CrailResult>>();
-		this.buffers = new LinkedBlockingQueue<ByteBuffer>();
-		this.isClosed = false;
-		this.currentStream = null;
-		this.closeAttempts = 0;
-		this.totalReads = 0;
-		this.totalBlocks = 0;
-		this.totalNonBlocks = 0;	
-		this.tmpByteBuf = new byte[1];
-		this.tmpBoundaryBuffer = ByteBuffer.allocate(8);		
-		this.fs = fs;
-		
-		while(paths.hasNext()){
-			CrailFile file = paths.next();
-			CrailInputStream stream = file.getDirectInputStream(file.getCapacity());
-			this.virtualCapacity += file.getCapacity();
-			this.streamQueue.add(stream);
-			this.streams.add(stream);
-			
-			if (currentStream == null){
-				currentStream = this.streamQueue.poll();
-			}
-			
-			if (outstanding.hasNext()){
-				ByteBuffer buffer = outstanding.next();
-				if (triggerRead(buffer)){
-					buffers.add(buffer);
-				} 			
-			}
-		}
-		
-		if (outstanding.hasNext()){
-			ByteBuffer buffer = outstanding.next();
-			while (buffer != null){
-				if (triggerRead(buffer)){
-					buffers.add(buffer);
-				}
-				buffer = outstanding.next();
-			}
-		}
-		
-		if (CrailConstants.DEBUG){
-			LOG.info("multistream2, init, streams " + this.streamQueue.size() + ", usedBuffers " + bufferQueue.size() + ", virtualCapacity " + virtualCapacity);
-		}
-	}		
 	
 	public final synchronized int read() throws IOException {
 		int ret = read(tmpByteBuf);
@@ -342,11 +289,6 @@ public class CrailMultiStream extends InputStream implements CrailInputStream {
 	}	
 	
 	@Override
-	public Future<CrailResult> readAsync(ByteBuffer dataBuf) throws Exception {
-		throw new Exception("async operation not implemented!");
-	}	
-
-	@Override
 	public final synchronized void close() throws IOException {
 		this.closeAttempts++;
 		
@@ -412,7 +354,7 @@ public class CrailMultiStream extends InputStream implements CrailInputStream {
 	private boolean triggerRead(ByteBuffer buffer) throws Exception{
 		buffer.clear();
 		while(currentStream != null){
-			Future<CrailResult> future = currentStream.readAsync(buffer);
+			Future<CrailResult> future = currentStream.read(buffer);
 			if (future != null){
 				this.totalReads++;
 //				LOG.info("reading new buffer and pushing future to queue");
@@ -451,22 +393,18 @@ public class CrailMultiStream extends InputStream implements CrailInputStream {
 		return virtualPosition;
 	}
 
-	@Override
 	public void seek(long pos) throws IOException {
 		throw new IOException("operation not implemented!");
 	}
 
-	@Override
 	public boolean isOpen() {
 		return true;
 	}
 
-	@Override
 	public long position() {
 		return virtualPosition;
 	}
 
-	@Override
 	public long getReadHint() {
 		return 0;
 	}

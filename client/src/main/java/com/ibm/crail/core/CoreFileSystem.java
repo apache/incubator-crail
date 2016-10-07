@@ -176,7 +176,7 @@ public class CoreFileSystem extends CrailFS {
 		record.write(buffer);
 		buffer.flip();
 		stream.seek(fileInfo.getDirOffset());
-		Future<CrailResult> future = stream.writeAsync(buffer);
+		Future<CrailResult> future = stream.write(buffer);
 		
 		
 		if (CrailConstants.DEBUG){
@@ -271,7 +271,7 @@ public class CoreFileSystem extends CrailFS {
 		recordSrc.write(bufferSrc);
 		bufferSrc.flip();
 		streamSrc.seek(srcFile.getDirOffset());
-		Future<CrailResult> futureSrc = streamSrc.writeAsync(bufferSrc);		
+		Future<CrailResult> futureSrc = streamSrc.write(bufferSrc);		
 		
 		CoreDirFile dirDst = new CoreDirFile(this, dstDir, CrailUtils.getParent(dst));
 		CoreOutputStream streamDst = this.getOutputStream(dirDst, 0);
@@ -281,7 +281,7 @@ public class CoreFileSystem extends CrailFS {
 		recordDst.write(bufferDst);
 		bufferDst.flip();
 		streamDst.seek(dstFile.getDirOffset());
-		Future<CrailResult> futureDst = streamDst.writeAsync(bufferDst);		
+		Future<CrailResult> futureDst = streamDst.write(bufferDst);		
 
 		blockCache.remove(srcFile.getFd());
 		
@@ -324,7 +324,7 @@ public class CoreFileSystem extends CrailFS {
 		record.write(buffer);
 		buffer.flip();
 		stream.seek(fileInfo.getDirOffset());
-		Future<CrailResult> future = stream.writeAsync(buffer);		
+		Future<CrailResult> future = stream.write(buffer);		
 		
 		blockCache.remove(fileInfo.getFd());
 		

@@ -26,13 +26,15 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import sun.nio.ch.DirectBuffer;
+
 import org.slf4j.Logger;
+
 import com.ibm.crail.conf.CrailConstants;
+import com.ibm.crail.utils.CrailImmediateOperation;
 import com.ibm.crail.utils.CrailUtils;
 
 
-public class CrailBufferedOutputStream extends OutputStream implements CrailOutputStream {
+public class CrailBufferedOutputStream extends OutputStream {
 	public static final Logger LOG = CrailUtils.getLogger();
 	
 	private CrailOutputStream outputStream;
@@ -40,6 +42,7 @@ public class CrailBufferedOutputStream extends OutputStream implements CrailOutp
 	private byte[] tmpByteBuf; 
 	private ByteBuffer tmpBoundaryBuffer;
 	private CrailFS crailFS;
+	private CrailImmediateOperation noOp;
 	
 	public CrailBufferedOutputStream(CrailFS crailFS, CrailOutputStream outputStream) throws IOException {
 		this.crailFS = crailFS;
@@ -48,31 +51,31 @@ public class CrailBufferedOutputStream extends OutputStream implements CrailOutp
 		this.internalBuf.clear();		
 		this.tmpByteBuf = new byte[1];
 		this.tmpBoundaryBuffer = ByteBuffer.allocate(8);
+		this.noOp = new CrailImmediateOperation(0);
 	}
 	
-	public final synchronized void write(int b) throws IOException {
-		tmpByteBuf[0] = (byte) b;
+	public final synchronized void write(int dataBuf) throws IOException {
+		tmpByteBuf[0] = (byte) dataBuf;
 		this.write(tmpByteBuf);
 	}
 	
-	public final synchronized void write(byte[] buf) throws IOException {
-		this.write(buf, 0, buf.length);
+	public final synchronized void write(byte[] dataBuf) throws IOException {
+		this.write(dataBuf, 0, dataBuf.length);
 	}
 
-	public final synchronized void write(byte[] buf, int off, int len) throws IOException {
+	public final synchronized void write(byte[] dataBuf, int off, int len) throws IOException {
 		try {
-			if (buf == null) {
+			if (dataBuf == null) {
 				throw new NullPointerException();
-			} else if ((off < 0) || (off > buf.length) || (len < 0) || ((off + len) > buf.length) || ((off + len) < 0)) {
+			} else if ((off < 0) || (off > dataBuf.length) || (len < 0) || ((off + len) > dataBuf.length) || ((off + len) < 0)) {
 				throw new IndexOutOfBoundsException();
 			} else if (len == 0) {
-				// LOG.info("len = 0, nothing to write");
 				return;
 			}
 
 			while (len > 0) {
 				int bufferRemaining = Math.min(len, internalBuf.remaining());
-				internalBuf.put(buf, off, bufferRemaining);
+				internalBuf.put(dataBuf, off, bufferRemaining);
 				off += bufferRemaining;
 				len -= bufferRemaining;
 				purgeIfFull();
@@ -84,34 +87,26 @@ public class CrailBufferedOutputStream extends OutputStream implements CrailOutp
 	
 	public final synchronized void write(ByteBuffer dataBuf) throws IOException {
 		try {
-			if (dataBuf instanceof DirectBuffer) {
-				writeAsync(dataBuf).get(CrailConstants.DATA_TIMEOUT, TimeUnit.MILLISECONDS);
-			} else {
-				int len = dataBuf.remaining();
-				while (len > 0) {
-					int bufferRemaining = Math.min(len, internalBuf.remaining());
-					int oldLimit = dataBuf.limit();
-					dataBuf.limit(dataBuf.position() + bufferRemaining);
-					internalBuf.put(dataBuf);
-					dataBuf.limit(oldLimit);
-					len -= bufferRemaining;
-					purgeIfFull();
-				}
+			if (dataBuf == null) {
+				throw new NullPointerException();
+			} else if (dataBuf.remaining() == 0) {
+				return;
+			}			
+			
+			int len = dataBuf.remaining();
+			while (len > 0) {
+				int bufferRemaining = Math.min(len, internalBuf.remaining());
+				int oldLimit = dataBuf.limit();
+				dataBuf.limit(dataBuf.position() + bufferRemaining);
+				internalBuf.put(dataBuf);
+				dataBuf.limit(oldLimit);
+				len -= bufferRemaining;
+				purgeIfFull();
 			}
 		} catch (Exception e) {
 			throw new IOException(e);
 		}
 	}
-	
-	public final synchronized Future<CrailResult> writeAsync(ByteBuffer dataBuf) throws IOException {
-		try {
-			purge().get();
-			Future<CrailResult> future = outputStream.writeAsync(dataBuf);
-			return future;			
-		} catch(Exception e){
-			throw new IOException(e);
-		}
-	}	
 	
 	private synchronized void purgeIfFull() throws IOException {
 		try {
@@ -123,12 +118,16 @@ public class CrailBufferedOutputStream extends OutputStream implements CrailOutp
 		}
 	}
 	
-	public synchronized Future<?> purge() throws IOException {
+	public synchronized Future<CrailResult> purge() throws IOException {
 		try {
-			internalBuf.flip();
-			Future<CrailResult> future = outputStream.writeAsync(internalBuf);
-			internalBuf.clear();
-			return future;
+			if (internalBuf.position() > 0){
+				internalBuf.flip();
+				Future<CrailResult> future = outputStream.write(internalBuf);
+				internalBuf.clear();
+				return future;
+			} else {
+				return noOp;
+			}
 		} catch(Exception e){
 			throw new IOException(e);
 		}
@@ -161,17 +160,14 @@ public class CrailBufferedOutputStream extends OutputStream implements CrailOutp
 		return internalBuf.remaining();
 	}
 
-	@Override
 	public boolean isOpen() {
 		return outputStream.isOpen();
 	}
 
-	@Override
 	public long position() {
 		return outputStream.position();
 	}
 
-	@Override
 	public long getWriteHint() {
 		return outputStream.getWriteHint();
 	}

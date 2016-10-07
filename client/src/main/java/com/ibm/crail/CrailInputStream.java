@@ -26,8 +26,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.Future;
 
 public interface CrailInputStream {
-	public int read(ByteBuffer dataBuf) throws Exception;
-	public Future<CrailResult> readAsync(ByteBuffer dataBuf) throws Exception;
+	public Future<CrailResult> read(ByteBuffer dataBuf) throws Exception;
 	public void seek(long pos) throws IOException;
 	public int available();
 	public boolean isOpen();

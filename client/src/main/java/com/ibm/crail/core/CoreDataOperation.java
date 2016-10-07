@@ -21,7 +21,6 @@
 
 package com.ibm.crail.core;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -158,25 +157,9 @@ public class CoreDataOperation implements Future<CrailResult>, CrailResult {
 		}
 	}
 	
-//	int getBufferPosition() { 
-//		return bufferPosition;
-//	}
-//	
-//	long getStreamPosition() { 
-//		return fileOffset;
-//	}	
-	
 	public long getLen() {
 		return completedLen;
 	}
-	
-//	public int getInProcessLen() {
-//		return inProcessLen;
-//	}
-//	
-//	int getOperationLength() {
-//		return operationLength;
-//	}	
 	
 	void incProcessedLen(int opLen){
 		this.inProcessLen += opLen;

@@ -26,8 +26,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.Future;
 
 public interface CrailOutputStream {
-	public void write(ByteBuffer dataBuf) throws Exception;
-	public Future<CrailResult> writeAsync(ByteBuffer dataBuf) throws Exception;
+	public Future<CrailResult> write(ByteBuffer dataBuf) throws Exception;
 	public Future<Void> sync() throws IOException;
 	public boolean isOpen();
 	public long position();
