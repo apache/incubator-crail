@@ -190,7 +190,7 @@ class StorageTier {
 			try {
 				BlockInfo block = null;
 				int size = arrayList.size();
-				int startIndex = random.nextInt();
+				int startIndex = random.nextInt(Integer.MAX_VALUE);
 				for (int i = 0; i < size; i++){
 //					int index = anyCounter.getAndIncrement() % size;
 					int index = (startIndex + i) % size;
