@@ -63,11 +63,11 @@ public class CoreInputStream extends CoreStream implements CrailInputStream {
 		if (!(dataBuf instanceof DirectBuffer)) {
 			throw new IOException("buffer not offheap");
 		}		
+		if (dataBuf.remaining() <= 0) {
+			return new CoreDataOperation(this, dataBuf);
+		}
 		if (position() >= getFile().getCapacity()) {
 			return null;
-		}
-		if (dataBuf.remaining() <= 0) {
-			return CoreDataOperation.noOp(this);
 		}
 		
 		long fileAvailable = available();

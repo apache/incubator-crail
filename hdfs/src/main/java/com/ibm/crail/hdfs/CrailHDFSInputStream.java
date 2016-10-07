@@ -62,16 +62,23 @@ public class CrailHDFSInputStream extends FSDataInputStream {
 			throws IOException {
 		return inputStream.read(position, buffer, offset, length);
 	}
+	
+	@Override
+	public void readFully(long position, byte[] buffer) throws IOException {
+		readFully(position, buffer, 0, buffer.length);
+	}	
 
 	@Override
 	public void readFully(long position, byte[] buffer, int offset, int length)
 			throws IOException {
-		inputStream.readFully(position, buffer, offset, length);
-	}
-
-	@Override
-	public void readFully(long position, byte[] buffer) throws IOException {
-		inputStream.readFully(position, buffer);
+		int nread = 0;
+		while (nread < length) {
+			int nbytes = read(position + nread, buffer, offset + nread, length - nread);
+			if (nbytes < 0) {
+				throw new java.io.EOFException("End of file reached before reading fully.");
+			}
+			nread += nbytes;
+		}		
 	}
 
 	@Override
@@ -154,14 +161,21 @@ public class CrailHDFSInputStream extends FSDataInputStream {
 
 		@Override
 		public void readFully(long position, byte[] buf) throws IOException {
-			inputStream.readFully(position, buf);
+			readFully(position, buf);
 			
 		}
 
 		@Override
 		public void readFully(long position, byte[] buffer, int offset, int length)
 				throws IOException {
-			inputStream.readFully(position, buffer, offset, length);
+			int nread = 0;
+			while (nread < length) {
+				int nbytes = read(position + nread, buffer, offset + nread, length - nread);
+				if (nbytes < 0) {
+					throw new java.io.EOFException("End of file reached before reading fully.");
+				}
+				nread += nbytes;
+			}
 		}
 
 		@Override

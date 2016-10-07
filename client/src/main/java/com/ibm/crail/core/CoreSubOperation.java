@@ -28,23 +28,31 @@ import com.ibm.crail.utils.CrailUtils;
 
 public class CoreSubOperation {
 	private long fd;
+	private long fileOffset;
+	private int bufferPosition;
+	private int len;
+	
 	private long blockOffset;
 	private long blockStart;
-	private int len;
 	private String key;
-	private long fileOffset;
 	
-	public CoreSubOperation(long fd, long fileOffset, int writeLen) throws IOException {
+	public CoreSubOperation(long fd, long fileOffset, int bufferPosition, int writeLen) throws IOException {
 		this.fd = fd;
 		this.fileOffset = fileOffset;
-		this.blockOffset = fileOffset % CrailConstants.BLOCK_SIZE;
+		this.bufferPosition = bufferPosition;
 		this.len = writeLen;
+		
+		this.blockOffset = fileOffset % CrailConstants.BLOCK_SIZE;
 		blockStart = CrailUtils.blockStartAddress(fileOffset);
 		this.key = CoreSubOperation.createKey(fd, blockStart);
 	}
 
 	public long getBlockOffset() {
 		return blockOffset;
+	}
+	
+	public int getBufferPosition(){
+		return bufferPosition;
 	}
 
 	public int getLen() {

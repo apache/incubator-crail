@@ -64,7 +64,7 @@ public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 			throw new IOException("buffer not offheap");
 		}
 		if (dataBuf.remaining() <= 0) {
-			return CoreDataOperation.noOp(this);
+			return new CoreDataOperation(this, dataBuf);
 		}
 		
 		inFlight.incrementAndGet();

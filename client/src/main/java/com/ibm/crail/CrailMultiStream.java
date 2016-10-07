@@ -46,7 +46,8 @@ public class CrailMultiStream extends InputStream implements CrailInputStream {
 	private CrailFS fs;
 	private ByteBuffer currentBuffer;
 	private CrailInputStream currentStream;
-	private byte[] tmpBuf;
+	private byte[] tmpByteBuf;
+	private ByteBuffer tmpBoundaryBuffer;
 	private long virtualCapacity;
 	private long virtualPosition;
 	private boolean isClosed;
@@ -71,7 +72,9 @@ public class CrailMultiStream extends InputStream implements CrailInputStream {
 		this.closeAttempts = 0;
 		this.totalReads = 0;
 		this.totalBlocks = 0;
-		this.totalNonBlocks = 0;	
+		this.totalNonBlocks = 0;
+		this.tmpByteBuf = new byte[1];
+		this.tmpBoundaryBuffer = ByteBuffer.allocate(8);		
 		this.fs = fs;
 		
 		int i = 0;
@@ -136,6 +139,8 @@ public class CrailMultiStream extends InputStream implements CrailInputStream {
 		this.totalReads = 0;
 		this.totalBlocks = 0;
 		this.totalNonBlocks = 0;	
+		this.tmpByteBuf = new byte[1];
+		this.tmpBoundaryBuffer = ByteBuffer.allocate(8);		
 		this.fs = fs;
 		
 		while(paths.hasNext()){
@@ -173,8 +178,8 @@ public class CrailMultiStream extends InputStream implements CrailInputStream {
 	}		
 	
 	public final synchronized int read() throws IOException {
-		int ret = read(tmpBuf);
-		return (ret <= 0) ? -1 : (tmpBuf[0] & 0xff);
+		int ret = read(tmpByteBuf);
+		return (ret <= 0) ? -1 : (tmpByteBuf[0] & 0xff);
 	}
 	
     public final synchronized int read(byte b[]) throws IOException {
@@ -263,6 +268,78 @@ public class CrailMultiStream extends InputStream implements CrailInputStream {
 			throw new IOException(e);
 		}
 	}
+	
+	public final synchronized double readDouble() throws Exception {
+		if (currentBuffer == null){
+			currentBuffer = getNextBuffer();
+		}	
+		if (currentBuffer == null){
+			throw new Exception("no bytes left in stream");
+		}
+		
+		if (currentBuffer.remaining() < 4){
+			tmpBoundaryBuffer.clear();
+			tmpBoundaryBuffer.limit(4);
+			read(tmpBoundaryBuffer);
+			return tmpBoundaryBuffer.getDouble();
+		} else {
+			return currentBuffer.getDouble();
+		}
+	}
+	
+	public final synchronized int readInt() throws Exception {
+		if (currentBuffer == null){
+			currentBuffer = getNextBuffer();
+		}	
+		if (currentBuffer == null){
+			throw new Exception("no bytes left in stream");
+		}		
+		
+		if (currentBuffer.remaining() < 4){
+			tmpBoundaryBuffer.clear();
+			tmpBoundaryBuffer.limit(4);
+			read(tmpBoundaryBuffer);
+			return tmpBoundaryBuffer.getInt();
+		} else {
+			return currentBuffer.getInt();
+		}
+	}
+	
+	public final synchronized double readLong() throws Exception {
+		if (currentBuffer == null){
+			currentBuffer = getNextBuffer();
+		}	
+		if (currentBuffer == null){
+			throw new Exception("no bytes left in stream");
+		}		
+		
+		if (currentBuffer.remaining() < 8){
+			tmpBoundaryBuffer.clear();
+			tmpBoundaryBuffer.limit(8);
+			read(tmpBoundaryBuffer);
+			return tmpBoundaryBuffer.getLong();
+		} else {
+			return currentBuffer.getLong();
+		}
+	}
+	
+	public final synchronized double readShort() throws Exception {
+		if (currentBuffer == null){
+			currentBuffer = getNextBuffer();
+		}	
+		if (currentBuffer == null){
+			throw new Exception("no bytes left in stream");
+		}		
+		
+		if (currentBuffer.remaining() < 2){
+			tmpBoundaryBuffer.clear();
+			tmpBoundaryBuffer.limit(2);
+			read(tmpBoundaryBuffer);
+			return tmpBoundaryBuffer.getShort();
+		} else {
+			return currentBuffer.getShort();
+		}
+	}	
 	
 	@Override
 	public Future<CrailResult> readAsync(ByteBuffer dataBuf) throws Exception {

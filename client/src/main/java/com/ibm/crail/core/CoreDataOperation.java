@@ -39,54 +39,42 @@ public class CoreDataOperation implements Future<CrailResult>, CrailResult {
 	protected static int RPC_DONE = 1;
 	protected static int RPC_ERROR = 2;		
 	
+	//init state
 	private CoreStream stream;
 	private ByteBuffer buffer;
-	private LinkedBlockingQueue<Future<DataResult>> pendingDataOps;
 	private long fileOffset;
 	private int bufferPosition;
-	private int bufferLimit;
-	private long len;
-	private AtomicInteger status;
+	private int operationLength;
+	
+	//current state
 	private BufferCheckpoint bufferCheckpoint;
+	private LinkedBlockingQueue<Future<DataResult>> pendingDataOps;
+	private int inProcessLen;
+	private long completedLen;
+	private AtomicInteger status;
 	private Exception exception;
 	
-	public static CoreDataOperation newOp(CoreStream stream, BufferCheckpoint bufferCheckpoint, ByteBuffer buffer) throws Exception {
-		return new CoreDataOperation(stream, bufferCheckpoint, buffer);
-	}
-	
-	public static CoreDataOperation noOp(CoreStream stream) throws IOException {
-		return new CoreDataOperation(stream);
-	}	
-	
-	private CoreDataOperation(CoreStream stream){
+	public CoreDataOperation(CoreStream stream, ByteBuffer buffer) throws Exception{
 		this.stream = stream;
-		this.fileOffset = stream.position();
-		this.buffer = null;
-		this.bufferPosition = 0;
-		this.bufferLimit = 0;
-		this.bufferCheckpoint = null;
-		
-		this.pendingDataOps = null;
-		this.len = 0;
-		this.status = new AtomicInteger(RPC_DONE);
-		this.exception = null;
-	}
-	
-	private CoreDataOperation(CoreStream stream, BufferCheckpoint bufferCheckpoint, ByteBuffer buffer) throws Exception{
-		this.stream = stream;
-		this.fileOffset = stream.position();
 		this.buffer = buffer;
+		this.fileOffset = stream.position();
 		this.bufferPosition = buffer.position();
-		this.bufferLimit = buffer.limit();
-		this.bufferCheckpoint = bufferCheckpoint;
+		this.operationLength = buffer.remaining();
+		this.inProcessLen = 0;
+		this.completedLen = 0;
 		
-		this.pendingDataOps = new LinkedBlockingQueue<Future<DataResult>>();
-		this.len = 0;
-		this.status = new AtomicInteger(RPC_PENDING);
-		
-		if (CrailConstants.DEBUG){
-			this.bufferCheckpoint.checkIn(buffer);
+		if (operationLength > 0){
+			this.pendingDataOps = new LinkedBlockingQueue<Future<DataResult>>();
+			this.exception = null;
+			this.status = new AtomicInteger(RPC_PENDING);
+			this.bufferCheckpoint = stream.getBufferCheckpoint();
+			if (CrailConstants.DEBUG){
+				this.bufferCheckpoint.checkIn(buffer);
+			}		
+		} else {
+			this.status = new AtomicInteger(RPC_DONE);			
 		}
+		
 	}
 	
 	public synchronized boolean isDone() {
@@ -96,7 +84,7 @@ public class CoreDataOperation implements Future<CrailResult>, CrailResult {
 				while (dataFuture != null && dataFuture.isDone()) {
 					dataFuture = pendingDataOps.poll();
 					DataResult result = dataFuture.get();
-					len += result.getLen();
+					completedLen += result.getLen();
 					dataFuture = pendingDataOps.peek();
 				}
 				if (pendingDataOps.isEmpty() && status.get() == RPC_PENDING) {
@@ -120,7 +108,7 @@ public class CoreDataOperation implements Future<CrailResult>, CrailResult {
 			try {
 				for (Future<DataResult> dataFuture = pendingDataOps.poll(); dataFuture != null; dataFuture = pendingDataOps.poll()){
 					DataResult result = dataFuture.get();
-					len += result.getLen();
+					completedLen += result.getLen();
 				}
 				completeOperation();
 			} catch (Exception e) {
@@ -150,7 +138,7 @@ public class CoreDataOperation implements Future<CrailResult>, CrailResult {
 			try {
 				for (Future<DataResult> dataFuture = pendingDataOps.poll(); dataFuture != null; dataFuture = pendingDataOps.poll()){
 					DataResult result = dataFuture.get(CrailConstants.DATA_TIMEOUT, TimeUnit.MILLISECONDS);
-					len += result.getLen();
+					completedLen += result.getLen();
 				}
 				completeOperation();
 			} catch (Exception e) {
@@ -168,53 +156,66 @@ public class CoreDataOperation implements Future<CrailResult>, CrailResult {
 		} else {
 			throw new InterruptedException("RPC error");
 		}
-	}	
+	}
 	
-	synchronized void add(Future<DataResult> dataFuture) {
-		this.pendingDataOps.add(dataFuture);
-	}		
-
+//	int getBufferPosition() { 
+//		return bufferPosition;
+//	}
+//	
+//	long getStreamPosition() { 
+//		return fileOffset;
+//	}	
+	
 	public long getLen() {
-		return len;
-	}
-
-	public long getFileOffset() {
-		return fileOffset;
-	}
-
-	public int position() {
-		return bufferPosition;
+		return completedLen;
 	}
 	
-	public int position(int newPosition) {
-		bufferPosition = newPosition;
-		return bufferPosition;
+//	public int getInProcessLen() {
+//		return inProcessLen;
+//	}
+//	
+//	int getOperationLength() {
+//		return operationLength;
+//	}	
+	
+	void incProcessedLen(int opLen){
+		this.inProcessLen += opLen;
+	}
+	
+	int remaining() {
+		return operationLength - inProcessLen;
 	}	
 	
-	public int limit() {
-		return bufferLimit;
-	}	
-	
-	public int remaining(){
-		return bufferLimit - bufferPosition;
+	int getCurrentBufferPosition(){
+		return bufferPosition + inProcessLen;
 	}
-
-	@Override
+	
+	long getCurrentStreamPosition(){
+		return fileOffset + inProcessLen;
+	}
+	
+	boolean isProcessed() {
+		return inProcessLen == operationLength;
+	}
+	
 	public boolean cancel(boolean mayInterruptIfRunning) {
 		return false;
 	}
 
-	@Override
 	public boolean isCancelled() {
 		return false;
 	}
+	
+	synchronized void add(Future<DataResult> dataFuture) {
+		this.pendingDataOps.add(dataFuture);
+	}	
 	
 	//-----------
 	
 	private void completeOperation(){
 		if (status.get() != RPC_DONE){
 			status.set(RPC_DONE);
-			stream.update(fileOffset + len);
+			stream.update(fileOffset + completedLen);
 			if (CrailConstants.DEBUG){
 				bufferCheckpoint.checkOut(buffer);
 			}

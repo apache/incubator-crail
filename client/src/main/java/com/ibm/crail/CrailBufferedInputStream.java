@@ -21,21 +21,19 @@
 
 package com.ibm.crail;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
 import com.ibm.crail.conf.CrailConstants;
-
 import sun.nio.ch.DirectBuffer;
 
 public class CrailBufferedInputStream extends InputStream implements CrailInputStream {
 	private CrailInputStream inputStream;
 	private ByteBuffer internalBuf;	
-	private byte[] tmpBuf;
+	private byte[] tmpByteBuf;
+	private ByteBuffer tmpBoundaryBuffer;
 	private CrailFS crailFS;
 	
 	public CrailBufferedInputStream(CrailFS crailFS, CrailInputStream inputStream) throws IOException {
@@ -44,33 +42,19 @@ public class CrailBufferedInputStream extends InputStream implements CrailInputS
 		this.internalBuf = crailFS.allocateBuffer();
 		this.internalBuf.clear();
 		this.internalBuf.flip();
-		this.tmpBuf = new byte[1];
+		this.tmpByteBuf = new byte[1];
+		this.tmpBoundaryBuffer = ByteBuffer.allocate(8);
 	}
 	
 	public final synchronized int read() throws IOException {
-		int ret = read(tmpBuf);
-		return (ret <= 0) ? -1 : (tmpBuf[0] & 0xff);
+		int ret = read(tmpByteBuf);
+		return (ret <= 0) ? -1 : (tmpByteBuf[0] & 0xff);
 	}
 	
     public final int read(byte b[]) throws IOException {
         return read(b, 0, b.length);
     }	
 
-	public final synchronized void readFully(long position, byte[] buf) throws IOException {
-		this.readFully(position, buf, 0, buf.length);
-	}	
-	
-	public final synchronized void readFully(long position, byte[] buffer, int offset, int length) throws IOException {
-		int nread = 0;
-		while (nread < length) {
-			int nbytes = read(position + nread, buffer, offset + nread, length - nread);
-			if (nbytes < 0) {
-				throw new EOFException("End of file reached before reading fully.");
-			}
-			nread += nbytes;
-		}
-	}
-	
 	public final synchronized int read(long position, byte[] buffer, int offset, int length) throws IOException {
 		long oldPos = getPos();
 		int nread = -1;
@@ -97,19 +81,9 @@ public class CrailBufferedInputStream extends InputStream implements CrailInputS
 			
 			int sumLen = 0;
 			while (len > 0) {
-				// LOG.info("len " + len + ", remaining " +
-				// internalBuf.remaining());
-				if (internalBuf.remaining() == 0) {
-					internalBuf.clear();
-					int res = read(internalBuf);
-					if (res > 0){
-						internalBuf.flip();
-					} else {
-						internalBuf.position(internalBuf.limit());
-						break;
-					}
+				if (!fetchIfEmpty()){
+					break;
 				}
-
 				int bufferRemaining = Math.min(len, internalBuf.remaining());
 				internalBuf.get(buf, off, bufferRemaining);
 				len -= bufferRemaining;
@@ -132,33 +106,15 @@ public class CrailBufferedInputStream extends InputStream implements CrailInputS
 			if (dataBuf instanceof DirectBuffer) {
 				Future<CrailResult> future = readAsync(dataBuf);
 				if (future != null){
-					long ret = future.get(CrailConstants.DATA_TIMEOUT, TimeUnit.MILLISECONDS).getLen();
-					if (ret > 0){
-						totalBytesRead = ret;
-					} else {
-						throw new IOException("not enough bytes read");
-					}
+					totalBytesRead = future.get(CrailConstants.DATA_TIMEOUT, TimeUnit.MILLISECONDS).getLen();
 				} 
 			} else {
 				int len = dataBuf.remaining();
 				int sumLen = 0;
 				while (len > 0) {
-					if (internalBuf.remaining() == 0) {
-						internalBuf.clear();
-						Future<CrailResult> future = readAsync(internalBuf);
-						if (future != null){
-							long ret = future.get(CrailConstants.DATA_TIMEOUT, TimeUnit.MILLISECONDS).getLen();
-							if (ret < 0){
-								throw new IOException("not enough bytes read");
-							} else {
-								internalBuf.flip();
-							}
-						} else {
-							internalBuf.position(internalBuf.limit());
-							break;
-						}
-					}
-
+					if (!fetchIfEmpty()){
+						break;
+					}					
 					int bufferRemaining = Math.min(len, internalBuf.remaining());
 					int oldLimit = internalBuf.limit();
 					internalBuf.limit(internalBuf.position() + bufferRemaining);
@@ -181,8 +137,43 @@ public class CrailBufferedInputStream extends InputStream implements CrailInputS
 	
 	public final synchronized Future<CrailResult> readAsync(ByteBuffer dataBuf) throws IOException {
 		try {
+			if (dataBuf.remaining() > 0 && internalBuf.remaining() > 0){
+				int len = dataBuf.remaining();
+				int bufferRemaining = Math.min(len, internalBuf.remaining());
+				int oldLimit = internalBuf.limit();
+				internalBuf.limit(internalBuf.position() + bufferRemaining);
+				dataBuf.put(internalBuf);
+				internalBuf.limit(oldLimit);				
+			}
 			Future<CrailResult> future = inputStream.readAsync(dataBuf);
 			return future;
+		} catch(Exception e){
+			throw new IOException(e);
+		}
+	}
+	
+	private boolean fetchIfEmpty() throws IOException {
+		try {
+			if (internalBuf.remaining() != 0){
+				return true;
+			}
+			
+			internalBuf.clear();
+			Future<CrailResult> future = inputStream.readAsync(internalBuf);
+			if (future == null){
+				internalBuf.position(internalBuf.limit());
+				return false;
+			}
+			
+			long ret = future.get(CrailConstants.DATA_TIMEOUT, TimeUnit.MILLISECONDS).getLen();
+			if (ret > 0){
+				internalBuf.flip();
+			} else {
+				internalBuf.position(internalBuf.limit());
+				throw new IOException("not enough bytes read");
+			}
+			
+			return true;
 		} catch(Exception e){
 			throw new IOException(e);
 		}
@@ -290,4 +281,50 @@ public class CrailBufferedInputStream extends InputStream implements CrailInputS
 	public long getReadHint() {
 		return inputStream.getReadHint();
 	}
+	
+	//---------------------- ByteBuffer interface 
+	
+	public final synchronized double readDouble() throws Exception {
+		if (internalBuf.remaining() >= 4){
+			return internalBuf.getDouble();
+		} else {
+			tmpBoundaryBuffer.clear();
+			tmpBoundaryBuffer.limit(4);
+			read(tmpBoundaryBuffer);
+			return tmpBoundaryBuffer.getDouble();
+		}
+	}
+	
+	public final synchronized int readInt() throws Exception {
+		if (internalBuf.remaining() >= 4){
+			return internalBuf.getInt();
+		} else {
+			tmpBoundaryBuffer.clear();
+			tmpBoundaryBuffer.limit(4);
+			read(tmpBoundaryBuffer);
+			return tmpBoundaryBuffer.getInt();
+		}
+	}
+	
+	public final synchronized double readLong() throws Exception {
+		if (internalBuf.remaining() >= 8){
+			return internalBuf.getLong();
+		} else {
+			tmpBoundaryBuffer.clear();
+			tmpBoundaryBuffer.limit(8);
+			read(tmpBoundaryBuffer);
+			return tmpBoundaryBuffer.getLong();
+		}
+	}
+	
+	public final synchronized double readShort() throws Exception {
+		if (internalBuf.remaining() >= 2){
+			return internalBuf.getShort();
+		} else {
+			tmpBoundaryBuffer.clear();
+			tmpBoundaryBuffer.limit(2);
+			read(tmpBoundaryBuffer);
+			return tmpBoundaryBuffer.getShort();
+		}
+	}		
 }

@@ -92,13 +92,13 @@ public abstract class CoreStream {
 	final Future<CrailResult> dataOperation(ByteBuffer dataBuf) throws Exception {
 		blockMap.clear();
 		pendingBlocks.clear();
-		CoreDataOperation multiOperation = CoreDataOperation.newOp(this, bufferCheckpoint, dataBuf);
+		CoreDataOperation multiOperation = new CoreDataOperation(this, dataBuf);
 		
 		//compute off, len for the fragments, start transfer or start RPC if block info is missing
 		while(multiOperation.remaining() > 0){
 			long blockRemaining = blockRemaining();
 			int opLen = CrailUtils.minFileBuf(blockRemaining, multiOperation.remaining());	
-			CoreSubOperation subOperation = new CoreSubOperation(fileInfo.getFd(), position, opLen);
+			CoreSubOperation subOperation = new CoreSubOperation(fileInfo.getFd(), position, multiOperation.getCurrentBufferPosition(), opLen);
 //			LOG.info("OpDesc: " + opDesc.toString());
 			ioStats.incTotalOps((long) opLen);
 			
@@ -119,7 +119,7 @@ public abstract class CoreStream {
 			}
 			
 			position += opLen;
-			multiOperation.position(multiOperation.position() + opLen);
+			multiOperation.incProcessedLen(opLen);
 		}
 		
 		//wait for RPC results and start reads for those blocks as well
@@ -151,6 +151,11 @@ public abstract class CoreStream {
 			blockCache.put(subOperation.key(), block);
 		}
 		
+		if (!multiOperation.isProcessed()){
+			throw new IOException("Internal error, processed data != operation length");
+		}
+		
+		dataBuf.position(multiOperation.getCurrentBufferPosition());
 		return multiOperation;
 	}
 	
@@ -224,6 +229,10 @@ public abstract class CoreStream {
 		return file;
 	}
 	
+	BufferCheckpoint getBufferCheckpoint(){
+		return bufferCheckpoint;
+	}	
+	
 	//-----------------
 	
 	void setCapacity(long currentCapacity) {
@@ -240,14 +249,11 @@ public abstract class CoreStream {
 		try {
 			InetSocketAddress inetAddress = block.getDnInfo().getInetAddress();
 			DataNodeEndpoint endpoint = endpointCache.getDataEndpoint(block.getDnInfo().getStorageTier(), inetAddress);
-			int oldPos = dataBuf.position();
-			int oldLimit = dataBuf.limit();
 			ByteBuffer region = fs.getBufferCache().getAllocationBuffer(dataBuf);
 			region = region != null ? region : dataBuf;
-			dataBuf.limit(oldPos + opDesc.getLen());
+			dataBuf.position(opDesc.getBufferPosition());
+			dataBuf.limit(dataBuf.position() + opDesc.getLen());
 			Future<DataResult> subFuture = trigger(endpoint, opDesc, dataBuf, region, block);
-			dataBuf.position(oldPos + opDesc.getLen());
-			dataBuf.limit(oldLimit);
 			incStats(endpoint.isLocal());
 			return subFuture;
 		} catch(IOException e){
