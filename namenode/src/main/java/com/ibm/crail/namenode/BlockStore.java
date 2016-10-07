@@ -23,6 +23,7 @@ package com.ibm.crail.namenode;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -85,15 +86,14 @@ class StorageTier {
 	private ConcurrentHashMap<String, DataNodeBlocks> membership;
 	private ConcurrentHashMap<Integer, DataNodeArray> affinitySets;
 	private DataNodeArray anySet;
-	
-	private AtomicIntegerModulo anyCounter;
+//	private AtomicIntegerModulo anyCounter;
 	
 	public StorageTier(int storageTier){
 		this.storageTier = storageTier;
 		this.membership = new ConcurrentHashMap<String, DataNodeBlocks>();
 		this.affinitySets = new ConcurrentHashMap<Integer, DataNodeArray>();
 		this.anySet = new DataNodeArray();
-		this.anyCounter = new AtomicIntegerModulo();
+//		this.anyCounter = new AtomicIntegerModulo();
 	}
 	
 	short addBlock(BlockInfo block) throws UnknownHostException {
@@ -168,10 +168,12 @@ class StorageTier {
 	private class DataNodeArray {
 		private ArrayList<DataNodeBlocks> arrayList;
 		private ReentrantReadWriteLock lock;
+		private Random random;
 		
 		public DataNodeArray(){
 			this.arrayList = new ArrayList<DataNodeBlocks>();
 			this.lock = new ReentrantReadWriteLock();
+			this.random = new Random();
 		}
 		
 		public void add(DataNodeBlocks dataNode){
@@ -188,9 +190,10 @@ class StorageTier {
 			try {
 				BlockInfo block = null;
 				int size = arrayList.size();
-				
+				int startIndex = random.nextInt();
 				for (int i = 0; i < size; i++){
-					int index = anyCounter.getAndIncrement() % size;
+//					int index = anyCounter.getAndIncrement() % size;
+					int index = (startIndex + i) % size;
 					DataNodeBlocks anyDn = arrayList.get(index);
 					block = anyDn.getFreeBlock();
 					if (block != null){
