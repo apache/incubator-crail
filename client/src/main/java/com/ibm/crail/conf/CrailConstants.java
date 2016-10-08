@@ -36,6 +36,9 @@ public class CrailConstants {
 	public static final String NAMENODE_ADDRESS_KEY = "crail.namenode.address";
 	public static String NAMENODE_ADDRESS = "";
 	
+	public static final String NAMENODE_BLOCKSELECTION_KEY = "crail.namenode.blockselection";
+	public static String NAMENODE_BLOCKSELECTION = "roundrobin";	
+	
 	public static final String NAMENODE_RPC_TYPE_KEY = "crail.namenode.rpc.type";
 	public static String NAMENODE_RPC_TYPE = "com.ibm.crail.namenode.rpc.darpc.DaRPCNameNode";	
 	
@@ -106,6 +109,9 @@ public class CrailConstants {
 		if (conf.get(NAMENODE_ADDRESS_KEY) != null) {
 			NAMENODE_ADDRESS = conf.get(NAMENODE_ADDRESS_KEY);
 		} 
+		if (conf.get(NAMENODE_BLOCKSELECTION_KEY) != null) {
+			NAMENODE_BLOCKSELECTION = conf.get(NAMENODE_BLOCKSELECTION_KEY);
+		}		
 		if (conf.get(NAMENODE_RPC_TYPE_KEY) != null) {
 			NAMENODE_RPC_TYPE = conf.get(NAMENODE_RPC_TYPE_KEY);
 		}		
@@ -177,6 +183,7 @@ public class CrailConstants {
 	public static void printConf(){
 		LOG.info(VERSION_KEY + " " + VERSION);
 		LOG.info(NAMENODE_ADDRESS_KEY + " " + NAMENODE_ADDRESS);
+		LOG.info(NAMENODE_BLOCKSELECTION_KEY + " " + NAMENODE_BLOCKSELECTION);
 		LOG.info(NAMENODE_RPC_TYPE_KEY + " " + NAMENODE_RPC_TYPE);
 		LOG.info(NAMENODE_DARPC_POLLING_KEY + " " + NAMENODE_DARPC_POLLING);
 		LOG.info(NAMENODE_DARPC_TYPE_KEY + " " + NAMENODE_DARPC_TYPE);

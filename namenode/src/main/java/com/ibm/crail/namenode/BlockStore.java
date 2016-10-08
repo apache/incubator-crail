@@ -23,13 +23,11 @@ package com.ibm.crail.namenode;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import org.slf4j.Logger;
-
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.namenode.protocol.DataNodeInfo;
@@ -86,13 +84,18 @@ class StorageTier {
 	private ConcurrentHashMap<String, DataNodeBlocks> membership;
 	private ConcurrentHashMap<Integer, DataNodeArray> affinitySets;
 	private DataNodeArray anySet;
-//	private AtomicIntegerModulo anyCounter;
+	private BlockSelection blockSelection;
 	
 	public StorageTier(int storageTier){
+		if (CrailConstants.NAMENODE_BLOCKSELECTION.equalsIgnoreCase("roundrobin")){
+			this.blockSelection = new RoundRobinBlockSelection();
+		} else {
+			this.blockSelection = new RandomBlockSelection();
+		}
 		this.storageTier = storageTier;
 		this.membership = new ConcurrentHashMap<String, DataNodeBlocks>();
 		this.affinitySets = new ConcurrentHashMap<Integer, DataNodeArray>();
-		this.anySet = new DataNodeArray();
+		this.anySet = new DataNodeArray(blockSelection);
 //		this.anyCounter = new AtomicIntegerModulo();
 	}
 	
@@ -146,7 +149,7 @@ class StorageTier {
 //		LOG.info("adding datanode for affinity " + dataNode.getAffinity());
 		DataNodeArray hostMap = affinitySets.get(dataNode.getLocationAffinity());
 		if (hostMap == null){
-			hostMap = new DataNodeArray();
+			hostMap = new DataNodeArray(blockSelection);
 			DataNodeArray oldMap = affinitySets.putIfAbsent(dataNode.getLocationAffinity(), hostMap);
 			if (oldMap != null){
 				hostMap = oldMap;
@@ -165,15 +168,44 @@ class StorageTier {
 		return block;
 	}
 	
+	public static interface BlockSelection {
+		int getNext(int size);
+	}
+	
+	private class RoundRobinBlockSelection implements BlockSelection {
+		private AtomicIntegerModulo counter;
+		
+		public RoundRobinBlockSelection(){
+			LOG.info("round robin block selection");
+			counter = new AtomicIntegerModulo();
+		}
+		
+		@Override
+		public int getNext(int size) {
+			return counter.getAndIncrement() % size;
+		}
+	}
+	
+	private class RandomBlockSelection implements BlockSelection {
+		public RandomBlockSelection(){
+			LOG.info("random block selection");
+		}		
+		
+		@Override
+		public int getNext(int size) {
+			return ThreadLocalRandom.current().nextInt(size);
+		}
+	}	
+	
 	private class DataNodeArray {
 		private ArrayList<DataNodeBlocks> arrayList;
 		private ReentrantReadWriteLock lock;
-		private Random random;
+		private BlockSelection blockSelection;
 		
-		public DataNodeArray(){
+		public DataNodeArray(BlockSelection blockSelection){
 			this.arrayList = new ArrayList<DataNodeBlocks>();
 			this.lock = new ReentrantReadWriteLock();
-			this.random = new Random();
+			this.blockSelection = blockSelection;
 		}
 		
 		public void add(DataNodeBlocks dataNode){
@@ -190,9 +222,8 @@ class StorageTier {
 			try {
 				BlockInfo block = null;
 				int size = arrayList.size();
-				int startIndex = random.nextInt(Integer.MAX_VALUE);
+				int startIndex = blockSelection.getNext(size);
 				for (int i = 0; i < size; i++){
-//					int index = anyCounter.getAndIncrement() % size;
 					int index = (startIndex + i) % size;
 					DataNodeBlocks anyDn = arrayList.get(index);
 					block = anyDn.getFreeBlock();
@@ -211,3 +242,4 @@ class StorageTier {
 		return storageTier;
 	}
 }
+
