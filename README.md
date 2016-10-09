@@ -169,14 +169,14 @@ Once the file is created, a file stream can be obtained for writing:
 
 Here, we create a buffered stream so that we can pass heap byte arrays as well. We could also create a non-buffered stream using
 
-    CrailOutputStream outstream = getDirectOutputStream(1024);
+    CrailOutputStream outstream = file.getDirectOutputStream(1024);
 
 In both cases, we pass a write hint (1024 in the example) that indicates to Crail how much data we are intending to write. This allows Crail to optimize metadatanode lookups. Crail never prefetches data, but it may fetch the metadata of the very next operation concurrently with the current data operation if the write hint allows to do so. 
 
 Once the stream has been obtained, there exist various ways to write a file. The code snippet below shows the use of the asynchronous interface:
 
     ByteBuffer dataBuf = fs.allocateBuffer();
-    Future<DataResult> future = outputStream.writeAsync(dataBuf);
+    Future<DataResult> future = outputStream.write(dataBuf);
     ...
     future.get();
 
