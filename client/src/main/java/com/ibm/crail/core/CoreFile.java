@@ -24,6 +24,7 @@ package com.ibm.crail.core;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Future;
 
+import com.ibm.crail.CrailBlockLocation;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailInputStream;
 import com.ibm.crail.CrailOutputStream;
@@ -109,6 +110,10 @@ public abstract class CoreFile extends CrailFile {
 	
 	public long getFd() {
 		return fileInfo.getFd();
+	}
+	
+	public CrailBlockLocation[] getBlockLocations(long start, long len) throws Exception{
+		return fs.getBlockLocations(path, start, len);
 	}
 
 	@Override

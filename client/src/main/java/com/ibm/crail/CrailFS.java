@@ -44,8 +44,7 @@ public abstract class CrailFS {
 	public abstract Future<CrailDirectory> lookupDirectory(String path) throws Exception;
 	public abstract Future<CrailFile> rename(String src, String dst) throws Exception;
 	public abstract Future<CrailFile> delete(String path, boolean recursive) throws Exception;
-	public abstract Iterator<String> listEntries(String name) throws Exception;
-	public abstract CrailBlockLocation[] getBlockLocations(String path, long start, long len) throws Exception;
+	
 	public abstract void dumpNameNode() throws Exception;
 	public abstract ByteBuffer allocateBuffer() throws IOException;
 	public abstract void freeBuffer(ByteBuffer buffer) throws IOException;

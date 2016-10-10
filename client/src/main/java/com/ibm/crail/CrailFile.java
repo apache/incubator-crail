@@ -32,6 +32,7 @@ public abstract class CrailFile implements CrailNode {
 	public abstract int storageAffinity();
 	public abstract long getToken();
 	public abstract long getFd();
+	public abstract CrailBlockLocation[] getBlockLocations(long start, long len) throws Exception;
 	public abstract void close() throws Exception;
 
 	public CrailBufferedInputStream getBufferedInputStream(long readHint) throws Exception {

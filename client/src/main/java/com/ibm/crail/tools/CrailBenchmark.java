@@ -472,7 +472,7 @@ public class CrailBenchmark {
 		System.out.println("starting benchmark...");
 		fs.resetStatistics();
 		for (int i = 0; i < loop; i++){
-			Iterator<String> files = fs.listEntries(filename);
+//			Iterator<String> files = fs.listEntries(filename);
 			CrailMultiStream multiStream = fs.lookupDirectory(filename).get().getMultiStream(batch);
 //			CrailMultiStream multiStream = fs.getMultiStream(files, batch);
 			ByteBuffer buf = fs.allocateBuffer();
@@ -708,7 +708,7 @@ public class CrailBenchmark {
 		long start = System.currentTimeMillis();
 		for (int i = 0; i < loop; i++) {
 			// single operation == loop
-			Iterator<String> iter = fs.listEntries(filename);
+			Iterator<String> iter = fs.lookupDirectory(filename).get().listEntries();
 			while (iter.hasNext()) {
 				iter.next();
 			}

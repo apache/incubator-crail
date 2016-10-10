@@ -27,6 +27,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.ibm.crail.CrailBlockLocation;
+import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFS;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.conf.CrailConfiguration;
@@ -55,7 +56,7 @@ public class CrailFsck {
 		System.out.println("getLocations, filename " + filename + ", offset " + offset + ", len " + length);
 		CrailConfiguration conf = new CrailConfiguration();
 		CrailFS fs = CrailFS.newInstance(conf);
-		CrailBlockLocation locations[] = fs.getBlockLocations(filename, offset, length);
+		CrailBlockLocation locations[] = fs.lookupFile(filename, false).get().getBlockLocations(offset, length);
 		for (int i = 0; i < locations.length; i++){
 			System.out.println("location " + i + " : " + locations[i].toString());
 		}	
@@ -67,18 +68,13 @@ public class CrailFsck {
 		CrailConfiguration conf = new CrailConfiguration();
 		CrailFS fs = CrailFS.newInstance(conf);
 		LinkedBlockingQueue<CrailFile> fileQueue = new LinkedBlockingQueue<CrailFile>();
-		CrailFile directFile = fs.lookupFile(filename, false).get();
-		fileQueue.add(directFile);
+		CrailDirectory directory = fs.lookupDirectory(filename).get();
 		
-		while (!fileQueue.isEmpty()) {
-			CrailFile file = fileQueue.poll();
-			Iterator<String> iter = fs.listEntries(file.getPath());
-			while (iter.hasNext()) {
-				String path = iter.next();
-				CrailFile child = fs.lookupFile(path, false).get();
-				fileQueue.add(child);
-			}
-			printPath(stats, fs, file.getPath(), 0, file.getCapacity());
+		Iterator<String> iter = directory.listEntries();
+		while (iter.hasNext()) {
+			String path = iter.next();
+			CrailFile child = fs.lookupFile(path, false).get();
+			printPath(stats, fs, child.getPath(), 0, child.getCapacity());
 		}
 		printStats(stats);	
 		fs.close();
@@ -132,7 +128,7 @@ public class CrailFsck {
 
 	private void printPath(HashMap<String, AtomicInteger> stats, CrailFS fs, String filePath, long offset, long len) throws Exception {
 		System.out.println("printing locations for path " + filePath);
-		CrailBlockLocation locations[] = fs.getBlockLocations(filePath, offset, len);
+		CrailBlockLocation locations[] = fs.lookupFile(filePath, false).get().getBlockLocations(offset, len);
 		for (int i = 0; i < locations.length; i++){
 			for (int j = 0; j < locations[i].getNames().length; j++){
 				String name = locations[i].getNames()[j];
