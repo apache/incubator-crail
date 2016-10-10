@@ -38,7 +38,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
+
 import com.ibm.crail.CrailBlockLocation;
+import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailFS;
 import com.ibm.crail.CrailResult;
@@ -129,35 +131,31 @@ public class CoreFileSystem extends CrailFS {
 		this.streamStats = new CoreStreamStatistics();
 	}
 	
-	public Future<CrailFile> create(String path, boolean isDir, int storageAffinity, int locationAffinity) throws Exception {
-		if (isDir && locationAffinity > 0){
-			throw new Exception("Cannot create directory with local affinity, dir " + path + ", affinity " + locationAffinity);
-		}
-		
+	public Future<CrailFile> createFile(String path, int storageAffinity, int locationAffinity) throws Exception {
 		FileName name = new FileName(path);
 		
 		if (CrailConstants.DEBUG){
-			LOG.info("create: name " + path + ", isDir " + isDir + ", storageAffinity " + storageAffinity + ", locationAffinity " + locationAffinity);
+			LOG.info("createFile: name " + path + ", storageAffinity " + storageAffinity + ", locationAffinity " + locationAffinity);
 		}
 
-		RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> fileRes = namenodeClientRpc.createFile(name, isDir, storageAffinity, locationAffinity);
+		RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> fileRes = namenodeClientRpc.createFile(name, false, storageAffinity, locationAffinity);
 		return new CreateFileFuture(this, path, fileRes, storageAffinity, locationAffinity);
 	}	
 	
-	CoreFile _create(RpcResponseMessage.CreateFileRes fileRes, String path, int storageAffinity, int locationAffinity) throws Exception {
+	CoreFile _createFile(RpcResponseMessage.CreateFileRes fileRes, String path, int storageAffinity, int locationAffinity) throws Exception {
 		if (fileRes.getError() == NameNodeProtocol.ERR_PARENT_MISSING){
 			throw new IOException("create: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
 		} else if  (fileRes.getError() == NameNodeProtocol.ERR_FILE_EXISTS){
 			throw new IOException("create: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
 		} else if (fileRes.getError() != NameNodeProtocol.ERR_OK){
 			LOG.info("create: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
-			throw new IOException("create: " + NameNodeProtocol.messages[fileRes.getError()] + ", error " + fileRes.getError());
+			throw new IOException("createFile: " + NameNodeProtocol.messages[fileRes.getError()] + ", error " + fileRes.getError());
 		}		
 		
 		FileInfo fileInfo = fileRes.getFile();
 		FileInfo dirInfo = fileRes.getParent();
 		if (fileInfo == null || dirInfo == null){
-			throw new IOException("create: " + NameNodeProtocol.messages[NameNodeProtocol.ERR_UNKNOWN]);
+			throw new IOException("createFile: " + NameNodeProtocol.messages[NameNodeProtocol.ERR_UNKNOWN]);
 		}
 
 		blockCache.remove(fileInfo.getFd());
@@ -180,29 +178,117 @@ public class CoreFileSystem extends CrailFS {
 		
 		
 		if (CrailConstants.DEBUG){
-			LOG.info("create: name " + path + ", success, fd " + fileInfo.getFd() + ", token " + fileInfo.getToken());
+			LOG.info("createFile: name " + path + ", success, fd " + fileInfo.getFd() + ", token " + fileInfo.getToken());
 		}
 		
 		return new CoreCreateFile(this, fileInfo, path, storageAffinity, locationAffinity, future, buffer, stream);		
 	}
 	
+	public Future<CrailDirectory> makeDirectory(String path) throws Exception {
+		FileName name = new FileName(path);
+		
+		if (CrailConstants.DEBUG){
+			LOG.info("makeDirectory: name " + path);
+		}
+
+		RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> fileRes = namenodeClientRpc.createFile(name, true, 0, 0);
+		return new MakeDirFuture(this, path, fileRes);
+	}	
+	
+	CoreDirectory _makeDirectory(RpcResponseMessage.CreateFileRes fileRes, String path) throws Exception {
+		if (fileRes.getError() == NameNodeProtocol.ERR_PARENT_MISSING){
+			throw new IOException("makeDirectory: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
+		} else if  (fileRes.getError() == NameNodeProtocol.ERR_FILE_EXISTS){
+			throw new IOException("makeDirectory: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
+		} else if (fileRes.getError() != NameNodeProtocol.ERR_OK){
+			LOG.info("makeDirectory: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
+			throw new IOException("makeDirectory: " + NameNodeProtocol.messages[fileRes.getError()] + ", error " + fileRes.getError());
+		}		
+		
+		FileInfo fileInfo = fileRes.getFile();
+		FileInfo dirInfo = fileRes.getParent();
+		if (fileInfo == null || dirInfo == null){
+			throw new IOException("makeDirectory: " + NameNodeProtocol.messages[NameNodeProtocol.ERR_UNKNOWN]);
+		}
+
+		blockCache.remove(fileInfo.getFd());
+		nextBlockCache.remove(fileInfo.getFd());
+		
+		BlockInfo fileBlock = fileRes.getFileBlock();
+		getBlockCache(fileInfo.getFd()).put(CoreSubOperation.createKey(fileInfo.getFd(), 0), fileBlock);
+		BlockInfo dirBlock = fileRes.getDirBlock();
+		getBlockCache(dirInfo.getFd()).put(CoreSubOperation.createKey(dirInfo.getFd(), fileInfo.getDirOffset()), dirBlock);
+		
+		CoreDirFile dirFile = new CoreDirFile(this, dirInfo, CrailUtils.getParent(path));
+		CoreOutputStream stream = this.getOutputStream(dirFile, 0);
+		DirectoryRecord record = new DirectoryRecord(true, path);
+		ByteBuffer buffer = this.allocateBuffer();
+		buffer.clear();
+		record.write(buffer);
+		buffer.flip();
+		stream.seek(fileInfo.getDirOffset());
+		Future<CrailResult> future = stream.write(buffer);
+		
+		
+		if (CrailConstants.DEBUG){
+			LOG.info("makeDirectory: name " + path + ", success, fd " + fileInfo.getFd() + ", token " + fileInfo.getToken());
+		}
+		
+		return new CoreMakeDirectory(this, fileInfo, path, future, buffer, stream);		
+	}
+	
+	
 	public Future<CrailFile> lookupFile(String path, boolean writeable) throws Exception {
 		FileName name = new FileName(path);
 		
 		if (CrailConstants.DEBUG){
-			LOG.info("lookup: path " + path + ", writeable " + writeable);
+			LOG.info("lookupFile: path " + path + ", writeable " + writeable);
 		}
 		
 		RpcNameNodeFuture<RpcResponseMessage.GetFileRes> fileRes = namenodeClientRpc.getFile(name, writeable);
 		return new LookupFileFuture(this, path, fileRes);
 	}	
 	
-	CoreFile _lookup(RpcResponseMessage.GetFileRes fileRes, String path) throws Exception {
+	CoreFile _lookupFile(RpcResponseMessage.GetFileRes fileRes, String path) throws Exception {
 		if (fileRes.getError() == NameNodeProtocol.ERR_GET_FILE_FAILED){
 			return null;
 		}
 		else if (fileRes.getError() != NameNodeProtocol.ERR_OK){
-			LOG.info("lookup: " + NameNodeProtocol.messages[fileRes.getError()]);
+			LOG.info("lookupFile: " + NameNodeProtocol.messages[fileRes.getError()]);
+			return null;
+		}		
+		
+		FileInfo fileInfo = fileRes.getFile();
+		
+		if (fileInfo != null){
+			if (CrailConstants.DEBUG){
+				LOG.info("lookupFile: name " + path + ", success, fd " + fileInfo.getFd());
+			}
+			BlockInfo fileBlock = fileRes.getFileBlock();
+			getBlockCache(fileInfo.getFd()).put(CoreSubOperation.createKey(fileInfo.getFd(), 0), fileBlock);
+			return new CoreLookupFile(this, fileInfo, path);
+		} else {
+			return null;
+		}
+	}	
+	
+	public Future<CrailDirectory> lookupDirectory(String path) throws Exception {
+		FileName name = new FileName(path);
+		
+		if (CrailConstants.DEBUG){
+			LOG.info("lookupDirectory: path " + path);
+		}
+		
+		RpcNameNodeFuture<RpcResponseMessage.GetFileRes> fileRes = namenodeClientRpc.getFile(name, false);
+		return new LookupDirectoryFuture(this, path, fileRes);
+	}	
+	
+	CrailDirectory _lookupDirectory(RpcResponseMessage.GetFileRes fileRes, String path) throws Exception {
+		if (fileRes.getError() == NameNodeProtocol.ERR_GET_FILE_FAILED){
+			return null;
+		}
+		else if (fileRes.getError() != NameNodeProtocol.ERR_OK){
+			LOG.info("lookupDirectory: " + NameNodeProtocol.messages[fileRes.getError()]);
 			return null;
 		}		
 		
@@ -214,11 +300,12 @@ public class CoreFileSystem extends CrailFS {
 			}
 			BlockInfo fileBlock = fileRes.getFileBlock();
 			getBlockCache(fileInfo.getFd()).put(CoreSubOperation.createKey(fileInfo.getFd(), 0), fileBlock);
-			return new CoreLookupFile(this, fileInfo, path);
+			return new CoreDirectory(this, fileInfo, path);
 		} else {
 			return null;
 		}
 	}	
+	
 
 	public Future<CrailFile> rename(String src, String dst) throws Exception {
 		FileName srcPath = new FileName(src);

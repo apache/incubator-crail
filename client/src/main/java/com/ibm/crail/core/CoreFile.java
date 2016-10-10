@@ -59,10 +59,12 @@ public abstract class CoreFile extends CrailFile {
 		return fs.getOutputStream(this, writeHint);
 	}	
 	
-	public abstract CrailFile syncDir() throws Exception;
-	
 	public CoreFileSystem getFileSystem(){
 		return this.fs;
+	}
+	
+	public CrailFile syncDir() throws Exception {
+		return this;
 	}
 	
 	public void close() throws Exception {
@@ -147,16 +149,9 @@ class CoreCreateFile extends CoreFile {
 }
 
 class CoreLookupFile extends CoreFile {
-
 	protected CoreLookupFile(CoreFileSystem fs, FileInfo fileInfo, String path) {
 		super(fs, fileInfo, path, 0, 0);
 	}
-
-	@Override
-	public CrailFile syncDir() throws Exception {
-		return this;
-	}
-	
 }
 
 
@@ -204,8 +199,7 @@ class CoreRenamedFile extends CoreFile {
 		if (dstStream != null){
 			dstStream.close();
 			dstStream = null;
-		}		
-		
+		}
 		return this;
 	}
 }
@@ -245,11 +239,6 @@ class CoreDirFile extends CoreFile {
 
 	protected CoreDirFile(CoreFileSystem fs, FileInfo fileInfo, String path) {
 		super(fs, fileInfo, path, 0, 0);
-	}
-
-	@Override
-	public CrailFile syncDir() throws Exception {
-		return this;
 	}
 	
 }

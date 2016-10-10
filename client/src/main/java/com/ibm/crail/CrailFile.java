@@ -21,20 +21,18 @@
 
 package com.ibm.crail;
 
-public abstract class CrailFile {
+public abstract class CrailFile implements CrailNode {
 	public abstract CrailInputStream getDirectInputStream(long readHint) throws Exception;
 	public abstract CrailOutputStream getDirectOutputStream(long writeHint) throws Exception;
 	public abstract CrailFile syncDir() throws Exception;
-	public abstract void close() throws Exception;
-	public abstract CrailFS getFileSystem();
 	public abstract boolean isDir();
 	public abstract long getModificationTime();
 	public abstract long getCapacity();
 	public abstract int locationAffinity();
 	public abstract int storageAffinity();
-	public abstract String getPath(); 
 	public abstract long getToken();
 	public abstract long getFd();
+	public abstract void close() throws Exception;
 
 	public CrailBufferedInputStream getBufferedInputStream(long readHint) throws Exception {
 		CrailInputStream stream = getDirectInputStream(readHint);

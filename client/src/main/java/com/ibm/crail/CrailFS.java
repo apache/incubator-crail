@@ -38,8 +38,10 @@ public abstract class CrailFS {
 	private static AtomicLong referenceCounter = new AtomicLong(0);
 	private static CrailFS instance = null;
 	
-	protected abstract Future<CrailFile> create(String path, boolean isDir, int storageAffinity, int locationAffinity) throws Exception;
+	public abstract Future<CrailFile> createFile(String path, int locationAffinity, int storageAffinity) throws Exception;
+	public abstract Future<CrailDirectory> makeDirectory(String path) throws Exception;
 	public abstract Future<CrailFile> lookupFile(String path, boolean writeable) throws Exception;
+	public abstract Future<CrailDirectory> lookupDirectory(String path) throws Exception;
 	public abstract Future<CrailFile> rename(String src, String dst) throws Exception;
 	public abstract Future<CrailFile> delete(String path, boolean recursive) throws Exception;
 	public abstract Iterator<String> listEntries(String name) throws Exception;
@@ -72,18 +74,6 @@ public abstract class CrailFS {
 		}
 	}
 	
-	public CrailMultiStream getMultiStream(Iterator<String> paths, int outstanding) throws Exception{
-		return new CrailMultiStream(this, paths, outstanding);
-	}	
-	
-	public Future<CrailFile> createFile(String path, int locationAffinity, int storageAffinity) throws Exception {
-		return create(path, false, locationAffinity, storageAffinity);
-	}	
-	
-	public Future<CrailFile> createDir(String path) throws Exception {
-		return create(path, true, 0, 0);
-	}
-
 	public void close() throws Exception {
 		synchronized(referenceCounter){
 			if (CrailConstants.SINGLETON){

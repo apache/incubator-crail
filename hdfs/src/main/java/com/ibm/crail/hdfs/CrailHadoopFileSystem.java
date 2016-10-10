@@ -42,6 +42,7 @@ import org.apache.hadoop.util.Progressable;
 import com.ibm.crail.CrailBufferedInputStream;
 import com.ibm.crail.CrailBufferedOutputStream;
 import com.ibm.crail.CrailBlockLocation;
+import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailFS;
 import com.ibm.crail.conf.CrailConfiguration;
@@ -237,7 +238,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 	@Override
 	public boolean mkdirs(Path path, FsPermission permission) throws IOException {
 		try {
-			CrailFile file = dfs.createDir(path.toUri().getRawPath()).get();
+			CrailDirectory file = dfs.makeDirectory(path.toUri().getRawPath()).get();
 			file.syncDir();
 			return true;
 		} catch(Exception e){

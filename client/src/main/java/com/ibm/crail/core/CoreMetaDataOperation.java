@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
@@ -153,7 +154,24 @@ class CreateFileFuture extends CoreMetaDataOperation<RpcResponseMessage.CreateFi
 
 	@Override
 	CrailFile process(RpcResponseMessage.CreateFileRes tmp) throws Exception {
-		return fs._create(tmp, path, storageAffinity, locationAffinity);
+		return fs._createFile(tmp, path, storageAffinity, locationAffinity);
+	}
+
+}
+
+class MakeDirFuture extends CoreMetaDataOperation<RpcResponseMessage.CreateFileRes, CrailDirectory> {
+	private String path;
+	private CoreFileSystem fs;
+
+	public MakeDirFuture(CoreFileSystem fs, String path, Future<RpcResponseMessage.CreateFileRes> fileRes) {
+		super(fileRes);
+		this.fs = fs;
+		this.path = path;
+	}
+
+	@Override
+	CrailDirectory process(RpcResponseMessage.CreateFileRes tmp) throws Exception {
+		return fs._makeDirectory(tmp, path);
 	}
 
 }
@@ -188,7 +206,24 @@ class LookupFileFuture extends CoreMetaDataOperation<RpcResponseMessage.GetFileR
 
 	@Override
 	CrailFile process(RpcResponseMessage.GetFileRes tmp) throws Exception {
-		return fs._lookup(tmp, path);
+		return fs._lookupFile(tmp, path);
+	}
+
+}
+
+class LookupDirectoryFuture extends CoreMetaDataOperation<RpcResponseMessage.GetFileRes, CrailDirectory> {
+	private String path;
+	private CoreFileSystem fs;	
+
+	public LookupDirectoryFuture(CoreFileSystem fs, String path, Future<RpcResponseMessage.GetFileRes> fileRes) {
+		super(fileRes);
+		this.fs = fs;
+		this.path = path;
+	}
+
+	@Override
+	CrailDirectory process(RpcResponseMessage.GetFileRes tmp) throws Exception {
+		return fs._lookupDirectory(tmp, path);
 	}
 
 }
@@ -254,3 +289,5 @@ class NoOperation implements Future<Void> {
 		return null;
 	}
 }
+
+

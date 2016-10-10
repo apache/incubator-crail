@@ -473,7 +473,8 @@ public class CrailBenchmark {
 		fs.resetStatistics();
 		for (int i = 0; i < loop; i++){
 			Iterator<String> files = fs.listEntries(filename);
-			CrailMultiStream multiStream = fs.getMultiStream(files, batch);
+			CrailMultiStream multiStream = fs.lookupDirectory(filename).get().getMultiStream(batch);
+//			CrailMultiStream multiStream = fs.getMultiStream(files, batch);
 			ByteBuffer buf = fs.allocateBuffer();
 			
 			double sumbytes = 0;
@@ -602,7 +603,7 @@ public class CrailBenchmark {
 		System.out.println("starting benchmark...");
 		fs.resetStatistics();
 		LinkedBlockingQueue<String> pathQueue = new LinkedBlockingQueue<String>();
-		fs.createDir(filename).get().syncDir();
+		fs.makeDirectory(filename).get().syncDir();
 		int filecounter = 0;
 		for (int i = 0; i < loop; i++){
 			String name = "" + filecounter++;
@@ -649,7 +650,7 @@ public class CrailBenchmark {
 		LinkedBlockingQueue<Future<CrailFile>> futureQueue = new LinkedBlockingQueue<Future<CrailFile>>();
 		LinkedBlockingQueue<CrailFile> fileQueue = new LinkedBlockingQueue<CrailFile>();
 		LinkedBlockingQueue<String> pathQueue = new LinkedBlockingQueue<String>();
-		fs.createDir(filename).get().syncDir();	
+		fs.makeDirectory(filename).get().syncDir();	
 		
 		for (int i = 0; i < loop; i++){
 			String name = "/" + i;

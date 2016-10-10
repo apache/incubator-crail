@@ -54,6 +54,7 @@ import org.apache.hadoop.util.Progressable;
 import com.ibm.crail.CrailBufferedInputStream;
 import com.ibm.crail.CrailBufferedOutputStream;
 import com.ibm.crail.CrailBlockLocation;
+import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailFS;
 import com.ibm.crail.conf.CrailConfiguration;
@@ -144,7 +145,7 @@ public class CrailHDFS extends AbstractFileSystem {
 	@Override
 	public void mkdir(Path path, FsPermission permission, boolean createParent) throws AccessControlException, FileAlreadyExistsException, FileNotFoundException, UnresolvedLinkException, IOException {
 		try {
-			CrailFile file = dfs.createDir(path.toUri().getRawPath()).get();
+			CrailDirectory file = dfs.makeDirectory(path.toUri().getRawPath()).get();
 			file.syncDir();
 		} catch(Exception e){
 			if (e.getMessage().contains(NameNodeProtocol.messages[NameNodeProtocol.ERR_PARENT_MISSING])){
