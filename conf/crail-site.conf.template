@@ -1,7 +1,7 @@
-crail.namenode.address			crail://127.0.0.1:9060
+crail.namenode.address			crail://<hostname>:9060
 crail.namenode.blockselection		roundrobin
 crail.blocksize				1048576
-crail.buffersize			1048320
+crail.buffersize			1048576
 crail.regionsize			67108864
 crail.cachelimit			67108864
 caril.cachepath				<path, should be huge page mountpoint>
