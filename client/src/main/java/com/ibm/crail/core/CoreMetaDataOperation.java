@@ -33,7 +33,6 @@ import com.ibm.crail.CrailNode;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
 import com.ibm.crail.namenode.rpc.RpcResponseMessage;
-import com.ibm.crail.namenode.rpc.RpcResponseMessage.GetFileRes;
 
 public abstract class CoreMetaDataOperation<R,T> implements Future<T> {
 	protected static int RPC_PENDING = 0;

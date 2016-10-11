@@ -23,7 +23,6 @@ package com.ibm.crail;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Iterator;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
