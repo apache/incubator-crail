@@ -685,11 +685,12 @@ public class CoreFileSystem extends CrailFS {
 		
 		if (CrailConstants.STATISTICS){
 			streamStats.incOpen();
-			streamStats.incOpenInput();
-			streamStats.incCurrentInput();
-			streamStats.incMaxInput();
-			streamStats.incOpenInputDir();
-		}
+			streamStats.incOpenOutput();
+			streamStats.incCurrentOutput();
+			streamStats.incMaxOutput();
+			streamStats.incOpenOutputDir();
+		}		
+		
 		return inputStream;
 	}		
 	
@@ -699,19 +700,26 @@ public class CoreFileSystem extends CrailFS {
 			streamStats.incClose();
 			if (stream instanceof CoreInputStream){
 				streamStats.incCloseInput();
-				if (stream.getFile().isDir()){
-					streamStats.incCloseInputDir();
-				}
 				this.ioStatsIn.add(stream.getCoreStatistics());
 				streamStats.decCurrentInput();
-			} else if (stream instanceof CoreOutputStream){
+			} 
+			if (stream instanceof CoreOutputStream){
 				streamStats.incCloseOutput();
-				if (stream.getFile().isDir()){
-					streamStats.incCloseOutputDir();
-				}				
 				this.ioStatsOut.add(stream.getCoreStatistics());
 				streamStats.decCurrentOutput();
 			}
+			if (stream instanceof DirectoryInputStream){
+				streamStats.incCloseInput();
+				streamStats.incCloseInputDir();
+				this.ioStatsIn.add(stream.getCoreStatistics());
+				streamStats.decCurrentInput();
+			} 
+			if (stream instanceof DirectoryOutputStream){
+				streamStats.incCloseOutput();
+				streamStats.incCloseOutputDir();
+				this.ioStatsOut.add(stream.getCoreStatistics());
+				streamStats.decCurrentOutput();
+			}			
 		}
 		
 		return stream;
