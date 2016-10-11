@@ -21,28 +21,17 @@
 
 package com.ibm.crail.core;
 
-import java.nio.ByteBuffer;
 import java.util.concurrent.Future;
-
 import com.ibm.crail.CrailBlockLocation;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailInputStream;
 import com.ibm.crail.CrailOutputStream;
 import com.ibm.crail.namenode.protocol.FileInfo;
 
-public abstract class CoreFile extends CrailFile {
-	private CoreFileSystem fs;
-	private FileInfo fileInfo;
-	private String path;
-	private int storageAffinity;
-	private int locationAffinity;
+abstract class CoreFile extends CoreNode implements CrailFile {
 	
 	protected CoreFile(CoreFileSystem fs, FileInfo fileInfo, String path, int storageAffinity, int locationAffinity){
-		this.fs = fs;
-		this.fileInfo = fileInfo;
-		this.path = path;
-		this.storageAffinity = storageAffinity;
-		this.locationAffinity = locationAffinity;
+		super(fs, fileInfo, path, storageAffinity, locationAffinity);
 	}
 	
 	public CrailInputStream getDirectInputStream(long readHint) throws Exception{
@@ -58,47 +47,17 @@ public abstract class CoreFile extends CrailFile {
 			throw new Exception("File is in read mode, cannot create outputstream, fd " + fileInfo.getFd());
 		}
 		return fs.getOutputStream(this, writeHint);
+	}
+	
+	public CrailBlockLocation[] getBlockLocations(long start, long len) throws Exception{
+		return fs.getBlockLocations(path, start, len);
 	}	
-	
-	public CoreFileSystem getFileSystem(){
-		return this.fs;
-	}
-	
-	public CrailFile syncDir() throws Exception {
-		return this;
-	}
 	
 	public void close() throws Exception {
 		if (fileInfo.getToken() > 0){
 			fs.closeFile(fileInfo);
 		}
 	}	
-	
-	FileInfo getFileInfo(){
-		return this.fileInfo;
-	}
-	
-	//---------------
-	
-	public boolean isDir() {
-		return fileInfo.isDir();
-	}
-
-	public long getModificationTime() {
-		return fileInfo.getModificationTime();
-	}
-
-	public long getCapacity() {
-		return fileInfo.getCapacity();
-	}
-	
-	public int storageAffinity(){
-		return storageAffinity;
-	}	
-
-	public int locationAffinity() {
-		return locationAffinity;
-	}
 	
 	public long getToken() {
 		return fileInfo.getToken();
@@ -107,42 +66,22 @@ public abstract class CoreFile extends CrailFile {
 	public boolean tokenFree(){
 		return fileInfo.tokenFree();
 	}	
-	
-	public long getFd() {
-		return fileInfo.getFd();
-	}
-	
-	public CrailBlockLocation[] getBlockLocations(long start, long len) throws Exception{
-		return fs.getBlockLocations(path, start, len);
-	}
-
-	@Override
-	public String getPath() {
-		return path;
-	}
 }
 
 class CoreCreateFile extends CoreFile {
 	private Future<?> dirFuture;
-	private ByteBuffer dirBuffer;
-	private CoreOutputStream dirStream;	
+	private DirectoryOutputStream dirStream;	
 	
-	public CoreCreateFile(CoreFileSystem fs, FileInfo fileInfo, String path, int storageAffinity, int locationAffinity, Future<?> dirFuture, ByteBuffer dirBuffer, CoreOutputStream dirStream){
+	public CoreCreateFile(CoreFileSystem fs, FileInfo fileInfo, String path, int storageAffinity, int locationAffinity, Future<?> dirFuture, DirectoryOutputStream dirStream){
 		super(fs, fileInfo, path, storageAffinity, locationAffinity);
 		this.dirFuture = dirFuture;
-		this.dirBuffer = dirBuffer;		
 		this.dirStream = dirStream;
 	}
 	
-	@Override
-	public CrailFile syncDir() throws Exception {
+	public CoreNode syncDir() throws Exception {
 		if (dirFuture != null) {
 			dirFuture.get();
 			dirFuture = null;
-		}
-		if (dirBuffer != null) {
-			this.getFileSystem().freeBuffer(dirBuffer);
-			dirBuffer = null;
 		}
 		if (dirStream != null){
 			dirStream.close();
@@ -157,94 +96,5 @@ class CoreLookupFile extends CoreFile {
 	protected CoreLookupFile(CoreFileSystem fs, FileInfo fileInfo, String path) {
 		super(fs, fileInfo, path, 0, 0);
 	}
-}
-
-
-class CoreRenamedFile extends CoreFile {
-	private Future<?> srcDirFuture;
-	private Future<?> dstDirFuture;
-	private ByteBuffer srcDirBuffer;
-	private ByteBuffer dstDirBuffer;
-	private CoreOutputStream srcStream;
-	private CoreOutputStream dstStream;
-	
-
-	protected CoreRenamedFile(CoreFileSystem fs, FileInfo fileInfo, String path, Future<?> srcDirFuture, Future<?> dstDirFuture, ByteBuffer srcDirBuffer, ByteBuffer dstDirBuffer, CoreOutputStream srcStream, CoreOutputStream dstStream){
-		super(fs, fileInfo, path, 0, 0);
-		this.srcDirFuture = srcDirFuture;
-		this.dstDirFuture = dstDirFuture;
-		this.srcDirBuffer = srcDirBuffer;
-		this.dstDirBuffer = dstDirBuffer;
-		this.srcStream = srcStream;
-		this.dstStream = dstStream;
-	}
-
-	@Override
-	public CrailFile syncDir() throws Exception {
-		if (srcDirFuture != null) {
-			srcDirFuture.get();
-			srcDirFuture = null;
-		}
-		if (dstDirFuture != null) {
-			dstDirFuture.get();
-			dstDirFuture = null;
-		}		
-		if (srcDirBuffer != null) {
-			this.getFileSystem().freeBuffer(srcDirBuffer);
-			srcDirBuffer = null;
-		}
-		if (dstDirBuffer != null) {
-			this.getFileSystem().freeBuffer(dstDirBuffer);
-			dstDirBuffer = null;
-		}		
-		if (srcStream != null){
-			srcStream.close();
-			srcStream = null;
-		}
-		if (dstStream != null){
-			dstStream.close();
-			dstStream = null;
-		}
-		return this;
-	}
-}
-
-class CoreDeleteFile extends CoreFile {
-	private Future<?> dirFuture;
-	private ByteBuffer dirBuffer;
-	private CoreOutputStream dirStream;	
-	
-	public CoreDeleteFile(CoreFileSystem fs, FileInfo fileInfo, String path, Future<?> dirFuture, ByteBuffer dirBuffer, CoreOutputStream dirStream){
-		super(fs, fileInfo, path, 0, 0);
-		this.dirFuture = dirFuture;
-		this.dirBuffer = dirBuffer;		
-		this.dirStream = dirStream;
-	}
-	
-	@Override
-	public CrailFile syncDir() throws Exception {
-		if (dirFuture != null) {
-			dirFuture.get();
-			dirFuture = null;
-		}
-		if (dirBuffer != null) {
-			this.getFileSystem().freeBuffer(dirBuffer);
-			dirBuffer = null;
-		}
-		if (dirStream != null){
-			dirStream.close();
-			dirStream = null;
-		}
-		return this;
-	}
-	
-}
-
-class CoreDirFile extends CoreFile {
-
-	protected CoreDirFile(CoreFileSystem fs, FileInfo fileInfo, String path) {
-		super(fs, fileInfo, path, 0, 0);
-	}
-	
 }
 

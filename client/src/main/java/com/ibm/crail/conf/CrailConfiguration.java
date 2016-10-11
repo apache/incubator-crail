@@ -21,11 +21,16 @@
 
 package com.ibm.crail.conf;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
+
 import org.slf4j.Logger;
+
 import com.ibm.crail.utils.CrailUtils;
 
 public class CrailConfiguration {
@@ -33,7 +38,7 @@ public class CrailConfiguration {
 	private ConcurrentHashMap<String, String> conf;
 	
 	
-	public CrailConfiguration(){
+	public CrailConfiguration() throws IOException{
 		conf = new ConcurrentHashMap<>();
 		Properties properties = loadProperties("crail-site.conf");
 		mergeProperties(properties);
@@ -69,19 +74,16 @@ public class CrailConfiguration {
 		}
 	}
 	
-	private static Properties loadProperties(String resourceName) {
+	private static Properties loadProperties(String resourceName) throws IOException {
 		Properties properties = new Properties();
 
-		InputStream inputStream = CrailConfiguration.class.getClassLoader().getResourceAsStream(resourceName);
-		if (inputStream == null) {
-			return null;
-		}
+		String base = System.getenv("CRAIL_HOME");
+		FileInputStream inputStream = new FileInputStream(new File(base + "/conf/" + resourceName));
 
 		try {
 			properties.load(inputStream);
-		} catch (IOException e) {
-			LOG.error("Unable to load default Crail properties file {}", resourceName, e);
-			return null;
+		} finally {
+			inputStream.close();
 		}
 		return properties;
 	}

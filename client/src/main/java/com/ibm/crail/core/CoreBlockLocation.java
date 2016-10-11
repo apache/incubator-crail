@@ -2,7 +2,7 @@ package com.ibm.crail.core;
 
 import com.ibm.crail.CrailBlockLocation;
 
-public class CoreBlockLocation implements CrailBlockLocation {
+class CoreBlockLocation implements CrailBlockLocation {
 	private String[] names;
 	private String[] hosts;
 	private String[] topology;

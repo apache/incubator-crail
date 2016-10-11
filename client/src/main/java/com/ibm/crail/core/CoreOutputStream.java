@@ -45,7 +45,7 @@ public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 	private long writeHint;
 	private CrailImmediateOperation noOp;
 	
-	public CoreOutputStream(CoreFile file, long streamId, long writeHint) throws Exception {
+	public CoreOutputStream(CoreNode file, long streamId, long writeHint) throws Exception {
 		super(file, streamId, file.getCapacity());
 		this.writeHint = Math.max(0, writeHint);
 		this.inFlight = new AtomicLong(0);

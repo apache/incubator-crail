@@ -43,6 +43,7 @@ import com.ibm.crail.CrailBlockLocation;
 import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailFS;
+import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
@@ -166,22 +167,16 @@ public class CoreFileSystem extends CrailFS {
 		BlockInfo dirBlock = fileRes.getDirBlock();
 		getBlockCache(dirInfo.getFd()).put(CoreSubOperation.createKey(dirInfo.getFd(), fileInfo.getDirOffset()), dirBlock);
 		
-		CoreDirFile dirFile = new CoreDirFile(this, dirInfo, CrailUtils.getParent(path));
-		CoreOutputStream stream = this.getOutputStream(dirFile, 0);
+		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path));
+		DirectoryOutputStream stream = this.getDirectoryOutputStream(dirFile);
 		DirectoryRecord record = new DirectoryRecord(true, path);
-		ByteBuffer buffer = this.allocateBuffer();
-		buffer.clear();
-		record.write(buffer);
-		buffer.flip();
-		stream.seek(fileInfo.getDirOffset());
-		Future<CrailResult> future = stream.write(buffer);
-		
+		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());
 		
 		if (CrailConstants.DEBUG){
 			LOG.info("createFile: name " + path + ", success, fd " + fileInfo.getFd() + ", token " + fileInfo.getToken());
 		}
 		
-		return new CoreCreateFile(this, fileInfo, path, storageAffinity, locationAffinity, future, buffer, stream);		
+		return new CoreCreateFile(this, fileInfo, path, storageAffinity, locationAffinity, future, stream);		
 	}
 	
 	public Future<CrailDirectory> makeDirectory(String path) throws Exception {
@@ -219,22 +214,16 @@ public class CoreFileSystem extends CrailFS {
 		BlockInfo dirBlock = fileRes.getDirBlock();
 		getBlockCache(dirInfo.getFd()).put(CoreSubOperation.createKey(dirInfo.getFd(), fileInfo.getDirOffset()), dirBlock);
 		
-		CoreDirFile dirFile = new CoreDirFile(this, dirInfo, CrailUtils.getParent(path));
-		CoreOutputStream stream = this.getOutputStream(dirFile, 0);
+		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path));
+		DirectoryOutputStream stream = this.getDirectoryOutputStream(dirFile);
 		DirectoryRecord record = new DirectoryRecord(true, path);
-		ByteBuffer buffer = this.allocateBuffer();
-		buffer.clear();
-		record.write(buffer);
-		buffer.flip();
-		stream.seek(fileInfo.getDirOffset());
-		Future<CrailResult> future = stream.write(buffer);
-		
+		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());		
 		
 		if (CrailConstants.DEBUG){
 			LOG.info("makeDirectory: name " + path + ", success, fd " + fileInfo.getFd() + ", token " + fileInfo.getToken());
 		}
 		
-		return new CoreMakeDirectory(this, fileInfo, path, future, buffer, stream);		
+		return new CoreMakeDirectory(this, fileInfo, path, future, stream);		
 	}
 	
 	
@@ -304,10 +293,44 @@ public class CoreFileSystem extends CrailFS {
 		} else {
 			return null;
 		}
+	}
+	
+	public Future<CrailNode> lookupNode(String path) throws Exception {
+		FileName name = new FileName(path);
+		
+		if (CrailConstants.DEBUG){
+			LOG.info("lookupDirectory: path " + path);
+		}
+		
+		RpcNameNodeFuture<RpcResponseMessage.GetFileRes> fileRes = namenodeClientRpc.getFile(name, false);
+		return new LookupNodeFuture(this, path, fileRes);
+	}	
+	
+	CoreNode _lookupNode(RpcResponseMessage.GetFileRes fileRes, String path) throws Exception {
+		if (fileRes.getError() == NameNodeProtocol.ERR_GET_FILE_FAILED){
+			return null;
+		}
+		else if (fileRes.getError() != NameNodeProtocol.ERR_OK){
+			LOG.info("lookupDirectory: " + NameNodeProtocol.messages[fileRes.getError()]);
+			return null;
+		}		
+		
+		FileInfo fileInfo = fileRes.getFile();
+		
+		if (fileInfo != null){
+			if (CrailConstants.DEBUG){
+				LOG.info("lookup: name " + path + ", success, fd " + fileInfo.getFd());
+			}
+			BlockInfo fileBlock = fileRes.getFileBlock();
+			getBlockCache(fileInfo.getFd()).put(CoreSubOperation.createKey(fileInfo.getFd(), 0), fileBlock);
+			return new CoreNode(this, fileInfo, path, 0, 0);
+		} else {
+			return null;
+		}
 	}	
 	
 
-	public Future<CrailFile> rename(String src, String dst) throws Exception {
+	public Future<CrailNode> rename(String src, String dst) throws Exception {
 		FileName srcPath = new FileName(src);
 		FileName dstPath = new FileName(dst);
 		
@@ -316,10 +339,10 @@ public class CoreFileSystem extends CrailFS {
 		}
 		
 		RpcNameNodeFuture<RpcResponseMessage.RenameRes> renameRes = namenodeClientRpc.renameFile(srcPath, dstPath);
-		return new RenameFileFuture(this, src, dst, renameRes);
+		return new RenameNodeFuture(this, src, dst, renameRes);
 	}
 	
-	CoreFile _rename(RpcResponseMessage.RenameRes renameRes, String src, String dst) throws Exception {
+	CrailNode _rename(RpcResponseMessage.RenameRes renameRes, String src, String dst) throws Exception {
 		if (renameRes.getError() == NameNodeProtocol.ERR_SRC_FILE_NOT_FOUND){
 			LOG.info("rename: " + NameNodeProtocol.messages[renameRes.getError()]);
 			return null;
@@ -350,25 +373,15 @@ public class CoreFileSystem extends CrailFS {
 		BlockInfo dirBlock = renameRes.getDstBlock();
 		getBlockCache(dstDir.getFd()).put(CoreSubOperation.createKey(dstDir.getFd(), dstFile.getDirOffset()), dirBlock);		
 		
-		CoreDirFile dirSrc = new CoreDirFile(this, srcParent, CrailUtils.getParent(src));
-		CoreOutputStream streamSrc = this.getOutputStream(dirSrc, 0);
+		CoreDirectory dirSrc = new CoreDirectory(this, srcParent, CrailUtils.getParent(src));
+		DirectoryOutputStream streamSrc = this.getDirectoryOutputStream(dirSrc);
 		DirectoryRecord recordSrc = new DirectoryRecord(false, src);
-		ByteBuffer bufferSrc = this.allocateBuffer();
-		bufferSrc.clear();
-		recordSrc.write(bufferSrc);
-		bufferSrc.flip();
-		streamSrc.seek(srcFile.getDirOffset());
-		Future<CrailResult> futureSrc = streamSrc.write(bufferSrc);		
+		Future<CrailResult> futureSrc = streamSrc.writeRecord(recordSrc, srcFile.getDirOffset());			
 		
-		CoreDirFile dirDst = new CoreDirFile(this, dstDir, CrailUtils.getParent(dst));
-		CoreOutputStream streamDst = this.getOutputStream(dirDst, 0);
+		CoreDirectory dirDst = new CoreDirectory(this, dstDir, CrailUtils.getParent(dst));
+		DirectoryOutputStream streamDst = this.getDirectoryOutputStream(dirDst);
 		DirectoryRecord recordDst = new DirectoryRecord(true, dst);
-		ByteBuffer bufferDst = this.allocateBuffer();
-		bufferDst.clear();
-		recordDst.write(bufferDst);
-		bufferDst.flip();
-		streamDst.seek(dstFile.getDirOffset());
-		Future<CrailResult> futureDst = streamDst.write(bufferDst);		
+		Future<CrailResult> futureDst = streamDst.writeRecord(recordDst, dstFile.getDirOffset());			
 
 		blockCache.remove(srcFile.getFd());
 		
@@ -376,10 +389,10 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("rename: srcname " + src + ", dstname " + dst + ", success");
 		}
 		
-		return new CoreRenamedFile(this, dstFile, dst, futureSrc, futureDst, bufferSrc, bufferDst, streamSrc, streamDst);		
+		return new CoreRenamedNode(this, dstFile, dst, futureSrc, futureDst, streamSrc, streamDst);		
 	}
 	
-	public Future<CrailFile> delete(String path, boolean recursive) throws Exception {
+	public Future<CrailNode> delete(String path, boolean recursive) throws Exception {
 		FileName name = new FileName(path);
 		
 		if (CrailConstants.DEBUG){
@@ -387,10 +400,10 @@ public class CoreFileSystem extends CrailFS {
 		}
 
 		RpcNameNodeFuture<RpcResponseMessage.DeleteFileRes> fileRes = namenodeClientRpc.removeFile(name, recursive);
-		return new DeleteFileFuture(this, path, recursive, fileRes);
+		return new DeleteNodeFuture(this, path, recursive, fileRes);
 	}	
 	
-	CoreFile _delete(RpcResponseMessage.DeleteFileRes fileRes, String path, boolean recursive) throws Exception {
+	CrailNode _delete(RpcResponseMessage.DeleteFileRes fileRes, String path, boolean recursive) throws Exception {
 		if (fileRes.getError() == NameNodeProtocol.ERR_HAS_CHILDREN) {
 			LOG.info("delete: " + NameNodeProtocol.messages[fileRes.getError()]);
 			throw new IOException(NameNodeProtocol.messages[fileRes.getError()]);
@@ -403,15 +416,10 @@ public class CoreFileSystem extends CrailFS {
 		FileInfo fileInfo = fileRes.getFile();
 		FileInfo dirInfo = fileRes.getParent();
 		
-		CoreDirFile dirFile = new CoreDirFile(this, dirInfo, CrailUtils.getParent(path));
-		CoreOutputStream stream = this.getOutputStream(dirFile, 0);
+		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path));
+		DirectoryOutputStream stream = this.getDirectoryOutputStream(dirFile);
 		DirectoryRecord record = new DirectoryRecord(false, path);
-		ByteBuffer buffer = this.allocateBuffer();
-		buffer.clear();
-		record.write(buffer);
-		buffer.flip();
-		stream.seek(fileInfo.getDirOffset());
-		Future<CrailResult> future = stream.write(buffer);		
+		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());			
 		
 		blockCache.remove(fileInfo.getFd());
 		
@@ -419,7 +427,7 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("delete: name " + path + ", recursive " + recursive + ", success");
 		}		
 		
-		return new CoreDeleteFile(this, fileInfo, path, future, buffer, stream);
+		return new CoreDeleteNode(this, fileInfo, path, future, stream);
 	}	
 	
 	public Iterator<String> listEntries(String name) throws Exception {
@@ -446,7 +454,7 @@ public class CoreFileSystem extends CrailFS {
 			throw new FileNotFoundException(NameNodeProtocol.messages[NameNodeProtocol.ERR_FILE_IS_NOT_DIR]);
 		}
 		
-		CoreDirFile dirFile = new CoreDirFile(this, dirInfo, name);
+		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, name);
 		DirectoryInputStream inputStream = this.getDirectoryInputStream(dirFile);
 		
 		return new DirectoryRecordIterator(name, inputStream);
@@ -640,9 +648,6 @@ public class CoreFileSystem extends CrailFS {
 			streamStats.incOpenInput();
 			streamStats.incCurrentInput();
 			streamStats.incMaxInput();
-			if (file.isDir()){
-				streamStats.incOpenInputDir();
-			}
 		}
 		return inputStream;
 	}
@@ -656,15 +661,12 @@ public class CoreFileSystem extends CrailFS {
 			streamStats.incOpenOutput();
 			streamStats.incCurrentOutput();
 			streamStats.incMaxOutput();
-			if (file.isDir()){
-				streamStats.incOpenOutputDir();
-			}
 		}
 		return outputStream;
 	}	
 	
-	DirectoryInputStream getDirectoryInputStream(CoreFile file) throws Exception {
-		DirectoryInputStream inputStream = new DirectoryInputStream(file, streamCounter.incrementAndGet());
+	DirectoryInputStream getDirectoryInputStream(CoreDirectory directory) throws Exception {
+		DirectoryInputStream inputStream = new DirectoryInputStream(directory, streamCounter.incrementAndGet());
 		openStreams.put(inputStream.getStreamId(), inputStream);
 		
 		if (CrailConstants.STATISTICS){
@@ -672,12 +674,24 @@ public class CoreFileSystem extends CrailFS {
 			streamStats.incOpenInput();
 			streamStats.incCurrentInput();
 			streamStats.incMaxInput();
-			if (file.isDir()){
-				streamStats.incOpenInputDir();
-			}
+			streamStats.incOpenInputDir();
 		}
 		return inputStream;
 	}	
+	
+	DirectoryOutputStream getDirectoryOutputStream(CoreDirectory directory) throws Exception {
+		DirectoryOutputStream inputStream = new DirectoryOutputStream(directory, streamCounter.incrementAndGet());
+		openStreams.put(inputStream.getStreamId(), inputStream);
+		
+		if (CrailConstants.STATISTICS){
+			streamStats.incOpen();
+			streamStats.incOpenInput();
+			streamStats.incCurrentInput();
+			streamStats.incMaxInput();
+			streamStats.incOpenInputDir();
+		}
+		return inputStream;
+	}		
 	
 	CoreStream unregister(CoreStream coreStream) {
 		CoreStream stream = this.openStreams.remove(coreStream.getStreamId());

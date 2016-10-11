@@ -57,6 +57,7 @@ import com.ibm.crail.CrailBlockLocation;
 import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailFS;
+import com.ibm.crail.CrailNode;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
@@ -162,7 +163,7 @@ public class CrailHDFS extends AbstractFileSystem {
 	@Override
 	public boolean delete(Path path, boolean recursive) throws AccessControlException, FileNotFoundException, UnresolvedLinkException, IOException {
 		try {
-			CrailFile file = dfs.delete(path.toUri().getRawPath(), recursive).get();
+			CrailNode file = dfs.delete(path.toUri().getRawPath(), recursive).get();
 			if (file != null){
 				file.syncDir();
 			}
@@ -205,7 +206,7 @@ public class CrailHDFS extends AbstractFileSystem {
 	@Override
 	public void renameInternal(Path src, Path dst) throws AccessControlException, FileAlreadyExistsException, FileNotFoundException, ParentNotDirectoryException, UnresolvedLinkException, IOException {
 		try {
-			CrailFile file = dfs.rename(src.toUri().getRawPath(), dst.toUri().getRawPath()).get();
+			CrailNode file = dfs.rename(src.toUri().getRawPath(), dst.toUri().getRawPath()).get();
 			if (file != null){
 				file.syncDir();
 			}

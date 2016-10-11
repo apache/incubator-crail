@@ -23,9 +23,11 @@ package com.ibm.crail.datanode.rdma.client;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+
 import com.ibm.crail.datanode.DataNodeEndpoint;
 import com.ibm.crail.datanode.rdma.MrCache;
 import com.ibm.crail.datanode.rdma.RdmaConstants;
+import com.ibm.crail.datanode.rdma.RdmaDataNode;
 import com.ibm.crail.datanode.rdma.RdmaDataNodeGroup;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.disni.endpoints.*;
@@ -37,8 +39,17 @@ public class RdmaDataNodePassiveGroup extends RdmaPassiveEndpointGroup<RdmaDataN
 	public RdmaDataNodePassiveGroup(int timeout, int maxWR, int maxSge, int cqSize, MrCache mrCache)
 			throws IOException {
 		super(timeout, maxWR, maxSge, cqSize);
-		this.mrCache = mrCache;
-		this.localEndpoint = new RdmaDataNodeLocalEndpoint();
+		try {
+			this.mrCache = mrCache;
+			InetSocketAddress datanodeAddr = RdmaDataNode.getDataNodeAddress();
+			if (datanodeAddr != null){
+				this.localEndpoint = new RdmaDataNodeLocalEndpoint(datanodeAddr);
+			} else {
+				this.localEndpoint = null;
+			}
+		} catch(Exception e){
+			throw new IOException(e);
+		}
 	}
 
 	public DataNodeEndpoint createEndpoint(InetSocketAddress inetAddress) throws IOException {

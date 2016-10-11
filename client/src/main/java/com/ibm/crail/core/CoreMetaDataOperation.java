@@ -29,9 +29,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFile;
+import com.ibm.crail.CrailNode;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
 import com.ibm.crail.namenode.rpc.RpcResponseMessage;
+import com.ibm.crail.namenode.rpc.RpcResponseMessage.GetFileRes;
 
 public abstract class CoreMetaDataOperation<R,T> implements Future<T> {
 	protected static int RPC_PENDING = 0;
@@ -176,24 +178,6 @@ class MakeDirFuture extends CoreMetaDataOperation<RpcResponseMessage.CreateFileR
 
 }
 
-class DeleteFileFuture extends CoreMetaDataOperation<RpcResponseMessage.DeleteFileRes, CrailFile> {
-	private String path;
-	private boolean recursive;
-	private CoreFileSystem fs;
-
-	public DeleteFileFuture(CoreFileSystem fs, String path, boolean recursive, Future<RpcResponseMessage.DeleteFileRes> fileRes) {
-		super(fileRes);
-		this.fs = fs;
-		this.path = path;
-		this.recursive = recursive;
-	}
-
-	@Override
-	CrailFile process(RpcResponseMessage.DeleteFileRes tmp) throws Exception {
-		return fs._delete(tmp, path, recursive);
-	}
-}
-
 class LookupFileFuture extends CoreMetaDataOperation<RpcResponseMessage.GetFileRes, CrailFile> {
 	private String path;
 	private CoreFileSystem fs;	
@@ -225,15 +209,49 @@ class LookupDirectoryFuture extends CoreMetaDataOperation<RpcResponseMessage.Get
 	CrailDirectory process(RpcResponseMessage.GetFileRes tmp) throws Exception {
 		return fs._lookupDirectory(tmp, path);
 	}
+}
+
+class LookupNodeFuture extends CoreMetaDataOperation<RpcResponseMessage.GetFileRes, CrailNode> {
+	private String path;
+	private CoreFileSystem fs;	
+
+	public LookupNodeFuture(CoreFileSystem fs, String path, Future<RpcResponseMessage.GetFileRes> fileRes) {
+		super(fileRes);
+		this.fs = fs;
+		this.path = path;
+	}
+
+	@Override
+	CrailNode process(RpcResponseMessage.GetFileRes tmp) throws Exception {
+		return fs._lookupNode(tmp, path);
+	}
 
 }
 
-class RenameFileFuture extends CoreMetaDataOperation<RpcResponseMessage.RenameRes, CrailFile> {
+class DeleteNodeFuture extends CoreMetaDataOperation<RpcResponseMessage.DeleteFileRes, CrailNode> {
+	private String path;
+	private boolean recursive;
+	private CoreFileSystem fs;
+
+	public DeleteNodeFuture(CoreFileSystem fs, String path, boolean recursive, Future<RpcResponseMessage.DeleteFileRes> fileRes) {
+		super(fileRes);
+		this.fs = fs;
+		this.path = path;
+		this.recursive = recursive;
+	}
+
+	@Override
+	CrailNode process(RpcResponseMessage.DeleteFileRes tmp) throws Exception {
+		return fs._delete(tmp, path, recursive);
+	}
+}
+
+class RenameNodeFuture extends CoreMetaDataOperation<RpcResponseMessage.RenameRes, CrailNode> {
 	private String src;
 	private String dst;
 	private CoreFileSystem fs;
 
-	public RenameFileFuture(CoreFileSystem fs, String src, String dst, Future<RpcResponseMessage.RenameRes> fileRes) {
+	public RenameNodeFuture(CoreFileSystem fs, String src, String dst, Future<RpcResponseMessage.RenameRes> fileRes) {
 		super(fileRes);
 		this.fs = fs;
 		this.src = src;
@@ -241,14 +259,14 @@ class RenameFileFuture extends CoreMetaDataOperation<RpcResponseMessage.RenameRe
 	}
 
 	@Override
-	CrailFile process(RpcResponseMessage.RenameRes tmp) throws Exception {
+	CrailNode process(RpcResponseMessage.RenameRes tmp) throws Exception {
 		return fs._rename(tmp, src, dst);
 	}
 }
 
-class SyncFileFuture extends CoreMetaDataOperation<RpcResponseMessage.VoidRes, Void> {
+class SyncNodeFuture extends CoreMetaDataOperation<RpcResponseMessage.VoidRes, Void> {
 
-	public SyncFileFuture(Future<RpcResponseMessage.VoidRes> fileRes) {
+	public SyncNodeFuture(Future<RpcResponseMessage.VoidRes> fileRes) {
 		super(fileRes);
 	}
 	

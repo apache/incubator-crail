@@ -42,8 +42,9 @@ public abstract class CrailFS {
 	public abstract Future<CrailDirectory> makeDirectory(String path) throws Exception;
 	public abstract Future<CrailFile> lookupFile(String path, boolean writeable) throws Exception;
 	public abstract Future<CrailDirectory> lookupDirectory(String path) throws Exception;
-	public abstract Future<CrailFile> rename(String src, String dst) throws Exception;
-	public abstract Future<CrailFile> delete(String path, boolean recursive) throws Exception;
+	public abstract Future<CrailNode> lookupNode(String path) throws Exception;
+	public abstract Future<CrailNode> rename(String src, String dst) throws Exception;
+	public abstract Future<CrailNode> delete(String path, boolean recursive) throws Exception;
 	
 	public abstract void dumpNameNode() throws Exception;
 	public abstract ByteBuffer allocateBuffer() throws IOException;

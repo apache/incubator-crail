@@ -52,36 +52,36 @@ public class RdmaDataNodeLocalEndpoint implements DataNodeEndpoint {
 	private ConcurrentHashMap<Integer, RdmaBlockIndex> indexMap;
 	private Unsafe unsafe;
 	
-	public RdmaDataNodeLocalEndpoint() throws IOException {
+	public RdmaDataNodeLocalEndpoint(InetSocketAddress datanodeAddr) throws IOException {
+		if (datanodeAddr == null){
+			throw new IOException("Datanode address not valid!");
+		}
+		
 		try {
 			this.bufferMap = new ConcurrentHashMap<Integer, MappedByteBuffer>();
 			this.indexMap = new ConcurrentHashMap<Integer, RdmaBlockIndex>();
 			this.unsafe = getUnsafe();
-			InetSocketAddress datanodeAddr = RdmaDataNode.getDataNodeAddress();
-
-			if (datanodeAddr != null){
-				this.indexDirPath = RdmaDataNode.getIndexDirectory(datanodeAddr);
-				File indexDir = new File(indexDirPath);
-				ByteBuffer fileBuffer = ByteBuffer.allocate(CrailConstants.BUFFER_SIZE);
-				if (indexDir.exists()){
-					for (File indexFile : indexDir.listFiles()) {
-						FileInputStream indexStream = new FileInputStream(indexFile);
-						FileChannel indexChannel = indexStream.getChannel();
-						fileBuffer.clear();
-						indexChannel.read(fileBuffer);
-						fileBuffer.flip();
-						RdmaBlockIndex blockIndex = new RdmaBlockIndex();
-						blockIndex.update(fileBuffer);
-						File dataFile = new File(blockIndex.getPath());
-						MappedByteBuffer mappedBuffer = mmap(dataFile);
-						indexStream.close();
-						indexChannel.close();
-						
-						bufferMap.put(blockIndex.getKey(), mappedBuffer);
-						indexMap.put(blockIndex.getKey(), blockIndex);
-					}				
+			this.indexDirPath = RdmaDataNode.getIndexDirectory(datanodeAddr);
+			File indexDir = new File(indexDirPath);
+			ByteBuffer fileBuffer = ByteBuffer.allocate(CrailConstants.BUFFER_SIZE);
+			if (indexDir.exists()){
+				for (File indexFile : indexDir.listFiles()) {
+					FileInputStream indexStream = new FileInputStream(indexFile);
+					FileChannel indexChannel = indexStream.getChannel();
+					fileBuffer.clear();
+					indexChannel.read(fileBuffer);
+					fileBuffer.flip();
+					RdmaBlockIndex blockIndex = new RdmaBlockIndex();
+					blockIndex.update(fileBuffer);
+					File dataFile = new File(blockIndex.getPath());
+					MappedByteBuffer mappedBuffer = mmap(dataFile);
+					indexStream.close();
+					indexChannel.close();
+					
+					bufferMap.put(blockIndex.getKey(), mappedBuffer);
+					indexMap.put(blockIndex.getKey(), blockIndex);
 				}				
-			}
+			}			
 		} catch(Exception e){
 			throw new IOException(e);
 		}

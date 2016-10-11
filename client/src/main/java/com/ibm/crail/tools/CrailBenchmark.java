@@ -88,7 +88,7 @@ public class CrailBenchmark {
 		long _capacity = _loop*_bufsize;
 		double sumbytes = 0;
 		double ops = 0;
-		CrailFile file = fs.createFile(filename, 0, hosthash).get().syncDir();
+		CrailFile file = fs.createFile(filename, 0, hosthash).get();
 		CrailBufferedOutputStream bufferedStream = file.getBufferedOutputStream(_capacity);	
 		CrailOutputStream directStream = file.getDirectOutputStream(_capacity);	
 		long start = System.currentTimeMillis();
@@ -729,7 +729,8 @@ public class CrailBenchmark {
 		CrailFS fs = CrailFS.newInstance(conf);
 		
 		ByteBuffer buf = ByteBuffer.allocateDirect(size);
-		CrailFile file = fs.createFile(filename, 0, 0).get().syncDir();
+		CrailFile file = fs.createFile(filename, 0, 0).get();
+		file.syncDir();
 		CrailOutputStream directOutputStream = file.getDirectOutputStream(0);
 		directOutputStream.write(buf).get();
 		directOutputStream.close();
@@ -758,7 +759,8 @@ public class CrailBenchmark {
 		String warmupFilename = filename + ".warmup";
 		System.out.println("warmUp, warmupFile " + warmupFilename + ", operations " + operations);
 		if (operations > 0){
-			CrailFile warmupFile = fs.createFile(warmupFilename, 0, 0).get().syncDir();
+			CrailFile warmupFile = fs.createFile(warmupFilename, 0, 0).get();
+			warmupFile.syncDir();
 			CrailBufferedOutputStream warmupStream = warmupFile.getBufferedOutputStream(0);
 			for (int i = 0; i < operations; i++){
 				ByteBuffer buf = bufferList.poll();

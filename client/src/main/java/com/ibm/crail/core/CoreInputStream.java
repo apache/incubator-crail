@@ -45,7 +45,7 @@ public class CoreInputStream extends CoreStream implements CrailInputStream {
 	private long readHint;
 	private CrailImmediateOperation noOp;
 	
-	public CoreInputStream(CoreFile file, long streamId, long readHint) throws Exception {
+	public CoreInputStream(CoreNode file, long streamId, long readHint) throws Exception {
 		super(file, streamId, 0);
 		this.inFlight = new AtomicLong(0);
 		this.readHint = Math.max(0, Math.min(file.getCapacity(), readHint));

@@ -51,7 +51,7 @@ public abstract class CoreStream {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	private CoreFileSystem fs;
-	private CoreFile file;
+	private CoreNode node;
 	private EndpointCache endpointCache;
 	private RpcNameNodeClient namenodeClientRpc;
 	private FileBlockCache blockCache;
@@ -69,10 +69,10 @@ public abstract class CoreStream {
 	abstract Future<DataResult> trigger(DataNodeEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception;
 	abstract void update(long newCapacity);	
 	
-	CoreStream(CoreFile file, long streamId, long fileOffset) throws Exception {
-		this.file = file;
-		this.fs = file.getFileSystem();
-		this.fileInfo = file.getFileInfo();
+	CoreStream(CoreNode node, long streamId, long fileOffset) throws Exception {
+		this.node = node;
+		this.fs = node.getFileSystem();
+		this.fileInfo = node.getFileInfo();
 		this.endpointCache = fs.getDatanodeEndpointCache();
 		this.namenodeClientRpc = fs.getNamenodeClientRpc();
 		this.blockCache = fs.getBlockCache(fileInfo.getFd());
@@ -113,7 +113,7 @@ public abstract class CoreStream {
 				pendingBlocks.add(rpcFuture);
 			} else {
 				this.syncedCapacity = fileInfo.getCapacity();
-				RpcNameNodeFuture<RpcResponseMessage.GetBlockRes> rpcFuture = namenodeClientRpc.getBlock(fileInfo.getFd(), fileInfo.getToken(), position, file.storageAffinity(), file.locationAffinity(), syncedCapacity);
+				RpcNameNodeFuture<RpcResponseMessage.GetBlockRes> rpcFuture = namenodeClientRpc.getBlock(fileInfo.getFd(), fileInfo.getToken(), position, node.storageAffinity(), node.locationAffinity(), syncedCapacity);
 				blockMap.put(rpcFuture.getTicket(), subOperation);
 				pendingBlocks.add(rpcFuture);
 			}
@@ -169,7 +169,7 @@ public abstract class CoreStream {
 			return;
 		}
 		this.syncedCapacity = fileInfo.getCapacity();
-		RpcNameNodeFuture<RpcResponseMessage.GetBlockRes> nextBlock = namenodeClientRpc.getBlock(fileInfo.getFd(), fileInfo.getToken(), nextOffset, file.storageAffinity(), file.locationAffinity(), syncedCapacity);
+		RpcNameNodeFuture<RpcResponseMessage.GetBlockRes> nextBlock = namenodeClientRpc.getBlock(fileInfo.getFd(), fileInfo.getToken(), nextOffset, node.storageAffinity(), node.locationAffinity(), syncedCapacity);
 		nextBlock.setPrefetched(true);
 		nextBlockCache.put(key, nextBlock);
 		this.ioStats.incPrefetchedOps();
@@ -188,7 +188,7 @@ public abstract class CoreStream {
 		Future<Void> future = null;
 		if (fileInfo.getToken() > 0 && syncedCapacity < fileInfo.getCapacity()){
 			syncedCapacity = fileInfo.getCapacity();
-			future = new SyncFileFuture(namenodeClientRpc.setFile(fileInfo, false));	
+			future = new SyncNodeFuture(namenodeClientRpc.setFile(fileInfo, false));	
 		} else {
 			future = new NoOperation();
 		}
@@ -198,7 +198,7 @@ public abstract class CoreStream {
 	
 	void close() throws IOException {
 		try {
-			file.syncDir();
+			node.syncDir();
 			ioStats.setCapacity(fileInfo.getCapacity());
 			if (fs.unregister(this) != null){
 				this.open = false;
@@ -225,8 +225,8 @@ public abstract class CoreStream {
 		return ioStats;
 	}
 	
-	public CoreFile getFile(){
-		return file;
+	public CoreNode getFile(){
+		return node;
 	}
 	
 	BufferCheckpoint getBufferCheckpoint(){

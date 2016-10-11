@@ -34,7 +34,7 @@ public class DirectoryInputStream extends CoreInputStream {
 	private ByteBuffer internalBuf;	
 	private CoreFileSystem fs;
 
-	public DirectoryInputStream(CoreFile file, long streamId) throws Exception {
+	public DirectoryInputStream(CoreDirectory file, long streamId) throws Exception {
 		super(file, streamId, 0);
 		this.fs = file.getFileSystem();
 		this.internalBuf = fs.allocateBuffer();

@@ -26,7 +26,7 @@ import java.util.NoSuchElementException;
 import org.slf4j.Logger;
 import com.ibm.crail.utils.CrailUtils;
 
-public class CoreFileIterator implements Iterator<String> {
+class CoreFileIterator implements Iterator<String> {
 	private static final Logger LOG = CrailUtils.getLogger();
 	private DirectoryRecordIterator iter;
 	private String current;

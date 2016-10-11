@@ -33,7 +33,7 @@ import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.datanode.DataResult;
 import com.ibm.crail.utils.BufferCheckpoint;
 
-public class CoreDataOperation implements Future<CrailResult>, CrailResult {
+class CoreDataOperation implements Future<CrailResult>, CrailResult {
 	protected static int RPC_PENDING = 0;
 	protected static int RPC_DONE = 1;
 	protected static int RPC_ERROR = 2;		
