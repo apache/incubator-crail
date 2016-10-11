@@ -23,7 +23,7 @@
   </property>
   <property>
     <name>fs.defaultFS</name>
-    <value>crail://namenode:9000</value>
+    <value>crail://127.0.0.1:9060</value>
   </property>
   <property>
     <name>fs.AbstractFileSystem.crail.impl</name>
