@@ -702,24 +702,18 @@ public class CoreFileSystem extends CrailFS {
 				streamStats.incCloseInput();
 				this.ioStatsIn.add(stream.getCoreStatistics());
 				streamStats.decCurrentInput();
+				if (stream.getFile().isDir()){
+					streamStats.incCloseInputDir();
+				}
 			} 
 			if (stream instanceof CoreOutputStream){
 				streamStats.incCloseOutput();
 				this.ioStatsOut.add(stream.getCoreStatistics());
 				streamStats.decCurrentOutput();
+				if (stream.getFile().isDir()){
+					streamStats.incCloseOutputDir();
+				}
 			}
-			if (stream instanceof DirectoryInputStream){
-				streamStats.incCloseInput();
-				streamStats.incCloseInputDir();
-				this.ioStatsIn.add(stream.getCoreStatistics());
-				streamStats.decCurrentInput();
-			} 
-			if (stream instanceof DirectoryOutputStream){
-				streamStats.incCloseOutput();
-				streamStats.incCloseOutputDir();
-				this.ioStatsOut.add(stream.getCoreStatistics());
-				streamStats.decCurrentOutput();
-			}			
 		}
 		
 		return stream;
