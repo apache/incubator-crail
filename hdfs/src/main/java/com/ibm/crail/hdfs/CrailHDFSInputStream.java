@@ -185,7 +185,7 @@ public class CrailHDFSInputStream extends FSDataInputStream {
 
 		@Override
 		public void seek(long n) throws IOException {
-			inputStream.skip(n);
+			inputStream.seek(n);
 		}
 
 		@Override
