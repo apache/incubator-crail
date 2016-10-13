@@ -6,14 +6,15 @@ import java.util.concurrent.Future;
 
 import com.ibm.crail.CrailResult;
 
-public class DirectoryOutputStream extends CoreOutputStream {
+public class DirectoryOutputStream {
+	private CoreOutputStream stream;
 	private ByteBuffer internalBuf;	
 	private CoreFileSystem fs;
 
-	public DirectoryOutputStream(CoreDirectory directory, long streamId)
+	public DirectoryOutputStream(CoreOutputStream stream)
 			throws Exception {
-		super(directory, streamId, 0);
-		this.fs = directory.getFileSystem();
+		this.fs = stream.getFile().getFileSystem();
+		this.stream = stream;
 		this.internalBuf = fs.allocateBuffer();
 	}
 	
@@ -21,17 +22,21 @@ public class DirectoryOutputStream extends CoreOutputStream {
 		internalBuf.clear();
 		record.write(internalBuf);
 		internalBuf.flip();
-		seek(offset);
-		Future<CrailResult> future = write(internalBuf);
+		stream.seek(offset);
+		Future<CrailResult> future = stream.write(internalBuf);
 		return future;
 	}	
 	
 	public void close() throws IOException {
-		if (!this.isOpen()){
-			return;
-		}
-		super.close();
-		fs.freeBuffer(internalBuf);
+		try {
+			if (!stream.isOpen()){
+				return;
+			}
+			stream.close();
+			fs.freeBuffer(internalBuf);
+		} catch (Exception e) {
+			throw new IOException(e);
+		} 		
 	}	
 	
 	//debug

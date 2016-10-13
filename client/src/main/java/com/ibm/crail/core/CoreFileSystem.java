@@ -44,6 +44,7 @@ import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailFS;
 import com.ibm.crail.CrailNode;
+import com.ibm.crail.CrailOutputStream;
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
@@ -430,12 +431,7 @@ public class CoreFileSystem extends CrailFS {
 		return new CoreDeleteNode(this, fileInfo, path, future, stream);
 	}	
 	
-	public Iterator<String> listEntries(String name) throws Exception {
-		DirectoryRecordIterator dirRecordIter = _listEntries(name);
-		return new CoreFileIterator(dirRecordIter);
-	}	
-	
-	public DirectoryRecordIterator _listEntries(String name) throws Exception {
+	public DirectoryInputStream listEntries(String name) throws Exception {
 		FileName directory = new FileName(name);
 		
 		if (CrailConstants.DEBUG){
@@ -456,9 +452,8 @@ public class CoreFileSystem extends CrailFS {
 		
 		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, name);
 		DirectoryInputStream inputStream = this.getDirectoryInputStream(dirFile);
-		
-		return new DirectoryRecordIterator(name, inputStream);
-	}		
+		return inputStream;
+	}	
 	
 	public CrailBlockLocation[] getBlockLocations(String path, long start, long len) throws Exception {
 		if (CrailConstants.DEBUG){
@@ -639,20 +634,17 @@ public class CoreFileSystem extends CrailFS {
 
 	//-------------------------------------------------------------
 	
-	CoreInputStream getInputStream(CoreFile file, long readHint) throws Exception {
-		CoreInputStream inputStream = new CoreInputStream(file, streamCounter.incrementAndGet(), readHint);
-		openStreams.put(inputStream.getStreamId(), inputStream);
-		
-		if (CrailConstants.STATISTICS){
-			streamStats.incOpen();
-			streamStats.incOpenInput();
-			streamStats.incCurrentInput();
-			streamStats.incMaxInput();
-		}
-		return inputStream;
+	DirectoryOutputStream getDirectoryOutputStream(CoreDirectory directory) throws Exception {
+		CoreOutputStream outputStream = getOutputStream(directory, 0);
+		return new DirectoryOutputStream(outputStream);
 	}
+	
+	DirectoryInputStream getDirectoryInputStream(CoreDirectory directory) throws Exception {
+		CoreInputStream inputStream = getInputStream(directory, 0);
+		return new DirectoryInputStream(inputStream);
+	}	
 
-	CoreOutputStream getOutputStream(CoreFile file, long writeHint) throws Exception {
+	CoreOutputStream getOutputStream(CoreNode file, long writeHint) throws Exception {
 		CoreOutputStream outputStream = new CoreOutputStream(file, streamCounter.incrementAndGet(), writeHint);
 		openStreams.put(outputStream.getStreamId(), outputStream);
 
@@ -661,12 +653,15 @@ public class CoreFileSystem extends CrailFS {
 			streamStats.incOpenOutput();
 			streamStats.incCurrentOutput();
 			streamStats.incMaxOutput();
+			if (file.isDir()){
+				streamStats.incOpenOutputDir();
+			}
 		}
 		return outputStream;
-	}	
+	}		
 	
-	DirectoryInputStream getDirectoryInputStream(CoreDirectory directory) throws Exception {
-		DirectoryInputStream inputStream = new DirectoryInputStream(directory, streamCounter.incrementAndGet());
+	CoreInputStream getInputStream(CoreNode file, long readHint) throws Exception {
+		CoreInputStream inputStream = new CoreInputStream(file, streamCounter.incrementAndGet(), readHint);
 		openStreams.put(inputStream.getStreamId(), inputStream);
 		
 		if (CrailConstants.STATISTICS){
@@ -674,25 +669,12 @@ public class CoreFileSystem extends CrailFS {
 			streamStats.incOpenInput();
 			streamStats.incCurrentInput();
 			streamStats.incMaxInput();
-			streamStats.incOpenInputDir();
+			if (file.isDir()){
+				streamStats.incOpenInputDir();
+			}
 		}
 		return inputStream;
-	}	
-	
-	DirectoryOutputStream getDirectoryOutputStream(CoreDirectory directory) throws Exception {
-		DirectoryOutputStream inputStream = new DirectoryOutputStream(directory, streamCounter.incrementAndGet());
-		openStreams.put(inputStream.getStreamId(), inputStream);
-		
-		if (CrailConstants.STATISTICS){
-			streamStats.incOpen();
-			streamStats.incOpenOutput();
-			streamStats.incCurrentOutput();
-			streamStats.incMaxOutput();
-			streamStats.incOpenOutputDir();
-		}		
-		
-		return inputStream;
-	}		
+	}
 	
 	CoreStream unregister(CoreStream coreStream) {
 		CoreStream stream = this.openStreams.remove(coreStream.getStreamId());

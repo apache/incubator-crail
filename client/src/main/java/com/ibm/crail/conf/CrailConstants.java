@@ -31,7 +31,7 @@ public class CrailConstants {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	public static final String VERSION_KEY = "crail.version";
-	public static int VERSION = 2633;
+	public static int VERSION = 2634;
 	
 	public static final String NAMENODE_ADDRESS_KEY = "crail.namenode.address";
 	public static String NAMENODE_ADDRESS = "";
@@ -214,6 +214,6 @@ public class CrailConstants {
 		}	
 		if (!CrailConstants.NAMENODE_DARPC_TYPE.equalsIgnoreCase("passive") && !CrailConstants.NAMENODE_DARPC_TYPE.equalsIgnoreCase("active")){
 			throw new IOException("crail.namenode.darpc.type must be either <active> or <passive>, found " + CrailConstants.NAMENODE_DARPC_TYPE);
-		}	
+		}
 	}
 }

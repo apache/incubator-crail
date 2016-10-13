@@ -39,49 +39,31 @@ public class DirectoryRecord {
 		this.filename = CrailUtils.getName(path);
 	}	
 	
-	private DirectoryRecord(String parent) {
+	public DirectoryRecord(String parent) {
+		this.valid = 0;
 		this.parent = parent;
+		this.filename = null;
+		
 	}
 	
-	public static DirectoryRecord fromBuffer(String parent, ByteBuffer buffer) throws Exception {
-		DirectoryRecord record = null;
-		if (buffer.remaining() >= DirectoryRecord.MaxSize){
-			record = new DirectoryRecord(parent); 
-			record.update(buffer);
-		}
-		return record;
-	}	
-
 	public void write(ByteBuffer buffer) throws Exception {
-		if (buffer.remaining() < DirectoryRecord.MaxSize){
-			throw new Exception("Not enough space in buffer, remaining " + buffer.remaining());
-		}		
-		
 		int oldposition = buffer.position();
-		
 		buffer.putInt(valid);
 		byte barray[] = filename.getBytes();
 		buffer.putInt(barray.length);
 		buffer.put(barray);
-		
 		buffer.position(oldposition + MaxSize);
 	}
 	
-	public void update(ByteBuffer buffer) throws Exception {
-		if (buffer.remaining() < DirectoryRecord.MaxSize){
-			throw new Exception("Not enough space in buffer, remaining " + buffer.remaining());
-		}
-			
+	public void update(ByteBuffer buffer) {
 		int oldlimit = buffer.limit();
 		int tmplimit = buffer.position() + DirectoryRecord.MaxSize;
 		buffer.limit(tmplimit);
-		
 		valid = buffer.getInt();
 		int length = buffer.getInt();
 		byte barray[] = new byte[length];
 		buffer.get(barray);
 		filename = new String(barray);
-		
 		buffer.position(tmplimit);
 		buffer.limit(oldlimit);
 	}

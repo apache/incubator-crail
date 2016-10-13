@@ -23,49 +23,114 @@ package com.ibm.crail.core;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConstants;
+import com.ibm.crail.utils.CrailUtils;
 
 
-public class DirectoryInputStream extends CoreInputStream {
+public class DirectoryInputStream implements Iterator<String> {
+	private static final Logger LOG = CrailUtils.getLogger();
+	
+	private CoreInputStream stream;
 	private ByteBuffer internalBuf;	
 	private CoreFileSystem fs;
-
-	public DirectoryInputStream(CoreDirectory file, long streamId) throws Exception {
-		super(file, streamId, 0);
-		this.fs = file.getFileSystem();
+	private String parent;
+	private String currentFile;
+	
+	public DirectoryInputStream(CoreInputStream stream) throws Exception {
+		this.stream = stream;
+		this.fs = stream.getFile().getFileSystem();
+		this.parent = stream.getFile().getPath();
 		this.internalBuf = fs.allocateBuffer();
-		if (internalBuf.capacity() % DirectoryRecord.MaxSize != 0){
-			throw new IOException("buffer from cache is not a multiple of " + DirectoryRecord.MaxSize);
-		}
 		this.internalBuf.clear();
-		this.internalBuf.position(this.internalBuf.capacity());		
+		this.internalBuf.position(this.internalBuf.capacity());
+		this.currentFile = null;
 	}
 	
-	DirectoryRecord readRecord(String name) throws Exception {
-		if (!internalBuf.hasRemaining()){
-			internalBuf.clear();
-			Future<CrailResult> future = read(internalBuf);
-			long res = future != null ? future.get(CrailConstants.DATA_TIMEOUT, TimeUnit.MILLISECONDS).getLen() : -1;
-			if (res >= DirectoryRecord.MaxSize){
-				internalBuf.flip();
-			} else {
-				internalBuf.position(internalBuf.capacity());
+	public boolean hasNext() {
+		if (currentFile != null){
+			return true;
+		}
+		while(hasRecord()){
+			DirectoryRecord record = nextRecord();
+			if (record.isValid()){
+				currentFile = CrailUtils.combinePath(record.getParent(), record.getFile());
+				break;
 			}
 		}
-		return DirectoryRecord.fromBuffer(name, internalBuf);
+		return currentFile != null;
 	}
 	
-	public void close() throws IOException {
-		if (!this.isOpen()){
-			return;
+	public String next(){
+		String ret = currentFile;
+		currentFile = null;
+		return ret;
+	}
+	
+	public boolean hasRecord() {
+		if (fetchIfEmpty()){
+			if (internalBuf.remaining() >= DirectoryRecord.MaxSize){
+				return true;
+			}
 		}
-		
-		super.close();
-		fs.freeBuffer(internalBuf);
+		try {
+			close();
+		} catch(Exception e){
+			LOG.info("error when closing directory stream " + e.getMessage());
+		}
+		return false;
+	}
+
+	public DirectoryRecord nextRecord() {
+		DirectoryRecord record = new DirectoryRecord(parent);
+		record.update(internalBuf);
+		return record;
+	}	
+	
+	private boolean fetchIfEmpty() {
+		try {
+			if (internalBuf.remaining() != 0){
+				return true;
+			}
+			
+			internalBuf.clear();
+			Future<CrailResult> future = stream.read(internalBuf);
+			if (future == null){
+				internalBuf.position(internalBuf.limit());
+				return false;
+			}
+			
+			long ret = future.get(CrailConstants.DATA_TIMEOUT, TimeUnit.MILLISECONDS).getLen();
+			if (ret > 0){
+				internalBuf.flip();
+			} else {
+				internalBuf.position(internalBuf.limit());
+				return false;
+			}
+			
+			return true;
+		} catch(Exception e){
+			return false;
+		}
+	}	
+	
+	public void close() throws IOException {
+		try {
+			if (!stream.isOpen()){
+				return;
+			}			
+			
+			stream.close();
+			fs.freeBuffer(internalBuf);
+		} catch (Exception e) {
+			throw new IOException(e);
+		}
 	}	
 	
 	//debug

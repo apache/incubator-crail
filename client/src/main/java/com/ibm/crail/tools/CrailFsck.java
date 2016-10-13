@@ -33,8 +33,8 @@ import com.ibm.crail.CrailFile;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.core.CoreFileSystem;
+import com.ibm.crail.core.DirectoryInputStream;
 import com.ibm.crail.core.DirectoryRecord;
-import com.ibm.crail.core.DirectoryRecordIterator;
 import com.ibm.crail.namenode.protocol.FileName;
 import com.ibm.crail.utils.GetOpt;
 import com.ibm.crail.utils.CrailUtils;
@@ -91,11 +91,11 @@ public class CrailFsck {
 		CrailConfiguration conf = new CrailConfiguration();
 		CrailConstants.updateConstants(conf);
 		CoreFileSystem fs = new CoreFileSystem(conf);		
-		DirectoryRecordIterator iter = fs._listEntries(filename);
+		DirectoryInputStream iter = fs.listEntries(filename);
 		System.out.println("#hash   \t\tname\t\tfilecomponent");
 		int i = 0;
-		while(iter.hasNext()){
-			DirectoryRecord record = iter.next();
+		while(iter.hasRecord()){
+			DirectoryRecord record = iter.nextRecord();
 			String path = CrailUtils.combinePath(record.getParent(), record.getFile());
 			FileName hash = new FileName(path);
 			System.out.format(i + ": " + "%08d\t\t%s\t%d\n", record.isValid() ? 1 : 0, padRight(record.getFile(), 8), hash.getFileComponent());
