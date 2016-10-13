@@ -611,7 +611,7 @@ public class CoreFileSystem extends CrailFS {
 		if (!isOpen) {
 			return;
 		}
-	
+		
 		LinkedList<CoreStream> streamTmp = new LinkedList<CoreStream>();
 		for (CoreStream stream : openStreams.values()) {
 			streamTmp.add(stream);

@@ -159,8 +159,7 @@ public abstract class CoreStream {
 		return multiOperation;
 	}
 	
-	final void prefetchMetadata() throws Exception {
-		long nextOffset = CrailUtils.nextBlockAddress(position);
+	final void prefetchMetadata(long nextOffset) throws Exception {
 		String key = CoreSubOperation.createKey(fileInfo.getFd(), nextOffset);
 		if (blockCache.containsKey(key)){
 			return;

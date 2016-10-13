@@ -7,6 +7,6 @@ public interface CrailDirectory extends CrailNode {
 	public abstract Iterator<String> listEntries() throws Exception;
 	
 	default CrailMultiStream getMultiStream(int outstanding) throws Exception{
-		return new CrailMultiStream(this.getFileSystem(), listEntries(), outstanding);
+		return new CrailMultiStream(this.getFileSystem(), listEntries(), outstanding, files());
 	}	
 }

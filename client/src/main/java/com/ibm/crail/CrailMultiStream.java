@@ -58,7 +58,7 @@ public class CrailMultiStream extends InputStream {
 	private long totalBlocks;
 	private long totalNonBlocks;
 	
-	public CrailMultiStream(CrailFS fs, Iterator<String> paths, int outstanding) throws Exception{
+	public CrailMultiStream(CrailFS fs, Iterator<String> paths, int outstanding, int maxfiles) throws Exception{
 		this.virtualPosition = 0;
 		this.virtualCapacity = 0;
 		this.currentBuffer = null;
