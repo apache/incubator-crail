@@ -265,7 +265,7 @@ public class CrailBenchmark {
 					ops = ops + 1.0;
 				} else {
 					ops = ops + 1.0;
-					if (bufferedStream.getPos() == 0){
+					if (bufferedStream.position() == 0){
 						break;
 					} else {
 						bufferedStream.seek(0);

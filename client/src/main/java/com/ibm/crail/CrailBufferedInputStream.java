@@ -26,23 +26,34 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+
 import com.ibm.crail.conf.CrailConstants;
+import com.ibm.crail.utils.CrailUtils;
 
 public class CrailBufferedInputStream extends InputStream {
+	private static final Logger LOG = CrailUtils.getLogger();
+	
+	private CrailFS crailFS;
 	private CrailInputStream inputStream;
-	private ByteBuffer internalBuf;	
 	private byte[] tmpByteBuf;
 	private ByteBuffer tmpBoundaryBuffer;
-	private CrailFS crailFS;
+	private ByteBuffer internalBuf;	
+	private Future<CrailResult> future;
+	private boolean pending;
+	private long position;
 	
 	public CrailBufferedInputStream(CrailFS crailFS, CrailInputStream inputStream) throws IOException {
 		this.crailFS = crailFS;
 		this.inputStream = inputStream;
-		this.internalBuf = crailFS.allocateBuffer();
-		this.internalBuf.clear();
-		this.internalBuf.flip();
+		this.position = 0;
 		this.tmpByteBuf = new byte[1];
 		this.tmpBoundaryBuffer = ByteBuffer.allocate(8);
+		this.internalBuf = crailFS.allocateBuffer();
+		this.pending = false;
+		this.internalBuf.clear().flip();
+		this.future = triggerFetch();
 	}
 	
 	public final synchronized int read() throws IOException {
@@ -55,7 +66,7 @@ public class CrailBufferedInputStream extends InputStream {
     }	
 
 	public final synchronized int read(long position, byte[] buffer, int offset, int length) throws IOException {
-		long oldPos = getPos();
+		long oldPos = position();
 		int nread = -1;
 		try {
 			seek(position);
@@ -79,19 +90,19 @@ public class CrailBufferedInputStream extends InputStream {
 			}
 			
 			int sumLen = 0;
-			while (len > 0) {
-				if (!fetchIfEmpty()){
-					break;
-				}
-				int bufferRemaining = Math.min(len, internalBuf.remaining());
-				internalBuf.get(buf, off, bufferRemaining);
-				len -= bufferRemaining;
-				off += bufferRemaining;
-				sumLen += bufferRemaining;
-			}
-			
-			int totalBytesRead = sumLen > 0 ? sumLen : -1;
-			return totalBytesRead;
+			while (len > 0 && future != null) {
+				internalBuf = completeFetch();
+				if (internalBuf.remaining() > 0){
+					int bufferRemaining = Math.min(len, internalBuf.remaining());
+					internalBuf.get(buf, off, bufferRemaining);
+					len -= bufferRemaining;
+					off += bufferRemaining;
+					sumLen += bufferRemaining;		
+					position += bufferRemaining;
+				} 
+				future = triggerFetch();
+			}			
+			return sumLen > 0 ? sumLen : -1;
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new IOException(e);
@@ -108,52 +119,55 @@ public class CrailBufferedInputStream extends InputStream {
 
 			int len = dataBuf.remaining();
 			int sumLen = 0;
-			while (len > 0) {
-				if (!fetchIfEmpty()){
-					break;
-				}					
-				int bufferRemaining = Math.min(len, internalBuf.remaining());
-				int oldLimit = internalBuf.limit();
-				internalBuf.limit(internalBuf.position() + bufferRemaining);
-				dataBuf.put(internalBuf);
-				internalBuf.limit(oldLimit);
-				len -= bufferRemaining;
-				sumLen += bufferRemaining;
+			while (len > 0 && future != null) {
+				internalBuf = completeFetch();
+				if (internalBuf.remaining() > 0){
+					int bufferRemaining = Math.min(len, internalBuf.remaining());
+					int oldLimit = internalBuf.limit();
+					internalBuf.limit(internalBuf.position() + bufferRemaining);
+					dataBuf.put(internalBuf);
+					internalBuf.limit(oldLimit);
+					len -= bufferRemaining;
+					sumLen += bufferRemaining;	
+					position += bufferRemaining;
+				} 
+				future = triggerFetch();
 			}
 			return sumLen > 0 ? sumLen : -1;			
-			
 		} catch (Exception e) {
 			throw new IOException(e);
 		}
 		
 	}
 	
-	private boolean fetchIfEmpty() throws IOException {
+	private Future<CrailResult> triggerFetch() throws IOException {
 		try {
-			if (internalBuf.remaining() != 0){
-				return true;
+			if (internalBuf.remaining() == 0){
+				internalBuf.clear();
+				pending = true;
+				future = inputStream.read(internalBuf);
+				if (future == null){
+					internalBuf.clear().flip();
+				}
 			}
-			
-			internalBuf.clear();
-			Future<CrailResult> future = inputStream.read(internalBuf);
-			if (future == null){
-				internalBuf.position(internalBuf.limit());
-				return false;
-			}
-			
-			long ret = future.get(CrailConstants.DATA_TIMEOUT, TimeUnit.MILLISECONDS).getLen();
-			if (ret > 0){
-				internalBuf.flip();
-			} else {
-				internalBuf.position(internalBuf.limit());
-				throw new IOException("not enough bytes read");
-			}
-			
-			return true;
+			return future;
 		} catch(Exception e){
 			throw new IOException(e);
 		}
-	}
+	}	
+	
+	private ByteBuffer completeFetch() throws IOException {
+		try {
+			if (pending){
+				future.get();
+				internalBuf.flip();
+				pending = false;
+			}
+			return internalBuf;
+		} catch(Exception e){
+			throw new IOException(e);
+		}
+	}	
 	
 	@Override
 	public synchronized void close() throws IOException {
@@ -188,11 +202,6 @@ public class CrailBufferedInputStream extends InputStream {
 		}
 	}
 
-	@Override
-	public synchronized void reset() throws IOException {
-		this.seek(0);
-	}
-	
 	public synchronized void seek(long pos) throws IOException {
 		long oldPos = inputStream.position();
 		inputStream.seek(pos);
@@ -206,6 +215,7 @@ public class CrailBufferedInputStream extends InputStream {
 				internalBuf.clear();
 				internalBuf.flip();
 			}
+			position += skipped;
 		} else if (oldPos > newPos) {
 			long removed = oldPos - newPos;
 			if (removed < internalBuf.position()) {
@@ -215,46 +225,31 @@ public class CrailBufferedInputStream extends InputStream {
 				internalBuf.clear();
 				internalBuf.flip();
 			}
+			position -= removed;
 		}
 	}
 
 
 	public synchronized int available() {
-		return inputStream.available();
+		try {
+			if (pending && future != null && future.isDone()){
+				return (int) future.get().getLen();
+			} else {
+				return internalBuf.remaining();
+			}
+		} catch(Exception e){
+			return -1;
+		}
 	}
 
-	public synchronized boolean seekToNewSource(long targetPos) throws IOException {
-		return false;
-	}
-
-
-	public boolean markSupported() {
-		return false;
-	}
-
-	public synchronized void mark(int readlimit) {
-	}
-
-	public synchronized long getPos() {
-		return inputStream.position();
-	}
-	
-	public void setReadahead(Long readahead) throws IOException,
-			UnsupportedOperationException {
-	}	
-	
 	public boolean isOpen() {
 		return inputStream.isOpen();
 	}
 
-	public long position() {
-		return inputStream.position();
+	public synchronized long position() {
+		return position;
 	}
 
-	public long getReadHint() {
-		return inputStream.getReadHint();
-	}
-	
 	//---------------------- ByteBuffer interface 
 	
 	public final synchronized double readDouble() throws Exception {

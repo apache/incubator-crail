@@ -78,7 +78,7 @@ public class CoreInputStream extends CoreStream implements CrailInputStream {
 		
 		inFlight.incrementAndGet();
 		long nextOffset = CrailUtils.nextBlockAddress(position() + dataBuf.remaining());
-		if (nextOffset < this.getReadHint()){
+		if (nextOffset < readHint){
 			prefetchMetadata(nextOffset);
 		}
 		Future<CrailResult> future = dataOperation(dataBuf);
@@ -103,10 +103,6 @@ public class CoreInputStream extends CoreStream implements CrailInputStream {
 			this.readHint = 0;
 		}
 	}
-	
-	final public long getReadHint() {
-		return this.readHint;
-	}		
 	
 	public synchronized void close() throws IOException {
 		if (!isOpen()){
@@ -133,8 +129,4 @@ public class CoreInputStream extends CoreStream implements CrailInputStream {
 	public void update(long newCapacity) {
 		inFlight.decrementAndGet();
 	}
-	
-	public long getInFlight(){
-		return inFlight.get();
-	}	
 }

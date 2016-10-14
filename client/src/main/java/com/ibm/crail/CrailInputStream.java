@@ -31,6 +31,5 @@ public interface CrailInputStream {
 	public int available();
 	public boolean isOpen();
 	public long position();
-	public long getReadHint();
 	void close() throws IOException;
 }

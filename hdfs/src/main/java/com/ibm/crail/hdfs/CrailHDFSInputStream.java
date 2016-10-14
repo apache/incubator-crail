@@ -49,7 +49,7 @@ public class CrailHDFSInputStream extends FSDataInputStream {
 
 	@Override
 	public long getPos() throws IOException {
-		return inputStream.getPos();
+		return inputStream.position();
 	}
 
 	@Override
@@ -83,7 +83,7 @@ public class CrailHDFSInputStream extends FSDataInputStream {
 
 	@Override
 	public boolean seekToNewSource(long targetPos) throws IOException {
-		return inputStream.seekToNewSource(targetPos);
+		return false;
 	}
 
 	@Override
@@ -180,7 +180,7 @@ public class CrailHDFSInputStream extends FSDataInputStream {
 
 		@Override
 		public long getPos() throws IOException {
-			return inputStream.getPos();
+			return inputStream.position();
 		}
 
 		@Override
@@ -190,7 +190,7 @@ public class CrailHDFSInputStream extends FSDataInputStream {
 
 		@Override
 		public boolean seekToNewSource(long targetPos) throws IOException {
-			return inputStream.seekToNewSource(targetPos);
+			return false;
 		}		
 	}
 	

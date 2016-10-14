@@ -113,8 +113,4 @@ public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 		inFlight.decrementAndGet();
 		setCapacity(newCapacity);
 	}
-	
-	public long getInFlight(){
-		return inFlight.get();
-	}
 }
