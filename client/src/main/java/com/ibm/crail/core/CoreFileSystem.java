@@ -432,6 +432,10 @@ public class CoreFileSystem extends CrailFS {
 	}	
 	
 	public DirectoryInputStream listEntries(String name) throws Exception {
+		return _listEntries(name, CrailConstants.DIRECTORY_RANDOMIZE);
+	}
+	
+	public DirectoryInputStream _listEntries(String name, boolean randomize) throws Exception {
 		FileName directory = new FileName(name);
 		
 		if (CrailConstants.DEBUG){
@@ -451,7 +455,7 @@ public class CoreFileSystem extends CrailFS {
 		}
 		
 		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, name);
-		DirectoryInputStream inputStream = this.getDirectoryInputStream(dirFile);
+		DirectoryInputStream inputStream = this.getDirectoryInputStream(dirFile, randomize);
 		return inputStream;
 	}	
 	
@@ -639,9 +643,9 @@ public class CoreFileSystem extends CrailFS {
 		return new DirectoryOutputStream(outputStream);
 	}
 	
-	DirectoryInputStream getDirectoryInputStream(CoreDirectory directory) throws Exception {
+	DirectoryInputStream getDirectoryInputStream(CoreDirectory directory, boolean randomize) throws Exception {
 		CoreInputStream inputStream = getInputStream(directory, 0);
-		return new DirectoryInputStream(inputStream);
+		return new DirectoryInputStream(inputStream, randomize);
 	}	
 
 	CoreOutputStream getOutputStream(CoreNode file, long writeHint) throws Exception {

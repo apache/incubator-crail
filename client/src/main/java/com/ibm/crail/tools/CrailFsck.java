@@ -87,11 +87,11 @@ public class CrailFsck {
 		fs.close();
 	}
 
-	public void directoryDump(String filename) throws Exception {
+	public void directoryDump(String filename, boolean randomize) throws Exception {
 		CrailConfiguration conf = new CrailConfiguration();
 		CrailConstants.updateConstants(conf);
 		CoreFileSystem fs = new CoreFileSystem(conf);		
-		DirectoryInputStream iter = fs.listEntries(filename);
+		DirectoryInputStream iter = fs._listEntries(filename, randomize);
 		System.out.println("#hash   \t\tname\t\tfilecomponent");
 		int i = 0;
 		while(iter.hasRecord()){
@@ -149,7 +149,7 @@ public class CrailFsck {
 	
 	public static void main(String[] args) throws Exception {
 		String[] _args = args;
-		GetOpt go = new GetOpt(_args, "t:f:y:l:");
+		GetOpt go = new GetOpt(_args, "t:f:y:l:r:");
 		go.optErr = true;
 		int ch = -1;
 		
@@ -161,6 +161,7 @@ public class CrailFsck {
 		String filename = "/tmp.dat";
 		int offset = 0;
 		int length = 1;
+		boolean randomize = false;
 		
 		while ((ch = go.getopt()) != GetOpt.optEOF) {
 			if ((char) ch == 't') {
@@ -171,6 +172,8 @@ public class CrailFsck {
 				offset = Integer.parseInt(go.optArgGet());
 			} else if ((char) ch == 'l') {
 				length = Integer.parseInt(go.optArgGet());
+			} else if ((char) ch == 'r') {
+				randomize = Boolean.parseBoolean(go.optArgGet());
 			} else {
 				System.exit(1); // undefined option
 			}
@@ -180,7 +183,7 @@ public class CrailFsck {
 		if (type.equals("getLocations")){
 			fsck.getLocations(filename, offset, length);
 		} else if (type.equals("directoryDump")){
-			fsck.directoryDump(filename);
+			fsck.directoryDump(filename, randomize);
 		} else if (type.equals("namenodeDump")){
 			fsck.namenodeDump();
 		} else if (type.equals("blockStatistics")){

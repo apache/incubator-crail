@@ -27,8 +27,6 @@ import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.utils.CrailUtils;
 
 public class DirectoryRecord {
-//	public static int MaxSize = 512; //FlashSystem
-	
 	private int valid;
 	private String parent;
 	private String filename;

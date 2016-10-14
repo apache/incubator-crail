@@ -47,9 +47,11 @@ public class DirectoryInputStream implements Iterator<String> {
 	private int availableRecords;
 	private int[] blockTickets;
 	private Random random;
+	private boolean randomize;
 	
-	public DirectoryInputStream(CoreInputStream stream) throws Exception {
+	public DirectoryInputStream(CoreInputStream stream, boolean randomize) throws Exception {
 		this.stream = stream;
+		this.randomize = randomize;
 		this.fs = stream.getFile().getFileSystem();
 		this.parent = stream.getFile().getPath();
 		this.internalBuf = fs.allocateBuffer();
@@ -58,8 +60,11 @@ public class DirectoryInputStream implements Iterator<String> {
 		this.currentFile = null;
 		this.availableRecords = 0;
 		this.consumedRecords = 0;
-		this.blockTickets = new int[CrailConstants.BUFFER_SIZE/CrailConstants.DIRECTORY_RECORD];
 		this.random = new Random();
+		this.blockTickets = new int[CrailConstants.BUFFER_SIZE/CrailConstants.DIRECTORY_RECORD];
+		for (int i = 0; i < blockTickets.length; i++){
+			blockTickets[i] = i;
+		}		
 	}
 	
 	public boolean hasNext() {
@@ -114,10 +119,9 @@ public class DirectoryInputStream implements Iterator<String> {
 						internalBuf.flip();
 						availableRecords = internalBuf.remaining() / CrailConstants.DIRECTORY_RECORD;
 						consumedRecords = 0;
-						for (int i = 0; i < availableRecords; i++){
-							blockTickets[i] = i;
+						if (randomize){
+							shuffleTickets(blockTickets, availableRecords);
 						}
-						shuffleTickets(blockTickets, availableRecords);
 					} 		
 				}
 			}
@@ -142,6 +146,9 @@ public class DirectoryInputStream implements Iterator<String> {
 	}	
 	
 	void shuffleTickets(int[] tickets, int length) {
+		for (int i = 0; i < availableRecords; i++){
+			blockTickets[i] = i;
+		}		
 		for (int i = length - 1; i > 0; i--) {
 			int index = random.nextInt(i + 1);
 			int tmp = tickets[index];

@@ -31,7 +31,7 @@ public class CrailConstants {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	public static final String VERSION_KEY = "crail.version";
-	public static int VERSION = 2635;
+	public static int VERSION = 2636;
 	
 	public static final String NAMENODE_ADDRESS_KEY = "crail.namenode.address";
 	public static String NAMENODE_ADDRESS = "";
@@ -108,6 +108,9 @@ public class CrailConstants {
 	public static final String DIRECTORY_RECORD_KEY = "crail.directoryrecord";
 	public static int DIRECTORY_RECORD = 512;	
 	
+	public static final String DIRECTORY_RANDOMIZE_KEY = "crail.directoryrandomize";
+	public static boolean DIRECTORY_RANDOMIZE = true;		
+	
 	public static void updateConstants(CrailConfiguration conf){
 		if (conf.get(NAMENODE_ADDRESS_KEY) != null) {
 			NAMENODE_ADDRESS = conf.get(NAMENODE_ADDRESS_KEY);
@@ -183,7 +186,10 @@ public class CrailConstants {
 		}	
 		if (conf.get(DIRECTORY_RECORD_KEY) != null) {
 			DIRECTORY_RECORD = Integer.parseInt(conf.get(DIRECTORY_RECORD_KEY));
-		}		
+		}	
+		if (conf.get(CrailConstants.DIRECTORY_RANDOMIZE_KEY) != null) {
+			DIRECTORY_RANDOMIZE = conf.getBoolean(CrailConstants.DIRECTORY_RANDOMIZE_KEY, false);
+		}			
 	}
 	
 	public static void printConf(){
@@ -213,6 +219,7 @@ public class CrailConstants {
 		LOG.info(SINGLETON_KEY + " " + SINGLETON);
 		LOG.info(REGION_SIZE_KEY + " " + REGION_SIZE);
 		LOG.info(DIRECTORY_RECORD_KEY + " " + DIRECTORY_RECORD);
+		LOG.info(DIRECTORY_RANDOMIZE_KEY + " " + DIRECTORY_RANDOMIZE);
 	}
 	
 	public static void verify() throws IOException {
