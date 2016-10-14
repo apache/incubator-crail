@@ -360,7 +360,7 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("rename: " + NameNodeProtocol.messages[renameRes.getError()]);
 			throw new IOException(NameNodeProtocol.messages[renameRes.getError()]);			
 		} 
-		if (renameRes.getDstParent().getCapacity() < renameRes.getDstFile().getDirOffset() + DirectoryRecord.MaxSize){
+		if (renameRes.getDstParent().getCapacity() < renameRes.getDstFile().getDirOffset() + CrailConstants.DIRECTORY_RECORD){
 			LOG.info("rename: parent capacity does not match dst file offset, capacity " + renameRes.getDstParent().getCapacity() + ", offset " + renameRes.getDstFile().getDirOffset());
 		}		
 		

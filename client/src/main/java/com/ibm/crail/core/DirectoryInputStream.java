@@ -24,6 +24,7 @@ package com.ibm.crail.core;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
+import java.util.Random;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -42,6 +43,10 @@ public class DirectoryInputStream implements Iterator<String> {
 	private CoreFileSystem fs;
 	private String parent;
 	private String currentFile;
+	private int consumedRecords;
+	private int availableRecords;
+	private int[] blockTickets;
+	private Random random;
 	
 	public DirectoryInputStream(CoreInputStream stream) throws Exception {
 		this.stream = stream;
@@ -51,6 +56,10 @@ public class DirectoryInputStream implements Iterator<String> {
 		this.internalBuf.clear();
 		this.internalBuf.position(this.internalBuf.capacity());
 		this.currentFile = null;
+		this.availableRecords = 0;
+		this.consumedRecords = 0;
+		this.blockTickets = new int[CrailConstants.BUFFER_SIZE/CrailConstants.DIRECTORY_RECORD];
+		this.random = new Random();
 	}
 	
 	public boolean hasNext() {
@@ -74,10 +83,8 @@ public class DirectoryInputStream implements Iterator<String> {
 	}
 	
 	public boolean hasRecord() {
-		if (fetchIfEmpty()){
-			if (internalBuf.remaining() >= DirectoryRecord.MaxSize){
-				return true;
-			}
+		if (fetchIfEmpty() > 0){
+			return true;
 		}
 		try {
 			close();
@@ -89,34 +96,35 @@ public class DirectoryInputStream implements Iterator<String> {
 
 	public DirectoryRecord nextRecord() {
 		DirectoryRecord record = new DirectoryRecord(parent);
+		int offset = blockTickets[consumedRecords]*CrailConstants.DIRECTORY_RECORD;
+		internalBuf.position(offset);
 		record.update(internalBuf);
+		consumedRecords++;
 		return record;
 	}	
 	
-	private boolean fetchIfEmpty() {
+	private int fetchIfEmpty() {
 		try {
-			if (internalBuf.remaining() != 0){
-				return true;
+			if (consumedRecords == availableRecords){
+				internalBuf.clear();
+				Future<CrailResult> future = stream.read(internalBuf);
+				if (future != null){
+					long ret = future.get(CrailConstants.DATA_TIMEOUT, TimeUnit.MILLISECONDS).getLen();
+					if (ret > 0){
+						internalBuf.flip();
+						availableRecords = internalBuf.remaining() / CrailConstants.DIRECTORY_RECORD;
+						consumedRecords = 0;
+						for (int i = 0; i < availableRecords; i++){
+							blockTickets[i] = i;
+						}
+						shuffleTickets(blockTickets, availableRecords);
+					} 		
+				}
 			}
 			
-			internalBuf.clear();
-			Future<CrailResult> future = stream.read(internalBuf);
-			if (future == null){
-				internalBuf.position(internalBuf.limit());
-				return false;
-			}
-			
-			long ret = future.get(CrailConstants.DATA_TIMEOUT, TimeUnit.MILLISECONDS).getLen();
-			if (ret > 0){
-				internalBuf.flip();
-			} else {
-				internalBuf.position(internalBuf.limit());
-				return false;
-			}
-			
-			return true;
+			return availableRecords - consumedRecords;
 		} catch(Exception e){
-			return false;
+			return 0;
 		}
 	}	
 	
@@ -133,17 +141,12 @@ public class DirectoryInputStream implements Iterator<String> {
 		}
 	}	
 	
-	//debug
-	
-	public int getBufCapacity(){
-		return internalBuf.capacity();
-	}
-	
-	public int getBufPosition(){
-		return internalBuf.position();
-	}
-	
-	public int getBufLimit(){
-		return internalBuf.limit();
+	void shuffleTickets(int[] tickets, int length) {
+		for (int i = length - 1; i > 0; i--) {
+			int index = random.nextInt(i + 1);
+			int tmp = tickets[index];
+			tickets[index] = tickets[i];
+			tickets[i] = tmp;
+		}
 	}
 }

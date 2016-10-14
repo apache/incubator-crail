@@ -23,11 +23,11 @@ package com.ibm.crail.core;
 
 import java.nio.ByteBuffer;
 
+import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.utils.CrailUtils;
 
 public class DirectoryRecord {
-//	public static int MaxSize = 128;
-	public static int MaxSize = 512; //FlashSystem
+//	public static int MaxSize = 512; //FlashSystem
 	
 	private int valid;
 	private String parent;
@@ -52,12 +52,12 @@ public class DirectoryRecord {
 		byte barray[] = filename.getBytes();
 		buffer.putInt(barray.length);
 		buffer.put(barray);
-		buffer.position(oldposition + MaxSize);
+		buffer.position(oldposition + CrailConstants.DIRECTORY_RECORD);
 	}
 	
 	public void update(ByteBuffer buffer) {
 		int oldlimit = buffer.limit();
-		int tmplimit = buffer.position() + DirectoryRecord.MaxSize;
+		int tmplimit = buffer.position() + CrailConstants.DIRECTORY_RECORD;
 		buffer.limit(tmplimit);
 		valid = buffer.getInt();
 		int length = buffer.getInt();

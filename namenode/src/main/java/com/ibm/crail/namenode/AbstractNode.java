@@ -29,6 +29,7 @@ import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.core.DirectoryRecord;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.namenode.protocol.FileInfo;
@@ -71,7 +72,7 @@ public abstract class AbstractNode extends FileInfo implements Delayed {
 		
 		AbstractNode old = children.putIfAbsent(child.getComponent(), child);
 		if (old == null){
-			child.setDirOffset(dirOffsetCounter.getAndAdd(DirectoryRecord.MaxSize));
+			child.setDirOffset(dirOffsetCounter.getAndAdd(CrailConstants.DIRECTORY_RECORD));
 			return true;
 		} else {
 			return false;

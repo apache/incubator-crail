@@ -2,7 +2,9 @@ package com.ibm.crail.core;
 
 import java.util.Iterator;
 import java.util.concurrent.Future;
+
 import com.ibm.crail.CrailDirectory;
+import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.protocol.FileInfo;
 
 class CoreDirectory extends CoreNode implements CrailDirectory {
@@ -16,7 +18,7 @@ class CoreDirectory extends CoreNode implements CrailDirectory {
 
 	@Override
 	public int files() {
-		return (int) fileInfo.getCapacity()/DirectoryRecord.MaxSize;
+		return (int) fileInfo.getCapacity()/CrailConstants.DIRECTORY_RECORD;
 	}
 
 	@Override

@@ -105,6 +105,9 @@ public class CrailConstants {
 	public static final String REGION_SIZE_KEY = "crail.regionsize";
 	public static long REGION_SIZE = 1073741824;
 	
+	public static final String DIRECTORY_RECORD_KEY = "crail.directoryrecord";
+	public static int DIRECTORY_RECORD = 512;	
+	
 	public static void updateConstants(CrailConfiguration conf){
 		if (conf.get(NAMENODE_ADDRESS_KEY) != null) {
 			NAMENODE_ADDRESS = conf.get(NAMENODE_ADDRESS_KEY);
@@ -177,7 +180,10 @@ public class CrailConstants {
 		}	
 		if (conf.get(REGION_SIZE_KEY) != null) {
 			REGION_SIZE = Integer.parseInt(conf.get(REGION_SIZE_KEY));
-		}			
+		}	
+		if (conf.get(DIRECTORY_RECORD_KEY) != null) {
+			DIRECTORY_RECORD = Integer.parseInt(conf.get(DIRECTORY_RECORD_KEY));
+		}		
 	}
 	
 	public static void printConf(){
@@ -206,11 +212,12 @@ public class CrailConstants {
 		LOG.info(HDFS_WRITE_AHEAD_KEY + " " + HDFS_WRITE_AHEAD);
 		LOG.info(SINGLETON_KEY + " " + SINGLETON);
 		LOG.info(REGION_SIZE_KEY + " " + REGION_SIZE);
+		LOG.info(DIRECTORY_RECORD_KEY + " " + DIRECTORY_RECORD);
 	}
 	
 	public static void verify() throws IOException {
-		if (CrailConstants.BUFFER_SIZE % DirectoryRecord.MaxSize != 0){
-			throw new IOException("crail.buffersize must be multiple of " + DirectoryRecord.MaxSize);
+		if (CrailConstants.BUFFER_SIZE % CrailConstants.DIRECTORY_RECORD != 0){
+			throw new IOException("crail.buffersize must be multiple of " + CrailConstants.DIRECTORY_RECORD);
 		}	
 		if (!CrailConstants.NAMENODE_DARPC_TYPE.equalsIgnoreCase("passive") && !CrailConstants.NAMENODE_DARPC_TYPE.equalsIgnoreCase("active")){
 			throw new IOException("crail.namenode.darpc.type must be either <active> or <passive>, found " + CrailConstants.NAMENODE_DARPC_TYPE);

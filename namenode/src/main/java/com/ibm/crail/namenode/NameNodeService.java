@@ -143,7 +143,7 @@ public class NameNodeService implements RpcNameNodeService {
 				}
 			}
 		}
-		parentInfo.incCapacity(DirectoryRecord.MaxSize);
+		parentInfo.incCapacity(CrailConstants.DIRECTORY_RECORD);
 		fileTable.put(fileInfo.getFd(), fileInfo);
 		
 		if (writeable) {
@@ -368,14 +368,14 @@ public class NameNodeService implements RpcNameNodeService {
 				}
 			} 
 		}
-		dstParent.incCapacity(DirectoryRecord.MaxSize);
+		dstParent.incCapacity(CrailConstants.DIRECTORY_RECORD);
 		//end
 		
 		response.setDstParent(dstParent);
 		response.setDstFile(dstFile);
 		response.setDstBlock(dstBlock);
 		
-		if (response.getDstParent().getCapacity() < response.getDstFile().getDirOffset() + DirectoryRecord.MaxSize){
+		if (response.getDstParent().getCapacity() < response.getDstFile().getDirOffset() + CrailConstants.DIRECTORY_RECORD){
 			LOG.info("rename: parent capacity does not match dst file offset, capacity " + response.getDstParent().getCapacity() + ", offset " + response.getDstFile().getDirOffset() + ", capacity " + dstParent.getCapacity() + ", offset " + dstFile.getDirOffset());
 		}
 		
