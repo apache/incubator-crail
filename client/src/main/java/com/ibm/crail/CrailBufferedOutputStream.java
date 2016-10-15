@@ -139,7 +139,7 @@ public class CrailBufferedOutputStream extends OutputStream {
 		}
 	}
 	
-	private synchronized Future<CrailResult> purge() throws IOException {
+	public synchronized Future<CrailResult> purge() throws IOException {
 		try {
 			if (!pending && internalBuf.position() > 0) {
 				internalBuf.flip();
