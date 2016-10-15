@@ -25,102 +25,50 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-
 import org.slf4j.Logger;
-
-import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.utils.CrailUtils;
 
 public class CrailMultiStream extends InputStream {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
-	private LinkedBlockingQueue<CrailInputStream> streams;
-	private LinkedBlockingQueue<ByteBuffer> buffers;
-	private LinkedBlockingQueue<CrailInputStream> streamQueue;
-	private LinkedBlockingQueue<ByteBuffer> bufferQueue;
-	private LinkedBlockingQueue<Future<CrailResult>> futureQueue;
-	
 	private CrailFS fs;
-	private ByteBuffer currentBuffer;
-	private CrailInputStream currentStream;
+	private Iterator<String> paths;
+	private int outstanding;
+	private int files;
+	
+	//state
+	private LinkedBlockingQueue<SubStream> substreams;
+	private long triggeredPosition;
+	private long consumedPosition;
 	private byte[] tmpByteBuf;
-	private ByteBuffer tmpBoundaryBuffer;
-	private long virtualCapacity;
-	private long virtualPosition;
 	private boolean isClosed;
 	
-	//stats
-	private long closeAttempts;
-	private long totalReads;
-	private long totalBlocks;
-	private long totalNonBlocks;
-	
-	public CrailMultiStream(CrailFS fs, Iterator<String> paths, int outstanding, int maxfiles) throws Exception{
-		this.virtualPosition = 0;
-		this.virtualCapacity = 0;
-		this.currentBuffer = null;
-		this.streams = new LinkedBlockingQueue<CrailInputStream>();
-		this.streamQueue = new LinkedBlockingQueue<CrailInputStream>();
-		this.bufferQueue = new LinkedBlockingQueue<ByteBuffer>();
-		this.futureQueue = new LinkedBlockingQueue<Future<CrailResult>>();
-		this.buffers = new LinkedBlockingQueue<ByteBuffer>();
-		this.isClosed = false;
-		this.currentStream = null;
-		this.closeAttempts = 0;
-		this.totalReads = 0;
-		this.totalBlocks = 0;
-		this.totalNonBlocks = 0;
-		this.tmpByteBuf = new byte[1];
-		this.tmpBoundaryBuffer = ByteBuffer.allocate(8);		
+	public CrailMultiStream(CrailFS fs, Iterator<String> paths, int outstanding, int files) throws Exception{
 		this.fs = fs;
+		this.paths = paths;
+		this.files = files;
+		this.outstanding = Math.min(outstanding, files);
 		
-		int i = 0;
-		while(paths.hasNext()){
-			String path = paths.next();
-			CrailFile file = null;
-			try {
-				file = fs.lookupFile(path, false).get();
-			} catch(Exception e){
-				throw new Exception("File not found, name " + path + ", exc: " + e.getMessage());
+		this.substreams = new LinkedBlockingQueue<SubStream>();
+		this.triggeredPosition = 0;
+		this.consumedPosition = 0;
+		this.tmpByteBuf = new byte[1];
+		this.isClosed = false;
+		
+		for (int i = 0; i < this.outstanding; i++){
+			if (!paths.hasNext()){
+				break;
 			}
+			String path = paths.next();
+			CrailFile file = fs.lookupFile(path, false).get();
 			if (file == null){
 				throw new Exception("File not found, name " + path);
 			}
-			CrailInputStream stream = file.getDirectInputStream(file.getCapacity());
-			this.virtualCapacity += file.getCapacity();
-			this.streamQueue.add(stream);
-			this.streams.add(stream);
-			
-			if (currentStream == null){
-				currentStream = this.streamQueue.poll();
-			}
-			
-			if (i < outstanding){
-				ByteBuffer buffer = fs.allocateBuffer();
-				if (triggerRead(buffer)){
-					buffers.add(buffer);
-					i++;
-				} else {
-					fs.freeBuffer(buffer);
-				}				
-			}
-		}
-		
-		for (; i < outstanding; i++){
-			ByteBuffer buffer = fs.allocateBuffer();
-			if (triggerRead(buffer)){
-				buffers.add(buffer);
-			} else {
-				fs.freeBuffer(buffer);
-				break;
-			}
-		}
-		
-		if (CrailConstants.DEBUG){
-			LOG.info("multistream, init, streams " + this.streamQueue.size() + ", usedBuffers " + bufferQueue.size() + ", virtualCapacity " + virtualCapacity);
+			CrailBufferedInputStream stream = file.getBufferedInputStream(file.getCapacity());
+			SubStream substream = new SubStream(file, stream, triggeredPosition);
+			substreams.add(substream);
+			triggeredPosition += file.getCapacity();
 		}
 	}	
 	
@@ -146,29 +94,7 @@ public class CrailMultiStream extends InputStream {
 				return -1;
 			}
 		
-			if (currentBuffer == null){
-				currentBuffer = getNextBuffer();
-			}			
-			
-			int sumLen = 0;
-			while (currentBuffer != null && len > 0) {
-				if (currentBuffer.remaining() == 0) {
-					triggerRead(currentBuffer);
-					currentBuffer = getNextBuffer();
-				} else {
-					int bufferRemaining = Math.min(len, currentBuffer.remaining());
-					currentBuffer.get(buf, off, bufferRemaining);
-					len -= bufferRemaining;
-					off += bufferRemaining;
-					sumLen += bufferRemaining;
-				}
-			}
-
-			int totalBytesRead = sumLen > 0 ? sumLen : -1;
-			if (totalBytesRead > 0){
-				virtualPosition += totalBytesRead;
-			}
-			return totalBytesRead;
+			return 0;
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new IOException(e);
@@ -185,214 +111,42 @@ public class CrailMultiStream extends InputStream {
 			} else if (isClosed){
 				return -1;
 			}
-		
-			if (currentBuffer == null){
-				currentBuffer = getNextBuffer();
-			}			
 			
-			int sumLen = 0;
-			while (currentBuffer != null && buffer.remaining() > 0) {
-				if (currentBuffer.remaining() == 0) {
-					triggerRead(currentBuffer);
-					currentBuffer = getNextBuffer();
+			long readPosition = consumedPosition;
+			int len = buffer.remaining();
+			int sum = 0;
+			while(sum < len){
+				SubStream subStream = substreams.poll();
+				if (subStream.available() > 0){
+					subStream.copyOut(buffer);
+				}
+				if (subStream.isEnd()){
+					subStream.close();
 				} else {
-					int bufferRemaining = Math.min(buffer.remaining(), currentBuffer.remaining());
-					int oldLimit = currentBuffer.limit();
-					currentBuffer.limit(currentBuffer.position() + bufferRemaining);
-					buffer.put(currentBuffer);
-					currentBuffer.limit(oldLimit);					
-					sumLen += bufferRemaining;
+					substreams.add(subStream);
 				}
 			}
-
-			int totalBytesRead = sumLen > 0 ? sumLen : -1;
-			if (totalBytesRead > 0){
-				virtualPosition += totalBytesRead;
-			}
-			return totalBytesRead;
+			consumedPosition += len;
+			return len;
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new IOException(e);
 		}
 	}
 	
-	public final synchronized double readDouble() throws Exception {
-		if (currentBuffer == null){
-			currentBuffer = getNextBuffer();
-		}	
-		if (currentBuffer == null){
-			throw new Exception("no bytes left in stream");
-		}
-		
-		if (currentBuffer.remaining() < 4){
-			tmpBoundaryBuffer.clear();
-			tmpBoundaryBuffer.limit(4);
-			read(tmpBoundaryBuffer);
-			return tmpBoundaryBuffer.getDouble();
-		} else {
-			return currentBuffer.getDouble();
-		}
-	}
-	
-	public final synchronized int readInt() throws Exception {
-		if (currentBuffer == null){
-			currentBuffer = getNextBuffer();
-		}	
-		if (currentBuffer == null){
-			throw new Exception("no bytes left in stream");
-		}		
-		
-		if (currentBuffer.remaining() < 4){
-			tmpBoundaryBuffer.clear();
-			tmpBoundaryBuffer.limit(4);
-			read(tmpBoundaryBuffer);
-			return tmpBoundaryBuffer.getInt();
-		} else {
-			return currentBuffer.getInt();
-		}
-	}
-	
-	public final synchronized double readLong() throws Exception {
-		if (currentBuffer == null){
-			currentBuffer = getNextBuffer();
-		}	
-		if (currentBuffer == null){
-			throw new Exception("no bytes left in stream");
-		}		
-		
-		if (currentBuffer.remaining() < 8){
-			tmpBoundaryBuffer.clear();
-			tmpBoundaryBuffer.limit(8);
-			read(tmpBoundaryBuffer);
-			return tmpBoundaryBuffer.getLong();
-		} else {
-			return currentBuffer.getLong();
-		}
-	}
-	
-	public final synchronized double readShort() throws Exception {
-		if (currentBuffer == null){
-			currentBuffer = getNextBuffer();
-		}	
-		if (currentBuffer == null){
-			throw new Exception("no bytes left in stream");
-		}		
-		
-		if (currentBuffer.remaining() < 2){
-			tmpBoundaryBuffer.clear();
-			tmpBoundaryBuffer.limit(2);
-			read(tmpBoundaryBuffer);
-			return tmpBoundaryBuffer.getShort();
-		} else {
-			return currentBuffer.getShort();
-		}
-	}	
-	
 	@Override
 	public final synchronized void close() throws IOException {
-		this.closeAttempts++;
-		
 		if (isClosed){
 			return;
-		}
-		
-//		LOG.info("closing multistream");
-		try {
-			ByteBuffer buffer = getNextBuffer();
-			while(buffer != null){
-				buffer = getNextBuffer();
-			}
-		} catch(Exception e){
-//			LOG.info("ERROR " + e.getMessage());
-		}
-		
-		try {
-			ByteBuffer buffer = buffers.poll();
-			while (buffer != null){
-				fs.freeBuffer(buffer);
-				buffer = buffers.poll();
-			}
-		} catch(Exception e){
-//			LOG.info("ERROR " + e.getMessage());
-		}
-			
-		try {
-			CrailInputStream stream = streams.poll();
-			while(stream != null){
-				stream.close();
-				stream = streams.poll();
-			}
-		} catch(Exception e){
-//			LOG.info("ERROR " + e.getMessage());
 		}
 		
 		this.isClosed = true;
 	}
 
 	public final synchronized int available() {
-		long diff = virtualCapacity - virtualPosition;
-		return (int) diff;
+		return 0;
 	}
 	
-	private ByteBuffer getNextBuffer() throws InterruptedException, ExecutionException{
-		if (!futureQueue.isEmpty()){
-			Future<CrailResult> future = futureQueue.poll();
-			if (future.isDone()){
-				this.totalNonBlocks++;
-			} else {
-				this.totalBlocks++;
-			}
-			future.get();
-			currentBuffer = bufferQueue.poll();
-			currentBuffer.flip();
-			return currentBuffer;
-		} else {
-			return null;
-		}
-	}
-	
-	private boolean triggerRead(ByteBuffer buffer) throws Exception{
-		buffer.clear();
-		while(currentStream != null){
-			Future<CrailResult> future = currentStream.read(buffer);
-			if (future != null){
-				this.totalReads++;
-//				LOG.info("reading new buffer and pushing future to queue");
-				bufferQueue.add(buffer);
-				futureQueue.add(future);
-				return true;
-			} else {
-//				LOG.info("skipping stream, fd " + currentStream.getFd() + ", streams " + streamQueue.size());
-				currentStream = streamQueue.poll();
-			}
-		}	
-		return false;
-	}
-
-	public long getCloseAttempts() {
-		return closeAttempts;
-	}
-
-	public long getTotalReads() {
-		return totalReads;
-	}
-
-	public long getTotalBlocks() {
-		return totalBlocks;
-	}
-
-	public long getTotalNonBlocks() {
-		return totalNonBlocks;
-	}
-
-	public long getCapacity() {
-		return virtualCapacity;
-	}
-
-	public long getPos() {
-		return virtualPosition;
-	}
-
 	public void seek(long pos) throws IOException {
 		throw new IOException("operation not implemented!");
 	}
@@ -401,11 +155,30 @@ public class CrailMultiStream extends InputStream {
 		return true;
 	}
 
-	public long position() {
-		return virtualPosition;
-	}
+	private static class SubStream {
+		private CrailFile file;
+		private CrailBufferedInputStream stream;
+		private long position;
+		
+		public SubStream(CrailFile file, CrailBufferedInputStream stream, long position) {
+			this.file = file;
+			this.stream = stream;
+			this.position = position;
+		}
 
-	public long getReadHint() {
-		return 0;
+		public void close() throws IOException {
+			stream.close();
+		}
+
+		public boolean isEnd() {
+			return file.getCapacity() == stream.position();
+		}
+
+		public void copyOut(ByteBuffer buffer) {
+		}
+
+		public int available() {
+			return stream.available();
+		}
 	}
 }

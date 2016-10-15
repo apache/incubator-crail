@@ -43,7 +43,6 @@ public class CrailBufferedOutputStream extends OutputStream {
 	private CrailFS crailFS;
 	private CrailImmediateOperation noOp;
 	private long position;
-	private boolean pending;
 	private Future<CrailResult> future;
 	
 	public CrailBufferedOutputStream(CrailFS crailFS, CrailOutputStream outputStream) throws IOException {
@@ -55,7 +54,6 @@ public class CrailBufferedOutputStream extends OutputStream {
 		this.tmpBoundaryBuffer = ByteBuffer.allocate(8);
 		this.noOp = new CrailImmediateOperation(0);
 		this.position = 0;
-		this.pending = false;
 		this.future = null;
 	}
 	
@@ -123,10 +121,10 @@ public class CrailBufferedOutputStream extends OutputStream {
 	
 	private void completePurge() throws IOException {
 		try {
-			if (pending && future != null){
+			if (future != null){
 				future.get();
 				internalBuf.clear();
-				pending = false;
+				future = null;
 			}
 		} catch(Exception e){
 			throw new IOException(e);
@@ -135,23 +133,21 @@ public class CrailBufferedOutputStream extends OutputStream {
 	
 	private synchronized void purgeIfFull() throws IOException {
 		if (internalBuf.remaining() == 0){
-			future = purge();
+			purge();
 		}
 	}
 	
 	public synchronized Future<CrailResult> purge() throws IOException {
 		try {
-			if (!pending && internalBuf.position() > 0) {
+			if (future == null && internalBuf.position() > 0) {
 				internalBuf.flip();
-				Future<CrailResult> purgeOp = outputStream.write(internalBuf);
+				future = outputStream.write(internalBuf);
 				internalBuf.clear();
-				pending = true;
-				return purgeOp;
-			} else if (pending){
 				return future;
-			} else {
-				return noOp;
-			}
+			} else if (internalBuf.position() == 0){
+				future = noOp;
+			} 
+			return future;
 		} catch(Exception e){
 			throw new IOException(e);
 		}

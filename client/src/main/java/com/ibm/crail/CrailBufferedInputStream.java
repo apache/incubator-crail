@@ -41,7 +41,7 @@ public class CrailBufferedInputStream extends InputStream {
 	private ByteBuffer tmpBoundaryBuffer;
 	private ByteBuffer internalBuf;	
 	private Future<CrailResult> future;
-	private boolean pending;
+	private boolean streamEnd;
 	private long position;
 	
 	public CrailBufferedInputStream(CrailFS crailFS, CrailInputStream inputStream) throws IOException {
@@ -51,7 +51,7 @@ public class CrailBufferedInputStream extends InputStream {
 		this.tmpByteBuf = new byte[1];
 		this.tmpBoundaryBuffer = ByteBuffer.allocate(8);
 		this.internalBuf = crailFS.allocateBuffer();
-		this.pending = false;
+		this.streamEnd = false;
 		this.future = null;
 		this.internalBuf.clear().flip();
 		triggerFetch();
@@ -91,7 +91,7 @@ public class CrailBufferedInputStream extends InputStream {
 			}
 			
 			int sumLen = 0;
-			while (len > 0 && future != null) {
+			while (len > 0 && !streamEnd) {
 				completeFetch();
 				if (internalBuf.remaining() > 0){
 					int bufferRemaining = Math.min(len, internalBuf.remaining());
@@ -120,7 +120,7 @@ public class CrailBufferedInputStream extends InputStream {
 
 			int len = dataBuf.remaining();
 			int sumLen = 0;
-			while (len > 0 && future != null) {
+			while (len > 0 && !streamEnd) {
 				completeFetch();
 				if (internalBuf.remaining() > 0){
 					int bufferRemaining = Math.min(len, internalBuf.remaining());
@@ -143,14 +143,12 @@ public class CrailBufferedInputStream extends InputStream {
 	
 	private void triggerFetch() throws IOException {
 		try {
-			if (internalBuf.remaining() == 0){
+			if (future == null && internalBuf.remaining() == 0){
 				internalBuf.clear();
 				future = inputStream.read(internalBuf);
-				if (future != null){
-					pending = true;
-				} else {
+				if (future == null){
 					internalBuf.clear().flip();
-					pending = false;
+					streamEnd = true;
 				}
 			}
 		} catch(Exception e){
@@ -160,10 +158,10 @@ public class CrailBufferedInputStream extends InputStream {
 	
 	private void completeFetch() throws IOException {
 		try {
-			if (pending){
+			if (future != null){
 				future.get();
 				internalBuf.flip();
-				pending = false;
+				future = null;
 			}
 		} catch(Exception e){
 			throw new IOException(e);
@@ -233,8 +231,8 @@ public class CrailBufferedInputStream extends InputStream {
 
 	public synchronized int available() {
 		try {
-			if (pending && future != null && future.isDone()){
-				return (int) future.get().getLen();
+			if (future != null){
+				return (int) (future.isDone() ? future.get().getLen() : 0);
 			} else {
 				return internalBuf.remaining();
 			}
