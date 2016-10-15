@@ -52,8 +52,9 @@ public class CrailBufferedInputStream extends InputStream {
 		this.tmpBoundaryBuffer = ByteBuffer.allocate(8);
 		this.internalBuf = crailFS.allocateBuffer();
 		this.pending = false;
+		this.future = null;
 		this.internalBuf.clear().flip();
-		this.future = triggerFetch();
+		triggerFetch();
 	}
 	
 	public final synchronized int read() throws IOException {
@@ -91,7 +92,7 @@ public class CrailBufferedInputStream extends InputStream {
 			
 			int sumLen = 0;
 			while (len > 0 && future != null) {
-				internalBuf = completeFetch();
+				completeFetch();
 				if (internalBuf.remaining() > 0){
 					int bufferRemaining = Math.min(len, internalBuf.remaining());
 					internalBuf.get(buf, off, bufferRemaining);
@@ -100,7 +101,7 @@ public class CrailBufferedInputStream extends InputStream {
 					sumLen += bufferRemaining;		
 					position += bufferRemaining;
 				} 
-				future = triggerFetch();
+				triggerFetch();
 			}			
 			return sumLen > 0 ? sumLen : -1;
 		} catch (Exception e) {
@@ -120,7 +121,7 @@ public class CrailBufferedInputStream extends InputStream {
 			int len = dataBuf.remaining();
 			int sumLen = 0;
 			while (len > 0 && future != null) {
-				internalBuf = completeFetch();
+				completeFetch();
 				if (internalBuf.remaining() > 0){
 					int bufferRemaining = Math.min(len, internalBuf.remaining());
 					int oldLimit = internalBuf.limit();
@@ -131,7 +132,7 @@ public class CrailBufferedInputStream extends InputStream {
 					sumLen += bufferRemaining;	
 					position += bufferRemaining;
 				} 
-				future = triggerFetch();
+				triggerFetch();
 			}
 			return sumLen > 0 ? sumLen : -1;			
 		} catch (Exception e) {
@@ -140,7 +141,7 @@ public class CrailBufferedInputStream extends InputStream {
 		
 	}
 	
-	private Future<CrailResult> triggerFetch() throws IOException {
+	private void triggerFetch() throws IOException {
 		try {
 			if (internalBuf.remaining() == 0){
 				internalBuf.clear();
@@ -152,20 +153,18 @@ public class CrailBufferedInputStream extends InputStream {
 					pending = false;
 				}
 			}
-			return future;
 		} catch(Exception e){
 			throw new IOException(e);
 		}
 	}	
 	
-	private ByteBuffer completeFetch() throws IOException {
+	private void completeFetch() throws IOException {
 		try {
 			if (pending){
 				future.get();
 				internalBuf.flip();
 				pending = false;
 			}
-			return internalBuf;
 		} catch(Exception e){
 			throw new IOException(e);
 		}
@@ -177,7 +176,7 @@ public class CrailBufferedInputStream extends InputStream {
 			if (!inputStream.isOpen()){
 				return;
 			}			
-			
+			completeFetch();
 			inputStream.close();
 			crailFS.freeBuffer(internalBuf);
 		} catch (Exception e) {

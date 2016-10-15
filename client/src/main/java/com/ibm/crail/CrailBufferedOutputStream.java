@@ -79,7 +79,7 @@ public class CrailBufferedOutputStream extends OutputStream {
 			}
 
 			while (len > 0) {
-				internalBuf = completePurge();
+				completePurge();
 				if (internalBuf.remaining() > 0){
 					int bufferRemaining = Math.min(len, internalBuf.remaining());
 					internalBuf.put(dataBuf, off, bufferRemaining);
@@ -87,7 +87,7 @@ public class CrailBufferedOutputStream extends OutputStream {
 					len -= bufferRemaining;
 					position += bufferRemaining;
 				}
-				future = purgeIfFull();				
+				purgeIfFull();				
 			}
 		} catch (Exception e) {
 			throw new IOException(e);
@@ -104,7 +104,7 @@ public class CrailBufferedOutputStream extends OutputStream {
 			
 			int len = dataBuf.remaining();
 			while (len > 0) {
-				internalBuf = completePurge();
+				completePurge();
 				if (internalBuf.remaining() > 0){
 					int bufferRemaining = Math.min(len, internalBuf.remaining());
 					int oldLimit = dataBuf.limit();
@@ -114,42 +114,44 @@ public class CrailBufferedOutputStream extends OutputStream {
 					len -= bufferRemaining;
 					position += bufferRemaining;
 				}
-				future = purgeIfFull();
+				purgeIfFull();
 			}
 		} catch (Exception e) {
 			throw new IOException(e);
 		}
 	}
 	
-	private ByteBuffer completePurge() throws IOException {
+	private void completePurge() throws IOException {
 		try {
 			if (pending && future != null){
 				future.get();
 				internalBuf.clear();
 				pending = false;
 			}
-			return internalBuf;
 		} catch(Exception e){
 			throw new IOException(e);
 		}
 	}
 	
-	private synchronized Future<CrailResult> purgeIfFull() throws IOException {
+	private synchronized void purgeIfFull() throws IOException {
 		if (internalBuf.remaining() == 0){
-			future = purgeIfDirty();
+			future = purge();
 		}
-		return future;
 	}
 	
-	private synchronized Future<CrailResult> purgeIfDirty() throws IOException {
+	private synchronized Future<CrailResult> purge() throws IOException {
 		try {
 			if (!pending && internalBuf.position() > 0) {
 				internalBuf.flip();
-				this.future = outputStream.write(internalBuf);
+				Future<CrailResult> purgeOp = outputStream.write(internalBuf);
 				internalBuf.clear();
 				pending = true;
+				return purgeOp;
+			} else if (pending){
+				return future;
+			} else {
+				return noOp;
 			}
-			return future;
 		} catch(Exception e){
 			throw new IOException(e);
 		}
@@ -166,7 +168,7 @@ public class CrailBufferedOutputStream extends OutputStream {
 				return;
 			}
 			completePurge();
-			purgeIfDirty();
+			future = purge();
 			completePurge();
 			outputStream.close();
 			crailFS.freeBuffer(internalBuf);
