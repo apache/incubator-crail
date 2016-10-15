@@ -35,7 +35,7 @@ import com.ibm.crail.utils.CrailUtils;
 
 
 public class CrailBufferedOutputStream extends OutputStream {
-//	public static final Logger LOG = CrailUtils.getLogger();
+	public static final Logger LOG = CrailUtils.getLogger();
 	private CrailOutputStream outputStream;
 	private ByteBuffer internalBuf;
 	private byte[] tmpByteBuf; 
@@ -135,27 +135,21 @@ public class CrailBufferedOutputStream extends OutputStream {
 	}
 	
 	private synchronized Future<CrailResult> purgeIfFull() throws IOException {
+		if (internalBuf.remaining() == 0){
+			future = purgeIfDirty();
+		}
+		return future;
+	}
+	
+	private synchronized Future<CrailResult> purgeIfDirty() throws IOException {
 		try {
-			if (internalBuf.remaining() == 0) {
-				future = purge();
+			if (!pending && internalBuf.position() > 0) {
+				internalBuf.flip();
+				this.future = outputStream.write(internalBuf);
+				internalBuf.clear();
 				pending = true;
 			}
 			return future;
-		} catch(Exception e){
-			throw new IOException(e);
-		}
-	}
-	
-	public synchronized Future<CrailResult> purge() throws IOException {
-		try {
-			if (internalBuf.position() > 0){
-				internalBuf.flip();
-				Future<CrailResult> future = outputStream.write(internalBuf);
-				internalBuf.clear();
-				return future;
-			} else {
-				return noOp;
-			}
 		} catch(Exception e){
 			throw new IOException(e);
 		}
@@ -171,8 +165,9 @@ public class CrailBufferedOutputStream extends OutputStream {
 			if (!outputStream.isOpen()){
 				return;
 			}
-			
-			purge().get();
+			completePurge();
+			purgeIfDirty();
+			completePurge();
 			outputStream.close();
 			crailFS.freeBuffer(internalBuf);
 		} catch (Exception e) {

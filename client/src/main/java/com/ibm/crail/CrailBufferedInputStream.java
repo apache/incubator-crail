@@ -144,10 +144,12 @@ public class CrailBufferedInputStream extends InputStream {
 		try {
 			if (internalBuf.remaining() == 0){
 				internalBuf.clear();
-				pending = true;
 				future = inputStream.read(internalBuf);
-				if (future == null){
+				if (future != null){
+					pending = true;
+				} else {
 					internalBuf.clear().flip();
+					pending = false;
 				}
 			}
 			return future;
