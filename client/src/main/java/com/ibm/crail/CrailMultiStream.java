@@ -26,7 +26,9 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.concurrent.LinkedBlockingQueue;
+
 import org.slf4j.Logger;
+
 import com.ibm.crail.utils.CrailUtils;
 
 public class CrailMultiStream extends InputStream {
@@ -35,10 +37,9 @@ public class CrailMultiStream extends InputStream {
 	private CrailFS fs;
 	private Iterator<String> paths;
 	private int outstanding;
-	private int files;
 	
 	//state
-	private LinkedBlockingQueue<SubStream> substreams;
+	private LinkedBlockingQueue<SubStream> streams;
 	private long triggeredPosition;
 	private long consumedPosition;
 	private byte[] tmpByteBuf;
@@ -47,28 +48,18 @@ public class CrailMultiStream extends InputStream {
 	public CrailMultiStream(CrailFS fs, Iterator<String> paths, int outstanding, int files) throws Exception{
 		this.fs = fs;
 		this.paths = paths;
-		this.files = files;
 		this.outstanding = Math.min(outstanding, files);
 		
-		this.substreams = new LinkedBlockingQueue<SubStream>();
+		this.streams = new LinkedBlockingQueue<SubStream>();
 		this.triggeredPosition = 0;
 		this.consumedPosition = 0;
 		this.tmpByteBuf = new byte[1];
 		this.isClosed = false;
 		
 		for (int i = 0; i < this.outstanding; i++){
-			if (!paths.hasNext()){
-				break;
-			}
-			String path = paths.next();
-			CrailFile file = fs.lookupFile(path, false).get();
-			if (file == null){
-				throw new Exception("File not found, name " + path);
-			}
-			CrailBufferedInputStream stream = file.getBufferedInputStream(file.getCapacity());
-			SubStream substream = new SubStream(file, stream, triggeredPosition);
-			substreams.add(substream);
-			triggeredPosition += file.getCapacity();
+			SubStream substream = nextSubStream();
+//			LOG.info("init adding multistream " + substream.toString());
+			streams.add(substream);
 		}
 	}	
 	
@@ -112,22 +103,31 @@ public class CrailMultiStream extends InputStream {
 				return -1;
 			}
 			
-			long readPosition = consumedPosition;
-			int len = buffer.remaining();
+			long streamPosition = consumedPosition;
+			int bufferPosition = buffer.position();
+			int bufferRemaining = buffer.remaining();
 			int sum = 0;
-			while(sum < len){
-				SubStream subStream = substreams.poll();
+//			LOG.info("starting read.., streamPosition " + streamPosition + ", bufferPosition " + bufferPosition + ", bufferRemaining " + bufferRemaining);
+			while(sum < bufferRemaining && !streams.isEmpty()){
+				SubStream subStream = streams.poll();
 				if (subStream.available() > 0){
-					subStream.copyOut(buffer);
+					int ret = subStream.read(streamPosition, buffer, bufferPosition, bufferRemaining);
+					sum += ret;
 				}
 				if (subStream.isEnd()){
 					subStream.close();
+					subStream = nextSubStream();
+					if (subStream != null){
+//						LOG.info("init adding multistream " + subStream.toString());
+						streams.add(subStream);
+					}
 				} else {
-					substreams.add(subStream);
+					streams.add(subStream);
 				}
+//				LOG.info("sum " + sum);
 			}
-			consumedPosition += len;
-			return len;
+			consumedPosition += bufferRemaining;
+			return sum > 0 ? sum : -1;			
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new IOException(e);
@@ -155,15 +155,30 @@ public class CrailMultiStream extends InputStream {
 		return true;
 	}
 
+	private SubStream nextSubStream() throws Exception {
+		SubStream substream = null;
+		if (paths.hasNext()){
+			String path = paths.next();
+			CrailFile file = fs.lookupFile(path, false).get();
+			if (file == null){
+				throw new Exception("File not found, name " + path);
+			}
+			CrailBufferedInputStream stream = file.getBufferedInputStream(file.getCapacity());
+			substream = new SubStream(file, stream, triggeredPosition);
+			triggeredPosition += file.getCapacity();
+		}
+		return substream;
+	}
+
 	private static class SubStream {
 		private CrailFile file;
 		private CrailBufferedInputStream stream;
-		private long position;
+		private long multiStreamOffset;
 		
-		public SubStream(CrailFile file, CrailBufferedInputStream stream, long position) {
+		public SubStream(CrailFile file, CrailBufferedInputStream stream, long multiStreamOffset) {
 			this.file = file;
 			this.stream = stream;
-			this.position = position;
+			this.multiStreamOffset = multiStreamOffset;
 		}
 
 		public void close() throws IOException {
@@ -174,7 +189,16 @@ public class CrailMultiStream extends InputStream {
 			return file.getCapacity() == stream.position();
 		}
 
-		public void copyOut(ByteBuffer buffer) {
+		public int read(long streamPosition, ByteBuffer buffer, int bufferPosition, int bufferRemaining) throws IOException {
+			int bufferOffset = (int) (multiStreamOffset - streamPosition);
+			if (bufferOffset >= 0 && bufferOffset < bufferRemaining){
+				int bufferReadPosition = bufferPosition + bufferOffset;
+				buffer.position(bufferReadPosition);
+				int ret = stream.read(buffer);
+				multiStreamOffset += ret;
+				return ret;
+			}
+			return 0;
 		}
 
 		public int available() {
