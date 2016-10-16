@@ -475,7 +475,7 @@ public class CrailBenchmark {
 //			Iterator<String> files = fs.listEntries(filename);
 			CrailMultiStream multiStream = fs.lookupDirectory(filename).get().getMultiStream(batch);
 //			CrailMultiStream multiStream = fs.getMultiStream(files, batch);
-			ByteBuffer buf = fs.allocateBuffer();
+			ByteBuffer buf = ByteBuffer.allocate(size);
 			
 			double sumbytes = 0;
 			long _sumbytes = 0;

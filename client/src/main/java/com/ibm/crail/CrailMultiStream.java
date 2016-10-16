@@ -32,7 +32,7 @@ import org.slf4j.Logger;
 import com.ibm.crail.utils.CrailUtils;
 
 public class CrailMultiStream extends InputStream {
-	private static final Logger LOG = CrailUtils.getLogger();
+//	private static final Logger LOG = CrailUtils.getLogger();
 	
 	private CrailFS fs;
 	private Iterator<String> paths;
@@ -40,6 +40,8 @@ public class CrailMultiStream extends InputStream {
 	
 	//state
 	private LinkedBlockingQueue<SubStream> streams;
+	private LinkedBlockingQueue<SubStream> runningStreams;
+	private LinkedBlockingQueue<SubStream> tmpStreams;
 	private long triggeredPosition;
 	private long consumedPosition;
 	private byte[] tmpByteBuf;
@@ -51,6 +53,8 @@ public class CrailMultiStream extends InputStream {
 		this.outstanding = Math.min(outstanding, files);
 		
 		this.streams = new LinkedBlockingQueue<SubStream>();
+		this.runningStreams = new LinkedBlockingQueue<SubStream>();
+		this.tmpStreams = new LinkedBlockingQueue<SubStream>();
 		this.triggeredPosition = 0;
 		this.consumedPosition = 0;
 		this.tmpByteBuf = new byte[1];
@@ -58,7 +62,6 @@ public class CrailMultiStream extends InputStream {
 		
 		for (int i = 0; i < this.outstanding; i++){
 			SubStream substream = nextSubStream();
-//			LOG.info("init adding multistream " + substream.toString());
 			streams.add(substream);
 		}
 	}	
@@ -103,31 +106,65 @@ public class CrailMultiStream extends InputStream {
 				return -1;
 			}
 			
+//			LOG.info("starting read, position " + consumedPosition);
 			long streamPosition = consumedPosition;
 			int bufferPosition = buffer.position();
 			int bufferRemaining = buffer.remaining();
-			int sum = 0;
-//			LOG.info("starting read.., streamPosition " + streamPosition + ", bufferPosition " + bufferPosition + ", bufferRemaining " + bufferRemaining);
-			while(sum < bufferRemaining && !streams.isEmpty()){
-				SubStream subStream = streams.poll();
-				if (subStream.available() > 0){
-					int ret = subStream.read(streamPosition, buffer, bufferPosition, bufferRemaining);
-					sum += ret;
-				}
-				if (subStream.isEnd()){
-					subStream.close();
-					subStream = nextSubStream();
-					if (subStream != null){
-//						LOG.info("init adding multistream " + subStream.toString());
-						streams.add(subStream);
-					}
+			int bufferLimit = buffer.limit();
+			long anticipatedPosition = consumedPosition + bufferRemaining;
+			
+			while(!streams.isEmpty()){
+				SubStream substream = streams.peek();
+				if (substream.current() < anticipatedPosition){
+					substream = streams.poll();
+					runningStreams.add(substream);
 				} else {
-					streams.add(subStream);
+					break;
 				}
-//				LOG.info("sum " + sum);
 			}
-			consumedPosition += bufferRemaining;
-			return sum > 0 ? sum : -1;			
+			
+			int sum = 0;
+			while(sum < bufferRemaining && !runningStreams.isEmpty()){
+				SubStream substream = runningStreams.poll();
+				int available = substream.available();
+//				LOG.info("checking file " +  substream.getPath() + ", available " + available);
+				if (available > 0){
+					int bufferOffset = (int) (substream.current() - streamPosition);
+					int bufferReadPosition = bufferPosition + bufferOffset;
+					int tmpLimit = Math.min(bufferReadPosition + available, bufferLimit);					
+					buffer.limit(tmpLimit);					
+					buffer.position(bufferReadPosition);
+					int dataRead = substream.read(streamPosition, buffer, bufferPosition, bufferRemaining, bufferLimit, available);
+					sum += dataRead;
+					if (substream.isEnd()){
+//						LOG.info("closing substream at position " + substream.current() + ", path " + substream.getPath());
+						substream.close();
+						substream = nextSubStream();
+						if (substream != null){
+							streams.add(substream);
+						}						
+					} else if (substream.current() >= anticipatedPosition){
+						long leftover = substream.end() - substream.current();
+//						LOG.info("moving tmp substream at position " + substream.current() + ", path " + substream.getPath() + ", leftover " + leftover);
+						tmpStreams.add(substream);
+					} else {
+						runningStreams.add(substream);
+					}
+				}
+//				LOG.info("");
+			}
+			while(!tmpStreams.isEmpty()){
+				SubStream substream = tmpStreams.poll();
+				runningStreams.add(substream);
+			}
+			buffer.limit(bufferLimit);
+			if (sum > 0){
+				buffer.position(bufferPosition + sum);
+				consumedPosition += sum;
+			} else {
+				buffer.position(bufferPosition);
+			}
+			return sum;
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new IOException(e);
@@ -164,45 +201,58 @@ public class CrailMultiStream extends InputStream {
 				throw new Exception("File not found, name " + path);
 			}
 			CrailBufferedInputStream stream = file.getBufferedInputStream(file.getCapacity());
+//			LOG.info("starting new substream, triggeredPosition " + triggeredPosition + ", file " + file.getPath());
 			substream = new SubStream(file, stream, triggeredPosition);
 			triggeredPosition += file.getCapacity();
 		}
 		return substream;
 	}
 
-	private static class SubStream {
+	private class SubStream {
 		private CrailFile file;
 		private CrailBufferedInputStream stream;
-		private long multiStreamOffset;
+		private long current;
+		private long end;
 		
-		public SubStream(CrailFile file, CrailBufferedInputStream stream, long multiStreamOffset) {
+		public SubStream(CrailFile file, CrailBufferedInputStream stream, long start) {
 			this.file = file;
 			this.stream = stream;
-			this.multiStreamOffset = multiStreamOffset;
+			this.current = start;
+			this.end = start + file.getCapacity();
 		}
 
+		public String getPath() {
+			return file.getPath();
+		}
+		
+		public long current(){
+			return current;
+		}
+		
+		public long end(){
+			return end;
+		}		
+		
+		public boolean isEnd() {
+			return current == end;
+		}
+	
+		public int available() {
+			return stream.available();
+		}		
+		
 		public void close() throws IOException {
 			stream.close();
 		}
 
-		public boolean isEnd() {
-			return file.getCapacity() == stream.position();
-		}
-
-		public int read(long streamPosition, ByteBuffer buffer, int bufferPosition, int bufferRemaining) throws IOException {
-			int bufferOffset = (int) (multiStreamOffset - streamPosition);
-			if (bufferOffset >= 0 && bufferOffset < bufferRemaining){
-				int bufferReadPosition = bufferPosition + bufferOffset;
-				buffer.position(bufferReadPosition);
-				int ret = stream.read(buffer);
-				multiStreamOffset += ret;
-				return ret;
+		public int read(long streamPosition, ByteBuffer buffer, int bufferPosition, int bufferRemaining, int bufferLimit, int available) throws IOException {
+			int ret = stream.read(buffer);
+			if (ret <= 0){
+				throw new IOException("Stream indicated available > 0, but reading returned " + ret);
 			}
-			return 0;
-		}
-
-		public int available() {
-			return stream.available();
+//			LOG.info("copying out.. multistream position " + current + ", ret " + ret + ", path " + file.getPath());
+			current += ret;
+			return ret;			
 		}
 	}
 }
