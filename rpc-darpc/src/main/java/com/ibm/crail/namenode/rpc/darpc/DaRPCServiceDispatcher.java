@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
 import com.ibm.crail.namenode.rpc.RpcNameNodeService;
 import com.ibm.crail.utils.CrailUtils;
+import com.ibm.darpc.RpcClientEndpoint;
 import com.ibm.darpc.RpcServerEvent;
 
 public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol {
@@ -128,6 +129,15 @@ public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol {
 		} catch(Exception e){
 			LOG.info("ERROR: RPC failed, messagesSend ");
 			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void close(
+			RpcClientEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> endpoint) {
+		try {
+			endpoint.close();
+		} catch(Exception e){
 		}
 	}	
 }

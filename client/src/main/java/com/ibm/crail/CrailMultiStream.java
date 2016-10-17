@@ -150,6 +150,8 @@ public class CrailMultiStream extends InputStream {
 					} else {
 						runningStreams.add(substream);
 					}
+				} else {
+					runningStreams.add(substream);
 				}
 //				LOG.info("");
 			}
@@ -173,10 +175,26 @@ public class CrailMultiStream extends InputStream {
 	
 	@Override
 	public final synchronized void close() throws IOException {
-		if (isClosed){
+		if (isClosed) {
 			return;
 		}
-		
+
+		while (!tmpStreams.isEmpty()) {
+			SubStream stream = tmpStreams.poll();
+			stream.close();
+		}
+		while (!runningStreams.isEmpty()) {
+			SubStream stream = runningStreams.poll();
+			stream.close();
+		}
+		while (!streams.isEmpty()) {
+			SubStream stream = streams.poll();
+			stream.close();
+		}
+		while (paths.hasNext()) {
+			paths.next();
+		}
+
 		this.isClosed = true;
 	}
 
