@@ -26,7 +26,12 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 
+import org.slf4j.Logger;
+
+import com.ibm.crail.utils.CrailUtils;
+
 public class DataNodeInfo {
+	private static final Logger LOG = CrailUtils.getLogger();
 	public static final int CSIZE = 16;
 	
 	private int storageTier;
@@ -106,21 +111,11 @@ public class DataNodeInfo {
 		return storageTier;
 	}
 	
-	public String key(){
+	public long key(){
 		if (key == 0){
-//			key = ipAddress[0] | ipAddress[1] << 8 | ipAddress[2] << 16 | ipAddress[3] << 24 | port << 32; 
+			int a = java.util.Arrays.hashCode(ipAddress);
+			key = (((long)a) << 32) | (port & 0xffffffffL);
 		}
-//		return key;
-		return inetAddress.toString();
+		return key;
 	}
-
-//	@Override
-//	public String toString() {
-//		if (inetAddress != null){
-//			return "ip " + inetAddress.toString();
-//		} else {
-//			return "";
-//		}
-//	}
-
 }

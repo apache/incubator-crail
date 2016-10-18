@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.datanode.DataNode;
 import com.ibm.crail.datanode.DataNodeEndpoint;
+import com.ibm.crail.namenode.protocol.DataNodeInfo;
 
 public class EndpointCache {
 	private static final Logger LOG = CrailUtils.getLogger();
@@ -48,8 +49,8 @@ public class EndpointCache {
 		this.isOpen = true;
 	}
 	
-	public DataNodeEndpoint getDataEndpoint(int type, InetSocketAddress inetAddress) throws IOException, InterruptedException {
-		return storageCaches.get(type).getDataEndpoint(inetAddress);
+	public DataNodeEndpoint getDataEndpoint(DataNodeInfo dataNodeInfo) throws IOException, InterruptedException {
+		return storageCaches.get(dataNodeInfo.getStorageTier()).getDataEndpoint(dataNodeInfo);
 	}
 	
 	public int size() {
@@ -74,16 +75,16 @@ public class EndpointCache {
 	
 	public static class StorageEndpointCache {
 		private DataNode datanodeGroup;
-		private ConcurrentHashMap<String, Object> locktable;
-		private ConcurrentHashMap<String, DataNodeEndpoint> cache;
+		private ConcurrentHashMap<Long, Object> locktable;
+		private ConcurrentHashMap<Long, DataNodeEndpoint> cache;
 		private int fsId;
 		private boolean isOpen;
 		
 		public StorageEndpointCache(int fsId, DataNode datanodeGroup){
 			this.fsId = fsId;
 			this.datanodeGroup = datanodeGroup;
-			this.cache = new ConcurrentHashMap<String, DataNodeEndpoint>();
-			this.locktable = new ConcurrentHashMap<String, Object>();
+			this.cache = new ConcurrentHashMap<Long, DataNodeEndpoint>();
+			this.locktable = new ConcurrentHashMap<Long, Object>();
 			this.isOpen = true;
 		}	
 		
@@ -99,23 +100,23 @@ public class EndpointCache {
 			}
 		}
 
-		public DataNodeEndpoint getDataEndpoint(InetSocketAddress inetAddress) throws IOException, InterruptedException {
-			DataNodeEndpoint endpoint = cache.get(inetAddress.toString());
+		public DataNodeEndpoint getDataEndpoint(DataNodeInfo dataNodeInfo) throws IOException, InterruptedException {
+			DataNodeEndpoint endpoint = cache.get(dataNodeInfo.key());
 			if (endpoint == null) {
-				Object lock = getLock(inetAddress.toString());
+				Object lock = getLock(dataNodeInfo.key());
 				synchronized (lock) {
-					endpoint = cache.get(inetAddress.toString());
+					endpoint = cache.get(dataNodeInfo.key());
 					if (endpoint == null){
-						endpoint = datanodeGroup.createEndpoint(inetAddress);
-						cache.put(inetAddress.toString(), endpoint);
+						endpoint = datanodeGroup.createEndpoint(dataNodeInfo.getInetAddress());
+						cache.put(dataNodeInfo.key(), endpoint);
 						if (CrailConstants.DEBUG) {
-							LOG.info("EndpointCache miss " + inetAddress.toString() + ", fsId " + fsId + ", cache size " + cache.size());
+							LOG.info("EndpointCache miss " + dataNodeInfo.getInetAddress().toString() + ", fsId " + fsId + ", cache size " + cache.size());
 						}
 					}
 				}
 			} else {
 				if (CrailConstants.DEBUG) {
-					LOG.info("EndpointCache hit " + inetAddress.toString() + ", fsId " + fsId);
+					LOG.info("EndpointCache hit " + dataNodeInfo.getInetAddress().toString() + ", fsId " + fsId);
 				}
 			}
 			return endpoint;
@@ -125,7 +126,7 @@ public class EndpointCache {
 			return cache.size();
 		}
 		
-		private Object getLock(String key){
+		private Object getLock(long key){
 			Object lock = locktable.get(key);
 			if (lock == null){
 				lock = new Object();

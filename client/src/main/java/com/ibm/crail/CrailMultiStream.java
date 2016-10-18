@@ -111,10 +111,10 @@ public class CrailMultiStream extends InputStream {
 			}
 			
 //			LOG.info("starting read, position " + consumedPosition);
-			long streamPosition = consumedPosition;
 			int bufferPosition = buffer.position();
 			int bufferRemaining = buffer.remaining();
 			int bufferLimit = buffer.limit();
+			long streamPosition = consumedPosition;
 			long anticipatedPosition = consumedPosition + bufferRemaining;
 			
 			while(!streams.isEmpty()){
@@ -170,7 +170,7 @@ public class CrailMultiStream extends InputStream {
 			} else {
 				buffer.position(bufferPosition);
 			}
-			return sum;
+			return sum > 0 ? sum : -1;
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new IOException(e);
