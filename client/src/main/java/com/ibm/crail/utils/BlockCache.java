@@ -47,25 +47,29 @@ public class BlockCache {
 		blockCache.remove(fd);
 	}	
 	
+	public void purge() {
+		blockCache.clear();
+	}
+
 	public static class FileBlockCache {
 		private long fd;
-		private ConcurrentHashMap<String, BlockInfo> fileBlockCache;
+		private ConcurrentHashMap<Long, BlockInfo> fileBlockCache;
 		
 		public FileBlockCache(long fd){
 			this.fd = fd;
-			this.fileBlockCache = new ConcurrentHashMap<String, BlockInfo>();
+			this.fileBlockCache = new ConcurrentHashMap<Long, BlockInfo>();
 		}
 
-		public void put(String key, BlockInfo block){
-			this.fileBlockCache.put(key, block);
+		public void put(long blockstart, BlockInfo block){
+			this.fileBlockCache.put(blockstart, block);
 		}
 		
-		public BlockInfo get(String key){
-			return this.fileBlockCache.get(key);
+		public BlockInfo get(long blockstart){
+			return this.fileBlockCache.get(blockstart);
 		}
 
-		public boolean containsKey(String key) {
-			return this.fileBlockCache.containsKey(key);
+		public boolean containsKey(long blockstart) {
+			return this.fileBlockCache.containsKey(blockstart);
 		}
 
 		public long getFd() {

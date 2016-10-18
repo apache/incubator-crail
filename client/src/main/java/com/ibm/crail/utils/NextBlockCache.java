@@ -49,25 +49,29 @@ public class NextBlockCache {
 		nextBlockCache.remove(fd);
 	}	
 	
+	public void purge() {
+		nextBlockCache.clear();
+	}
+
 	public static class FileNextBlockCache {
 		private long fd;
-		private ConcurrentHashMap<String, RpcNameNodeFuture<RpcResponseMessage.GetBlockRes>> fileBlockCache;
+		private ConcurrentHashMap<Long, RpcNameNodeFuture<RpcResponseMessage.GetBlockRes>> fileBlockCache;
 		
 		public FileNextBlockCache(long fd){
 			this.fd = fd;
-			this.fileBlockCache = new ConcurrentHashMap<String, RpcNameNodeFuture<RpcResponseMessage.GetBlockRes>>();
+			this.fileBlockCache = new ConcurrentHashMap<Long, RpcNameNodeFuture<RpcResponseMessage.GetBlockRes>>();
 		}
 
-		public void put(String key, RpcNameNodeFuture<RpcResponseMessage.GetBlockRes> block){
-			this.fileBlockCache.putIfAbsent(key, block);
+		public void put(long blockstart, RpcNameNodeFuture<RpcResponseMessage.GetBlockRes> block){
+			this.fileBlockCache.putIfAbsent(blockstart, block);
 		}
 		
-		public RpcNameNodeFuture<RpcResponseMessage.GetBlockRes> get(String key){
-			return this.fileBlockCache.get(key);
+		public RpcNameNodeFuture<RpcResponseMessage.GetBlockRes> get(long blockstart){
+			return this.fileBlockCache.get(blockstart);
 		}
 
-		public boolean containsKey(String key) {
-			return this.fileBlockCache.containsKey(key);
+		public boolean containsKey(long blockstart) {
+			return this.fileBlockCache.containsKey(blockstart);
 		}
 
 		public long getFd() {

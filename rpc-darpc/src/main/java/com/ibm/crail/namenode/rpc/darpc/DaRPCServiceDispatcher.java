@@ -136,6 +136,7 @@ public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol {
 	public void close(
 			RpcClientEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> endpoint) {
 		try {
+			LOG.info("disconnecting RPC connection, qpnum " + endpoint.getQp().getQp_num());
 			endpoint.close();
 		} catch(Exception e){
 		}

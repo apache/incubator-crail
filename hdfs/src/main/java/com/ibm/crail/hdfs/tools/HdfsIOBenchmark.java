@@ -19,7 +19,7 @@
  *
  */
 
-package com.ibm.crail.hdfs;
+package com.ibm.crail.hdfs.tools;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

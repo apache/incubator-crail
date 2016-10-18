@@ -724,4 +724,9 @@ public class CoreFileSystem extends CrailFS {
 	public DirectBufferCache getBufferCache() {
 		return bufferCache;
 	}
+
+	public void purgeCache() {
+		blockCache.purge();
+		nextBlockCache.purge();
+	}
 }

@@ -34,7 +34,7 @@ public class CoreSubOperation {
 	
 	private long blockOffset;
 	private long blockStart;
-	private String key;
+	private long key;
 	
 	public CoreSubOperation(long fd, long fileOffset, int bufferPosition, int writeLen) throws IOException {
 		this.fd = fd;
@@ -43,14 +43,23 @@ public class CoreSubOperation {
 		this.len = writeLen;
 		
 		this.blockOffset = fileOffset % CrailConstants.BLOCK_SIZE;
-		blockStart = CrailUtils.blockStartAddress(fileOffset);
-		this.key = CoreSubOperation.createKey(fd, blockStart);
+		this.blockStart = CrailUtils.blockStartAddress(fileOffset);
+//		this.key = CoreSubOperation.createKey(fd, blockStart);
+		this.key = blockStart;
+	}
+
+	public long getFd() {
+		return fd;
 	}
 
 	public long getBlockOffset() {
 		return blockOffset;
 	}
 	
+	public long getBlockStart() {
+		return blockStart;
+	}
+
 	public int getBufferPosition(){
 		return bufferPosition;
 	}
@@ -64,20 +73,13 @@ public class CoreSubOperation {
 		return "fd " + fd + ", fileOffset " + fileOffset + ", blockOffset " + blockOffset + ", len " + len + ", blockStart " + blockStart;
 	}
 
-	public long getBlockStart() {
-		return blockStart;
-	}
-	
-	public String key(){
+	public long key(){
 		return this.key;
 	}
 	
-	public static String createKey(long fd, long fileOffset){
+	public static long createKey(long fd, long fileOffset){
 		long offset = CrailUtils.blockStartAddress(fileOffset);
-		return fd + ":" + offset;
-	}
-
-	public long getFd() {
-		return fd;
+		return offset;
+//		return fd + ":" + offset;
 	}
 }

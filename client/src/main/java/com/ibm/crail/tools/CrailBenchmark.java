@@ -39,6 +39,7 @@ import com.ibm.crail.CrailOutputStream;
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
+import com.ibm.crail.core.CoreFileSystem;
 import com.ibm.crail.utils.GetOpt;
 
 public class CrailBenchmark {
@@ -507,6 +508,9 @@ public class CrailBenchmark {
 			System.out.println("ops " + ops);
 			System.out.println("throughput " + throughput);
 			System.out.println("latency " + latency);
+			
+			CoreFileSystem _fs = (CoreFileSystem) fs;
+			_fs.purgeCache();
 		}
 	
 		fs.printStatistics("close");

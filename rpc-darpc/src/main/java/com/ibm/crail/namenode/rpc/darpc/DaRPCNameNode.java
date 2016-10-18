@@ -91,7 +91,7 @@ public class DaRPCNameNode implements RpcNameNode {
 			LOG.info("opened server at " + addr);
 			while (true) {
 				RpcClientEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> clientEndpoint = namenodeServerEp.accept();
-//				LOG.info("accepting RPC connection, qpnum " + clientEndpoint.getQp().getQp_num() + ", total " + allEndpoints.size());
+				LOG.info("accepting RPC connection, qpnum " + clientEndpoint.getQp().getQp_num());
 			}
 		} catch(Exception e){
 			e.printStackTrace();
