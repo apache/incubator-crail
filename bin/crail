@@ -61,7 +61,7 @@ elif [ "$COMMAND" = "getconf" ] ; then
 elif [ "$COMMAND" = "iobench" ] ; then
   CLASS=com.ibm.crail.tools.CrailBenchmark  
 elif [ "$COMMAND" = "hdfsbench" ] ; then
-  CLASS=com.ibm.crail.tools.HdfsIOBenchmark    
+  CLASS=com.ibm.crail.hdfs.tools.HdfsIOBenchmark    
 fi
 
 export CLASSPATH="$bin"/../jars/*:"$bin"/../conf:.
