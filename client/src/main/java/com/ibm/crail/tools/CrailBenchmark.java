@@ -472,15 +472,13 @@ public class CrailBenchmark {
 		//benchmark
 		System.out.println("starting benchmark...");
 		fs.resetStatistics();
+		ByteBuffer buf = ByteBuffer.allocate(size);
 		for (int i = 0; i < loop; i++){
-//			Iterator<String> files = fs.listEntries(filename);
 			CrailMultiStream multiStream = fs.lookupDirectory(filename).get().getMultiStream(batch);
-//			CrailMultiStream multiStream = fs.getMultiStream(files, batch);
-			ByteBuffer buf = ByteBuffer.allocate(size);
-			
 			double sumbytes = 0;
 			long _sumbytes = 0;
 			double ops = 0;
+			buf.clear();
 			long start = System.currentTimeMillis();
 			int ret = multiStream.read(buf);
 			while(ret > 0){
@@ -508,9 +506,6 @@ public class CrailBenchmark {
 			System.out.println("ops " + ops);
 			System.out.println("throughput " + throughput);
 			System.out.println("latency " + latency);
-			
-			CoreFileSystem _fs = (CoreFileSystem) fs;
-			_fs.purgeCache();
 		}
 	
 		fs.printStatistics("close");

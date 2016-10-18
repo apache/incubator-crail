@@ -43,6 +43,7 @@ class CoreDataOperation implements Future<CrailResult>, CrailResult {
 	private ByteBuffer buffer;
 	private long fileOffset;
 	private int bufferPosition;
+	private int bufferLimit;
 	private int operationLength;
 	
 	//current state
@@ -58,6 +59,7 @@ class CoreDataOperation implements Future<CrailResult>, CrailResult {
 		this.buffer = buffer;
 		this.fileOffset = stream.position();
 		this.bufferPosition = buffer.position();
+		this.bufferLimit = buffer.limit();
 		this.operationLength = buffer.remaining();
 		this.inProcessLen = 0;
 		this.completedLen = 0;
@@ -163,6 +165,14 @@ class CoreDataOperation implements Future<CrailResult>, CrailResult {
 	
 	void incProcessedLen(int opLen){
 		this.inProcessLen += opLen;
+	}
+	
+	long getInProcessLen(){
+		return this.inProcessLen;
+	}
+	
+	int getBufferLimit(){
+		return bufferLimit;
 	}
 	
 	int remaining() {

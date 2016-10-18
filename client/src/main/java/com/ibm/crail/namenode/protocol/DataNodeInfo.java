@@ -35,6 +35,7 @@ public class DataNodeInfo {
 	private int port;	
 	
 	private InetSocketAddress inetAddress;
+	private long key;
 	
 	public DataNodeInfo(){
 		this.storageTier = 0;
@@ -42,6 +43,7 @@ public class DataNodeInfo {
 		this.ipAddress = new byte[4];
 		this.port = 0;		
 		this.inetAddress = null;
+		this.key = 0;
 	}
 	
 	public DataNodeInfo(int storageTier, int locationAffinity, InetSocketAddress inetAddress){
@@ -103,14 +105,22 @@ public class DataNodeInfo {
 	public int getStorageTier() {
 		return storageTier;
 	}
-
-	@Override
-	public String toString() {
-		if (inetAddress != null){
-			return "ip " + inetAddress.toString();
-		} else {
-			return "";
+	
+	public String key(){
+		if (key == 0){
+//			key = ipAddress[0] | ipAddress[1] << 8 | ipAddress[2] << 16 | ipAddress[3] << 24 | port << 32; 
 		}
+//		return key;
+		return inetAddress.toString();
 	}
+
+//	@Override
+//	public String toString() {
+//		if (inetAddress != null){
+//			return "ip " + inetAddress.toString();
+//		} else {
+//			return "";
+//		}
+//	}
 
 }

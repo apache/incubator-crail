@@ -85,8 +85,8 @@ public class BlockInfo {
 		return dnInfo;
 	}
 
-	@Override
-	public String toString() {
-		return dnInfo.toString() + ", addr " + addr + ", length " + length + ", key " + lkey;
-	}
+//	@Override
+//	public String toString() {
+//		return dnInfo.toString() + ", addr " + addr + ", length " + length + ", key " + lkey;
+//	}
 }

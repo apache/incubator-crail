@@ -222,12 +222,16 @@ public class RdmaDataNode extends DataNode {
 						Thread.sleep(2000);
 					}
 				} catch(Exception e){
+					LOG.info("Fatal error...exiting..");
 					e.printStackTrace();
+					System.exit(-1);
 				}
  
 			}
 		} catch(Exception e){
+			LOG.info("Fatal error...exiting..");
 			e.printStackTrace();
+			System.exit(-1);			
 		}
 
 		

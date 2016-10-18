@@ -155,6 +155,7 @@ public abstract class CoreStream {
 			throw new IOException("Internal error, processed data != operation length");
 		}
 		
+		dataBuf.limit(multiOperation.getBufferLimit());
 		dataBuf.position(multiOperation.getCurrentBufferPosition());
 		return multiOperation;
 	}
@@ -247,7 +248,7 @@ public abstract class CoreStream {
 	private Future<DataResult> prepareAndTrigger(CoreSubOperation opDesc, ByteBuffer dataBuf, BlockInfo block) throws Exception {
 		try {
 			InetSocketAddress inetAddress = block.getDnInfo().getInetAddress();
-			DataNodeEndpoint endpoint = endpointCache.getDataEndpoint(block.getDnInfo().getStorageTier(), inetAddress);
+			DataNodeEndpoint endpoint = endpointCache.getDataEndpoint(block.getDnInfo().getStorageTier(), block.getDnInfo().getInetAddress());
 			ByteBuffer region = fs.getBufferCache().getAllocationBuffer(dataBuf);
 			region = region != null ? region : dataBuf;
 			dataBuf.position(opDesc.getBufferPosition());
