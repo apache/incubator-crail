@@ -62,7 +62,11 @@ public class CrailMultiStream extends InputStream {
 		
 		for (int i = 0; i < this.outstanding; i++){
 			SubStream substream = nextSubStream();
-			streams.add(substream);
+			if (substream != null){
+				streams.add(substream);
+			} else {
+				break;
+			}
 		}
 	}	
 	
