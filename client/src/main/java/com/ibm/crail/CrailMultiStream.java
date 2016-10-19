@@ -147,9 +147,11 @@ public class CrailMultiStream extends InputStream {
 						substream.close();
 						filesProcessed++;
 						substream = nextSubStream();
-						if (substream != null){
+						if (substream != null && substream.current() < anticipatedPosition){
+							runningStreams.add(substream);
+						} else if (substream != null) {
 							streams.add(substream);
-						}						
+						}
 					} else if (substream.current() >= anticipatedPosition){
 						long leftover = substream.end() - substream.current();
 //						LOG.info("moving tmp substream at position " + substream.current() + ", path " + substream.getPath() + ", leftover " + leftover);
@@ -233,7 +235,7 @@ public class CrailMultiStream extends InputStream {
 //			LOG.info("starting new substream, triggeredPosition " + triggeredPosition + ", file " + file.getPath());
 			substream = new SubStream(file, stream, triggeredPosition);
 			triggeredPosition += file.getCapacity();
-		}
+		} 
 		return substream;
 	}
 
