@@ -110,7 +110,7 @@ public class CoreInputStream extends CoreStream implements CrailInputStream {
 		}			
 		
 		if (inFlight.get() != 0){
-			LOG.info("Cannot close, pending operations, opcount " + inFlight.get());
+			LOG.info("Cannot close, pending operations, opcount " + inFlight.get() + ", path " + getFile().getPath());
 			throw new IOException("Cannot close, pending operations, opcount " + inFlight.get());
 		}
 		super.close();

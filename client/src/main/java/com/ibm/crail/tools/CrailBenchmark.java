@@ -502,6 +502,7 @@ public class CrailBenchmark {
 			}
 			
 			System.out.println("round " + i + ":");
+			System.out.println("bytes read " + _sumbytes);
 			System.out.println("execution time " + executionTime);
 			System.out.println("ops " + ops);
 			System.out.println("throughput " + throughput);

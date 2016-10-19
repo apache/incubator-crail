@@ -46,6 +46,7 @@ public class CrailMultiStream extends InputStream {
 	private long consumedPosition;
 	private byte[] tmpByteBuf;
 	private boolean isClosed;
+	private int filesProcessed;
 	
 	public CrailMultiStream(CrailFS fs, Iterator<String> paths, int outstanding, int files) throws Exception{
 		this.fs = fs;
@@ -59,6 +60,7 @@ public class CrailMultiStream extends InputStream {
 		this.consumedPosition = 0;
 		this.tmpByteBuf = new byte[1];
 		this.isClosed = false;
+		this.filesProcessed = 0;
 		
 		for (int i = 0; i < this.outstanding; i++){
 			SubStream substream = nextSubStream();
@@ -143,6 +145,7 @@ public class CrailMultiStream extends InputStream {
 					if (substream.isEnd()){
 //						LOG.info("closing substream at position " + substream.current() + ", path " + substream.getPath());
 						substream.close();
+						filesProcessed++;
 						substream = nextSubStream();
 						if (substream != null){
 							streams.add(substream);
@@ -212,6 +215,10 @@ public class CrailMultiStream extends InputStream {
 
 	public boolean isOpen() {
 		return true;
+	}
+	
+	public int getFilesProcessed(){
+		return this.filesProcessed;
 	}
 
 	private SubStream nextSubStream() throws Exception {
