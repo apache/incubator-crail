@@ -41,7 +41,6 @@ public class CrailBufferedInputStream extends InputStream {
 	private ByteBuffer tmpBoundaryBuffer;
 	private ByteBuffer internalBuf;	
 	private Future<CrailResult> future;
-	private boolean streamEnd;
 	private long position;
 	
 	public CrailBufferedInputStream(CrailFS crailFS, CrailInputStream inputStream) throws IOException {
@@ -51,7 +50,6 @@ public class CrailBufferedInputStream extends InputStream {
 		this.tmpByteBuf = new byte[1];
 		this.tmpBoundaryBuffer = ByteBuffer.allocate(8);
 		this.internalBuf = crailFS.allocateBuffer();
-		this.streamEnd = false;
 		this.future = null;
 		this.internalBuf.clear().flip();
 		triggerFetch();
@@ -89,20 +87,17 @@ public class CrailBufferedInputStream extends InputStream {
 			} else if (len == 0) {
 				return 0;
 			}
-			
+
 			int sumLen = 0;
-			while (len > 0 && !streamEnd) {
-				completeFetch();
-				if (internalBuf.remaining() > 0){
-					int bufferRemaining = Math.min(len, internalBuf.remaining());
-					internalBuf.get(buf, off, bufferRemaining);
-					len -= bufferRemaining;
-					off += bufferRemaining;
-					sumLen += bufferRemaining;		
-					position += bufferRemaining;
-				} 
+			while (len > 0 && completeFetch() > 0) {
+				int bufferRemaining = Math.min(len, internalBuf.remaining());
+				internalBuf.get(buf, off, bufferRemaining);
+				len -= bufferRemaining;
+				off += bufferRemaining;
+				sumLen += bufferRemaining;		
+				position += bufferRemaining;
 				triggerFetch();
-			}			
+			}		
 			return sumLen > 0 ? sumLen : -1;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -120,18 +115,15 @@ public class CrailBufferedInputStream extends InputStream {
 
 			int len = dataBuf.remaining();
 			int sumLen = 0;
-			while (len > 0 && !streamEnd) {
-				completeFetch();
-				if (internalBuf.remaining() > 0){
-					int bufferRemaining = Math.min(len, internalBuf.remaining());
-					int oldLimit = internalBuf.limit();
-					internalBuf.limit(internalBuf.position() + bufferRemaining);
-					dataBuf.put(internalBuf);
-					internalBuf.limit(oldLimit);
-					len -= bufferRemaining;
-					sumLen += bufferRemaining;	
-					position += bufferRemaining;
-				} 
+			while (len > 0 && completeFetch() > 0) {
+				int bufferRemaining = Math.min(len, internalBuf.remaining());
+				int oldLimit = internalBuf.limit();
+				internalBuf.limit(internalBuf.position() + bufferRemaining);
+				dataBuf.put(internalBuf);
+				internalBuf.limit(oldLimit);
+				len -= bufferRemaining;
+				sumLen += bufferRemaining;	
+				position += bufferRemaining;
 				triggerFetch();
 			}
 			return sumLen > 0 ? sumLen : -1;			
@@ -148,7 +140,6 @@ public class CrailBufferedInputStream extends InputStream {
 				future = inputStream.read(internalBuf);
 				if (future == null){
 					internalBuf.clear().flip();
-					streamEnd = true;
 				}
 			}
 		} catch(Exception e){
@@ -156,13 +147,14 @@ public class CrailBufferedInputStream extends InputStream {
 		}
 	}	
 	
-	private void completeFetch() throws IOException {
+	private int completeFetch() throws IOException {
 		try {
 			if (future != null){
 				future.get();
 				internalBuf.flip();
 				future = null;
 			}
+			return internalBuf.remaining();
 		} catch(Exception e){
 			throw new IOException(e);
 		}
@@ -190,9 +182,9 @@ public class CrailBufferedInputStream extends InputStream {
 			return 0;
 		}
 
-		long oldPos = inputStream.position();
+		long oldPos = position();
 		this.seek(oldPos + n);
-		long newPos = inputStream.position();
+		long newPos = position();
 
 		if (newPos >= oldPos) {
 			return newPos - oldPos;
@@ -202,30 +194,29 @@ public class CrailBufferedInputStream extends InputStream {
 	}
 
 	public synchronized void seek(long pos) throws IOException {
-		long oldPos = inputStream.position();
-		inputStream.seek(pos);
-		long newPos = inputStream.position();
-		if (oldPos < newPos) {
-			long skipped = newPos - oldPos;
-			if (skipped < internalBuf.remaining()) {
-				int _skipped = (int) skipped;
-				internalBuf.position(internalBuf.position() + _skipped);
-			} else {
-				internalBuf.clear();
-				internalBuf.flip();
-			}
-			position += skipped;
-		} else if (oldPos > newPos) {
-			long removed = oldPos - newPos;
-			if (removed < internalBuf.position()) {
-				int _removed = (int) removed;
-				internalBuf.position(internalBuf.position() - _removed);
-			} else {
-				internalBuf.clear();
-				internalBuf.flip();
-			}
-			position -= removed;
+		if (pos == position){
+			return;
 		}
+		
+		completeFetch();
+		long skip = pos - position;
+		if (Math.abs(skip) < Integer.MAX_VALUE){
+			int bufferPosition = internalBuf.position() + (int) skip;
+			if (bufferPosition > 0 && bufferPosition < internalBuf.limit()){
+				internalBuf.position(bufferPosition);
+				this.position = pos;
+				return;
+			}
+		}
+		
+		long startOffset = CrailUtils.blockStartAddress(pos);
+		long offset = pos % (long) CrailConstants.BUFFER_SIZE;
+		inputStream.seek(startOffset);
+		internalBuf.clear().flip();
+		triggerFetch();
+		completeFetch();
+		internalBuf.position((int) offset);
+		this.position = pos;
 	}
 
 

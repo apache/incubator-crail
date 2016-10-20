@@ -76,15 +76,12 @@ public class CrailBufferedOutputStream extends OutputStream {
 				return;
 			}
 
-			while (len > 0) {
-				completePurge();
-				if (internalBuf.remaining() > 0){
-					int bufferRemaining = Math.min(len, internalBuf.remaining());
-					internalBuf.put(dataBuf, off, bufferRemaining);
-					off += bufferRemaining;
-					len -= bufferRemaining;
-					position += bufferRemaining;
-				}
+			while (len > 0 && completePurge() > 0) {
+				int bufferRemaining = Math.min(len, internalBuf.remaining());
+				internalBuf.put(dataBuf, off, bufferRemaining);
+				off += bufferRemaining;
+				len -= bufferRemaining;
+				position += bufferRemaining;
 				purgeIfFull();				
 			}
 		} catch (Exception e) {
@@ -101,17 +98,14 @@ public class CrailBufferedOutputStream extends OutputStream {
 			}			
 			
 			int len = dataBuf.remaining();
-			while (len > 0) {
-				completePurge();
-				if (internalBuf.remaining() > 0){
-					int bufferRemaining = Math.min(len, internalBuf.remaining());
-					int oldLimit = dataBuf.limit();
-					dataBuf.limit(dataBuf.position() + bufferRemaining);
-					internalBuf.put(dataBuf);
-					dataBuf.limit(oldLimit);
-					len -= bufferRemaining;
-					position += bufferRemaining;
-				}
+			while (len > 0 && completePurge() > 0) {
+				int bufferRemaining = Math.min(len, internalBuf.remaining());
+				int oldLimit = dataBuf.limit();
+				dataBuf.limit(dataBuf.position() + bufferRemaining);
+				internalBuf.put(dataBuf);
+				dataBuf.limit(oldLimit);
+				len -= bufferRemaining;
+				position += bufferRemaining;
 				purgeIfFull();
 			}
 		} catch (Exception e) {
@@ -119,13 +113,14 @@ public class CrailBufferedOutputStream extends OutputStream {
 		}
 	}
 	
-	private void completePurge() throws IOException {
+	private int completePurge() throws IOException {
 		try {
 			if (future != null){
 				future.get();
 				internalBuf.clear();
 				future = null;
 			}
+			return internalBuf.remaining();
 		} catch(Exception e){
 			throw new IOException(e);
 		}
