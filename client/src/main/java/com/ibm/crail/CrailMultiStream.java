@@ -81,12 +81,12 @@ public class CrailMultiStream extends InputStream {
         return read(b, 0, b.length);
     }	
 
-	public final synchronized int read(byte[] buf, int off, int len)
+	public final synchronized int read(byte[] buffer, int off, int len)
 			throws IOException {
 		try {
-			if (buf == null) {
+			if (buffer == null) {
 				throw new NullPointerException();
-			} else if (off < 0 || len < 0 || len > buf.length - off) {
+			} else if (off < 0 || len < 0 || len > buffer.length - off) {
 				throw new IndexOutOfBoundsException();
 			} else if (len == 0) {
 				return 0;
@@ -94,9 +94,64 @@ public class CrailMultiStream extends InputStream {
 				return -1;
 			}
 		
-			return 0;
+//			LOG.info("starting read, position " + consumedPosition);
+			int bufferPosition = off;
+			int bufferRemaining = len;
+			int bufferLimit = off + len;
+			long streamPosition = consumedPosition;
+			long anticipatedPosition = consumedPosition + bufferRemaining;
+			
+			while(!streams.isEmpty()){
+				SubStream substream = streams.peek();
+				if (substream.current() < anticipatedPosition){
+					substream = streams.poll();
+					runningStreams.add(substream);
+				} else {
+					break;
+				}
+			}
+			
+			int sum = 0;
+			while(sum < bufferRemaining && !runningStreams.isEmpty()){
+				SubStream substream = runningStreams.poll();
+				int available = substream.available();
+//				LOG.info("checking file " +  substream.getPath() + ", available " + available);
+				if (available > 0){
+					int bufferOffset = (int) (substream.current() - streamPosition);
+					int bufferReadPosition = bufferPosition + bufferOffset;
+					int dataRead = substream.read(buffer, bufferReadPosition, available);
+					sum += dataRead;
+					if (substream.isEnd()){
+//						LOG.info("closing substream at position " + substream.current() + ", path " + substream.getPath());
+						substream.close();
+						filesProcessed++;
+						substream = nextSubStream();
+						if (substream != null && substream.current() < anticipatedPosition){
+							runningStreams.add(substream);
+						} else if (substream != null) {
+							streams.add(substream);
+						}
+					} else if (substream.current() >= anticipatedPosition){
+						long leftover = substream.end() - substream.current();
+//						LOG.info("moving tmp substream at position " + substream.current() + ", path " + substream.getPath() + ", leftover " + leftover);
+						tmpStreams.add(substream);
+					} else {
+						runningStreams.add(substream);
+					}
+				} else {
+					runningStreams.add(substream);
+				}
+//				LOG.info("");
+			}
+			while(!tmpStreams.isEmpty()){
+				SubStream substream = tmpStreams.poll();
+				runningStreams.add(substream);
+			}
+			if (sum > 0){
+				consumedPosition += sum;
+			} 
+			return sum > 0 ? sum : -1;
 		} catch (Exception e) {
-			e.printStackTrace();
 			throw new IOException(e);
 		}
 	}
@@ -140,7 +195,7 @@ public class CrailMultiStream extends InputStream {
 					int tmpLimit = Math.min(bufferReadPosition + available, bufferLimit);					
 					buffer.limit(tmpLimit);					
 					buffer.position(bufferReadPosition);
-					int dataRead = substream.read(streamPosition, buffer, bufferPosition, bufferRemaining, bufferLimit, available);
+					int dataRead = substream.read(buffer);
 					sum += dataRead;
 					if (substream.isEnd()){
 //						LOG.info("closing substream at position " + substream.current() + ", path " + substream.getPath());
@@ -276,7 +331,7 @@ public class CrailMultiStream extends InputStream {
 			stream.close();
 		}
 
-		public int read(long streamPosition, ByteBuffer buffer, int bufferPosition, int bufferRemaining, int bufferLimit, int available) throws IOException {
+		public int read(ByteBuffer buffer) throws IOException {
 			int ret = stream.read(buffer);
 			if (ret <= 0){
 				throw new IOException("Stream indicated available > 0, but reading returned " + ret);
@@ -285,5 +340,14 @@ public class CrailMultiStream extends InputStream {
 			current += ret;
 			return ret;			
 		}
+		
+		public int read(byte[] buffer, int off, int len) throws IOException {
+			int ret = stream.read(buffer, off, len);
+			if (ret <= 0){
+				throw new IOException("Stream indicated available > 0, but reading returned " + ret);
+			}			
+			current += ret;
+			return ret;		
+		}		
 	}
 }
