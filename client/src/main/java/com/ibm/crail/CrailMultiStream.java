@@ -119,6 +119,7 @@ public class CrailMultiStream extends InputStream {
 				if (available > 0){
 					int bufferOffset = (int) (substream.current() - streamPosition);
 					int bufferReadPosition = bufferPosition + bufferOffset;
+					available = Math.min(available, bufferLimit - bufferReadPosition); 
 					int dataRead = substream.read(buffer, bufferReadPosition, available);
 					sum += dataRead;
 					if (substream.isEnd()){

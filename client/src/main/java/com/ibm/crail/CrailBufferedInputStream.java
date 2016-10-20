@@ -83,7 +83,7 @@ public class CrailBufferedInputStream extends InputStream {
 			if (buf == null) {
 				throw new NullPointerException();
 			} else if (off < 0 || len < 0 || len > buf.length - off) {
-				throw new IndexOutOfBoundsException();
+				throw new IndexOutOfBoundsException("off " + off + ", len " + len + ", length " + buf.length);
 			} else if (len == 0) {
 				return 0;
 			}
