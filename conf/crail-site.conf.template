@@ -1,17 +1,20 @@
 crail.namenode.address			crail://<hostname>:9060
 crail.namenode.blockselection		roundrobin
+crail.namenode.darpc.queuesize		64
+crail.namenode.darpc.polling		false
+crail.datanode.rdma.interface           eth0
+crail.datanode.rdma.port                50040
+crail.datanode.rdma.allocationsize      1073741824
+crail.datanode.rdma.storagelimit        10737418240
+crail.datanode.rdma.datapath            <path, should be huge page mountpoint>
+crail.datanode.rdma.indexpath           <path, cannot be huge page mountpoint>
+crail.datanode.rdma.localmap            true
 crail.blocksize				1048576
 crail.buffersize			1048576
-crail.regionsize			67108864
-crail.cachelimit			67108864
+crail.regionsize			1073741824
+crail.cachelimit			1073741824
 caril.cachepath				<path, should be huge page mountpoint>
 crail.singleton				true
 crail.statistics 			true
 crail.datanode.types 			com.ibm.crail.datanode.rdma.RdmaDataNode
-crail.datanode.rdma.interface		eth0
-crail.datanode.rdma.port		50040
-crail.datanode.rdma.allocationsize      67108864
-crail.datanode.rdma.storagelimit        536870912
-crail.datanode.rdma.datapath            <path, should be huge page mountpoint>
-crail.datanode.rdma.indexpath		<path, cannot be huge page mountpoint>
-crail.datanode.rdma.localmap 		true
+
