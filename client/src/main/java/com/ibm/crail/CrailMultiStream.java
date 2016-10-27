@@ -281,16 +281,18 @@ public class CrailMultiStream extends InputStream {
 
 	private SubStream nextSubStream() throws Exception {
 		SubStream substream = null;
-		if (paths.hasNext()){
+		while (paths.hasNext() && substream == null){
 			String path = paths.next();
 			CrailFile file = fs.lookupFile(path, false).get();
 			if (file == null){
 				throw new Exception("File not found, name " + path);
 			}
-			CrailBufferedInputStream stream = file.getBufferedInputStream(file.getCapacity());
-//			LOG.info("starting new substream, triggeredPosition " + triggeredPosition + ", file " + file.getPath());
-			substream = new SubStream(file, stream, triggeredPosition);
-			triggeredPosition += file.getCapacity();
+			if (file.getCapacity() > 0){
+				CrailBufferedInputStream stream = file.getBufferedInputStream(file.getCapacity());
+//				LOG.info("starting new substream, triggeredPosition " + triggeredPosition + ", file " + file.getPath());
+				substream = new SubStream(file, stream, triggeredPosition);
+				triggeredPosition += file.getCapacity();
+			}
 		} 
 		return substream;
 	}
