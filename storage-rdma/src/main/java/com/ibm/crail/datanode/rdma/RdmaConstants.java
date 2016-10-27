@@ -29,9 +29,6 @@ public class RdmaConstants {
 	public static final String DATANODE_RDMA_LOCAL_MAP_KEY = "crail.datanode.rdma.localmap";
 	public static boolean DATANODE_RDMA_LOCAL_MAP = true;
 	
-	public static final String DATANODE_RDMA_CONCURRENT_POSTS_KEY = "crail.datanode.rdma.concurrent.posts";
-	public static int DATANODE_RDMA_CONCURRENT_POSTS = 16;		
-
 	public static final String DATANODE_RDMA_QUEUESIZE_KEY = "crail.datanode.rdma.queuesize";
 	public static int DATANODE_RDMA_QUEUESIZE = 32;
 	
@@ -60,9 +57,6 @@ public class RdmaConstants {
 		if (conf.get(DATANODE_RDMA_LOCAL_MAP_KEY) != null) {
 			DATANODE_RDMA_LOCAL_MAP = conf.getBoolean(DATANODE_RDMA_LOCAL_MAP_KEY, false);
 		}			
-		if (conf.get(DATANODE_RDMA_CONCURRENT_POSTS_KEY) != null) {
-			DATANODE_RDMA_CONCURRENT_POSTS = Integer.parseInt(conf.get(DATANODE_RDMA_CONCURRENT_POSTS_KEY));
-		}		
 		if (conf.get(DATANODE_RDMA_QUEUESIZE_KEY) != null) {
 			DATANODE_RDMA_QUEUESIZE = Integer.parseInt(conf.get(DATANODE_RDMA_QUEUESIZE_KEY));
 		}			
@@ -81,9 +75,6 @@ public class RdmaConstants {
 		if (!DATANODE_RDMA_TYPE.equalsIgnoreCase("passive") && !DATANODE_RDMA_TYPE.equalsIgnoreCase("active")){
 			throw new IOException("crail.datanode.type must be either <active> or <passive>, found " + DATANODE_RDMA_TYPE);
 		}			
-		if (DATANODE_RDMA_CONCURRENT_POSTS > DATANODE_RDMA_QUEUESIZE){
-			throw new IOException("crail.datanode.rdma.concurrent.posts must be smaller or equal to crail.datanode.rdma.queuesize");
-		}
 	}
 
 	public static void printConf(Logger logger) {
@@ -94,7 +85,6 @@ public class RdmaConstants {
 		logger.info(DATANODE_RDMA_DATA_PATH_KEY + " " + DATANODE_RDMA_DATA_PATH);
 		logger.info(DATANODE_RDMA_INDEX_PATH_KEY + " " + DATANODE_RDMA_INDEX_PATH);
 		logger.info(DATANODE_RDMA_LOCAL_MAP_KEY + " " + DATANODE_RDMA_LOCAL_MAP);
-		logger.info(DATANODE_RDMA_CONCURRENT_POSTS_KEY + " " + DATANODE_RDMA_CONCURRENT_POSTS);
 		logger.info(DATANODE_RDMA_QUEUESIZE_KEY + " " + DATANODE_RDMA_QUEUESIZE);
 		logger.info(DATANODE_RDMA_TYPE_KEY + " " + DATANODE_RDMA_TYPE);
 	}	

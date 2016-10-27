@@ -58,7 +58,7 @@ public class RdmaDataNodeActiveEndpoint extends RdmaActiveClientEndpoint impleme
 		readOps = new LinkedBlockingQueue<SVCPostSend>();
 		this.opcount = new AtomicIntegerModulo();
 		this.futureMap = new ConcurrentHashMap<Long, RdmaDataActiveFuture>();
-		this.sendQueueAvailable = new Semaphore(group.getMaxWR());
+		this.sendQueueAvailable = new Semaphore(RdmaConstants.DATANODE_RDMA_QUEUESIZE);
 		this.mrCache = group.getMrCache();
 		this.deviceCache = null;
 	}
@@ -67,7 +67,7 @@ public class RdmaDataNodeActiveEndpoint extends RdmaActiveClientEndpoint impleme
 	protected synchronized void init() throws IOException {
 		super.init();
 		
-		for (int i = 0; i < RdmaConstants.DATANODE_RDMA_CONCURRENT_POSTS; i++){
+		for (int i = 0; i < RdmaConstants.DATANODE_RDMA_QUEUESIZE; i++){
 			SVCPostSend write = initWriteOp();
 			writeOps.add(write);
 			SVCPostSend read = initReadOp();
