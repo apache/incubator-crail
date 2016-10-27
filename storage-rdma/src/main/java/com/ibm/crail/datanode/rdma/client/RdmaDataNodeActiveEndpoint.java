@@ -183,10 +183,7 @@ public class RdmaDataNodeActiveEndpoint extends RdmaActiveClientEndpoint impleme
 		RdmaDataActiveFuture future = new RdmaDataActiveFuture(sendReadWR.getWr_id(), sgeSendWrite.getLength(), true);
 		
 		futureMap.put(future.getWrid(), future);
-		if (!writeOp.execute().success()){
-			throw new IOException("error in posting write");
-		}
-		
+		writeOp.execute();
 		writeOps.add(writeOp);
 		
 		return future;
@@ -241,10 +238,7 @@ public class RdmaDataNodeActiveEndpoint extends RdmaActiveClientEndpoint impleme
 		RdmaDataActiveFuture future = new RdmaDataActiveFuture(sendWR.getWr_id(), sgeSend.getLength(), false);
 		
 		futureMap.put(future.getWrid(), future);
-		if (!readOp.execute().success()){
-			throw new IOException("error in posting read");
-		}
-		
+		readOp.execute();
 		readOps.add(readOp);
 		
 		return future;		

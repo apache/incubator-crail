@@ -201,11 +201,8 @@ public class RdmaDataNodePassiveEndpoint extends RdmaClientEndpoint implements D
 		
 		RdmaDataPassiveFuture future = new RdmaDataPassiveFuture(this, sendReadWR.getWr_id(), sgeSendWrite.getLength(), true);
 		
-		futureMap.put(future.getWrid(), future);		
-		if (!writeOp.execute().success()){
-			throw new IOException("error in posting write");
-		}
-		
+		futureMap.put(future.getWrid(), future);	
+		writeOp.execute();
 		writeOps.add(writeOp);
 		
 		return future;
@@ -260,10 +257,7 @@ public class RdmaDataNodePassiveEndpoint extends RdmaClientEndpoint implements D
 		RdmaDataPassiveFuture future = new RdmaDataPassiveFuture(this, sendWR.getWr_id(), sgeSend.getLength(), false);
 		
 		futureMap.put(future.getWrid(), future);
-		if (!readOp.execute().success()){
-			throw new IOException("error in posting read");
-		}
-		
+		readOp.execute();
 		readOps.add(readOp);
 		
 		return future;		

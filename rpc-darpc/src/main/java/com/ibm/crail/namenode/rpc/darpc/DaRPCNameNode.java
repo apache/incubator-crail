@@ -106,18 +106,23 @@ public class DaRPCNameNode implements RpcNameNode {
 		try {
 			if (namenodeClientEp != null){
 				namenodeClientEp.close();
+				namenodeClientEp = null;
 			}
 			if (namenodeClientGroup != null){
 				namenodeClientGroup.close();
+				namenodeClientGroup = null;
 			}
 			if (namenodeServerEp != null){
 				namenodeServerEp.close();
+				namenodeServerEp = null;
 			}
 			if (namenodeServerGroup != null){
 				namenodeServerGroup.close();
+				namenodeServerGroup = null;
 			}			
 		} catch(Exception e){
-			LOG.info("Error while closing ");
+			e.printStackTrace();
+			LOG.info("Error while closing " + e.getMessage());
 		}
 	}
 
