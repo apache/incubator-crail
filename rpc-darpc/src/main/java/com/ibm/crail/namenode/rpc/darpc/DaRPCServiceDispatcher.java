@@ -63,8 +63,8 @@ public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol {
 	}
 	
 	public void processServerEvent(RpcServerEvent<DaRPCNameNodeRequest, DaRPCNameNodeResponse> event) {
-		DaRPCNameNodeRequest request = event.getRequest();
-		DaRPCNameNodeResponse response = event.getResponse();
+		DaRPCNameNodeRequest request = event.getReceiveMessage();
+		DaRPCNameNodeResponse response = event.getSendMessage();
 		short error = NameNodeProtocol.ERR_OK;
 		try {
 			response.setType(NameNodeProtocol.responseTypes[request.getCmd()]);
