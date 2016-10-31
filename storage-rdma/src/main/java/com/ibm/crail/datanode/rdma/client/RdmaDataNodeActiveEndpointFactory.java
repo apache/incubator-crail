@@ -34,7 +34,7 @@ public class RdmaDataNodeActiveEndpointFactory implements RdmaEndpointFactory<Rd
 	}
 	
 	@Override
-	public RdmaDataNodeActiveEndpoint createEndpoint(RdmaCmId id) throws IOException {
-		return new RdmaDataNodeActiveEndpoint(group, id);
+	public RdmaDataNodeActiveEndpoint createEndpoint(RdmaCmId id, boolean serverSide) throws IOException {
+		return new RdmaDataNodeActiveEndpoint(group, id, serverSide);
 	}
 }

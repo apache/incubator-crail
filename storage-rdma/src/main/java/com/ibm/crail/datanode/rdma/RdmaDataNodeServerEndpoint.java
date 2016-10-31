@@ -29,8 +29,8 @@ import com.ibm.disni.rdma.*;
 public class RdmaDataNodeServerEndpoint extends RdmaEndpoint {
 	private RdmaDataNodeServer closer;
 
-	public RdmaDataNodeServerEndpoint(RdmaPassiveEndpointGroup<RdmaDataNodeServerEndpoint> endpointGroup, RdmaCmId idPriv, RdmaDataNodeServer closer) throws IOException {	
-		super(endpointGroup, idPriv);
+	public RdmaDataNodeServerEndpoint(RdmaPassiveEndpointGroup<RdmaDataNodeServerEndpoint> endpointGroup, RdmaCmId idPriv, RdmaDataNodeServer closer, boolean serverSide) throws IOException {	
+		super(endpointGroup, idPriv, serverSide);
 		this.closer = closer;
 	}	
 	

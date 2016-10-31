@@ -52,8 +52,8 @@ public class RdmaDataNodeActiveEndpoint extends RdmaActiveEndpoint implements Da
 	private MrCache mrCache;
 	private DeviceMrCache deviceCache;
 	
-	public RdmaDataNodeActiveEndpoint(RdmaDataNodeActiveGroup group, RdmaCmId id) throws IOException {
-		super(group, id);
+	public RdmaDataNodeActiveEndpoint(RdmaDataNodeActiveGroup group, RdmaCmId id, boolean serverSide) throws IOException {
+		super(group, id, serverSide);
 		writeOps = new LinkedBlockingQueue<SVCPostSend>();
 		readOps = new LinkedBlockingQueue<SVCPostSend>();
 		this.opcount = new AtomicIntegerModulo();

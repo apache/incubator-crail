@@ -33,7 +33,7 @@ public class RdmaDataNodePassiveEndpointFactory implements RdmaEndpointFactory<R
 	}
 	
 	@Override
-	public RdmaDataNodePassiveEndpoint createEndpoint(RdmaCmId id) throws IOException {
-		return new RdmaDataNodePassiveEndpoint(group, id);
+	public RdmaDataNodePassiveEndpoint createEndpoint(RdmaCmId id, boolean serverSide) throws IOException {
+		return new RdmaDataNodePassiveEndpoint(group, id, serverSide);
 	}
 }
