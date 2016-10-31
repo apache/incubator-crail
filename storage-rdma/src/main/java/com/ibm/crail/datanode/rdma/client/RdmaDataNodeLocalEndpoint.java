@@ -41,7 +41,7 @@ import com.ibm.crail.datanode.DataResult;
 import com.ibm.crail.datanode.rdma.RdmaConstants;
 import com.ibm.crail.datanode.rdma.RdmaDataNode;
 import com.ibm.crail.namenode.protocol.BlockInfo;
-import com.ibm.disni.verbs.*;
+import com.ibm.disni.rdma.verbs.*;
 import com.ibm.disni.util.*;
 
 import sun.misc.Unsafe;

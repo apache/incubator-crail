@@ -28,8 +28,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.ibm.disni.util.MemoryUtils;
-import com.ibm.disni.verbs.IbvMr;
-import com.ibm.disni.verbs.IbvPd;
+import com.ibm.disni.rdma.verbs.IbvMr;
+import com.ibm.disni.rdma.verbs.IbvPd;
 
 public class MrCache {
 	private ConcurrentHashMap<Integer, DeviceMrCache> cache;

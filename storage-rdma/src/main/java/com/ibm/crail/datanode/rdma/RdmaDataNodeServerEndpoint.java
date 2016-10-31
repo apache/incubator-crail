@@ -23,10 +23,10 @@ package com.ibm.crail.datanode.rdma;
 
 import java.io.IOException;
 
-import com.ibm.disni.verbs.*;
-import com.ibm.disni.endpoints.*;
+import com.ibm.disni.rdma.verbs.*;
+import com.ibm.disni.rdma.*;
 
-public class RdmaDataNodeServerEndpoint extends RdmaClientEndpoint {
+public class RdmaDataNodeServerEndpoint extends RdmaEndpoint {
 	private RdmaDataNodeServer closer;
 
 	public RdmaDataNodeServerEndpoint(RdmaPassiveEndpointGroup<RdmaDataNodeServerEndpoint> endpointGroup, RdmaCmId idPriv, RdmaDataNodeServer closer) throws IOException {	

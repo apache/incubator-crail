@@ -32,7 +32,7 @@ import com.ibm.darpc.RpcActiveEndpointGroup;
 import com.ibm.darpc.RpcClientEndpoint;
 import com.ibm.darpc.RpcEndpointGroup;
 import com.ibm.darpc.RpcPassiveEndpointGroup;
-import com.ibm.disni.endpoints.RdmaServerEndpoint;
+import com.ibm.disni.rdma.RdmaServerEndpoint;
 
 public class DaRPCNameNode implements RpcNameNode {
 	private static final Logger LOG = CrailUtils.getLogger();
@@ -62,7 +62,7 @@ public class DaRPCNameNode implements RpcNameNode {
 			this.namenodeClientGroup = RpcActiveEndpointGroup.createDefault(namenodeProtocol, clusterAffinities, 100, CrailConstants.NAMENODE_DARPC_MAXINLINE, false, CrailConstants.NAMENODE_DARPC_QUEUESIZE, 4, CrailConstants.NAMENODE_DARPC_QUEUESIZE*2);
 		}
 		LOG.info("rpc group started, maxWR " + namenodeClientGroup.getRpcpipeline() + ", maxSge " + namenodeClientGroup.getMaxSge() + ", cqSize " + namenodeClientGroup.getCqSize());
-		this.namenodeClientEp = namenodeClientGroup.createClientEndpoint();
+		this.namenodeClientEp = namenodeClientGroup.createEndpoint();
 		
 		InetSocketAddress nnAddr = CrailUtils.getNameNodeAddress();
 		LOG.info("connecting to namenode at " + nnAddr);

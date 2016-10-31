@@ -23,8 +23,8 @@ package com.ibm.crail.datanode.rdma;
 
 import java.io.IOException;
 
-import com.ibm.disni.endpoints.*;
-import com.ibm.disni.verbs.*;
+import com.ibm.disni.rdma.*;
+import com.ibm.disni.rdma.verbs.*;
 
 public class RdmaDataNodeServerEndpointFactory implements RdmaEndpointFactory<RdmaDataNodeServerEndpoint> {
 	private RdmaDataNodeServer closer;
@@ -36,7 +36,7 @@ public class RdmaDataNodeServerEndpointFactory implements RdmaEndpointFactory<Rd
 	}
 	
 	@Override
-	public RdmaDataNodeServerEndpoint createClientEndpoint(RdmaCmId id) throws IOException {
+	public RdmaDataNodeServerEndpoint createEndpoint(RdmaCmId id) throws IOException {
 		return new RdmaDataNodeServerEndpoint(group, id, closer);
 	}
 }

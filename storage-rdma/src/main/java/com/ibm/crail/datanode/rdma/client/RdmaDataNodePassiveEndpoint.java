@@ -43,12 +43,12 @@ import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.utils.AtomicIntegerModulo;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.disni.util.MemoryUtils;
-import com.ibm.disni.verbs.*;
-import com.ibm.disni.verbs.SVCPostSend.SendWRMod;
-import com.ibm.disni.verbs.SVCPostSend.SgeMod;
-import com.ibm.disni.endpoints.*;
+import com.ibm.disni.rdma.verbs.*;
+import com.ibm.disni.rdma.verbs.SVCPostSend.SendWRMod;
+import com.ibm.disni.rdma.verbs.SVCPostSend.SgeMod;
+import com.ibm.disni.rdma.*;
 
-public class RdmaDataNodePassiveEndpoint extends RdmaClientEndpoint implements DataNodeEndpoint {
+public class RdmaDataNodePassiveEndpoint extends RdmaEndpoint implements DataNodeEndpoint {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	private LinkedBlockingQueue<SVCPostSend> writeOps;

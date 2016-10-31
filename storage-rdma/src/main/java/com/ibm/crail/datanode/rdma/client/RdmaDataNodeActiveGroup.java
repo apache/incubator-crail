@@ -30,7 +30,7 @@ import com.ibm.crail.datanode.rdma.RdmaConstants;
 import com.ibm.crail.datanode.rdma.RdmaDataNode;
 import com.ibm.crail.datanode.rdma.RdmaDataNodeGroup;
 import com.ibm.crail.utils.CrailUtils;
-import com.ibm.disni.endpoints.*;
+import com.ibm.disni.rdma.*;
 
 public class RdmaDataNodeActiveGroup extends RdmaActiveEndpointGroup<RdmaDataNodeActiveEndpoint> implements RdmaDataNodeGroup {
 	private RdmaDataNodeLocalEndpoint localEndpoint;
@@ -56,7 +56,7 @@ public class RdmaDataNodeActiveGroup extends RdmaActiveEndpointGroup<RdmaDataNod
 		if (localEndpoint != null && RdmaConstants.DATANODE_RDMA_LOCAL_MAP && CrailUtils.isLocalAddress(inetAddress.getAddress())){
 			return this.localEndpoint;
 		} 
-		RdmaDataNodeActiveEndpoint endpoint = super.createClientEndpoint();
+		RdmaDataNodeActiveEndpoint endpoint = super.createEndpoint();
 		try {
 			endpoint.connect(inetAddress, 1000);
 		} catch(Exception e){

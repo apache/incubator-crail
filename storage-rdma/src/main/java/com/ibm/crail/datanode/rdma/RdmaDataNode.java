@@ -47,9 +47,9 @@ import com.ibm.crail.datanode.rdma.client.RdmaDataNodePassiveEndpointFactory;
 import com.ibm.crail.datanode.rdma.client.RdmaDataNodePassiveGroup;
 import com.ibm.crail.namenode.protocol.DataNodeStatistics;
 import com.ibm.crail.utils.CrailUtils;
-import com.ibm.disni.endpoints.*;
+import com.ibm.disni.rdma.*;
 import com.ibm.disni.util.*;
-import com.ibm.disni.verbs.IbvMr;
+import com.ibm.disni.rdma.verbs.IbvMr;
 
 public class RdmaDataNode extends DataNode {
 	private static final Logger LOG = CrailUtils.getLogger();

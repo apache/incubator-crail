@@ -27,22 +27,22 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 
 import com.ibm.crail.utils.CrailUtils;
-import com.ibm.disni.endpoints.*;
+import com.ibm.disni.rdma.*;
 
 public class RdmaDataNodeServer implements Runnable {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	private InetSocketAddress datanodeAddr;
 	private RdmaServerEndpoint<RdmaDataNodeServerEndpoint> datanodeServerEndpoint;
-	private ConcurrentHashMap<Integer, RdmaClientEndpoint> allEndpoints; 
+	private ConcurrentHashMap<Integer, RdmaEndpoint> allEndpoints; 
 	
 	public RdmaDataNodeServer(RdmaServerEndpoint<RdmaDataNodeServerEndpoint> serverEndpoint, InetSocketAddress datanodeAddr) {
 		this.datanodeAddr = datanodeAddr;
 		this.datanodeServerEndpoint = serverEndpoint;
-		this.allEndpoints = new ConcurrentHashMap<Integer, RdmaClientEndpoint>();
+		this.allEndpoints = new ConcurrentHashMap<Integer, RdmaEndpoint>();
 	}
 
-	public void close(RdmaClientEndpoint ep) {
+	public void close(RdmaEndpoint ep) {
 		try {
 			allEndpoints.remove(ep.getEndpointId());
 			LOG.info("removing endpoint, connCount " + allEndpoints.size());
@@ -56,7 +56,7 @@ public class RdmaDataNodeServer implements Runnable {
 		try {
 			LOG.info("RdmaDataNodeServer started at " + datanodeAddr);
 			while(true){
-				RdmaClientEndpoint clientEndpoint = datanodeServerEndpoint.accept();
+				RdmaEndpoint clientEndpoint = datanodeServerEndpoint.accept();
 				allEndpoints.put(clientEndpoint.getEndpointId(), clientEndpoint);
 				LOG.info("accepting client connection, conncount " + allEndpoints.size());
 			}			
