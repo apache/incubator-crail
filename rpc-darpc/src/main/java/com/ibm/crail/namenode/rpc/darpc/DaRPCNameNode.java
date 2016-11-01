@@ -28,20 +28,21 @@ import org.slf4j.Logger;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.rpc.*;
 import com.ibm.crail.utils.CrailUtils;
-import com.ibm.darpc.RpcActiveEndpointGroup;
 import com.ibm.darpc.RpcClientEndpoint;
+import com.ibm.darpc.RpcClientGroup;
 import com.ibm.darpc.RpcEndpointGroup;
-import com.ibm.darpc.RpcPassiveEndpointGroup;
+import com.ibm.darpc.RpcServerEndpoint;
+import com.ibm.darpc.RpcServerGroup;
 import com.ibm.disni.rdma.RdmaServerEndpoint;
 
 public class DaRPCNameNode implements RpcNameNode {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
-	private RpcEndpointGroup<DaRPCNameNodeRequest, DaRPCNameNodeResponse> namenodeClientGroup;
+	private RpcClientGroup<DaRPCNameNodeRequest, DaRPCNameNodeResponse> namenodeClientGroup;
 	private RpcClientEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> namenodeClientEp;
 	
-	private RpcEndpointGroup<DaRPCNameNodeRequest, DaRPCNameNodeResponse> namenodeServerGroup;
-	private RdmaServerEndpoint<RpcClientEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse>> namenodeServerEp;
+	private RpcServerGroup<DaRPCNameNodeRequest, DaRPCNameNodeResponse> namenodeServerGroup;
+	private RdmaServerEndpoint<RpcServerEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse>> namenodeServerEp;
 	
 	public DaRPCNameNode(){
 		this.namenodeClientEp = null;
@@ -53,17 +54,9 @@ public class DaRPCNameNode implements RpcNameNode {
 	@Override
 	public RpcNameNodeClient getRpcClient(InetSocketAddress address) throws Exception {
 		DaRPCNameNodeProtocol namenodeProtocol = new DaRPCNameNodeProtocol();
-		long clusterAffinities[] = { 1L << 1 | 1L << 17};
-		if (CrailConstants.NAMENODE_DARPC_TYPE.equalsIgnoreCase("passive")){
-			LOG.info("passive RPC");
-			this.namenodeClientGroup = RpcPassiveEndpointGroup.createDefault(namenodeProtocol, clusterAffinities, 100, CrailConstants.NAMENODE_DARPC_MAXINLINE, false, CrailConstants.NAMENODE_DARPC_QUEUESIZE, 4, CrailConstants.NAMENODE_DARPC_QUEUESIZE*2);
-		} else {
-			LOG.info("active RPC");		
-			this.namenodeClientGroup = RpcActiveEndpointGroup.createDefault(namenodeProtocol, clusterAffinities, 100, CrailConstants.NAMENODE_DARPC_MAXINLINE, false, CrailConstants.NAMENODE_DARPC_QUEUESIZE, 4, CrailConstants.NAMENODE_DARPC_QUEUESIZE*2);
-		}
+		this.namenodeClientGroup = RpcClientGroup.createClientGroup(namenodeProtocol, 100, CrailConstants.NAMENODE_DARPC_MAXINLINE, CrailConstants.NAMENODE_DARPC_QUEUESIZE, 4, CrailConstants.NAMENODE_DARPC_QUEUESIZE*2);
 		LOG.info("rpc group started, maxWR " + namenodeClientGroup.getRpcpipeline() + ", maxSge " + namenodeClientGroup.getMaxSge() + ", cqSize " + namenodeClientGroup.getCqSize());
 		this.namenodeClientEp = namenodeClientGroup.createEndpoint();
-		
 		InetSocketAddress nnAddr = CrailUtils.getNameNodeAddress();
 		LOG.info("connecting to namenode at " + nnAddr);
 		namenodeClientEp.connect(nnAddr, 1000);
@@ -82,7 +75,7 @@ public class DaRPCNameNode implements RpcNameNode {
 				clusterAffinities[i] = 1L << affinity;
 			}
 			DaRPCServiceDispatcher darpcService = new DaRPCServiceDispatcher(service);
-			this.namenodeServerGroup = RpcActiveEndpointGroup.createDefault(darpcService, clusterAffinities, -1, CrailConstants.NAMENODE_DARPC_MAXINLINE, CrailConstants.NAMENODE_DARPC_POLLING, CrailConstants.NAMENODE_DARPC_QUEUESIZE, 4, CrailConstants.NAMENODE_DARPC_QUEUESIZE*2*100);
+			this.namenodeServerGroup = RpcServerGroup.createServerGroup(darpcService, clusterAffinities, -1, CrailConstants.NAMENODE_DARPC_MAXINLINE, false, CrailConstants.NAMENODE_DARPC_QUEUESIZE, 4, CrailConstants.NAMENODE_DARPC_QUEUESIZE*2*100);
 			LOG.info("rpc group started, maxWR " + namenodeServerGroup.getRpcpipeline() + ", maxSge " + namenodeServerGroup.getMaxSge() + ", cqSize " + namenodeServerGroup.getCqSize());
 			this.namenodeServerEp = namenodeServerGroup.createServerEndpoint();
 			
@@ -90,7 +83,7 @@ public class DaRPCNameNode implements RpcNameNode {
 			namenodeServerEp.bind(addr, 100);
 			LOG.info("opened server at " + addr);
 			while (true) {
-				RpcClientEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> clientEndpoint = namenodeServerEp.accept();
+				RpcServerEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> clientEndpoint = namenodeServerEp.accept();
 				LOG.info("accepting RPC connection, qpnum " + clientEndpoint.getQp().getQp_num());
 			}
 		} catch(Exception e){

@@ -27,10 +27,6 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.slf4j.Logger;
-
-import com.ibm.crail.utils.CrailUtils;
-
 public class CrailMultiStream extends InputStream {
 //	private static final Logger LOG = CrailUtils.getLogger();
 	

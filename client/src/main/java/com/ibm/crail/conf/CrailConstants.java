@@ -24,7 +24,6 @@ package com.ibm.crail.conf;
 import java.io.IOException;
 import org.slf4j.Logger;
 
-import com.ibm.crail.core.DirectoryRecord;
 import com.ibm.crail.utils.CrailUtils;
 
 public class CrailConstants {

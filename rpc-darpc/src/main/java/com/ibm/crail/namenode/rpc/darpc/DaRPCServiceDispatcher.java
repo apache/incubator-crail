@@ -28,10 +28,11 @@ import org.slf4j.Logger;
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
 import com.ibm.crail.namenode.rpc.RpcNameNodeService;
 import com.ibm.crail.utils.CrailUtils;
-import com.ibm.darpc.RpcClientEndpoint;
+import com.ibm.darpc.RpcEndpoint;
 import com.ibm.darpc.RpcServerEvent;
+import com.ibm.darpc.RpcService;
 
-public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol {
+public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol implements RpcService<DaRPCNameNodeRequest, DaRPCNameNodeResponse> {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	private RpcNameNodeService service;
@@ -131,10 +132,14 @@ public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol {
 			e.printStackTrace();
 		}
 	}
+	
+	@Override
+	public void open(RpcEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> rpcClientEndpoint) {
+		
+	}	
 
 	@Override
-	public void close(
-			RpcClientEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> endpoint) {
+	public void close(RpcEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> endpoint) {
 		try {
 			LOG.info("disconnecting RPC connection, qpnum " + endpoint.getQp().getQp_num());
 			endpoint.close();

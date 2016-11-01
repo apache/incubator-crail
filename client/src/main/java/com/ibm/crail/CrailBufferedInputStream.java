@@ -25,8 +25,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
 
 import com.ibm.crail.conf.CrailConstants;

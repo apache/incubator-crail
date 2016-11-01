@@ -39,7 +39,6 @@ import com.ibm.crail.CrailOutputStream;
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.core.CoreFileSystem;
 import com.ibm.crail.utils.GetOpt;
 
 public class CrailBenchmark {

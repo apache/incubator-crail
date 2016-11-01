@@ -21,9 +21,9 @@
 
 package com.ibm.crail.namenode.rpc.darpc;
 
-import com.ibm.darpc.RdmaRpcService;
+import com.ibm.darpc.RpcProtocol;
 
-public class DaRPCNameNodeProtocol extends RdmaRpcService<DaRPCNameNodeRequest, DaRPCNameNodeResponse>{
+public class DaRPCNameNodeProtocol implements RpcProtocol<DaRPCNameNodeRequest, DaRPCNameNodeResponse>{
 
 	@Override
 	public DaRPCNameNodeRequest createRequest() {
@@ -34,5 +34,4 @@ public class DaRPCNameNodeProtocol extends RdmaRpcService<DaRPCNameNodeRequest, 
 	public DaRPCNameNodeResponse createResponse() {
 		return new DaRPCNameNodeResponse();
 	}
-
 }

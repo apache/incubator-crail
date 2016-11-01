@@ -22,7 +22,6 @@
 package com.ibm.crail.utils;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 

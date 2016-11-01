@@ -23,14 +23,12 @@ package com.ibm.crail.namenode.rpc.darpc;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
 import org.slf4j.Logger;
-
 import com.ibm.crail.namenode.rpc.*;
 import com.ibm.crail.utils.CrailUtils;
-import com.ibm.darpc.RdmaRpcMessage;
+import com.ibm.darpc.RpcMessage;
 
-public class DaRPCNameNodeRequest implements RdmaRpcMessage {
+public class DaRPCNameNodeRequest implements RpcMessage {
 	public static final Logger LOG = CrailUtils.getLogger();
 	public static final int CSIZE = 4 + Math.max(RpcRequestMessage.SetFileReq.CSIZE, RpcRequestMessage.RenameFileReq.CSIZE);
 	

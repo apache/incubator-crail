@@ -26,9 +26,9 @@ import java.nio.ByteBuffer;
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
 import com.ibm.crail.namenode.rpc.RpcNameNodeState;
 import com.ibm.crail.namenode.rpc.RpcResponseMessage;
-import com.ibm.darpc.RdmaRpcMessage;
+import com.ibm.darpc.RpcMessage;
 
-public class DaRPCNameNodeResponse implements RdmaRpcMessage, RpcNameNodeState {
+public class DaRPCNameNodeResponse implements RpcMessage, RpcNameNodeState {
 	public static final int CSIZE = 4 + Math.max(RpcResponseMessage.GetBlockRes.CSIZE, RpcResponseMessage.RenameRes.CSIZE);
 	
 	private short type;

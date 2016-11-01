@@ -22,7 +22,6 @@
 package com.ibm.crail.core;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.concurrent.Future;
