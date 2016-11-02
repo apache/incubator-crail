@@ -29,6 +29,7 @@ import com.ibm.crail.namenode.rpc.NameNodeProtocol;
 import com.ibm.crail.namenode.rpc.RpcNameNodeService;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.darpc.RpcEndpoint;
+import com.ibm.darpc.RpcServerEndpoint;
 import com.ibm.darpc.RpcServerEvent;
 import com.ibm.darpc.RpcService;
 
@@ -134,12 +135,12 @@ public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol implements Rpc
 	}
 	
 	@Override
-	public void open(RpcEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> rpcClientEndpoint) {
-		
+	public void open(RpcServerEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> endpoint) {
+		LOG.info("RPC connection, qpnum " + endpoint.getQp().getQp_num());
 	}	
 
 	@Override
-	public void close(RpcEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> endpoint) {
+	public void close(RpcServerEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> endpoint) {
 		try {
 			LOG.info("disconnecting RPC connection, qpnum " + endpoint.getQp().getQp_num());
 			endpoint.close();
