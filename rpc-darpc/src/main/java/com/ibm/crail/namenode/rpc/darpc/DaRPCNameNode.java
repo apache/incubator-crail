@@ -75,7 +75,7 @@ public class DaRPCNameNode implements RpcNameNode {
 				clusterAffinities[i] = 1L << affinity;
 			}
 			DaRPCServiceDispatcher darpcService = new DaRPCServiceDispatcher(service);
-			this.namenodeServerGroup = RpcServerGroup.createServerGroup(darpcService, clusterAffinities, -1, CrailConstants.NAMENODE_DARPC_MAXINLINE, false, CrailConstants.NAMENODE_DARPC_QUEUESIZE, CrailConstants.NAMENODE_DARPC_QUEUESIZE*2*100, CrailConstants.NAMENODE_DARPC_POLLSIZE);
+			this.namenodeServerGroup = RpcServerGroup.createServerGroup(darpcService, clusterAffinities, -1, CrailConstants.NAMENODE_DARPC_MAXINLINE, CrailConstants.NAMENODE_DARPC_POLLING, CrailConstants.NAMENODE_DARPC_QUEUESIZE, CrailConstants.NAMENODE_DARPC_QUEUESIZE*2*100, CrailConstants.NAMENODE_DARPC_POLLSIZE);
 			LOG.info("rpc group started, maxWR " + namenodeServerGroup.getRpcpipeline() + ", cqSize " + namenodeServerGroup.getCqSize());
 			this.namenodeServerEp = namenodeServerGroup.createServerEndpoint();
 			
