@@ -166,6 +166,8 @@ public class CoreFileSystem extends CrailFS {
 		BlockInfo dirBlock = fileRes.getDirBlock();
 		getBlockCache(dirInfo.getFd()).put(CoreSubOperation.createKey(dirInfo.getFd(), fileInfo.getDirOffset()), dirBlock);
 		
+		long adjustedCapacity = fileInfo.getDirOffset()*CrailConstants.DIRECTORY_RECORD + CrailConstants.DIRECTORY_RECORD;
+		dirInfo.setCapacity(Math.max(dirInfo.getCapacity(), adjustedCapacity));
 		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path));
 		DirectoryOutputStream stream = this.getDirectoryOutputStream(dirFile);
 		DirectoryRecord record = new DirectoryRecord(true, path);
@@ -377,6 +379,8 @@ public class CoreFileSystem extends CrailFS {
 		DirectoryRecord recordSrc = new DirectoryRecord(false, src);
 		Future<CrailResult> futureSrc = streamSrc.writeRecord(recordSrc, srcFile.getDirOffset());			
 		
+		long adjustedCapacity = dstFile.getDirOffset()*CrailConstants.DIRECTORY_RECORD + CrailConstants.DIRECTORY_RECORD;
+		dstDir.setCapacity(Math.max(dstDir.getCapacity(), adjustedCapacity));
 		CoreDirectory dirDst = new CoreDirectory(this, dstDir, CrailUtils.getParent(dst));
 		DirectoryOutputStream streamDst = this.getDirectoryOutputStream(dirDst);
 		DirectoryRecord recordDst = new DirectoryRecord(true, dst);

@@ -98,6 +98,12 @@ public class FileInfo {
 			this.setModificationTime(System.currentTimeMillis());
 		}
 		return capacity.get();
+	}
+	
+	public long incCapacity(int delta) {
+		long newcapacity = capacity.addAndGet(delta);
+		this.setModificationTime(System.currentTimeMillis());
+		return newcapacity;
 	}	
 	
 	public void resetCapacity(){
