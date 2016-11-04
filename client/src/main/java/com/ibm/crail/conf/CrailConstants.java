@@ -30,7 +30,7 @@ public class CrailConstants {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	public static final String VERSION_KEY = "crail.version";
-	public static int VERSION = 2660;
+	public static int VERSION = 2661;
 	
 	public static final String NAMENODE_ADDRESS_KEY = "crail.namenode.address";
 	public static String NAMENODE_ADDRESS = "";
@@ -58,6 +58,9 @@ public class CrailConstants {
 	
 	public static final String NAMENODE_DARPC_POLLSIZE_KEY = "crail.namenode.darpc.pollsize";
 	public static int NAMENODE_DARPC_POLLSIZE = NAMENODE_DARPC_QUEUESIZE;		
+	
+	public static final String NAMENODE_DARPC_CLUSTERSIZE_KEY = "crail.namenode.darpc.clustersize";
+	public static int NAMENODE_DARPC_CLUSTERSIZE = 128;		
 	
 	public static final String DATANODE_TYPES_KEY = "crail.datanode.types";
 	public static String DATANODE_TYPES = "com.ibm.crail.datanode.rdma.RdmaDataNode";		
@@ -140,7 +143,10 @@ public class CrailConstants {
 		}	
 		if (conf.get(NAMENODE_DARPC_POLLSIZE_KEY) != null) {
 			NAMENODE_DARPC_POLLSIZE = Integer.parseInt(conf.get(NAMENODE_DARPC_POLLSIZE_KEY));
-		}		
+		}	
+		if (conf.get(NAMENODE_DARPC_CLUSTERSIZE_KEY) != null) {
+			NAMENODE_DARPC_CLUSTERSIZE = Integer.parseInt(conf.get(NAMENODE_DARPC_CLUSTERSIZE_KEY));
+		}			
 		if (conf.get(DATANODE_TYPES_KEY) != null) {
 			DATANODE_TYPES = conf.get(DATANODE_TYPES_KEY);
 		}			
@@ -208,6 +214,7 @@ public class CrailConstants {
 		LOG.info(NAMENODE_DARPC_MAXINLINE_KEY + " " + NAMENODE_DARPC_MAXINLINE);
 		LOG.info(NAMENODE_DARPC_QUEUESIZE_KEY + " " + NAMENODE_DARPC_QUEUESIZE);
 		LOG.info(NAMENODE_DARPC_POLLSIZE_KEY + " " + NAMENODE_DARPC_POLLSIZE);
+		LOG.info(NAMENODE_DARPC_CLUSTERSIZE_KEY + " " + NAMENODE_DARPC_CLUSTERSIZE);
 		LOG.info(DATANODE_TYPES_KEY + " " + DATANODE_TYPES);
 		LOG.info(DIRECTORY_DEPTH_KEY + " " + DIRECTORY_DEPTH);
 		LOG.info(TOKEN_EXPIRATION_KEY + " " + TOKEN_EXPIRATION);

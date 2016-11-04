@@ -44,9 +44,6 @@ public class DirectoryBlocks extends AbstractNode {
 	@Override
 	public boolean addBlock(int index, BlockInfo block) {
 		BlockInfo old = blocks.putIfAbsent(index, block);
-		if (old == null){
-			super.setCapacity(index*CrailConstants.BLOCK_SIZE + CrailConstants.BLOCK_SIZE);
-		}
 		return old == null;
 	}
 
