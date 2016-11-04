@@ -100,12 +100,6 @@ public class FileInfo {
 		return capacity.get();
 	}	
 	
-	public long incCapacity(int delta) {
-		long newcapacity = capacity.addAndGet(delta);
-		this.setModificationTime(System.currentTimeMillis());
-		return newcapacity;
-	}	
-
 	public void resetCapacity(){
 		capacity.set(0);		
 	}	

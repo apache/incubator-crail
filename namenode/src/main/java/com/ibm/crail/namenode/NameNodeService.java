@@ -143,7 +143,6 @@ public class NameNodeService implements RpcNameNodeService {
 				}
 			}
 		}
-		parentInfo.incCapacity(CrailConstants.DIRECTORY_RECORD);
 		fileTable.put(fileInfo.getFd(), fileInfo);
 		
 		if (writeable) {
@@ -368,7 +367,6 @@ public class NameNodeService implements RpcNameNodeService {
 				}
 			} 
 		}
-		dstParent.incCapacity(CrailConstants.DIRECTORY_RECORD);
 		//end
 		
 		response.setDstParent(dstParent);

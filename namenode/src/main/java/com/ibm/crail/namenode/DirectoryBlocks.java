@@ -25,6 +25,7 @@ import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 
 public class DirectoryBlocks extends AbstractNode {
@@ -43,6 +44,9 @@ public class DirectoryBlocks extends AbstractNode {
 	@Override
 	public boolean addBlock(int index, BlockInfo block) {
 		BlockInfo old = blocks.putIfAbsent(index, block);
+		if (old == null){
+			super.setCapacity(index*CrailConstants.BLOCK_SIZE + CrailConstants.BLOCK_SIZE);
+		}
 		return old == null;
 	}
 
