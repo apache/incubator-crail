@@ -53,11 +53,14 @@ public class CrailConstants {
 	public static final String NAMENODE_DARPC_MAXINLINE_KEY = "crail.namenode.darpc.maxinline";
 	public static int NAMENODE_DARPC_MAXINLINE = 0;
 
-	public static final String NAMENODE_DARPC_QUEUESIZE_KEY = "crail.namenode.darpc.queuesize";
-	public static int NAMENODE_DARPC_QUEUESIZE = 32;	
+	public static final String NAMENODE_DARPC_RECVQUEUE_KEY = "crail.namenode.darpc.recvQueue";
+	public static int NAMENODE_DARPC_RECVQUEUE = 32;
+	
+	public static final String NAMENODE_DARPC_SENDQUEUE_KEY = "crail.namenode.darpc.sendQueue";
+	public static int NAMENODE_DARPC_SENDQUEUE = 32;		
 	
 	public static final String NAMENODE_DARPC_POLLSIZE_KEY = "crail.namenode.darpc.pollsize";
-	public static int NAMENODE_DARPC_POLLSIZE = NAMENODE_DARPC_QUEUESIZE;		
+	public static int NAMENODE_DARPC_POLLSIZE = NAMENODE_DARPC_RECVQUEUE;		
 	
 	public static final String NAMENODE_DARPC_CLUSTERSIZE_KEY = "crail.namenode.darpc.clustersize";
 	public static int NAMENODE_DARPC_CLUSTERSIZE = 128;		
@@ -138,9 +141,12 @@ public class CrailConstants {
 		if (conf.get(NAMENODE_DARPC_MAXINLINE_KEY) != null) {
 			NAMENODE_DARPC_MAXINLINE = Integer.parseInt(conf.get(NAMENODE_DARPC_MAXINLINE_KEY));
 		}	
-		if (conf.get(NAMENODE_DARPC_QUEUESIZE_KEY) != null) {
-			NAMENODE_DARPC_QUEUESIZE = Integer.parseInt(conf.get(NAMENODE_DARPC_QUEUESIZE_KEY));
-		}	
+		if (conf.get(NAMENODE_DARPC_RECVQUEUE_KEY) != null) {
+			NAMENODE_DARPC_RECVQUEUE = Integer.parseInt(conf.get(NAMENODE_DARPC_RECVQUEUE_KEY));
+		}
+		if (conf.get(NAMENODE_DARPC_SENDQUEUE_KEY) != null) {
+			NAMENODE_DARPC_SENDQUEUE = Integer.parseInt(conf.get(NAMENODE_DARPC_SENDQUEUE_KEY));
+		}		
 		if (conf.get(NAMENODE_DARPC_POLLSIZE_KEY) != null) {
 			NAMENODE_DARPC_POLLSIZE = Integer.parseInt(conf.get(NAMENODE_DARPC_POLLSIZE_KEY));
 		}	
@@ -212,7 +218,8 @@ public class CrailConstants {
 		LOG.info(NAMENODE_DARPC_TYPE_KEY + " " + NAMENODE_DARPC_TYPE);
 		LOG.info(NAMENODE_DARPC_AFFINITY_KEY + " " + NAMENODE_DARPC_AFFINITY);
 		LOG.info(NAMENODE_DARPC_MAXINLINE_KEY + " " + NAMENODE_DARPC_MAXINLINE);
-		LOG.info(NAMENODE_DARPC_QUEUESIZE_KEY + " " + NAMENODE_DARPC_QUEUESIZE);
+		LOG.info(NAMENODE_DARPC_RECVQUEUE_KEY + " " + NAMENODE_DARPC_RECVQUEUE);
+		LOG.info(NAMENODE_DARPC_SENDQUEUE_KEY + " " + NAMENODE_DARPC_SENDQUEUE);
 		LOG.info(NAMENODE_DARPC_POLLSIZE_KEY + " " + NAMENODE_DARPC_POLLSIZE);
 		LOG.info(NAMENODE_DARPC_CLUSTERSIZE_KEY + " " + NAMENODE_DARPC_CLUSTERSIZE);
 		LOG.info(DATANODE_TYPES_KEY + " " + DATANODE_TYPES);

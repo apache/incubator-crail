@@ -54,7 +54,7 @@ public class DaRPCNameNode implements RpcNameNode {
 	@Override
 	public RpcNameNodeClient getRpcClient(InetSocketAddress address) throws Exception {
 		DaRPCNameNodeProtocol namenodeProtocol = new DaRPCNameNodeProtocol();
-		this.namenodeClientGroup = RpcClientGroup.createClientGroup(namenodeProtocol, 100, CrailConstants.NAMENODE_DARPC_MAXINLINE, CrailConstants.NAMENODE_DARPC_QUEUESIZE);
+		this.namenodeClientGroup = RpcClientGroup.createClientGroup(namenodeProtocol, 100, CrailConstants.NAMENODE_DARPC_MAXINLINE, CrailConstants.NAMENODE_DARPC_RECVQUEUE, CrailConstants.NAMENODE_DARPC_SENDQUEUE);
 		LOG.info("rpc group started, recvQueue " + namenodeClientGroup.recvQueueSize());
 		this.namenodeClientEp = namenodeClientGroup.createEndpoint();
 		InetSocketAddress nnAddr = CrailUtils.getNameNodeAddress();
@@ -75,7 +75,7 @@ public class DaRPCNameNode implements RpcNameNode {
 				clusterAffinities[i] = 1L << affinity;
 			}
 			DaRPCServiceDispatcher darpcService = new DaRPCServiceDispatcher(service);
-			this.namenodeServerGroup = RpcServerGroup.createServerGroup(darpcService, clusterAffinities, -1, CrailConstants.NAMENODE_DARPC_MAXINLINE, CrailConstants.NAMENODE_DARPC_POLLING, CrailConstants.NAMENODE_DARPC_QUEUESIZE, CrailConstants.NAMENODE_DARPC_POLLSIZE, CrailConstants.NAMENODE_DARPC_CLUSTERSIZE);
+			this.namenodeServerGroup = RpcServerGroup.createServerGroup(darpcService, clusterAffinities, -1, CrailConstants.NAMENODE_DARPC_MAXINLINE, CrailConstants.NAMENODE_DARPC_POLLING, CrailConstants.NAMENODE_DARPC_RECVQUEUE, CrailConstants.NAMENODE_DARPC_SENDQUEUE, CrailConstants.NAMENODE_DARPC_POLLSIZE, CrailConstants.NAMENODE_DARPC_CLUSTERSIZE);
 			LOG.info("rpc group started, recvQueue " + namenodeServerGroup.recvQueueSize());
 			this.namenodeServerEp = namenodeServerGroup.createServerEndpoint();
 			
