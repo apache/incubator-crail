@@ -228,74 +228,6 @@ public class CoreFileSystem extends CrailFS {
 	}
 	
 	
-	public Future<CrailFile> lookupFile(String path, boolean writeable) throws Exception {
-		FileName name = new FileName(path);
-		
-		if (CrailConstants.DEBUG){
-			LOG.info("lookupFile: path " + path + ", writeable " + writeable);
-		}
-		
-		RpcNameNodeFuture<RpcResponseMessage.GetFileRes> fileRes = namenodeClientRpc.getFile(name, writeable);
-		return new LookupFileFuture(this, path, fileRes);
-	}	
-	
-	CoreFile _lookupFile(RpcResponseMessage.GetFileRes fileRes, String path) throws Exception {
-		if (fileRes.getError() == NameNodeProtocol.ERR_GET_FILE_FAILED){
-			return null;
-		}
-		else if (fileRes.getError() != NameNodeProtocol.ERR_OK){
-			LOG.info("lookupFile: " + NameNodeProtocol.messages[fileRes.getError()]);
-			return null;
-		}		
-		
-		FileInfo fileInfo = fileRes.getFile();
-		
-		if (fileInfo != null){
-			if (CrailConstants.DEBUG){
-				LOG.info("lookupFile: name " + path + ", success, fd " + fileInfo.getFd());
-			}
-			BlockInfo fileBlock = fileRes.getFileBlock();
-			getBlockCache(fileInfo.getFd()).put(CoreSubOperation.createKey(fileInfo.getFd(), 0), fileBlock);
-			return new CoreLookupFile(this, fileInfo, path);
-		} else {
-			return null;
-		}
-	}	
-	
-	public Future<CrailDirectory> lookupDirectory(String path) throws Exception {
-		FileName name = new FileName(path);
-		
-		if (CrailConstants.DEBUG){
-			LOG.info("lookupDirectory: path " + path);
-		}
-		
-		RpcNameNodeFuture<RpcResponseMessage.GetFileRes> fileRes = namenodeClientRpc.getFile(name, false);
-		return new LookupDirectoryFuture(this, path, fileRes);
-	}	
-	
-	CrailDirectory _lookupDirectory(RpcResponseMessage.GetFileRes fileRes, String path) throws Exception {
-		if (fileRes.getError() == NameNodeProtocol.ERR_GET_FILE_FAILED){
-			return null;
-		}
-		else if (fileRes.getError() != NameNodeProtocol.ERR_OK){
-			LOG.info("lookupDirectory: " + NameNodeProtocol.messages[fileRes.getError()]);
-			return null;
-		}		
-		
-		FileInfo fileInfo = fileRes.getFile();
-		
-		if (fileInfo != null){
-			if (CrailConstants.DEBUG){
-				LOG.info("lookup: name " + path + ", success, fd " + fileInfo.getFd());
-			}
-			BlockInfo fileBlock = fileRes.getFileBlock();
-			getBlockCache(fileInfo.getFd()).put(CoreSubOperation.createKey(fileInfo.getFd(), 0), fileBlock);
-			return new CoreDirectory(this, fileInfo, path);
-		} else {
-			return null;
-		}
-	}
-	
 	public Future<CrailNode> lookupNode(String path) throws Exception {
 		FileName name = new FileName(path);
 		
@@ -324,7 +256,12 @@ public class CoreFileSystem extends CrailFS {
 			}
 			BlockInfo fileBlock = fileRes.getFileBlock();
 			getBlockCache(fileInfo.getFd()).put(CoreSubOperation.createKey(fileInfo.getFd(), 0), fileBlock);
-			return new CoreNode(this, fileInfo, path, 0, 0);
+			
+			if (fileInfo.isDir()){
+				return new CoreDirectory(this, fileInfo, path);
+			} else {
+				return new CoreLookupFile(this, fileInfo, path);
+			}
 		} else {
 			return null;
 		}

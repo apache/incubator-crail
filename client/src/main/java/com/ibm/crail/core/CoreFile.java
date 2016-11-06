@@ -22,6 +22,7 @@
 package com.ibm.crail.core;
 
 import java.util.concurrent.Future;
+
 import com.ibm.crail.CrailBlockLocation;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailInputStream;
@@ -65,7 +66,12 @@ abstract class CoreFile extends CoreNode implements CrailFile {
 
 	public boolean tokenFree(){
 		return fileInfo.tokenFree();
-	}	
+	}
+
+	@Override
+	public CoreFile asFile() throws Exception {
+		return this;
+	}
 }
 
 class CoreCreateFile extends CoreFile {

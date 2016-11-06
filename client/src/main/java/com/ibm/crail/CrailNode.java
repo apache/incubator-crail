@@ -28,4 +28,6 @@ public interface CrailNode {
 	public abstract long getModificationTime();
 	public abstract long getCapacity();
 	public abstract boolean isDir();
+	public abstract CrailFile asFile() throws Exception;
+	public abstract CrailDirectory asDirectory() throws Exception;
 }

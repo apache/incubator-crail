@@ -177,7 +177,7 @@ public class CrailHDFS extends AbstractFileSystem {
 	public FSDataInputStream open(Path path, int bufferSize) throws AccessControlException, FileNotFoundException, UnresolvedLinkException, IOException {
 		CrailFile fileInfo = null;
 		try {
-			fileInfo = dfs.lookupFile(path.toUri().getRawPath(), false).get();
+			fileInfo = dfs.lookupNode(path.toUri().getRawPath()).get().asFile();
 		} catch(Exception e){
 			throw new IOException(e);
 		}
@@ -234,9 +234,9 @@ public class CrailHDFS extends AbstractFileSystem {
 
 	@Override
 	public FileStatus getFileStatus(Path path) throws AccessControlException, FileNotFoundException, UnresolvedLinkException, IOException {
-		CrailFile directFile = null;
+		CrailNode directFile = null;
 		try {
-			directFile = dfs.lookupFile(path.toUri().getRawPath(), false).get();
+			directFile = dfs.lookupNode(path.toUri().getRawPath()).get();
 		} catch(Exception e){
 			throw new IOException(e);
 		}
@@ -255,7 +255,7 @@ public class CrailHDFS extends AbstractFileSystem {
 	@Override
 	public BlockLocation[] getFileBlockLocations(Path path, long start, long len) throws AccessControlException, FileNotFoundException, UnresolvedLinkException, IOException {
 		try {
-			CrailBlockLocation[] _locations = dfs.lookupFile(path.toUri().getRawPath(), false).get().getBlockLocations(start, len);
+			CrailBlockLocation[] _locations = dfs.lookupNode(path.toUri().getRawPath()).get().asFile().getBlockLocations(start, len);
 			BlockLocation[] locations = new BlockLocation[_locations.length];
 			for (int i = 0; i < locations.length; i++){
 				locations[i] = new BlockLocation();
@@ -280,11 +280,11 @@ public class CrailHDFS extends AbstractFileSystem {
 	@Override
 	public FileStatus[] listStatus(Path path) throws AccessControlException, FileNotFoundException, UnresolvedLinkException, IOException {
 		try {
-			Iterator<String> iter = dfs.lookupDirectory(path.toUri().getRawPath()).get().listEntries();
+			Iterator<String> iter = dfs.lookupNode(path.toUri().getRawPath()).get().asDirectory().listEntries();
 			ArrayList<FileStatus> statusList = new ArrayList<FileStatus>();
 			while(iter.hasNext()){
 				String filepath = iter.next();
-				CrailFile directFile = dfs.lookupFile(filepath, false).get();
+				CrailNode directFile = dfs.lookupNode(filepath).get();
 				if (directFile != null){
 					FsPermission permission = FsPermission.getFileDefault();
 					if (directFile.isDir()) {

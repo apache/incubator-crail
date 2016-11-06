@@ -46,6 +46,11 @@ class CoreDirectory extends CoreNode implements CrailDirectory {
 	public Iterator<String> listEntries() throws Exception {
 		return fs.listEntries(path);
 	}
+
+	@Override
+	public CoreDirectory asDirectory() throws Exception {
+		return this;
+	}
 }
 
 class CoreMakeDirectory extends CoreDirectory {

@@ -177,39 +177,6 @@ class MakeDirFuture extends CoreMetaDataOperation<RpcResponseMessage.CreateFileR
 
 }
 
-class LookupFileFuture extends CoreMetaDataOperation<RpcResponseMessage.GetFileRes, CrailFile> {
-	private String path;
-	private CoreFileSystem fs;	
-
-	public LookupFileFuture(CoreFileSystem fs, String path, Future<RpcResponseMessage.GetFileRes> fileRes) {
-		super(fileRes);
-		this.fs = fs;
-		this.path = path;
-	}
-
-	@Override
-	CrailFile process(RpcResponseMessage.GetFileRes tmp) throws Exception {
-		return fs._lookupFile(tmp, path);
-	}
-
-}
-
-class LookupDirectoryFuture extends CoreMetaDataOperation<RpcResponseMessage.GetFileRes, CrailDirectory> {
-	private String path;
-	private CoreFileSystem fs;	
-
-	public LookupDirectoryFuture(CoreFileSystem fs, String path, Future<RpcResponseMessage.GetFileRes> fileRes) {
-		super(fileRes);
-		this.fs = fs;
-		this.path = path;
-	}
-
-	@Override
-	CrailDirectory process(RpcResponseMessage.GetFileRes tmp) throws Exception {
-		return fs._lookupDirectory(tmp, path);
-	}
-}
-
 class LookupNodeFuture extends CoreMetaDataOperation<RpcResponseMessage.GetFileRes, CrailNode> {
 	private String path;
 	private CoreFileSystem fs;	

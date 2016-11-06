@@ -82,9 +82,18 @@ public class CoreNode implements CrailNode {
 	FileInfo getFileInfo(){
 		return fileInfo;
 	}
+	
+	public CoreFile asFile() throws Exception {
+		throw new Exception("Type of file unclear");
+	}
+	
+	public CoreDirectory asDirectory() throws Exception {
+		throw new Exception("Type of file unclear");
+	}	
+	
 }
 
-class CoreRenamedNode extends CoreFile {
+class CoreRenamedNode extends CoreNode {
 	private Future<?> srcDirFuture;
 	private Future<?> dstDirFuture;
 	private DirectoryOutputStream srcStream;
@@ -121,7 +130,7 @@ class CoreRenamedNode extends CoreFile {
 	}
 }
 
-class CoreDeleteNode extends CoreFile {
+class CoreDeleteNode extends CoreNode {
 	private Future<?> dirFuture;
 	private DirectoryOutputStream dirStream;	
 	

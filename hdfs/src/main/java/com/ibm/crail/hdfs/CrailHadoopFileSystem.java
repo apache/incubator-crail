@@ -97,7 +97,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 	public FSDataInputStream open(Path path, int bufferSize) throws IOException {
 		CrailFile fileInfo = null;
 		try {
-			fileInfo = dfs.lookupFile(path.toUri().getRawPath(), false).get();
+			fileInfo = dfs.lookupNode(path.toUri().getRawPath()).get().asFile();
 			CrailBufferedInputStream inputStream = fileInfo.getBufferedInputStream(fileInfo.getCapacity());
 			return new CrailHDFSInputStream(inputStream);
 		} catch (Exception e) {
@@ -152,27 +152,28 @@ public class CrailHadoopFileSystem extends FileSystem {
 	@Override
 	public FSDataOutputStream append(Path path, int bufferSize, Progressable progress) throws IOException {
 		CrailFile fileInfo = null;
-		try {
-			fileInfo = dfs.lookupFile(path.toUri().getRawPath(), true).get();
-		} catch(Exception e){
-			throw new IOException(e);
-		}
-	
-		
-		CrailBufferedOutputStream outputStream = null;
-		if (fileInfo != null){
-			try {
-				outputStream = fileInfo.getBufferedOutputStream(CrailConstants.HDFS_WRITE_AHEAD);
-			} catch(Exception e){
-				throw new IOException(e);
-			}
-		}
-		
-		if (outputStream != null){
-			return new CrailHDFSOutputStream(outputStream, statistics);
-		} else {
-			throw new IOException("Failed to create file, path " + path.toString());
-		}
+		throw new IOException("Append not supported");
+//		try {
+//			fileInfo = dfs.lookupNode(path.toUri().getRawPath()).get().asFile();
+//		} catch(Exception e){
+//			throw new IOException(e);
+//		}
+//	
+//		
+//		CrailBufferedOutputStream outputStream = null;
+//		if (fileInfo != null){
+//			try {
+//				outputStream = fileInfo.getBufferedOutputStream(CrailConstants.HDFS_WRITE_AHEAD);
+//			} catch(Exception e){
+//				throw new IOException(e);
+//			}
+//		}
+//		
+//		if (outputStream != null){
+//			return new CrailHDFSOutputStream(outputStream, statistics);
+//		} else {
+//			throw new IOException("Failed to create file, path " + path.toString());
+//		}
 	}
 
 	@Override
@@ -204,11 +205,11 @@ public class CrailHadoopFileSystem extends FileSystem {
 	@Override
 	public FileStatus[] listStatus(Path path) throws FileNotFoundException, IOException {
 		try {
-			Iterator<String> iter = dfs.lookupDirectory(path.toUri().getRawPath()).get().listEntries();
+			Iterator<String> iter = dfs.lookupNode(path.toUri().getRawPath()).get().asDirectory().listEntries();
 			ArrayList<FileStatus> statusList = new ArrayList<FileStatus>();
 			while(iter.hasNext()){
 				String filepath = iter.next();
-				CrailFile directFile = dfs.lookupFile(filepath, false).get();
+				CrailNode directFile = dfs.lookupNode(filepath).get();
 				if (directFile != null){
 					FsPermission permission = FsPermission.getFileDefault();
 					if (directFile.isDir()) {
@@ -257,9 +258,9 @@ public class CrailHadoopFileSystem extends FileSystem {
 
 	@Override
 	public FileStatus getFileStatus(Path path) throws IOException {
-		CrailFile directFile = null;
+		CrailNode directFile = null;
 		try {
-			directFile = dfs.lookupFile(path.toUri().getRawPath(), false).get();
+			directFile = dfs.lookupNode(path.toUri().getRawPath()).get();
 		} catch (Exception e) {
 			throw new IOException(e);
 		}
@@ -277,7 +278,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 	@Override
 	public BlockLocation[] getFileBlockLocations(FileStatus file, long start, long len) throws IOException {
 		try {
-			CrailBlockLocation[] _locations = dfs.lookupFile(file.getPath().toUri().getRawPath(), false).get().getBlockLocations(start, len);
+			CrailBlockLocation[] _locations = dfs.lookupNode(file.getPath().toUri().getRawPath()).get().asFile().getBlockLocations(start, len);
 			BlockLocation[] locations = new BlockLocation[_locations.length];
 			for (int i = 0; i < locations.length; i++){
 				locations[i] = new BlockLocation();
@@ -297,7 +298,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 	@Override
 	public BlockLocation[] getFileBlockLocations(Path path, long start, long len) throws IOException {
 		try {
-			CrailBlockLocation[] _locations = dfs.lookupFile(path.toUri().getRawPath(), false).get().getBlockLocations(start, len);
+			CrailBlockLocation[] _locations = dfs.lookupNode(path.toUri().getRawPath()).get().asFile().getBlockLocations(start, len);
 			BlockLocation[] locations = new BlockLocation[_locations.length];
 			for (int i = 0; i < locations.length; i++){
 				locations[i] = new BlockLocation();
