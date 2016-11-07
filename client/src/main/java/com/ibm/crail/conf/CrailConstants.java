@@ -30,10 +30,13 @@ public class CrailConstants {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	public static final String VERSION_KEY = "crail.version";
-	public static int VERSION = 2662;
+	public static int VERSION = 2663;
 	
 	public static final String NAMENODE_ADDRESS_KEY = "crail.namenode.address";
 	public static String NAMENODE_ADDRESS = "";
+	
+	public static final String NAMENODE_FILEBLOCKS_KEY = "crail.namenode.fileblocks";
+	public static int NAMENODE_FILEBLOCKS = 16;	
 	
 	public static final String NAMENODE_BLOCKSELECTION_KEY = "crail.namenode.blockselection";
 	public static String NAMENODE_BLOCKSELECTION = "roundrobin";	
@@ -117,7 +120,7 @@ public class CrailConstants {
 	public static int DIRECTORY_RECORD = 512;	
 	
 	public static final String DIRECTORY_RANDOMIZE_KEY = "crail.directoryrandomize";
-	public static boolean DIRECTORY_RANDOMIZE = true;		
+	public static boolean DIRECTORY_RANDOMIZE = true;	
 	
 	public static void updateConstants(CrailConfiguration conf){
 		if (conf.get(NAMENODE_ADDRESS_KEY) != null) {
@@ -125,6 +128,9 @@ public class CrailConstants {
 		} 
 		if (conf.get(NAMENODE_BLOCKSELECTION_KEY) != null) {
 			NAMENODE_BLOCKSELECTION = conf.get(NAMENODE_BLOCKSELECTION_KEY);
+		}		
+		if (conf.get(NAMENODE_FILEBLOCKS_KEY) != null) {
+			NAMENODE_FILEBLOCKS = Integer.parseInt(conf.get(NAMENODE_FILEBLOCKS_KEY));
 		}		
 		if (conf.get(NAMENODE_RPC_TYPE_KEY) != null) {
 			NAMENODE_RPC_TYPE = conf.get(NAMENODE_RPC_TYPE_KEY);
@@ -213,6 +219,7 @@ public class CrailConstants {
 		LOG.info(VERSION_KEY + " " + VERSION);
 		LOG.info(NAMENODE_ADDRESS_KEY + " " + NAMENODE_ADDRESS);
 		LOG.info(NAMENODE_BLOCKSELECTION_KEY + " " + NAMENODE_BLOCKSELECTION);
+		LOG.info(NAMENODE_FILEBLOCKS_KEY + " " + NAMENODE_FILEBLOCKS);
 		LOG.info(NAMENODE_RPC_TYPE_KEY + " " + NAMENODE_RPC_TYPE);
 		LOG.info(NAMENODE_DARPC_POLLING_KEY + " " + NAMENODE_DARPC_POLLING);
 		LOG.info(NAMENODE_DARPC_TYPE_KEY + " " + NAMENODE_DARPC_TYPE);
