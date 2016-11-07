@@ -81,7 +81,7 @@ class StorageTier {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	private int storageTier;
-	private ConcurrentHashMap<String, DataNodeBlocks> membership;
+	private ConcurrentHashMap<Long, DataNodeBlocks> membership;
 	private ConcurrentHashMap<Integer, DataNodeArray> affinitySets;
 	private DataNodeArray anySet;
 	private BlockSelection blockSelection;
@@ -93,18 +93,18 @@ class StorageTier {
 			this.blockSelection = new RandomBlockSelection();
 		}
 		this.storageTier = storageTier;
-		this.membership = new ConcurrentHashMap<String, DataNodeBlocks>();
+		this.membership = new ConcurrentHashMap<Long, DataNodeBlocks>();
 		this.affinitySets = new ConcurrentHashMap<Integer, DataNodeArray>();
 		this.anySet = new DataNodeArray(blockSelection);
 //		this.anyCounter = new AtomicIntegerModulo();
 	}
 	
 	short addBlock(BlockInfo block) throws UnknownHostException {
-		String dnAddress = block.getDnInfo().getInetAddress().toString();
+		long dnAddress = block.getDnInfo().key();
 		DataNodeBlocks current = membership.get(dnAddress);
 		if (current == null) {
 			current = DataNodeBlocks.fromDataNodeInfo(block.getDnInfo());
-			LOG.info("new datanode, address " + current.getInetAddress() + ", tier " + current.getStorageTier());
+			LOG.info("new datanode, address " + current.key() + ", tier " + current.getStorageTier());
 			addDataNode(current);
 		}
 
@@ -127,11 +127,11 @@ class StorageTier {
 	}
 
 	DataNodeBlocks getDataNode(DataNodeInfo dataNode) {
-		return membership.get(dataNode.getInetAddress().toString());
+		return membership.get(dataNode.key());
 	}
 
 	short addDataNode(DataNodeBlocks dataNode) {
-		DataNodeBlocks current = membership.putIfAbsent(dataNode.getInetAddress().toString(), dataNode);
+		DataNodeBlocks current = membership.putIfAbsent(dataNode.key(), dataNode);
 		if (current != null) {
 			return NameNodeProtocol.ERR_DATANODE_NOT_REGISTERED;
 		} 

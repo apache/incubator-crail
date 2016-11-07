@@ -90,7 +90,8 @@ public abstract class DataNode {
 	public void setBlock(long addr, int length, int key) throws Exception {
 		int localAffinity = InetAddress.getLocalHost().getHostName().hashCode();
 		int storageTier = dataNodeTypes.get(getType());
-		DataNodeInfo dnInfo = new DataNodeInfo(storageTier, localAffinity, getAddress());
+		InetSocketAddress inetAddress = getAddress();
+		DataNodeInfo dnInfo = new DataNodeInfo(storageTier, localAffinity, inetAddress.getAddress().getAddress(), inetAddress.getPort());
 		BlockInfo blockInfo = new BlockInfo(dnInfo, addr, length, key);
 		RpcResponseMessage.VoidRes res = namenodeClientRpc.setBlock(blockInfo).get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
 		if (res.getError() != NameNodeProtocol.ERR_OK){
@@ -102,7 +103,8 @@ public abstract class DataNode {
 	public DataNodeStatistics getDataNode() throws Exception{
 		int localAffinity = InetAddress.getLocalHost().getHostName().hashCode();
 		int storageTier = dataNodeTypes.get(getType());
-		DataNodeInfo dnInfo = new DataNodeInfo(storageTier, localAffinity, getAddress());
+		InetSocketAddress inetAddress = getAddress();
+		DataNodeInfo dnInfo = new DataNodeInfo(storageTier, localAffinity, inetAddress.getAddress().getAddress(), inetAddress.getPort());
 		return this.namenodeClientRpc.getDataNode(dnInfo).get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS).getStatistics();
 	}	
 	

@@ -21,13 +21,9 @@
 
 package com.ibm.crail.namenode.protocol;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-
 import org.slf4j.Logger;
-
 import com.ibm.crail.utils.CrailUtils;
 
 public class DataNodeInfo {
@@ -39,7 +35,6 @@ public class DataNodeInfo {
 	private byte[] ipAddress;
 	private int port;	
 	
-	private InetSocketAddress inetAddress;
 	private long key;
 	
 	public DataNodeInfo(){
@@ -47,26 +42,19 @@ public class DataNodeInfo {
 		this.locationAffinity = 0;
 		this.ipAddress = new byte[4];
 		this.port = 0;		
-		this.inetAddress = null;
 		this.key = 0;
 	}
 	
-	public DataNodeInfo(int storageTier, int locationAffinity, InetSocketAddress inetAddress){
+	public DataNodeInfo(int storageTier, int locationAffinity, byte[] ipAddress, int port){
 		this();
 		
 		this.storageTier = storageTier;
 		this.locationAffinity = locationAffinity;
-		byte[] _ipAddress = inetAddress.getAddress().getAddress();
-		for (int i = 0; i < _ipAddress.length; i++){
-			this.ipAddress[i] = _ipAddress[i];
+		for (int i = 0; i < ipAddress.length; i++){
+			this.ipAddress[i] = ipAddress[i];
 		}
-		this.port = inetAddress.getPort();
-		this.inetAddress = inetAddress;
+		this.port = port;
 	}	
-	
-	public InetSocketAddress getInetAddress() {
-		return inetAddress;
-	}
 	
 	void setDataNodeInfo(DataNodeInfo info) {
 		this.storageTier = info.getStorageTier();
@@ -75,7 +63,6 @@ public class DataNodeInfo {
 			this.ipAddress[i] = info.getIpAddress()[i];
 		}		
 		this.port = info.getPort();
-		this.inetAddress = null;
 	}
 
 	public int write(ByteBuffer buffer){
@@ -91,13 +78,11 @@ public class DataNodeInfo {
 		this.locationAffinity = buffer.getInt();
 		buffer.get(ipAddress);
 		this.port = buffer.getInt();
-		this.inetAddress = new InetSocketAddress(InetAddress.getByAddress(ipAddress), port);
 	}	
 	
 	public byte[] getIpAddress() {
 		return ipAddress;
 	}
-	
 
 	public int getPort() {
 		return port;

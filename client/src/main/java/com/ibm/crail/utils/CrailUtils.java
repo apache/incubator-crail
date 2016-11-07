@@ -26,9 +26,11 @@ import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.URI;
+import java.net.UnknownHostException;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import com.ibm.crail.conf.CrailConstants;
+import com.ibm.crail.namenode.protocol.DataNodeInfo;
 
 
 public class CrailUtils {
@@ -152,5 +154,9 @@ public class CrailUtils {
 	public static InetSocketAddress createSocketAddrForHost(String host, int port) {
 		return new InetSocketAddress(host, port);
 	}
+	
+	public static InetSocketAddress datanodeInfo2SocketAddr(DataNodeInfo dnInfo) throws UnknownHostException{
+		return new InetSocketAddress(InetAddress.getByAddress(dnInfo.getIpAddress()), dnInfo.getPort());
+	}	
 
 }

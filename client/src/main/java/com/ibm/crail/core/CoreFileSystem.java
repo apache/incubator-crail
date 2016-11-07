@@ -421,8 +421,8 @@ public class CoreFileSystem extends CrailFS {
 			blockCount++;
 		}
 		CoreBlockLocation[] blockLocations = new CoreBlockLocation[(int) blockCount];
-		HashMap<String, DataNodeInfo> dataNodeSet = new HashMap<String, DataNodeInfo>();
-		HashMap<Long, String> offset2DataNode = new HashMap<Long, String>();
+		HashMap<Long, DataNodeInfo> dataNodeSet = new HashMap<Long, DataNodeInfo>();
+		HashMap<Long, DataNodeInfo> offset2DataNode = new HashMap<Long, DataNodeInfo>();
 	
 		for (long current = CrailUtils.blockStartAddress(start); current < start + len; current += CrailConstants.BLOCK_SIZE){
 			RpcResponseMessage.GetLocationRes getLocationRes = namenodeClientRpc.getLocation(name, current).get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
@@ -432,13 +432,13 @@ public class CoreFileSystem extends CrailFS {
 			}
 			
 			DataNodeInfo dataNodeInfo = getLocationRes.getBlockInfo().getDnInfo();
-			dataNodeSet.put(dataNodeInfo.getInetAddress().toString(), dataNodeInfo);
+			dataNodeSet.put(dataNodeInfo.key(), dataNodeInfo);
 			CoreBlockLocation location = new CoreBlockLocation();
 			location.setOffset(current);
 			location.setLength(Math.min(start + len - current, CrailConstants.BLOCK_SIZE));
 			long index = (current - rangeStart) / CrailConstants.BLOCK_SIZE;
 			blockLocations[(int) index] = location;
-			offset2DataNode.put(current, dataNodeInfo.getInetAddress().toString());
+			offset2DataNode.put(current, dataNodeInfo);
 		}
 		
 		//asign an identifier to each data node
@@ -459,9 +459,9 @@ public class CoreFileSystem extends CrailFS {
 			int[] storageTiers = new int[locationSize];
 			int[] locationTiers = new int[locationSize];
 			
-			String key = offset2DataNode.get(location.getOffset());
-			DataNodeInfo mainDataNode = dataNodeSet.get(key);
-			InetSocketAddress address = mainDataNode.getInetAddress();
+			DataNodeInfo dnInfo = offset2DataNode.get(location.getOffset());
+			DataNodeInfo mainDataNode = dataNodeSet.get(dnInfo.key());
+			InetSocketAddress address = CrailUtils.datanodeInfo2SocketAddr(mainDataNode);
 			names[0] = address.getAddress().getHostAddress() + ":" + address.getPort(); 
 			hosts[0] = address.getAddress().getHostAddress();
 			topology[0] = "/default-rack/" + names[0];
@@ -469,7 +469,7 @@ public class CoreFileSystem extends CrailFS {
 			locationTiers[0] = mainDataNode.getLocationAffinity();
 			for (int j = 1; j < locationSize; j++){
 				DataNodeInfo replicaDataNode = dataNodeArray.get(blockIndex);
-				address = replicaDataNode.getInetAddress();
+				address = CrailUtils.datanodeInfo2SocketAddr(replicaDataNode);
 				names[j] = address.getAddress().getHostAddress() + ":" + address.getPort(); 
 				hosts[j] = address.getAddress().getHostAddress();
 				topology[j] = "/default-rack/" + names[j];

@@ -21,11 +21,8 @@
 
 package com.ibm.crail.namenode;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.LinkedBlockingQueue;
-
 import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.namenode.protocol.DataNodeInfo;
 
@@ -33,13 +30,12 @@ public class DataNodeBlocks extends DataNodeInfo {
 	private LinkedBlockingQueue<BlockInfo> freeBlocks;
 	
 	public static DataNodeBlocks fromDataNodeInfo(DataNodeInfo dnInfo) throws UnknownHostException{
-		InetSocketAddress address = new InetSocketAddress(InetAddress.getByAddress(dnInfo.getIpAddress()), dnInfo.getPort());
-		DataNodeBlocks dnInfoNn = new DataNodeBlocks(dnInfo.getStorageTier(), dnInfo.getLocationAffinity(), address);
+		DataNodeBlocks dnInfoNn = new DataNodeBlocks(dnInfo.getStorageTier(), dnInfo.getLocationAffinity(), dnInfo.getIpAddress(), dnInfo.getPort());
 		return dnInfoNn;
 	}	
 
-	public DataNodeBlocks(int tier, int hosthash, InetSocketAddress inetAddress) throws UnknownHostException {
-		super(tier, hosthash, inetAddress);
+	public DataNodeBlocks(int tier, int hosthash, byte[] ipAddress, int port) throws UnknownHostException {
+		super(tier, hosthash, ipAddress, port);
 		this.freeBlocks = new LinkedBlockingQueue<BlockInfo>();
 	}
 	

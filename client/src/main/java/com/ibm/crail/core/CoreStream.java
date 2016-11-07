@@ -27,9 +27,7 @@ import java.util.HashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
-
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.datanode.DataNodeEndpoint;
@@ -246,7 +244,6 @@ public abstract class CoreStream {
 	
 	private Future<DataResult> prepareAndTrigger(CoreSubOperation opDesc, ByteBuffer dataBuf, BlockInfo block) throws Exception {
 		try {
-//			InetSocketAddress inetAddress = block.getDnInfo().getInetAddress();
 			DataNodeEndpoint endpoint = endpointCache.getDataEndpoint(block.getDnInfo());
 			ByteBuffer region = fs.getBufferCache().getAllocationBuffer(dataBuf);
 			region = region != null ? region : dataBuf;

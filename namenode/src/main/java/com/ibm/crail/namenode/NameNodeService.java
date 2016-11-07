@@ -416,7 +416,7 @@ public class NameNodeService implements RpcNameNodeService {
 		
 		//get params
 		BlockInfo blockInfo = request.getBlockInfo();
-		DataNodeInfo dnInfoExt = new DataNodeInfo(blockInfo.getDnInfo().getStorageTier(), blockInfo.getDnInfo().getLocationAffinity(), blockInfo.getDnInfo().getInetAddress());
+		DataNodeInfo dnInfoExt = new DataNodeInfo(blockInfo.getDnInfo().getStorageTier(), blockInfo.getDnInfo().getLocationAffinity(), blockInfo.getDnInfo().getIpAddress(), blockInfo.getDnInfo().getPort());
 		
 		//rpc
 		int realBlocks = (int) (((long) blockInfo.getLength()) / CrailConstants.BLOCK_SIZE) ;

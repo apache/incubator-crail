@@ -106,16 +106,16 @@ public class EndpointCache {
 				synchronized (lock) {
 					endpoint = cache.get(dataNodeInfo.key());
 					if (endpoint == null){
-						endpoint = datanodeGroup.createEndpoint(dataNodeInfo.getInetAddress());
+						endpoint = datanodeGroup.createEndpoint(CrailUtils.datanodeInfo2SocketAddr(dataNodeInfo));
 						cache.put(dataNodeInfo.key(), endpoint);
 						if (CrailConstants.DEBUG) {
-							LOG.info("EndpointCache miss " + dataNodeInfo.getInetAddress().toString() + ", fsId " + fsId + ", cache size " + cache.size());
+							LOG.info("EndpointCache miss " + CrailUtils.datanodeInfo2SocketAddr(dataNodeInfo) + ", fsId " + fsId + ", cache size " + cache.size());
 						}
 					}
 				}
 			} else {
 				if (CrailConstants.DEBUG) {
-					LOG.info("EndpointCache hit " + dataNodeInfo.getInetAddress().toString() + ", fsId " + fsId);
+					LOG.info("EndpointCache hit " + CrailUtils.datanodeInfo2SocketAddr(dataNodeInfo) + ", fsId " + fsId);
 				}
 			}
 			return endpoint;
