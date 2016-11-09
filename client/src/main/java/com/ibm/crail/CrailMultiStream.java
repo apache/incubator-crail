@@ -284,7 +284,7 @@ public class CrailMultiStream extends InputStream {
 				throw new Exception("File not found, name " + path);
 			}
 			if (file.getCapacity() > 0){
-				CrailBufferedInputStream stream = file.getBufferedInputStream(file.getCapacity());
+				CrailBufferedInputStream stream = fs.getBufferedInputStream(file, file.getCapacity());
 //				LOG.info("starting new substream, triggeredPosition " + triggeredPosition + ", file " + file.getPath());
 				substream = new SubStream(file, stream, triggeredPosition);
 				triggeredPosition += file.getCapacity();

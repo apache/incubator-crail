@@ -38,6 +38,7 @@ import com.ibm.crail.CrailMultiStream;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailOutputStream;
 import com.ibm.crail.CrailResult;
+import com.ibm.crail.Upcoming;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.utils.GetOpt;
@@ -90,7 +91,7 @@ public class CrailBenchmark {
 		double sumbytes = 0;
 		double ops = 0;
 		CrailFile file = fs.createFile(filename, 0, hosthash).get();
-		CrailBufferedOutputStream bufferedStream = file.getBufferedOutputStream(_capacity);	
+		CrailBufferedOutputStream bufferedStream = fs.getBufferedOutputStream(file, _capacity);	
 		CrailOutputStream directStream = file.getDirectOutputStream(_capacity);	
 		long start = System.currentTimeMillis();
 		while (ops < loop) {
@@ -233,7 +234,7 @@ public class CrailBenchmark {
 		warmUp(fs, filename, warmup, bufferQueue);
 		
 		CrailFile file = fs.lookupNode(filename).get().asFile();
-		CrailBufferedInputStream bufferedStream = file.getBufferedInputStream(file.getCapacity());
+		CrailBufferedInputStream bufferedStream = fs.getBufferedInputStream(file, file.getCapacity());
 		CrailInputStream directStream = file.getDirectInputStream(file.getCapacity());
 		
 		//benchmark
@@ -317,7 +318,7 @@ public class CrailBenchmark {
 		System.out.println("starting benchmark...");
 		fs.resetStatistics();
 		CrailFile file = fs.lookupNode(filename).get().asFile();
-		CrailBufferedInputStream bufferedStream = file.getBufferedInputStream(file.getCapacity());
+		CrailBufferedInputStream bufferedStream = fs.getBufferedInputStream(file, file.getCapacity());
 		CrailInputStream directStream = file.getDirectInputStream(file.getCapacity());		
 		
 		double sumbytes = 0;
@@ -759,9 +760,7 @@ public class CrailBenchmark {
 		String warmupFilename = filename + ".warmup";
 		System.out.println("warmUp, warmupFile " + warmupFilename + ", operations " + operations);
 		if (operations > 0){
-			CrailFile warmupFile = fs.createFile(warmupFilename, 0, 0).get();
-			warmupFile.syncDir();
-			CrailBufferedOutputStream warmupStream = warmupFile.getBufferedOutputStream(0);
+			CrailBufferedOutputStream warmupStream = fs.getBufferedOutputStream(fs.createFile(warmupFilename, 0, 0).get(), 0);
 			for (int i = 0; i < operations; i++){
 				ByteBuffer buf = bufferList.poll();
 				buf.clear();

@@ -25,26 +25,34 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 
+import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.utils.CrailImmediateOperation;
 import com.ibm.crail.utils.CrailUtils;
 
 
 public class CrailBufferedOutputStream extends OutputStream {
 	public static final Logger LOG = CrailUtils.getLogger();
+	
+	private CrailFS crailFS;
+	private CrailFile file;
+	private long writeHint;
 	private CrailOutputStream outputStream;
 	private ByteBuffer internalBuf;
 	private byte[] tmpByteBuf; 
 	private ByteBuffer tmpBoundaryBuffer;
-	private CrailFS crailFS;
 	private CrailImmediateOperation noOp;
 	private long position;
 	private Future<CrailResult> future;
 	
-	public CrailBufferedOutputStream(CrailFS crailFS, CrailOutputStream outputStream) throws IOException {
+	public CrailBufferedOutputStream(CrailFS crailFS, CrailFile file, long writeHint) throws Exception {
 		this.crailFS = crailFS;
-		this.outputStream = outputStream;
+		this.file = file;
+		this.writeHint = writeHint;
+		this.outputStream = null;
 		this.internalBuf = crailFS.allocateBuffer();
 		this.internalBuf.clear();		
 		this.tmpByteBuf = new byte[1];
@@ -133,7 +141,7 @@ public class CrailBufferedOutputStream extends OutputStream {
 		try {
 			if (future == null && internalBuf.position() > 0) {
 				internalBuf.flip();
-				future = outputStream.write(internalBuf);
+				future = outputStream().write(internalBuf);
 				internalBuf.clear();
 				return future;
 			} else if (internalBuf.position() == 0){
@@ -146,27 +154,27 @@ public class CrailBufferedOutputStream extends OutputStream {
 	}	
 	
 	public synchronized Future<Void> sync() throws IOException {
-		Future<Void> future = outputStream.sync();
+		Future<Void> future = outputStream().sync();
 		return future;
 	}
 
 	public synchronized void close() throws IOException {
 		try {
-			if (!outputStream.isOpen()){
+			if (!outputStream().isOpen()){
 				return;
 			}
 			completePurge();
 			future = purge();
 			completePurge();
-			outputStream.close();
+			outputStream().close();
 			crailFS.freeBuffer(internalBuf);
 		} catch (Exception e) {
 			throw new IOException(e);
 		} 
 	}
 	
-	public boolean isOpen() {
-		return outputStream.isOpen();
+	public boolean isOpen() throws IOException {
+		return outputStream().isOpen();
 	}
 
 	public long position() {
@@ -217,6 +225,17 @@ public class CrailBufferedOutputStream extends OutputStream {
 			tmpBoundaryBuffer.putShort(value);
 			write(tmpBoundaryBuffer);
 		}			
-	}			
+	}	
+	
+	private CrailOutputStream outputStream() throws IOException {
+		if (outputStream == null){
+			try {
+				outputStream = file.getDirectOutputStream(writeHint);
+			} catch(Exception e){
+				throw new IOException(e);
+			}
+		}
+		return outputStream;
+	}	
 
 }

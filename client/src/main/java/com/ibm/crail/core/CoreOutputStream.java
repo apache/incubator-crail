@@ -55,7 +55,7 @@ public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 		}
 	}
 	
-	final public Future<CrailResult> write(ByteBuffer dataBuf) throws Exception {
+	final synchronized public Future<CrailResult> write(ByteBuffer dataBuf) throws Exception {
 		if (!isOpen()) {
 			throw new IOException("Stream closed, cannot write");
 		}
@@ -79,7 +79,7 @@ public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 		return this.writeHint;
 	}
 	
-	public Future<Void> sync() throws IOException {
+	public synchronized Future<Void> sync() throws IOException {
 		if (inFlight.get() != 0){
 			LOG.info("Cannot sync, pending operations, opcount " + inFlight.get());
 			throw new IOException("Cannot close, pending operations, opcount " + inFlight.get());
@@ -87,7 +87,7 @@ public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 		return super.sync();
 	}
 	
-	public void close() throws IOException {
+	public synchronized void close() throws IOException {
 		if (!isOpen()){
 			return;
 		}		
@@ -104,12 +104,12 @@ public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 	
 	// ----------------------
 	
-	public Future<DataResult> trigger(DataNodeEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception {
+	Future<DataResult> trigger(DataNodeEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception {
 		Future<DataResult> dataFuture = endpoint.write(buffer, region, block, opDesc.getBlockOffset());
 		return dataFuture;		
 	}	
 	
-	public synchronized void update(long newCapacity) {
+	synchronized void update(long newCapacity) {
 		inFlight.decrementAndGet();
 		setCapacity(newCapacity);
 	}

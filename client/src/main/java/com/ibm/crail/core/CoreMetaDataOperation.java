@@ -30,11 +30,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailNode;
+import com.ibm.crail.Upcoming;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
 import com.ibm.crail.namenode.rpc.RpcResponseMessage;
 
-public abstract class CoreMetaDataOperation<R,T> implements Future<T> {
+public abstract class CoreMetaDataOperation<R,T> implements Upcoming<T> {
 	protected static int RPC_PENDING = 0;
 	protected static int RPC_DONE = 1;
 	protected static int RPC_ERROR = 2;		
@@ -128,6 +129,10 @@ public abstract class CoreMetaDataOperation<R,T> implements Future<T> {
 		}
 	}
 	
+	public T early() throws Exception {
+		return this.get();
+	}
+	
 	@Override
 	public boolean cancel(boolean mayInterruptIfRunning) {
 		return false;
@@ -156,6 +161,11 @@ class CreateFileFuture extends CoreMetaDataOperation<RpcResponseMessage.CreateFi
 	@Override
 	CrailFile process(RpcResponseMessage.CreateFileRes tmp) throws Exception {
 		return fs._createFile(tmp, path, storageAffinity, locationAffinity);
+	}
+
+	@Override
+	public CrailFile early() throws Exception {
+		return new CoreEarlyFile(this);
 	}
 
 }

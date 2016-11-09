@@ -55,7 +55,7 @@ public class CoreInputStream extends CoreStream implements CrailInputStream {
 		}
 	}
 	
-	final public Future<CrailResult> read(ByteBuffer dataBuf) throws Exception {
+	final public synchronized Future<CrailResult> read(ByteBuffer dataBuf) throws Exception {
 		if (!isOpen()) {
 			throw new IOException("stream already closed");
 		}
@@ -95,7 +95,7 @@ public class CoreInputStream extends CoreStream implements CrailInputStream {
 		}		
 	}	
 	
-	final public void seek(long pos) throws IOException {
+	final public synchronized void seek(long pos) throws IOException {
 		long oldPos = position();
 		super.seek(pos);
 		long newPos = position();
@@ -121,12 +121,12 @@ public class CoreInputStream extends CoreStream implements CrailInputStream {
 	
 	// --------------------------
 	
-	public Future<DataResult> trigger(DataNodeEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception {
+	Future<DataResult> trigger(DataNodeEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception {
 		Future<DataResult> future = endpoint.read(buffer, region, block, opDesc.getBlockOffset());
 		return future;
 	}	
 	
-	public void update(long newCapacity) {
+	void update(long newCapacity) {
 		inFlight.decrementAndGet();
 	}
 }

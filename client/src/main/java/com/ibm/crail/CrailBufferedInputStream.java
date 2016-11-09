@@ -24,7 +24,11 @@ package com.ibm.crail;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.slf4j.Logger;
 
 import com.ibm.crail.conf.CrailConstants;
@@ -41,9 +45,9 @@ public class CrailBufferedInputStream extends InputStream {
 	private Future<CrailResult> future;
 	private long position;
 	
-	public CrailBufferedInputStream(CrailFS crailFS, CrailInputStream inputStream) throws IOException {
+	public CrailBufferedInputStream(CrailFS crailFS, CrailFile file, long readHint) throws Exception {
 		this.crailFS = crailFS;
-		this.inputStream = inputStream;
+		this.inputStream = file.getDirectInputStream(readHint);
 		this.position = 0;
 		this.tmpByteBuf = new byte[1];
 		this.tmpBoundaryBuffer = ByteBuffer.allocate(8);
@@ -230,7 +234,7 @@ public class CrailBufferedInputStream extends InputStream {
 		}
 	}
 
-	public boolean isOpen() {
+	public boolean isOpen() throws IOException {
 		return inputStream.isOpen();
 	}
 
@@ -282,5 +286,5 @@ public class CrailBufferedInputStream extends InputStream {
 			read(tmpBoundaryBuffer);
 			return tmpBoundaryBuffer.getShort();
 		}
-	}		
+	}	
 }

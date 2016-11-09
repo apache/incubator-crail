@@ -23,9 +23,7 @@ package com.ibm.crail;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
-
 import org.slf4j.Logger;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
@@ -37,11 +35,11 @@ public abstract class CrailFS {
 	private static AtomicLong referenceCounter = new AtomicLong(0);
 	private static CrailFS instance = null;
 	
-	public abstract Future<CrailFile> createFile(String path, int locationAffinity, int storageAffinity) throws Exception;
-	public abstract Future<CrailDirectory> makeDirectory(String path) throws Exception;
-	public abstract Future<CrailNode> lookupNode(String path) throws Exception;
-	public abstract Future<CrailNode> rename(String src, String dst) throws Exception;
-	public abstract Future<CrailNode> delete(String path, boolean recursive) throws Exception;
+	public abstract Upcoming<CrailFile> createFile(String path, int locationAffinity, int storageAffinity) throws Exception;
+	public abstract Upcoming<CrailDirectory> makeDirectory(String path) throws Exception;
+	public abstract Upcoming<CrailNode> lookupNode(String path) throws Exception;
+	public abstract Upcoming<CrailNode> rename(String src, String dst) throws Exception;
+	public abstract Upcoming<CrailNode> delete(String path, boolean recursive) throws Exception;
 	
 	public abstract void dumpNameNode() throws Exception;
 	public abstract ByteBuffer allocateBuffer() throws IOException;
@@ -51,25 +49,13 @@ public abstract class CrailFS {
 	public abstract void resetStatistics();
 	protected abstract void closeFileSystem() throws Exception;
 	
-	public static CrailFS newInstance(CrailConfiguration conf) throws Exception {
-		synchronized(referenceCounter){
-			boolean isSingleton = conf.getBoolean(CrailConstants.SINGLETON_KEY, false);
-			if (isSingleton) {
-				referenceCounter.incrementAndGet();
-				if (instance == null) {
-					LOG.info("creating singleton crail file system");
-					instance = new CoreFileSystem(conf);
-					return instance;
-				} else {
-					LOG.info("returning singleton crail file system");
-					return instance;
-				}
-			} else {
-				LOG.info("creating non-singleton crail file system");				
-				return new CoreFileSystem(conf);
-			}
-		}
+	public CrailBufferedInputStream getBufferedInputStream(CrailFile file, long readHint) throws Exception {
+		return new CrailBufferedInputStream(this, file, readHint);
 	}
+	
+	public CrailBufferedOutputStream getBufferedOutputStream(CrailFile file, long writeHint) throws Exception {
+		return new CrailBufferedOutputStream(this, file, writeHint);
+	}	
 	
 	public void close() throws Exception {
 		synchronized(referenceCounter){
@@ -95,5 +81,25 @@ public abstract class CrailFS {
 			
 		}
 	}
+	
+	public static CrailFS newInstance(CrailConfiguration conf) throws Exception {
+		synchronized(referenceCounter){
+			boolean isSingleton = conf.getBoolean(CrailConstants.SINGLETON_KEY, false);
+			if (isSingleton) {
+				referenceCounter.incrementAndGet();
+				if (instance == null) {
+					LOG.info("creating singleton crail file system");
+					instance = new CoreFileSystem(conf);
+					return instance;
+				} else {
+					LOG.info("returning singleton crail file system");
+					return instance;
+				}
+			} else {
+				LOG.info("creating non-singleton crail file system");				
+				return new CoreFileSystem(conf);
+			}
+		}
+	}	
 }
 

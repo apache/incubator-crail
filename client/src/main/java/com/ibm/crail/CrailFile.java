@@ -31,13 +31,13 @@ public interface CrailFile extends CrailNode {
 	public abstract long getFd();
 	public abstract void close() throws Exception;
 
-	default CrailBufferedInputStream getBufferedInputStream(long readHint) throws Exception {
-		CrailInputStream stream = getDirectInputStream(readHint);
-		return new CrailBufferedInputStream(getFileSystem(), stream);
-	}
-	
-	default CrailBufferedOutputStream getBufferedOutputStream(long writeHint) throws Exception {
-		CrailOutputStream stream = getDirectOutputStream(writeHint);
-		return new CrailBufferedOutputStream(getFileSystem(), stream);
-	}
+//	default CrailBufferedInputStream getBufferedInputStream(long readHint) throws Exception {
+//		CrailInputStream stream = getDirectInputStream(readHint);
+//		return new CrailBufferedInputStream(getFileSystem(), stream);
+//	}
+//	
+//	default CrailBufferedOutputStream getBufferedOutputStream(long writeHint) throws Exception {
+//		CrailOutputStream stream = getDirectOutputStream(writeHint);
+//		return new CrailBufferedOutputStream(getFileSystem(), stream);
+//	}
 }

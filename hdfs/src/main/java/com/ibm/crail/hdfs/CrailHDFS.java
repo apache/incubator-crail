@@ -128,7 +128,7 @@ public class CrailHDFS extends AbstractFileSystem {
 				if (fileInfo != null) {
 					fileInfo.syncDir();
 				} 				
-				outputStream = fileInfo.getBufferedOutputStream(CrailConstants.HDFS_WRITE_AHEAD);
+				outputStream = dfs.getBufferedOutputStream(fileInfo, CrailConstants.HDFS_WRITE_AHEAD);
 			} catch (Exception e) {
 				throw new IOException(e);
 			}			
@@ -185,7 +185,7 @@ public class CrailHDFS extends AbstractFileSystem {
 		CrailBufferedInputStream inputStream = null;
 		if (fileInfo != null){
 			try {
-				inputStream = fileInfo.getBufferedInputStream(fileInfo.getCapacity());
+				inputStream = dfs.getBufferedInputStream(fileInfo, fileInfo.getCapacity());
 			} catch(Exception e){
 				throw new IOException(e);
 			}

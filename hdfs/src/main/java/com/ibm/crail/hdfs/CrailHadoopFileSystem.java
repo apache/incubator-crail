@@ -98,7 +98,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 		CrailFile fileInfo = null;
 		try {
 			fileInfo = dfs.lookupNode(path.toUri().getRawPath()).get().asFile();
-			CrailBufferedInputStream inputStream = fileInfo.getBufferedInputStream(fileInfo.getCapacity());
+			CrailBufferedInputStream inputStream = dfs.getBufferedInputStream(fileInfo, fileInfo.getCapacity());
 			return new CrailHDFSInputStream(inputStream);
 		} catch (Exception e) {
 			throw new IOException(e);
@@ -136,7 +136,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 				if (fileInfo != null) {
 					fileInfo.syncDir();
 				} 				
-				outputStream = fileInfo.getBufferedOutputStream(CrailConstants.HDFS_WRITE_AHEAD);
+				outputStream = dfs.getBufferedOutputStream(fileInfo, CrailConstants.HDFS_WRITE_AHEAD);
 			} catch (Exception e) {
 				throw new IOException(e);
 			}
@@ -153,27 +153,6 @@ public class CrailHadoopFileSystem extends FileSystem {
 	public FSDataOutputStream append(Path path, int bufferSize, Progressable progress) throws IOException {
 		CrailFile fileInfo = null;
 		throw new IOException("Append not supported");
-//		try {
-//			fileInfo = dfs.lookupNode(path.toUri().getRawPath()).get().asFile();
-//		} catch(Exception e){
-//			throw new IOException(e);
-//		}
-//	
-//		
-//		CrailBufferedOutputStream outputStream = null;
-//		if (fileInfo != null){
-//			try {
-//				outputStream = fileInfo.getBufferedOutputStream(CrailConstants.HDFS_WRITE_AHEAD);
-//			} catch(Exception e){
-//				throw new IOException(e);
-//			}
-//		}
-//		
-//		if (outputStream != null){
-//			return new CrailHDFSOutputStream(outputStream, statistics);
-//		} else {
-//			throw new IOException("Failed to create file, path " + path.toString());
-//		}
 	}
 
 	@Override

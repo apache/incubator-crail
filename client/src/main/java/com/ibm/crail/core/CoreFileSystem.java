@@ -44,6 +44,7 @@ import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailFS;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailResult;
+import com.ibm.crail.Upcoming;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.datanode.DataNode;
@@ -131,7 +132,7 @@ public class CoreFileSystem extends CrailFS {
 		this.streamStats = new CoreStreamStatistics();
 	}
 	
-	public Future<CrailFile> createFile(String path, int storageAffinity, int locationAffinity) throws Exception {
+	public Upcoming<CrailFile> createFile(String path, int storageAffinity, int locationAffinity) throws Exception {
 		FileName name = new FileName(path);
 		
 		if (CrailConstants.DEBUG){
@@ -180,7 +181,7 @@ public class CoreFileSystem extends CrailFS {
 		return new CoreCreateFile(this, fileInfo, path, storageAffinity, locationAffinity, future, stream);		
 	}
 	
-	public Future<CrailDirectory> makeDirectory(String path) throws Exception {
+	public Upcoming<CrailDirectory> makeDirectory(String path) throws Exception {
 		FileName name = new FileName(path);
 		
 		if (CrailConstants.DEBUG){
@@ -228,7 +229,7 @@ public class CoreFileSystem extends CrailFS {
 	}
 	
 	
-	public Future<CrailNode> lookupNode(String path) throws Exception {
+	public Upcoming<CrailNode> lookupNode(String path) throws Exception {
 		FileName name = new FileName(path);
 		
 		if (CrailConstants.DEBUG){
@@ -268,7 +269,7 @@ public class CoreFileSystem extends CrailFS {
 	}	
 	
 
-	public Future<CrailNode> rename(String src, String dst) throws Exception {
+	public Upcoming<CrailNode> rename(String src, String dst) throws Exception {
 		FileName srcPath = new FileName(src);
 		FileName dstPath = new FileName(dst);
 		
@@ -332,7 +333,7 @@ public class CoreFileSystem extends CrailFS {
 		return new CoreRenamedNode(this, dstFile, dst, futureSrc, futureDst, streamSrc, streamDst);		
 	}
 	
-	public Future<CrailNode> delete(String path, boolean recursive) throws Exception {
+	public Upcoming<CrailNode> delete(String path, boolean recursive) throws Exception {
 		FileName name = new FileName(path);
 		
 		if (CrailConstants.DEBUG){
