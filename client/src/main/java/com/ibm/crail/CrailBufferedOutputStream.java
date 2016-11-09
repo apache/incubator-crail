@@ -227,7 +227,7 @@ public class CrailBufferedOutputStream extends OutputStream {
 		}			
 	}	
 	
-	private CrailOutputStream outputStream() throws IOException {
+	private synchronized CrailOutputStream outputStream() throws IOException {
 		if (outputStream == null){
 			try {
 				outputStream = file.getDirectOutputStream(writeHint);

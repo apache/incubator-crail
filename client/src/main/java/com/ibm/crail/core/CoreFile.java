@@ -177,7 +177,7 @@ class CoreEarlyFile implements CrailFile {
 		file().close();
 	}
 	
-	private CrailFile file(){
+	private synchronized CrailFile file(){
 		if (file == null){
 			try {
 				file = this.createFileFuture.get();

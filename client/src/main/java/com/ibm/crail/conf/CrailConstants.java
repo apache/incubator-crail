@@ -30,7 +30,7 @@ public class CrailConstants {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	public static final String VERSION_KEY = "crail.version";
-	public static int VERSION = 2664;
+	public static int VERSION = 2665;
 	
 	public static final String NAMENODE_ADDRESS_KEY = "crail.namenode.address";
 	public static String NAMENODE_ADDRESS = "";
