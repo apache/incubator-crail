@@ -22,6 +22,7 @@
 package com.ibm.crail.core;
 
 import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 
 import com.ibm.crail.CrailBlockLocation;
 import com.ibm.crail.CrailDirectory;
@@ -33,11 +34,11 @@ import com.ibm.crail.CrailOutputStream;
 import com.ibm.crail.namenode.protocol.FileInfo;
 
 abstract class CoreFile extends CoreNode implements CrailFile {
-	private CrailOutputStream outputStream;
+	private Semaphore outputStreams;
 	
 	protected CoreFile(CoreFileSystem fs, FileInfo fileInfo, String path, int storageAffinity, int locationAffinity){
 		super(fs, fileInfo, path, storageAffinity, locationAffinity);
-		this.outputStream = null;
+		this.outputStreams = new Semaphore(1);
 	}
 	
 	public CrailInputStream getDirectInputStream(long readHint) throws Exception{
@@ -45,7 +46,7 @@ abstract class CoreFile extends CoreNode implements CrailFile {
 			throw new Exception("Cannot open stream for directory");
 		}		
 		
-		return fs.getInputStream(this, readHint);
+		return super.getInputStream(readHint);
 	}	
 	
 	public synchronized CrailOutputStream getDirectOutputStream(long writeHint) throws Exception {
@@ -55,20 +56,14 @@ abstract class CoreFile extends CoreNode implements CrailFile {
 		if (fileInfo.getToken() == 0){
 			throw new Exception("File is in read mode, cannot create outputstream, fd " + fileInfo.getFd());
 		}
-		if (outputStream == null){
-			outputStream = fs.getOutputStream(this, writeHint);
+		if (!outputStreams.tryAcquire()){
+			throw new Exception("Only one concurrent output stream per file allowed");
 		}
-		return outputStream;
+		return super.getOutputStream(writeHint);
 	}
 	
 	public CrailBlockLocation[] getBlockLocations(long start, long len) throws Exception{
 		return fs.getBlockLocations(path, start, len);
-	}	
-	
-	public void close() throws Exception {
-		if (fileInfo.getToken() > 0){
-			fs.closeFile(fileInfo);
-		}
 	}	
 	
 	public long getToken() {
@@ -79,29 +74,41 @@ abstract class CoreFile extends CoreNode implements CrailFile {
 		return fileInfo.tokenFree();
 	}
 
-	@Override
 	public CoreFile asFile() throws Exception {
 		return this;
+	}
+
+	void closeOutputStream(CoreOutputStream stream) throws Exception {
+		super.closeOutputStream(stream);
+		outputStreams.release();
 	}
 }
 
 class CoreEarlyFile implements CrailFile {
 	private CreateFileFuture createFileFuture;
 	private CrailFile file;
+	private String path;
+	private CoreFileSystem fs;
+	private int storageAffinity;
+	private int locationAffinity;
 
-	public CoreEarlyFile(CreateFileFuture createFileFuture) {
+	public CoreEarlyFile(CreateFileFuture createFileFuture, String path, CoreFileSystem fs, int storageAffinity, int locationAffinity) {
 		this.createFileFuture = createFileFuture;
 		this.file = null;
+		this.path = path;
+		this.fs = fs;
+		this.storageAffinity = storageAffinity;
+		this.locationAffinity = locationAffinity;
 	}
 
 	@Override
 	public CrailFS getFileSystem() {
-		return file().getFileSystem();
+		return fs;
 	}
 
 	@Override
 	public String getPath() {
-		return file().getPath();
+		return path;
 	}
 
 	@Override
@@ -154,12 +161,12 @@ class CoreEarlyFile implements CrailFile {
 
 	@Override
 	public int locationAffinity() {
-		return file().locationAffinity();
+		return locationAffinity;
 	}
 
 	@Override
 	public int storageAffinity() {
-		return file().storageAffinity();
+		return storageAffinity;
 	}
 
 	@Override
@@ -172,11 +179,6 @@ class CoreEarlyFile implements CrailFile {
 		return file().getFd();
 	}
 
-	@Override
-	public void close() throws Exception {
-		file().close();
-	}
-	
 	private synchronized CrailFile file(){
 		if (file == null){
 			try {
@@ -200,7 +202,7 @@ class CoreCreateFile extends CoreFile {
 		this.dirStream = dirStream;
 	}
 	
-	public CoreNode syncDir() throws Exception {
+	public synchronized  CoreNode syncDir() throws Exception {
 		if (dirFuture != null) {
 			dirFuture.get();
 			dirFuture = null;
@@ -210,6 +212,12 @@ class CoreCreateFile extends CoreFile {
 			dirStream = null;
 		}
 		return this;
+	}
+
+	@Override
+	void closeOutputStream(CoreOutputStream stream) throws Exception {
+		syncDir();
+		super.closeOutputStream(stream);
 	}
 	
 }

@@ -165,7 +165,7 @@ class CreateFileFuture extends CoreMetaDataOperation<RpcResponseMessage.CreateFi
 
 	@Override
 	public CrailFile early() throws Exception {
-		return new CoreEarlyFile(this);
+		return new CoreEarlyFile(this, this.path , this.fs, this.storageAffinity, this.locationAffinity);
 	}
 
 }

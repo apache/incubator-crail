@@ -29,7 +29,6 @@ public interface CrailInputStream {
 	public Future<CrailResult> read(ByteBuffer dataBuf) throws Exception;
 	public void seek(long pos) throws IOException;
 	public int available();
-	public boolean isOpen();
 	public long position();
-	void close() throws IOException;
+	void close() throws Exception;
 }

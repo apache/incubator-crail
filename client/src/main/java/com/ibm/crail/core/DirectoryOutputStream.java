@@ -31,15 +31,21 @@ public class DirectoryOutputStream {
 	private CoreOutputStream stream;
 	private ByteBuffer internalBuf;	
 	private CoreFileSystem fs;
+	private boolean open;
 
 	public DirectoryOutputStream(CoreOutputStream stream)
 			throws Exception {
 		this.fs = stream.getFile().getFileSystem();
 		this.stream = stream;
 		this.internalBuf = fs.allocateBuffer();
+		this.open = true;
 	}
 	
 	Future<CrailResult> writeRecord(DirectoryRecord record, long offset) throws Exception {
+		if (!open) {
+			throw new IOException("stream closed");
+		} 		
+		
 		internalBuf.clear();
 		record.write(internalBuf);
 		internalBuf.flip();
@@ -50,11 +56,14 @@ public class DirectoryOutputStream {
 	
 	public void close() throws IOException {
 		try {
-			if (!stream.isOpen()){
+			if (!open){
 				return;
-			}
+			}		
+			
 			stream.close();
 			fs.freeBuffer(internalBuf);
+			internalBuf = null;
+			open = false;
 		} catch (Exception e) {
 			throw new IOException(e);
 		} 		

@@ -23,7 +23,6 @@ package com.ibm.crail.tools;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.ibm.crail.CrailBlockLocation;
@@ -67,7 +66,6 @@ public class CrailFsck {
 		HashMap<String, AtomicInteger> stats = new HashMap<String, AtomicInteger>();
 		CrailConfiguration conf = new CrailConfiguration();
 		CrailFS fs = CrailFS.newInstance(conf);
-		LinkedBlockingQueue<CrailFile> fileQueue = new LinkedBlockingQueue<CrailFile>();
 		CrailDirectory directory = fs.lookupNode(filename).get().asDirectory();
 		
 		Iterator<String> iter = directory.listEntries();

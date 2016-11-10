@@ -42,20 +42,12 @@ public abstract class CrailFS {
 	public abstract Upcoming<CrailNode> delete(String path, boolean recursive) throws Exception;
 	
 	public abstract void dumpNameNode() throws Exception;
-	public abstract ByteBuffer allocateBuffer() throws IOException;
-	public abstract void freeBuffer(ByteBuffer buffer) throws IOException;
+	public abstract ByteBuffer allocateBuffer() throws Exception;
+	public abstract void freeBuffer(ByteBuffer buffer) throws Exception;
 	public abstract int getHostHash();
 	public abstract void printStatistics(String message);
 	public abstract void resetStatistics();
 	protected abstract void closeFileSystem() throws Exception;
-	
-	public CrailBufferedInputStream getBufferedInputStream(CrailFile file, long readHint) throws Exception {
-		return new CrailBufferedInputStream(this, file, readHint);
-	}
-	
-	public CrailBufferedOutputStream getBufferedOutputStream(CrailFile file, long writeHint) throws Exception {
-		return new CrailBufferedOutputStream(this, file, writeHint);
-	}	
 	
 	public void close() throws Exception {
 		synchronized(referenceCounter){

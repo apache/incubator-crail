@@ -22,7 +22,10 @@
 package com.ibm.crail.core;
 
 import java.util.concurrent.Future;
+
+import com.ibm.crail.CrailInputStream;
 import com.ibm.crail.CrailNode;
+import com.ibm.crail.CrailOutputStream;
 import com.ibm.crail.namenode.protocol.FileInfo;
 
 public class CoreNode implements CrailNode {
@@ -79,10 +82,6 @@ public class CoreNode implements CrailNode {
 		return this;
 	}
 	
-	FileInfo getFileInfo(){
-		return fileInfo;
-	}
-	
 	public CoreFile asFile() throws Exception {
 		throw new Exception("Type of file unclear");
 	}
@@ -91,6 +90,25 @@ public class CoreNode implements CrailNode {
 		throw new Exception("Type of file unclear");
 	}	
 	
+	protected CoreInputStream getInputStream(long readHint) throws Exception{
+		return fs.getInputStream(this, readHint);
+	}	
+	
+	CoreOutputStream getOutputStream(long writeHint) throws Exception {
+		return fs.getOutputStream(this, writeHint);
+	}	
+
+	void closeInputStream(CoreInputStream coreStream) throws Exception {
+		fs.unregisterInputStream(coreStream);
+	}
+	
+	void closeOutputStream(CoreOutputStream coreStream) throws Exception {
+		fs.unregisterOutputStream(coreStream);
+	}	
+	
+	FileInfo getFileInfo(){
+		return fileInfo;
+	}	
 }
 
 class CoreRenamedNode extends CoreNode {
@@ -109,7 +127,7 @@ class CoreRenamedNode extends CoreNode {
 	}
 
 	@Override
-	public CoreNode syncDir() throws Exception {
+	public synchronized CoreNode syncDir() throws Exception {
 		if (srcDirFuture != null) {
 			srcDirFuture.get();
 			srcDirFuture = null;
@@ -128,6 +146,12 @@ class CoreRenamedNode extends CoreNode {
 		}
 		return this;
 	}
+
+	@Override
+	void closeOutputStream(CoreOutputStream coreStream) throws Exception {
+		syncDir();
+		super.closeOutputStream(coreStream);
+	}
 }
 
 class CoreDeleteNode extends CoreNode {
@@ -141,7 +165,7 @@ class CoreDeleteNode extends CoreNode {
 	}
 	
 	@Override
-	public CoreNode syncDir() throws Exception {
+	public synchronized CoreNode syncDir() throws Exception {
 		if (dirFuture != null) {
 			dirFuture.get();
 			dirFuture = null;
@@ -151,6 +175,12 @@ class CoreDeleteNode extends CoreNode {
 			dirStream = null;
 		}
 		return this;
+	}
+
+	@Override
+	void closeOutputStream(CoreOutputStream coreStream) throws Exception {
+		syncDir();
+		super.closeOutputStream(coreStream);
 	}
 	
 }

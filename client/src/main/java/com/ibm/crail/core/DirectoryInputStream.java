@@ -48,6 +48,7 @@ public class DirectoryInputStream implements Iterator<String> {
 	private int[] blockTickets;
 	private Random random;
 	private boolean randomize;
+	private boolean open;
 	
 	public DirectoryInputStream(CoreInputStream stream, boolean randomize) throws Exception {
 		this.stream = stream;
@@ -64,10 +65,14 @@ public class DirectoryInputStream implements Iterator<String> {
 		this.blockTickets = new int[CrailConstants.BUFFER_SIZE/CrailConstants.DIRECTORY_RECORD];
 		for (int i = 0; i < blockTickets.length; i++){
 			blockTickets[i] = i;
-		}		
+		}
+		this.open = true;
 	}
 	
 	public boolean hasNext() {
+		if (!open) { 
+			return false;
+		} 		
 		if (currentFile != null){
 			return true;
 		}
@@ -82,12 +87,19 @@ public class DirectoryInputStream implements Iterator<String> {
 	}
 	
 	public String next(){
+		if (!open) { 
+			return null;
+		} 		
+		
 		String ret = currentFile;
 		currentFile = null;
 		return ret;
 	}
 	
 	public boolean hasRecord() {
+		if (!open) { 
+			return false;
+		} 		
 		if (fetchIfEmpty() > 0){
 			return true;
 		}
@@ -100,6 +112,10 @@ public class DirectoryInputStream implements Iterator<String> {
 	}
 
 	public DirectoryRecord nextRecord() {
+		if (!open) { 
+			return null;
+		} 		
+		
 		DirectoryRecord record = new DirectoryRecord(parent);
 		int offset = blockTickets[consumedRecords]*CrailConstants.DIRECTORY_RECORD;
 		internalBuf.position(offset);
@@ -134,12 +150,14 @@ public class DirectoryInputStream implements Iterator<String> {
 	
 	public void close() throws IOException {
 		try {
-			if (!stream.isOpen()){
+			if (!open) { 
 				return;
-			}			
+			} 			
 			
 			stream.close();
 			fs.freeBuffer(internalBuf);
+			internalBuf = null;
+			open = false;
 		} catch (Exception e) {
 			throw new IOException(e);
 		}

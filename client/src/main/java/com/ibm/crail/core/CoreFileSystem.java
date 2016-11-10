@@ -79,7 +79,8 @@ public class CoreFileSystem extends CrailFS {
 	private EndpointCache datanodeEndpointCache;
 	
 	private AtomicLong streamCounter;
-	private ConcurrentHashMap<Long, CoreStream> openStreams;
+	private ConcurrentHashMap<Long, CoreInputStream> openInputStreams;
+	private ConcurrentHashMap<Long, CoreOutputStream> openOutputStreams;
 	
 	private BlockCache blockCache;
 	private NextBlockCache nextBlockCache;
@@ -123,7 +124,8 @@ public class CoreFileSystem extends CrailFS {
 		this.bufferCache = new MappedBufferCache();
 		this.blockCache = new BlockCache();
 		this.nextBlockCache = new NextBlockCache();
-		this.openStreams = new ConcurrentHashMap<Long, CoreStream>();
+		this.openInputStreams = new ConcurrentHashMap<Long, CoreInputStream>();
+		this.openOutputStreams = new ConcurrentHashMap<Long, CoreOutputStream>();
 		this.streamCounter = new AtomicLong(0);
 		this.isOpen = true;
 		this.bufferCheckpoint = new BufferCheckpoint();
@@ -170,7 +172,7 @@ public class CoreFileSystem extends CrailFS {
 		long adjustedCapacity = fileInfo.getDirOffset()*CrailConstants.DIRECTORY_RECORD + CrailConstants.DIRECTORY_RECORD;
 		dirInfo.setCapacity(Math.max(dirInfo.getCapacity(), adjustedCapacity));
 		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path));
-		DirectoryOutputStream stream = this.getDirectoryOutputStream(dirFile);
+		DirectoryOutputStream stream = dirFile.getDirectoryOutputStream();
 		DirectoryRecord record = new DirectoryRecord(true, path);
 		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());
 		
@@ -217,7 +219,7 @@ public class CoreFileSystem extends CrailFS {
 		getBlockCache(dirInfo.getFd()).put(CoreSubOperation.createKey(dirInfo.getFd(), fileInfo.getDirOffset()), dirBlock);
 		
 		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path));
-		DirectoryOutputStream stream = this.getDirectoryOutputStream(dirFile);
+		DirectoryOutputStream stream = dirFile.getDirectoryOutputStream();
 		DirectoryRecord record = new DirectoryRecord(true, path);
 		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());		
 		
@@ -313,14 +315,14 @@ public class CoreFileSystem extends CrailFS {
 		getBlockCache(dstDir.getFd()).put(CoreSubOperation.createKey(dstDir.getFd(), dstFile.getDirOffset()), dirBlock);		
 		
 		CoreDirectory dirSrc = new CoreDirectory(this, srcParent, CrailUtils.getParent(src));
-		DirectoryOutputStream streamSrc = this.getDirectoryOutputStream(dirSrc);
+		DirectoryOutputStream streamSrc = dirSrc.getDirectoryOutputStream();
 		DirectoryRecord recordSrc = new DirectoryRecord(false, src);
 		Future<CrailResult> futureSrc = streamSrc.writeRecord(recordSrc, srcFile.getDirOffset());			
 		
 		long adjustedCapacity = dstFile.getDirOffset()*CrailConstants.DIRECTORY_RECORD + CrailConstants.DIRECTORY_RECORD;
 		dstDir.setCapacity(Math.max(dstDir.getCapacity(), adjustedCapacity));
 		CoreDirectory dirDst = new CoreDirectory(this, dstDir, CrailUtils.getParent(dst));
-		DirectoryOutputStream streamDst = this.getDirectoryOutputStream(dirDst);
+		DirectoryOutputStream streamDst = dirDst.getDirectoryOutputStream();
 		DirectoryRecord recordDst = new DirectoryRecord(true, dst);
 		Future<CrailResult> futureDst = streamDst.writeRecord(recordDst, dstFile.getDirOffset());			
 
@@ -358,7 +360,7 @@ public class CoreFileSystem extends CrailFS {
 		FileInfo dirInfo = fileRes.getParent();
 		
 		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path));
-		DirectoryOutputStream stream = this.getDirectoryOutputStream(dirFile);
+		DirectoryOutputStream stream = dirFile.getDirectoryOutputStream();
 		DirectoryRecord record = new DirectoryRecord(false, path);
 		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());			
 		
@@ -395,7 +397,7 @@ public class CoreFileSystem extends CrailFS {
 		}
 		
 		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, name);
-		DirectoryInputStream inputStream = this.getDirectoryInputStream(dirFile, randomize);
+		DirectoryInputStream inputStream = dirFile.getDirectoryInputStream(randomize);
 		return inputStream;
 	}	
 	
@@ -556,13 +558,21 @@ public class CoreFileSystem extends CrailFS {
 			return;
 		}
 		
-		LinkedList<CoreStream> streamTmp = new LinkedList<CoreStream>();
-		for (CoreStream stream : openStreams.values()) {
-			streamTmp.add(stream);
+		LinkedList<CoreInputStream> tmpIn = new LinkedList<CoreInputStream>();
+		for (CoreInputStream stream : openInputStreams.values()) {
+			tmpIn.add(stream);
 		}
-		for (CoreStream stream : streamTmp) {
+		for (CoreInputStream stream : tmpIn) {
 			stream.close();
 		}
+		
+		LinkedList<CoreOutputStream> tmpOut = new LinkedList<CoreOutputStream>();
+		for (CoreOutputStream stream : openOutputStreams.values()) {
+			tmpOut.add(stream);
+		}
+		for (CoreOutputStream stream : tmpOut) {
+			stream.close();
+		}		
 	
 		bufferCache.close();
 		datanodeEndpointCache.close();
@@ -578,19 +588,9 @@ public class CoreFileSystem extends CrailFS {
 
 	//-------------------------------------------------------------
 	
-	DirectoryOutputStream getDirectoryOutputStream(CoreDirectory directory) throws Exception {
-		CoreOutputStream outputStream = getOutputStream(directory, 0);
-		return new DirectoryOutputStream(outputStream);
-	}
-	
-	DirectoryInputStream getDirectoryInputStream(CoreDirectory directory, boolean randomize) throws Exception {
-		CoreInputStream inputStream = getInputStream(directory, 0);
-		return new DirectoryInputStream(inputStream, randomize);
-	}	
-
 	CoreOutputStream getOutputStream(CoreNode file, long writeHint) throws Exception {
 		CoreOutputStream outputStream = new CoreOutputStream(file, streamCounter.incrementAndGet(), writeHint);
-		openStreams.put(outputStream.getStreamId(), outputStream);
+		openOutputStreams.put(outputStream.getStreamId(), outputStream);
 
 		if (CrailConstants.STATISTICS){
 			streamStats.incOpen();
@@ -606,7 +606,7 @@ public class CoreFileSystem extends CrailFS {
 	
 	CoreInputStream getInputStream(CoreNode file, long readHint) throws Exception {
 		CoreInputStream inputStream = new CoreInputStream(file, streamCounter.incrementAndGet(), readHint);
-		openStreams.put(inputStream.getStreamId(), inputStream);
+		openInputStreams.put(inputStream.getStreamId(), inputStream);
 		
 		if (CrailConstants.STATISTICS){
 			streamStats.incOpen();
@@ -620,25 +620,30 @@ public class CoreFileSystem extends CrailFS {
 		return inputStream;
 	}
 	
-	CoreStream unregister(CoreStream coreStream) {
-		CoreStream stream = this.openStreams.remove(coreStream.getStreamId());
+	CoreStream unregisterInputStream(CoreInputStream coreStream) {
+		CoreStream stream = this.openInputStreams.remove(coreStream.getStreamId());
 		if (stream != null && CrailConstants.STATISTICS){
 			streamStats.incClose();
-			if (stream instanceof CoreInputStream){
-				streamStats.incCloseInput();
-				this.ioStatsIn.add(stream.getCoreStatistics());
-				streamStats.decCurrentInput();
-				if (stream.getFile().isDir()){
-					streamStats.incCloseInputDir();
-				}
-			} 
-			if (stream instanceof CoreOutputStream){
-				streamStats.incCloseOutput();
-				this.ioStatsOut.add(stream.getCoreStatistics());
-				streamStats.decCurrentOutput();
-				if (stream.getFile().isDir()){
-					streamStats.incCloseOutputDir();
-				}
+			streamStats.incCloseInput();
+			this.ioStatsIn.add(stream.getCoreStatistics());
+			streamStats.decCurrentInput();
+			if (stream.getFile().isDir()){
+				streamStats.incCloseInputDir();
+			}
+		}
+		
+		return stream;
+	}	
+	
+	CoreStream unregisterOutputStream(CoreOutputStream coreStream) {
+		CoreStream stream = this.openOutputStreams.remove(coreStream.getStreamId());
+		if (stream != null && CrailConstants.STATISTICS){
+			streamStats.incClose();
+			streamStats.incCloseOutput();
+			this.ioStatsOut.add(stream.getCoreStatistics());
+			streamStats.decCurrentOutput();
+			if (stream.getFile().isDir()){
+				streamStats.incCloseOutputDir();
 			}
 		}
 		

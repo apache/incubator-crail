@@ -24,10 +24,7 @@ package com.ibm.crail;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 
@@ -44,9 +41,10 @@ public class CrailBufferedInputStream extends InputStream {
 	private ByteBuffer internalBuf;	
 	private Future<CrailResult> future;
 	private long position;
+	private boolean open;
 	
-	public CrailBufferedInputStream(CrailFS crailFS, CrailFile file, long readHint) throws Exception {
-		this.crailFS = crailFS;
+	public CrailBufferedInputStream(CrailFile file, long readHint) throws Exception {
+		this.crailFS = file.getFileSystem();
 		this.inputStream = file.getDirectInputStream(readHint);
 		this.position = 0;
 		this.tmpByteBuf = new byte[1];
@@ -55,9 +53,10 @@ public class CrailBufferedInputStream extends InputStream {
 		this.future = null;
 		this.internalBuf.clear().flip();
 		triggerFetch();
+		this.open = true;
 	}
 	
-	public final synchronized int read() throws IOException {
+	public final int read() throws IOException {
 		int ret = read(tmpByteBuf);
 		return (ret <= 0) ? -1 : (tmpByteBuf[0] & 0xff);
 	}
@@ -66,7 +65,7 @@ public class CrailBufferedInputStream extends InputStream {
         return read(b, 0, b.length);
     }	
 
-	public final synchronized int read(long position, byte[] buffer, int offset, int length) throws IOException {
+	public final int read(long position, byte[] buffer, int offset, int length) throws IOException {
 		long oldPos = position();
 		int nread = -1;
 		try {
@@ -79,13 +78,15 @@ public class CrailBufferedInputStream extends InputStream {
 	}
 	
 	@Override
-	public final synchronized int read(byte[] buf, int off, int len)
+	public final int read(byte[] buf, int off, int len)
 			throws IOException {
 		try {
 			if (buf == null) {
 				throw new NullPointerException();
 			} else if (off < 0 || len < 0 || len > buf.length - off) {
 				throw new IndexOutOfBoundsException("off " + off + ", len " + len + ", length " + buf.length);
+			} else if (!open) { 
+				throw new IOException("strem closed");
 			} else if (len == 0) {
 				return 0;
 			}
@@ -107,10 +108,12 @@ public class CrailBufferedInputStream extends InputStream {
 		}
 	}
 	
-	public final synchronized int read(ByteBuffer dataBuf) throws IOException {
+	public final int read(ByteBuffer dataBuf) throws IOException {
 		try {
 			if (dataBuf == null) {
 				throw new NullPointerException();
+			} else if (!open) { 
+				throw new IOException("strem closed");
 			} else if (dataBuf.remaining() == 0) {
 				return 0;
 			}
@@ -135,42 +138,18 @@ public class CrailBufferedInputStream extends InputStream {
 		
 	}
 	
-	private void triggerFetch() throws IOException {
-		try {
-			if (future == null && internalBuf.remaining() == 0){
-				internalBuf.clear();
-				future = inputStream.read(internalBuf);
-				if (future == null){
-					internalBuf.clear().flip();
-				}
-			}
-		} catch(Exception e){
-			throw new IOException(e);
-		}
-	}	
-	
-	private int completeFetch() throws IOException {
-		try {
-			if (future != null){
-				future.get();
-				internalBuf.flip();
-				future = null;
-			}
-			return internalBuf.remaining();
-		} catch(Exception e){
-			throw new IOException(e);
-		}
-	}	
-	
 	@Override
-	public synchronized void close() throws IOException {
+	public void close() throws IOException {
 		try {
-			if (!inputStream.isOpen()){
+			if (!open){
 				return;
-			}			
+			}
+			
 			completeFetch();
 			inputStream.close();
 			crailFS.freeBuffer(internalBuf);
+			internalBuf = null;
+			open = false;
 		} catch (Exception e) {
 			throw new IOException(e);
 		}
@@ -179,7 +158,7 @@ public class CrailBufferedInputStream extends InputStream {
 	//--------------------------------------
 
 	@Override
-	public synchronized long skip(long n) throws IOException {
+	public long skip(long n) throws IOException {
 		if (n <= 0) {
 			return 0;
 		}
@@ -195,7 +174,7 @@ public class CrailBufferedInputStream extends InputStream {
 		}
 	}
 
-	public synchronized void seek(long pos) throws IOException {
+	public void seek(long pos) throws IOException {
 		if (pos == position){
 			return;
 		}
@@ -222,7 +201,7 @@ public class CrailBufferedInputStream extends InputStream {
 	}
 
 
-	public synchronized int available() {
+	public int available() {
 		try {
 			if (future != null){
 				return (int) (future.isDone() ? future.get().getLen() : 0);
@@ -234,17 +213,40 @@ public class CrailBufferedInputStream extends InputStream {
 		}
 	}
 
-	public boolean isOpen() throws IOException {
-		return inputStream.isOpen();
-	}
-
-	public synchronized long position() {
+	public long position() {
 		return position;
 	}
 
 	//---------------------- ByteBuffer interface 
 	
-	public final synchronized double readDouble() throws Exception {
+	private void triggerFetch() throws IOException {
+		try {
+			if (future == null && internalBuf.remaining() == 0){
+				internalBuf.clear();
+				future = inputStream.read(internalBuf);
+				if (future == null){
+					internalBuf.clear().flip();
+				}
+			}
+		} catch(Exception e){
+			throw new IOException(e);
+		}
+	}
+
+	private int completeFetch() throws IOException {
+		try {
+			if (future != null){
+				future.get();
+				internalBuf.flip();
+				future = null;
+			}
+			return internalBuf.remaining();
+		} catch(Exception e){
+			throw new IOException(e);
+		}
+	}
+
+	private final double readDouble() throws Exception {
 		if (internalBuf.remaining() >= 4){
 			return internalBuf.getDouble();
 		} else {
@@ -255,7 +257,7 @@ public class CrailBufferedInputStream extends InputStream {
 		}
 	}
 	
-	public final synchronized int readInt() throws Exception {
+	private final int readInt() throws Exception {
 		if (internalBuf.remaining() >= 4){
 			return internalBuf.getInt();
 		} else {
@@ -266,7 +268,7 @@ public class CrailBufferedInputStream extends InputStream {
 		}
 	}
 	
-	public final synchronized double readLong() throws Exception {
+	private final double readLong() throws Exception {
 		if (internalBuf.remaining() >= 8){
 			return internalBuf.getLong();
 		} else {
@@ -277,7 +279,7 @@ public class CrailBufferedInputStream extends InputStream {
 		}
 	}
 	
-	public final synchronized double readShort() throws Exception {
+	private final double readShort() throws Exception {
 		if (internalBuf.remaining() >= 2){
 			return internalBuf.getShort();
 		} else {

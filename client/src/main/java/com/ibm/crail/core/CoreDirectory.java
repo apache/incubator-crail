@@ -51,6 +51,16 @@ class CoreDirectory extends CoreNode implements CrailDirectory {
 	public CoreDirectory asDirectory() throws Exception {
 		return this;
 	}
+	
+	DirectoryOutputStream getDirectoryOutputStream() throws Exception {
+		CoreOutputStream outputStream = super.getOutputStream(0);
+		return new DirectoryOutputStream(outputStream);
+	}
+	
+	DirectoryInputStream getDirectoryInputStream(boolean randomize) throws Exception {
+		CoreInputStream inputStream = super.getInputStream(0);
+		return new DirectoryInputStream(inputStream, randomize);
+	}	
 }
 
 class CoreMakeDirectory extends CoreDirectory {
@@ -74,5 +84,11 @@ class CoreMakeDirectory extends CoreDirectory {
 			dirStream = null;
 		}
 		return this;
+	}
+
+	@Override
+	void closeOutputStream(CoreOutputStream coreStream) throws Exception {
+		syncDir();
+		super.closeOutputStream(coreStream);
 	}	
 }

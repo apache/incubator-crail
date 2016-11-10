@@ -47,8 +47,9 @@ import com.ibm.crail.utils.NextBlockCache.FileNextBlockCache;
 public abstract class CoreStream {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
-	private CoreFileSystem fs;
-	private CoreNode node;
+	protected CoreFileSystem fs;
+	protected CoreNode node;
+	
 	private EndpointCache endpointCache;
 	private RpcNameNodeClient namenodeClientRpc;
 	private FileBlockCache blockCache;
@@ -57,7 +58,6 @@ public abstract class CoreStream {
 	private FileInfo fileInfo;
 	private long position;
 	private long syncedCapacity;
-	private boolean open;
 	private long streamId;
 	private CoreIOStatistics ioStats;
 	private HashMap<Integer, CoreSubOperation> blockMap;
@@ -78,7 +78,6 @@ public abstract class CoreStream {
 		
 		this.position = fileOffset;
 		this.syncedCapacity = fileInfo.getCapacity();
-		this.open = true;
 		this.streamId = streamId;
 		this.ioStats = new CoreIOStatistics();
 		
@@ -193,25 +192,12 @@ public abstract class CoreStream {
 		return future;
 	}
 	
-	void close() throws IOException {
-		try {
-			node.syncDir();
-			ioStats.setCapacity(fileInfo.getCapacity());
-			if (fs.unregister(this) != null){
-				this.open = false;
-				this.sync().get();
-			}
-		} catch(Exception e){
-			throw new IOException(e);
-		}
+	void updateIOStats() {
+		ioStats.setCapacity(fileInfo.getCapacity());
 	}
 	
 	long getStreamId() {
 		return streamId;
-	}
-	
-	public boolean isOpen(){
-		return open;
 	}
 	
 	public long position() {

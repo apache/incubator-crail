@@ -129,7 +129,7 @@ public class CrailMultiStream extends InputStream {
 							streams.add(substream);
 						}
 					} else if (substream.current() >= anticipatedPosition){
-						long leftover = substream.end() - substream.current();
+//						long leftover = substream.end() - substream.current();
 //						LOG.info("moving tmp substream at position " + substream.current() + ", path " + substream.getPath() + ", leftover " + leftover);
 						tmpStreams.add(substream);
 					} else {
@@ -205,7 +205,7 @@ public class CrailMultiStream extends InputStream {
 							streams.add(substream);
 						}
 					} else if (substream.current() >= anticipatedPosition){
-						long leftover = substream.end() - substream.current();
+//						long leftover = substream.end() - substream.current();
 //						LOG.info("moving tmp substream at position " + substream.current() + ", path " + substream.getPath() + ", leftover " + leftover);
 						tmpStreams.add(substream);
 					} else {
@@ -284,7 +284,7 @@ public class CrailMultiStream extends InputStream {
 				throw new Exception("File not found, name " + path);
 			}
 			if (file.getCapacity() > 0){
-				CrailBufferedInputStream stream = fs.getBufferedInputStream(file, file.getCapacity());
+				CrailBufferedInputStream stream = file.getBufferedInputStream(file.getCapacity());
 //				LOG.info("starting new substream, triggeredPosition " + triggeredPosition + ", file " + file.getPath());
 				substream = new SubStream(file, stream, triggeredPosition);
 				triggeredPosition += file.getCapacity();
@@ -294,22 +294,16 @@ public class CrailMultiStream extends InputStream {
 	}
 
 	private class SubStream {
-		private CrailFile file;
 		private CrailBufferedInputStream stream;
 		private long current;
 		private long end;
 		
 		public SubStream(CrailFile file, CrailBufferedInputStream stream, long start) {
-			this.file = file;
 			this.stream = stream;
 			this.current = start;
 			this.end = start + file.getCapacity();
 		}
 
-		public String getPath() {
-			return file.getPath();
-		}
-		
 		public long current(){
 			return current;
 		}

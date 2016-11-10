@@ -28,8 +28,7 @@ import java.util.concurrent.Future;
 public interface CrailOutputStream {
 	public Future<CrailResult> write(ByteBuffer dataBuf) throws Exception;
 	public Future<Void> sync() throws IOException;
-	public boolean isOpen();
 	public long position();
 	public long getWriteHint();
-	public void close() throws IOException;
+	public void close() throws Exception;
 }

@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
 import com.ibm.crail.namenode.rpc.RpcNameNodeService;
 import com.ibm.crail.utils.CrailUtils;
-import com.ibm.darpc.RpcEndpoint;
 import com.ibm.darpc.RpcServerEndpoint;
 import com.ibm.darpc.RpcServerEvent;
 import com.ibm.darpc.RpcService;

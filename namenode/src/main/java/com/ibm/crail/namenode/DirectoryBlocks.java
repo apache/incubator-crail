@@ -25,7 +25,6 @@ import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 
 public class DirectoryBlocks extends AbstractNode {

@@ -44,19 +44,21 @@ public class CoreInputStream extends CoreStream implements CrailInputStream {
 	private AtomicLong inFlight;
 	private long readHint;
 	private CrailImmediateOperation noOp;
+	private boolean open;
 	
 	public CoreInputStream(CoreNode file, long streamId, long readHint) throws Exception {
 		super(file, streamId, 0);
 		this.inFlight = new AtomicLong(0);
 		this.readHint = Math.max(0, Math.min(file.getCapacity(), readHint));
 		this.noOp = new CrailImmediateOperation(0);
+		this.open = true;
 		if (CrailConstants.DEBUG){
 			LOG.info("CoreInputStream: open, path  " + file.getPath() + ", fd " + file.getFd() + ", streamId " + streamId + ", isDir " + file.isDir() + ", readHint " + this.readHint);
 		}
 	}
 	
-	final public synchronized Future<CrailResult> read(ByteBuffer dataBuf) throws Exception {
-		if (!isOpen()) {
+	final public Future<CrailResult> read(ByteBuffer dataBuf) throws Exception {
+		if (!open) {
 			throw new IOException("stream already closed");
 		}
 		if (!(dataBuf instanceof DirectBuffer)) {
@@ -95,7 +97,7 @@ public class CoreInputStream extends CoreStream implements CrailInputStream {
 		}		
 	}	
 	
-	final public synchronized void seek(long pos) throws IOException {
+	final public void seek(long pos) throws IOException {
 		long oldPos = position();
 		super.seek(pos);
 		long newPos = position();
@@ -104,16 +106,18 @@ public class CoreInputStream extends CoreStream implements CrailInputStream {
 		}
 	}
 	
-	public synchronized void close() throws IOException {
-		if (!isOpen()){
+	public void close() throws Exception {
+		if (!open){
 			return;
-		}			
-		
+		}
 		if (inFlight.get() != 0){
 			LOG.info("Cannot close, pending operations, opcount " + inFlight.get() + ", path " + getFile().getPath());
 			throw new IOException("Cannot close, pending operations, opcount " + inFlight.get());
 		}
-		super.close();
+		
+		updateIOStats();
+		node.closeInputStream(this);
+		open = false;
 		if (CrailConstants.DEBUG){
 			LOG.info("CoreInputStream, close, path " + this.getFile().getPath() + ", fd " + getFile().getFd() + ", streamId " + getStreamId());
 		}	

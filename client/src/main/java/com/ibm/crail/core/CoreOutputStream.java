@@ -44,19 +44,21 @@ public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 	private AtomicLong inFlight;
 	private long writeHint;
 	private CrailImmediateOperation noOp;
+	private boolean open;
 	
 	public CoreOutputStream(CoreNode file, long streamId, long writeHint) throws Exception {
 		super(file, streamId, file.getCapacity());
 		this.writeHint = Math.max(0, writeHint);
 		this.inFlight = new AtomicLong(0);
 		this.noOp = new CrailImmediateOperation(0);
+		this.open = true;
 		if (CrailConstants.DEBUG){
 			LOG.info("CoreOutputStream, open, path " + file.getPath() + ", fd " + file.getFd() + ", streamId " + streamId + ", isDir " + file.isDir() + ", writeHint " + this.writeHint);
 		}
 	}
 	
-	final synchronized public Future<CrailResult> write(ByteBuffer dataBuf) throws Exception {
-		if (!isOpen()) {
+	final public Future<CrailResult> write(ByteBuffer dataBuf) throws Exception {
+		if (!open) {
 			throw new IOException("Stream closed, cannot write");
 		}
 		if (!(dataBuf instanceof DirectBuffer)) {
@@ -79,7 +81,7 @@ public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 		return this.writeHint;
 	}
 	
-	public synchronized Future<Void> sync() throws IOException {
+	public Future<Void> sync() throws IOException {
 		if (inFlight.get() != 0){
 			LOG.info("Cannot sync, pending operations, opcount " + inFlight.get());
 			throw new IOException("Cannot close, pending operations, opcount " + inFlight.get());
@@ -87,16 +89,19 @@ public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 		return super.sync();
 	}
 	
-	public synchronized void close() throws IOException {
-		if (!isOpen()){
+	public void close() throws Exception {
+		if (!open){
 			return;
-		}		
-		
+		}
 		if (inFlight.get() != 0){
 			LOG.info("Cannot close, pending operations, opcount " + inFlight.get() + ", path " + getFile().getPath());
 			throw new IOException("Cannot close, pending operations, opcount " + inFlight.get() + ", fd " + getFile().getFd() + ", streamId " + getStreamId() + ", capacity " + getFile().getCapacity());
-		}		
-		super.close();
+		}
+		
+		sync().get();
+		updateIOStats();
+		node.closeOutputStream(this);
+		open = false;
 		if (CrailConstants.DEBUG){
 			LOG.info("CoreOutputStream, close, path " + this.getFile().getPath() + ", fd " + getFile().getFd() + ", streamId " + getStreamId() + ", capacity " + getFile().getCapacity());
 		}	

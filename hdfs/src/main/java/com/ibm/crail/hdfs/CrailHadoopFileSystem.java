@@ -98,7 +98,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 		CrailFile fileInfo = null;
 		try {
 			fileInfo = dfs.lookupNode(path.toUri().getRawPath()).get().asFile();
-			CrailBufferedInputStream inputStream = dfs.getBufferedInputStream(fileInfo, fileInfo.getCapacity());
+			CrailBufferedInputStream inputStream = fileInfo.getBufferedInputStream(fileInfo.getCapacity());
 			return new CrailHDFSInputStream(inputStream);
 		} catch (Exception e) {
 			throw new IOException(e);
@@ -133,10 +133,8 @@ public class CrailHadoopFileSystem extends FileSystem {
 		CrailBufferedOutputStream outputStream = null;
 		if (fileInfo != null){
 			try {
-				if (fileInfo != null) {
-					fileInfo.syncDir();
-				} 				
-				outputStream = dfs.getBufferedOutputStream(fileInfo, CrailConstants.HDFS_WRITE_AHEAD);
+				fileInfo.syncDir();
+				outputStream = fileInfo.getBufferedOutputStream(CrailConstants.HDFS_WRITE_AHEAD);
 			} catch (Exception e) {
 				throw new IOException(e);
 			}
@@ -151,7 +149,6 @@ public class CrailHadoopFileSystem extends FileSystem {
 
 	@Override
 	public FSDataOutputStream append(Path path, int bufferSize, Progressable progress) throws IOException {
-		CrailFile fileInfo = null;
 		throw new IOException("Append not supported");
 	}
 

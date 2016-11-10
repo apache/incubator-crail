@@ -69,9 +69,11 @@ public class DirectBufferCache {
 	}
 	
 	public void putBuffer(ByteBuffer buffer) throws IOException{
-		cachePut.incrementAndGet();
-		cacheOut.decrementAndGet();
-		putBufferInternal(buffer);
+		if (buffer != null){
+			cachePut.incrementAndGet();
+			cacheOut.decrementAndGet();
+			putBufferInternal(buffer);
+		}
 	}
 	
 	public void putBufferInternal(ByteBuffer buffer) throws IOException{

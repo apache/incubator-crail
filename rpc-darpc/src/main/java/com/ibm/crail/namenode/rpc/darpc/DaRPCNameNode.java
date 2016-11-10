@@ -30,7 +30,6 @@ import com.ibm.crail.namenode.rpc.*;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.darpc.RpcClientEndpoint;
 import com.ibm.darpc.RpcClientGroup;
-import com.ibm.darpc.RpcEndpointGroup;
 import com.ibm.darpc.RpcServerEndpoint;
 import com.ibm.darpc.RpcServerGroup;
 import com.ibm.disni.rdma.RdmaServerEndpoint;
