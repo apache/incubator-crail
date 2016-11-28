@@ -24,6 +24,8 @@ package com.ibm.crail.core;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 
+import org.slf4j.Logger;
+
 import com.ibm.crail.CrailBlockLocation;
 import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFS;
@@ -32,6 +34,7 @@ import com.ibm.crail.CrailInputStream;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailOutputStream;
 import com.ibm.crail.namenode.protocol.FileInfo;
+import com.ibm.crail.utils.CrailUtils;
 
 abstract class CoreFile extends CoreNode implements CrailFile {
 	private Semaphore outputStreams;
@@ -85,6 +88,8 @@ abstract class CoreFile extends CoreNode implements CrailFile {
 }
 
 class CoreEarlyFile implements CrailFile {
+	private static final Logger LOG = CrailUtils.getLogger();
+	
 	private CreateFileFuture createFileFuture;
 	private CrailFile file;
 	private String path;
@@ -118,22 +123,42 @@ class CoreEarlyFile implements CrailFile {
 
 	@Override
 	public long getModificationTime() {
-		return file().getModificationTime();
+		try {
+			return file().getModificationTime();
+		} catch(Exception e){
+			LOG.info("Error: " + e.getMessage());
+			return -1;
+		}
 	}
 
 	@Override
 	public long getCapacity() {
-		return file().getCapacity();
+		try {
+			return file().getCapacity();
+		} catch(Exception e){
+			LOG.info("Error: " + e.getMessage());
+			return -1;
+		}
 	}
 
 	@Override
 	public boolean isDir() {
-		return file().isDir();
+		try {
+			return file().isDir();
+		} catch(Exception e){
+			LOG.info("Error: " + e.getMessage());
+			return false;
+		}
 	}
 
 	@Override
 	public CrailFile asFile() throws Exception {
-		return file().asFile();
+		try {
+			return file().asFile();
+		} catch(Exception e){
+			LOG.info("Error: " + e.getMessage());
+			return null;
+		}
 	}
 
 	@Override
@@ -171,25 +196,30 @@ class CoreEarlyFile implements CrailFile {
 
 	@Override
 	public long getToken() {
-		return file().getToken();
+		try {
+			return file().getToken();
+		} catch(Exception e){
+			LOG.info("Error: " + e.getMessage());
+			return -1;
+		}
 	}
 
 	@Override
 	public long getFd() {
-		return file().getFd();
+		try {
+			return file().getFd();
+		} catch(Exception e){
+			LOG.info("Error: " + e.getMessage());
+			return -1;
+		}
 	}
 
-	private synchronized CrailFile file(){
+	private synchronized CrailFile file() throws Exception {
 		if (file == null){
-			try {
-				file = this.createFileFuture.get();
-			} catch(Exception e){
-				e.printStackTrace();
-			}
+			file = this.createFileFuture.get();
 		}
 		return file;
 	}
-	
 }
 
 class CoreCreateFile extends CoreFile {
