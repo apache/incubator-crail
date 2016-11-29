@@ -27,6 +27,9 @@ import org.slf4j.Logger;
 
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
 import com.ibm.crail.namenode.rpc.RpcNameNodeService;
+import com.ibm.crail.namenode.rpc.RpcNameNodeState;
+import com.ibm.crail.namenode.rpc.RpcRequestMessage;
+import com.ibm.crail.namenode.rpc.RpcResponseMessage;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.darpc.RpcServerEndpoint;
 import com.ibm.darpc.RpcServerEvent;
@@ -44,9 +47,8 @@ public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol implements Rpc
 	private AtomicLong removeOps;
 	private AtomicLong renameOps;
 	private AtomicLong getOps;
-	private AtomicLong getErr;
-	private AtomicLong getWriteOps;
-	private AtomicLong getReadOps;	
+	private AtomicLong locationOps;
+	private AtomicLong errorOps;
 	
 	public DaRPCServiceDispatcher(RpcNameNodeService service){
 		this.service = service;
@@ -58,9 +60,8 @@ public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol implements Rpc
 		this.removeOps = new AtomicLong(0);
 		this.renameOps = new AtomicLong(0);
 		this.getOps = new AtomicLong(0);
-		this.getErr = new AtomicLong(0);
-		this.getWriteOps = new AtomicLong(0);
-		this.getReadOps = new AtomicLong(0);		
+		this.locationOps = new AtomicLong(0);
+		this.errorOps = new AtomicLong(0);
 	}
 	
 	public void processServerEvent(RpcServerEvent<DaRPCNameNodeRequest, DaRPCNameNodeResponse> event) {
@@ -72,33 +73,38 @@ public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol implements Rpc
 			response.setError((short) 0);
 			switch(request.getCmd()) {
 			case NameNodeProtocol.CMD_CREATE_FILE:
+				this.totalOps.incrementAndGet();
 				this.createOps.incrementAndGet();
 				error = service.createFile(request.createFile(), response.createFile(), response);
 				break;			
 			case NameNodeProtocol.CMD_GET_FILE:
+				this.totalOps.incrementAndGet();
 				this.lookupOps.incrementAndGet();
 				error = service.getFile(request.getFile(), response.getFile(), response);
 				break;
 			case NameNodeProtocol.CMD_SET_FILE:
+				this.totalOps.incrementAndGet();
 				this.setOps.incrementAndGet();
 				error = service.setFile(request.setFile(), response.getVoid(), response);
 				break;
 			case NameNodeProtocol.CMD_REMOVE_FILE:
+				this.totalOps.incrementAndGet();
 				this.removeOps.incrementAndGet();
 				error = service.removeFile(request.removeFile(), response.delFile(), response);
 				break;				
 			case NameNodeProtocol.CMD_RENAME_FILE:
+				this.totalOps.incrementAndGet();
 				this.renameOps.incrementAndGet();
 				error = service.renameFile(request.renameFile(), response.getRename(), response);
 				break;		
 			case NameNodeProtocol.CMD_GET_BLOCK:
+				this.totalOps.incrementAndGet();
 				this.getOps.incrementAndGet();
 				error = service.getBlock(request.getBlock(), response.getBlock(), response);
-				if (error != NameNodeProtocol.ERR_OK){
-					this.getErr.incrementAndGet();
-				}
 				break;
 			case NameNodeProtocol.CMD_GET_LOCATION:
+				this.totalOps.incrementAndGet();
+				this.locationOps.incrementAndGet();
 				error = service.getLocation(request.getLocation(), response.getLocation(), response);
 				break;				
 			case NameNodeProtocol.CMD_SET_BLOCK:
@@ -111,6 +117,7 @@ public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol implements Rpc
 				error = service.dump(request.dumpNameNode(), response.getVoid(), response);
 				break;			
 			case NameNodeProtocol.CMD_PING_NAMENODE:
+				error = this.stats(request.pingNameNode(), response.pingNameNode(), response);
 				error = service.ping(request.pingNameNode(), response.pingNameNode(), response);
 				break;
 			default:
@@ -119,19 +126,37 @@ public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol implements Rpc
 			}
 		} catch(Exception e){
 			error = NameNodeProtocol.ERR_UNKNOWN;
+			this.errorOps.incrementAndGet();
 			LOG.info(NameNodeProtocol.messages[NameNodeProtocol.ERR_UNKNOWN] + e.getMessage());
 			e.printStackTrace();
 		}
 		
 		try {
 			response.setError(error);
-			this.totalOps.incrementAndGet();
 			event.triggerResponse();
 		} catch(Exception e){
 			LOG.info("ERROR: RPC failed, messagesSend ");
 			e.printStackTrace();
 		}
 	}
+	
+	public short stats(RpcRequestMessage.PingNameNodeReq request, RpcResponseMessage.PingNameNodeRes response, RpcNameNodeState errorState) throws Exception {
+		if (!NameNodeProtocol.verifyProtocol(NameNodeProtocol.CMD_PING_NAMENODE, request, response)){
+			return NameNodeProtocol.ERR_PROTOCOL_MISMATCH;
+		}			
+		
+		LOG.info("totalOps " + totalOps.get());
+		LOG.info("errorOps " + errorOps.get());
+		LOG.info("createOps " + createOps.get());
+		LOG.info("lookupOps " + lookupOps.get());
+		LOG.info("setOps " + setOps.get());
+		LOG.info("removeOps " + removeOps.get());
+		LOG.info("renameOps " + renameOps.get());
+		LOG.info("getOps " + getOps.get());
+		LOG.info("locationOps " + locationOps.get());
+		
+		return NameNodeProtocol.ERR_OK;
+	}	
 	
 	@Override
 	public void open(RpcServerEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> endpoint) {

@@ -48,18 +48,7 @@ public class NameNodeService implements RpcNameNodeService {
 	private DelayQueue<AbstractNode> deleteQueue;
 	private FileStore fileTree;
 	private ConcurrentHashMap<Long, AbstractNode> fileTable;	
-	
-	//statistics
-	private AtomicLong totalOps;
-	private AtomicLong createOps;
-	private AtomicLong lookupOps;
-	private AtomicLong setOps;
-	private AtomicLong removeOps;
-	private AtomicLong renameOps;
-	private AtomicLong getOps;
-	private AtomicLong getErr;
-	private AtomicLong getWriteOps;
-	private AtomicLong getReadOps;
+
 	
 	NameNodeService(DelayQueue<AbstractNode> deleteQueue) throws IOException {
 		this.blockStore = new BlockStore();
@@ -69,17 +58,6 @@ public class NameNodeService implements RpcNameNodeService {
 		
 		AbstractNode root = fileTree.getRoot();
 		fileTable.put(root.getFd(), root);
-		
-		this.totalOps = new AtomicLong(0);
-		this.createOps = new AtomicLong(0);
-		this.lookupOps = new AtomicLong(0);
-		this.setOps = new AtomicLong(0);
-		this.removeOps = new AtomicLong(0);
-		this.renameOps = new AtomicLong(0);
-		this.getOps = new AtomicLong(0);
-		this.getErr = new AtomicLong(0);
-		this.getWriteOps = new AtomicLong(0);
-		this.getReadOps = new AtomicLong(0);
 	}
 	
 	@Override
@@ -480,14 +458,11 @@ public class NameNodeService implements RpcNameNodeService {
 				return NameNodeProtocol.ERR_ADD_BLOCK_FAILED;
 			}
 			fileInfo.setCapacity(capacity);
-			this.getWriteOps.incrementAndGet();
 		} else if (block == null && token > 0){ 
 			return NameNodeProtocol.ERR_TOKEN_MISMATCH;
 		} else if (block == null && token == 0){ 
 			return NameNodeProtocol.ERR_CAPACITY_EXCEEDED;
-		} else {
-			this.getReadOps.incrementAndGet();
-		}
+		} 
 		
 		response.setBlockInfo(block);
 		return NameNodeProtocol.ERR_OK;
@@ -552,18 +527,7 @@ public class NameNodeService implements RpcNameNodeService {
 	public short ping(RpcRequestMessage.PingNameNodeReq request, RpcResponseMessage.PingNameNodeRes response, RpcNameNodeState errorState) throws Exception {
 		if (!NameNodeProtocol.verifyProtocol(NameNodeProtocol.CMD_PING_NAMENODE, request, response)){
 			return NameNodeProtocol.ERR_PROTOCOL_MISMATCH;
-		}			
-		
-		LOG.info("totalOps " + totalOps.get());
-		LOG.info("createOps " + createOps.get());
-		LOG.info("lookupOps " + lookupOps.get());
-		LOG.info("setOps " + setOps.get());
-		LOG.info("removeOps " + removeOps.get());
-		LOG.info("renameOps " + renameOps.get());
-		LOG.info("getOps " + getOps.get());
-		LOG.info("getErr " + getErr.get());
-		LOG.info("getWriteOps " + getWriteOps.get());
-		LOG.info("getReadOps " + getReadOps.get());
+		}	
 		
 		response.setData(request.getOp()+1);
 		
