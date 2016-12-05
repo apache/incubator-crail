@@ -13,7 +13,7 @@ crail.blocksize				1048576
 crail.buffersize			1048576
 crail.regionsize			1073741824
 crail.cachelimit			1073741824
-caril.cachepath				<path, should be huge page mountpoint>
+crail.cachepath				<path, should be huge page mountpoint>
 crail.singleton				true
 crail.statistics 			true
 crail.datanode.types 			com.ibm.crail.datanode.rdma.RdmaDataNode
