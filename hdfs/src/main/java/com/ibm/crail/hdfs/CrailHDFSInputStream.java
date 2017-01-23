@@ -161,8 +161,7 @@ public class CrailHDFSInputStream extends FSDataInputStream {
 
 		@Override
 		public void readFully(long position, byte[] buf) throws IOException {
-			readFully(position, buf);
-			
+			readFully(position, buf, 0, buf.length);
 		}
 
 		@Override
