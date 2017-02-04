@@ -47,7 +47,7 @@ public class CrailFsck {
 	public static void usage() {
 		System.out.println("Usage: ");
 		System.out.println("fsck -t <getLocations|directoryDump|namenodeDump|blockStatistics|ping> " + 
-		"-f <file/dir> -y <offset> -l <length>");
+		"-f <file/dir> -y <offset> -l <length> -r <true/false>");
 		System.exit(1);
 	}		
 	
