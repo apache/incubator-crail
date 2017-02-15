@@ -86,8 +86,8 @@ public class MappedBufferCache extends DirectBufferCache implements CrailStatist
 		return super.printStatistics() + ", cacheMissMap " + missedMap() + ", cacheMissHeap " + missedHeap();
 	}	
 	
-	public void reset(){
-		super.reset();
+	public void resetStatistics(){
+		super.resetStatistics();
 		this.cacheMissesMap.set(0);
 		this.cacheMissesHeap.set(0);
 	}	

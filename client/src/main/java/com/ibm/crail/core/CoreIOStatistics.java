@@ -60,7 +60,7 @@ public class CoreIOStatistics implements CrailStatistics.StatisticsProvider {
 		this.capacity = new AtomicLong(0);
 		this.totalStreams = new AtomicLong(0);
 		this.totalSeeks = new AtomicLong(0);
-		reset();
+		resetStatistics();
 	}
 	
 	@Override
@@ -77,7 +77,7 @@ public class CoreIOStatistics implements CrailStatistics.StatisticsProvider {
 		", avgOpLen " + getAvgOpLen();
 	}	
 	
-	public void reset(){
+	public void resetStatistics(){
 		this.totalOps.set(0);
 		this.localOps.set(0);
 		this.remoteOps.set(0);

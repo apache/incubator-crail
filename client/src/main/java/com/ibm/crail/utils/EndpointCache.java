@@ -31,8 +31,9 @@ import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.datanode.DataNode;
 import com.ibm.crail.datanode.DataNodeEndpoint;
 import com.ibm.crail.namenode.protocol.DataNodeInfo;
+import com.ibm.crail.*;
 
-public class EndpointCache {
+public class EndpointCache implements CrailStatistics.StatisticsProvider {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	private boolean isOpen;
@@ -47,6 +48,20 @@ public class EndpointCache {
 		}
 		this.isOpen = true;
 	}
+	
+	@Override
+	public String providerName() {
+		return "EndpointCache";
+	}
+
+	@Override
+	public String printStatistics() {
+		return "size=" + size();
+	}
+
+	@Override
+	public void resetStatistics() {
+	}	
 	
 	public DataNodeEndpoint getDataEndpoint(DataNodeInfo dataNodeInfo) throws IOException, InterruptedException {
 		return storageCaches.get(dataNodeInfo.getStorageTier()).getDataEndpoint(dataNodeInfo);

@@ -70,7 +70,7 @@ public class CoreStreamStatistics implements CrailStatistics.StatisticsProvider 
 		", maxInput " + getMaxInput() + ", maxOutput " + getMaxOutput();
 	}	
 	
-	public void reset(){
+	public void resetStatistics(){
 		this.open.set(0);
 		this.openInput.set(0);
 		this.openOutput.set(0);

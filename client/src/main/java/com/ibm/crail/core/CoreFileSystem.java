@@ -138,6 +138,9 @@ public class CoreFileSystem extends CrailFS {
 		this.ioStatsOut = new CoreIOStatistics("output");
 		statistics.addProvider(ioStatsOut);
 		this.streamStats = new CoreStreamStatistics();
+		statistics.addProvider(streamStats);
+		statistics.addProvider(bufferCache);
+		statistics.addProvider(datanodeEndpointCache);
 	}
 	
 	public Upcoming<CrailFile> createFile(String path, int storageAffinity, int locationAffinity) throws Exception {
@@ -528,12 +531,12 @@ public class CoreFileSystem extends CrailFS {
 		return bufferCheckpoint;
 	}
 	
-	public void resetStatistics(){
-		this.ioStatsIn.reset();
-		this.ioStatsOut.reset();
-		this.streamStats.reset();
-		this.bufferCache.reset();
-	}
+//	public void resetStatistics(){
+//		this.ioStatsIn.resetStatistics();
+//		this.ioStatsOut.resetStatistics();
+//		this.streamStats.resetStatistics();
+//		this.bufferCache.resetStatistics();
+//	}
 	
 //	public void printStatistics(String message) {
 //		if (CrailConstants.STATISTICS){

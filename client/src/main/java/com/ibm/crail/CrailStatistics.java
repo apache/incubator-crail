@@ -18,22 +18,22 @@ public class CrailStatistics {
 		StatisticsProvider old = statistics.putIfAbsent(provider.providerName(), provider);
 	}
 	
-	public void printStatistics(String message){
+	public void print(String message){
 		LOG.info("CoreFileSystem statistics, " + message);
 		for (StatisticsProvider provider : statistics.values()){
-			provider.printStatistics();
+			LOG.info("provider=" + provider.providerName() + ",[" + provider.printStatistics() + "]");
 		}
 	}
 	
-	public void resetStatistics(){
+	public void reset(){
 		for (StatisticsProvider provider : statistics.values()){
-			provider.reset();
+			provider.resetStatistics();
 		}
 	}	
 	
 	public static interface StatisticsProvider {
 		public String providerName();
 		public String printStatistics();
-		public void reset();
+		public void resetStatistics();
 	}
 }

@@ -60,7 +60,7 @@ public class DirectBufferCache implements CrailStatistics.StatisticsProvider {
 		return ", cacheGet " + get() + ", cachePut " + put() + ", cacheMiss " + missed() + ", cacheSize " + size() +  ", cacheMax " + max();
 	}
 	
-	public void reset(){
+	public void resetStatistics(){
 		this.cacheGet.set(0);
 		this.cachePut.set(0);
 		this.cacheMisses.set(0);
