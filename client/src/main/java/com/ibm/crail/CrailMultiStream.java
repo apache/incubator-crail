@@ -175,6 +175,7 @@ public class CrailMultiStream extends InputStream {
 			int bufferLimit = buffer.limit();
 			long streamPosition = consumedPosition;
 			long anticipatedPosition = consumedPosition + bufferRemaining;
+			boolean blocking = false;
 			
 			while(!streams.isEmpty()){
 				SubStream substream = streams.peek();
@@ -217,6 +218,7 @@ public class CrailMultiStream extends InputStream {
 						runningStreams.add(substream);
 					}
 				} else {
+					blocking = true;
 					runningStreams.add(substream);
 				}
 //				LOG.info("");
@@ -234,6 +236,11 @@ public class CrailMultiStream extends InputStream {
 			}
 			
 			statistics.incTotalOps();
+			if (blocking){
+				statistics.incBlockingOps();
+			} else {
+				statistics.incNonBlockingOps();
+			}
 			
 			return sum > 0 ? sum : -1;
 		} catch (Exception e) {
