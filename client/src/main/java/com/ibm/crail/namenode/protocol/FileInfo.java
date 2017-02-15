@@ -147,7 +147,7 @@ public class FileInfo {
 	}
 
 	public boolean isDir() {
-		return type == FileType.DIRECTORY;
+		return type.isDir();
 	}
 	
 	public FileType getType(){
