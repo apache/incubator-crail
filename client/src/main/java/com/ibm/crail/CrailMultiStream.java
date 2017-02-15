@@ -26,6 +26,9 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
+
+import com.ibm.crail.CrailStatistics.StatisticsProvider;
 
 public class CrailMultiStream extends InputStream {
 //	private static final Logger LOG = CrailUtils.getLogger();
@@ -43,6 +46,7 @@ public class CrailMultiStream extends InputStream {
 	private byte[] tmpByteBuf;
 	private boolean isClosed;
 	private int filesProcessed;
+	private MultiStreamStatistics statistics;
 	
 	public CrailMultiStream(CrailFS fs, Iterator<String> paths, int outstanding, int files) throws Exception{
 		this.fs = fs;
@@ -57,6 +61,7 @@ public class CrailMultiStream extends InputStream {
 		this.tmpByteBuf = new byte[1];
 		this.isClosed = false;
 		this.filesProcessed = 0;
+		this.statistics = new MultiStreamStatistics();
 		
 		for (int i = 0; i < this.outstanding; i++){
 			SubStream substream = nextSubStream();
@@ -227,6 +232,9 @@ public class CrailMultiStream extends InputStream {
 			} else {
 				buffer.position(bufferPosition);
 			}
+			
+			statistics.incTotalOps();
+			
 			return sum > 0 ? sum : -1;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -256,6 +264,7 @@ public class CrailMultiStream extends InputStream {
 			paths.next();
 		}
 
+		this.fs.getStatistics().addProvider(statistics);
 		this.isClosed = true;
 	}
 
@@ -342,5 +351,67 @@ public class CrailMultiStream extends InputStream {
 			current += ret;
 			return ret;		
 		}		
+	}
+	
+	public static class MultiStreamStatistics implements StatisticsProvider {
+		private AtomicLong totalOps;
+		private AtomicLong blockingOps;
+		private AtomicLong nonBlockingOps;
+		
+		public MultiStreamStatistics(){
+			this.totalOps = new AtomicLong(0);
+			this.blockingOps = new AtomicLong(0);
+			this.nonBlockingOps = new AtomicLong(0);
+		}
+		
+		public void mergeStatistics(StatisticsProvider provider){
+			if (provider instanceof MultiStreamStatistics){
+				MultiStreamStatistics newProvider = (MultiStreamStatistics) provider;
+				this.totalOps.addAndGet(newProvider.getTotalOps());
+				this.blockingOps.addAndGet(newProvider.getBlockingOps());
+				this.nonBlockingOps.addAndGet(newProvider.getNonBlockingOps());
+			}
+		}
+		
+		@Override
+		public String providerName() {
+			return "MultiStream";
+		}
+
+		@Override
+		public String printStatistics() {
+			return "totalOps " + getTotalOps() + ", blockingOps " + getBlockingOps() + ", nonBlockingOps " + getNonBlockingOps();
+		}
+
+		@Override
+		public void resetStatistics() {
+			this.totalOps.set(0);
+			this.blockingOps.set(0);
+			this.nonBlockingOps.set(0);
+		}
+		
+		public void incTotalOps(){
+			this.totalOps.incrementAndGet();
+		}
+		
+		public void incBlockingOps(){
+			this.blockingOps.incrementAndGet();
+		}
+		
+		public void incNonBlockingOps(){
+			this.nonBlockingOps.incrementAndGet();
+		}
+		
+		public long getTotalOps(){
+			return totalOps.get();
+		}
+		
+		public long getBlockingOps(){
+			return blockingOps.get();
+		}
+		
+		public long getNonBlockingOps(){
+			return nonBlockingOps.get();
+		}
 	}
 }

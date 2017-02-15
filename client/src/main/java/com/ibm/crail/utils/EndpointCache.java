@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 
+import com.ibm.crail.CrailStatistics.StatisticsProvider;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.datanode.DataNode;
 import com.ibm.crail.datanode.DataNodeEndpoint;
@@ -56,7 +57,11 @@ public class EndpointCache implements CrailStatistics.StatisticsProvider {
 
 	@Override
 	public String printStatistics() {
-		return "size=" + size();
+		return "size " + size();
+	}
+	
+	public void mergeStatistics(StatisticsProvider provider){
+		
 	}
 
 	@Override

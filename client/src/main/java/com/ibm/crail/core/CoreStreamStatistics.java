@@ -21,9 +21,11 @@
 
 package com.ibm.crail.core;
 
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.ibm.crail.*;
+import com.ibm.crail.CrailStatistics.StatisticsProvider;
 
 public class CoreStreamStatistics implements CrailStatistics.StatisticsProvider {
 	private AtomicLong open;
@@ -60,12 +62,12 @@ public class CoreStreamStatistics implements CrailStatistics.StatisticsProvider 
 	
 	@Override
 	public String providerName() {
-		return "StreamStatistics";
+		return "Streams";
 	}
 
 	@Override
 	public String printStatistics() {
-		return ", open " + getOpen() + ", openInput " + getOpenInput() + ", openOutput " + getOpenOutput() + ", openInputDir " + getOpenInputDir() + ", openOutputDir " + getOpenOutputDir() + 
+		return "open " + getOpen() + ", openInput " + getOpenInput() + ", openOutput " + getOpenOutput() + ", openInputDir " + getOpenInputDir() + ", openOutputDir " + getOpenOutputDir() + 
 		", close " + getClose() + ", closeInput " + getCloseInput() + ", closeOutput " + getCloseOutput() + ", closeInputDir " + getCloseInputDir() + ", closeOutputDir " + getCloseOutputDir() + 
 		", maxInput " + getMaxInput() + ", maxOutput " + getMaxOutput();
 	}	
@@ -85,6 +87,9 @@ public class CoreStreamStatistics implements CrailStatistics.StatisticsProvider 
 		this.currentOutput.set(0); 
 		this.maxInput.set(0);
 		this.maxOutput.set(0);
+	}
+	
+	public void mergeStatistics(StatisticsProvider provider) {
 	}
 	
 	public void incOpen() {

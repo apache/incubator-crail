@@ -531,36 +531,6 @@ public class CoreFileSystem extends CrailFS {
 		return bufferCheckpoint;
 	}
 	
-//	public void resetStatistics(){
-//		this.ioStatsIn.resetStatistics();
-//		this.ioStatsOut.resetStatistics();
-//		this.streamStats.resetStatistics();
-//		this.bufferCache.resetStatistics();
-//	}
-	
-//	public void printStatistics(String message) {
-//		if (CrailConstants.STATISTICS){
-//			LOG.info("CoreFileSystem statistics, message " + message + 
-//					", total " + ioStatsIn.getTotalOps() + ", localOps " + ioStatsIn.getLocalOps() + ", remoteOps " + ioStatsIn.getRemoteOps() + ", localDirOps " + ioStatsIn.getLocalDirOps() + ", remoteDirOps " + ioStatsIn.getRemoteDirOps() + 
-//					", cached " + ioStatsIn.getCachedOps() + ", nonBlocking " + ioStatsIn.getNonblockingOps() + ", blocking " + ioStatsIn.getBlockingOps() +
-//					", prefetched " + ioStatsIn.getPrefetchedOps() + ", prefetchedNonBlocking " + ioStatsIn.getPrefetchedNonblockingOps() + ", prefetchedBlocking " + ioStatsIn.getPrefetchedBlockingOps() +
-//					", capacity " + ioStatsIn.getCapacity() + ", totalStreams " + ioStatsIn.getTotalStreams() + ", avgCapacity " + ioStatsIn.getAvgCapacity() +
-//					", avgOpLen " + ioStatsIn.getAvgOpLen() + 
-//					
-//					", total " + ioStatsOut.getTotalOps() + ", localOps " + ioStatsOut.getLocalOps() + ", remoteOps " + ioStatsOut.getRemoteOps() + ", localDirOps " + ioStatsOut.getLocalDirOps() + ", remoteDirOps " + ioStatsOut.getRemoteDirOps() + 
-//					", cached " + ioStatsOut.getCachedOps() + ", nonBlocking " + ioStatsOut.getNonblockingOps() + ", blocking " + ioStatsOut.getBlockingOps() +
-//					", prefetched " + ioStatsOut.getPrefetchedOps() + ", prefetchedNonBlocking " + ioStatsOut.getPrefetchedNonblockingOps() + ", prefetchedBlocking " + ioStatsOut.getPrefetchedBlockingOps() +
-//					", capacity " + ioStatsOut.getCapacity() + ", totalStreams " + ioStatsOut.getTotalStreams() + ", avgCapacity " + ioStatsOut.getAvgCapacity() +
-//					", avgOpLen " + ioStatsOut.getAvgOpLen() + 
-//					
-//					", cacheGet " + bufferCache.get() + ", cachePut " + bufferCache.put() + ", cacheMiss " + bufferCache.missed() + ", cacheMissMap " + bufferCache.missedMap() + ", cacheMissHeap " + bufferCache.missedHeap() + ", cacheSize " + bufferCache.size() +  ", cacheMax " + bufferCache.max() +
-//					", endpointCache " + datanodeEndpointCache.size() + 
-//					", open " + streamStats.getOpen() + ", openInput " + streamStats.getOpenInput() + ", openOutput " + streamStats.getOpenOutput() + ", openInputDir " + streamStats.getOpenInputDir() + ", openOutputDir " + streamStats.getOpenOutputDir() + 
-//					", close " + streamStats.getClose() + ", closeInput " + streamStats.getCloseInput() + ", closeOutput " + streamStats.getCloseOutput() + ", closeInputDir " + streamStats.getCloseInputDir() + ", closeOutputDir " + streamStats.getCloseOutputDir() + 
-//					", maxInput " + streamStats.getMaxInput() + ", maxOutput " + streamStats.getMaxOutput());
-//		}
-//	}	
-	
 	public CrailStatistics getStatistics(){
 		return statistics;
 	}
@@ -637,7 +607,7 @@ public class CoreFileSystem extends CrailFS {
 		if (stream != null && CrailConstants.STATISTICS){
 			streamStats.incClose();
 			streamStats.incCloseInput();
-			this.ioStatsIn.add(stream.getCoreStatistics());
+			this.ioStatsIn.mergeStatistics(stream.getCoreStatistics());
 			streamStats.decCurrentInput();
 			if (stream.getFile().isDir()){
 				streamStats.incCloseInputDir();
@@ -652,7 +622,7 @@ public class CoreFileSystem extends CrailFS {
 		if (stream != null && CrailConstants.STATISTICS){
 			streamStats.incClose();
 			streamStats.incCloseOutput();
-			this.ioStatsOut.add(stream.getCoreStatistics());
+			this.ioStatsOut.mergeStatistics(stream.getCoreStatistics());
 			streamStats.decCurrentOutput();
 			if (stream.getFile().isDir()){
 				streamStats.incCloseOutputDir();

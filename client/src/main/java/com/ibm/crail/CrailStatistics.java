@@ -15,13 +15,16 @@ public class CrailStatistics {
 	}
 	
 	public void addProvider(StatisticsProvider provider){
-		StatisticsProvider old = statistics.putIfAbsent(provider.providerName(), provider);
+		StatisticsProvider existing = statistics.putIfAbsent(provider.providerName(), provider);
+		if (existing != null){
+			existing.mergeStatistics(provider);
+		}
 	}
 	
-	public void print(String message){
-		LOG.info("CoreFileSystem statistics, " + message);
+	public void print(String tag){
+		LOG.info("CrailStatistics, tag=" + tag);
 		for (StatisticsProvider provider : statistics.values()){
-			LOG.info("provider=" + provider.providerName() + ",[" + provider.printStatistics() + "]");
+			LOG.info("provider=" + provider.providerName() + " [" + provider.printStatistics() + "]");
 		}
 	}
 	
@@ -34,6 +37,7 @@ public class CrailStatistics {
 	public static interface StatisticsProvider {
 		public String providerName();
 		public String printStatistics();
+		public void mergeStatistics(StatisticsProvider provider);
 		public void resetStatistics();
 	}
 }

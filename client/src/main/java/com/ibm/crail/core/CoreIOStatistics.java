@@ -24,6 +24,7 @@ package com.ibm.crail.core;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.ibm.crail.CrailStatistics;
+import com.ibm.crail.CrailStatistics.StatisticsProvider;
 
 public class CoreIOStatistics implements CrailStatistics.StatisticsProvider {
 	private String mode;
@@ -65,12 +66,12 @@ public class CoreIOStatistics implements CrailStatistics.StatisticsProvider {
 	
 	@Override
 	public String providerName() {
-		return "IOStatistics, " + mode;
+		return "IO/" + mode;
 	}
 
 	@Override
 	public String printStatistics() {
-		return ", total " + getTotalOps() + ", localOps " + getLocalOps() + ", remoteOps " + getRemoteOps() + ", localDirOps " + getLocalDirOps() + ", remoteDirOps " + getRemoteDirOps() + 
+		return "total " + getTotalOps() + ", localOps " + getLocalOps() + ", remoteOps " + getRemoteOps() + ", localDirOps " + getLocalDirOps() + ", remoteDirOps " + getRemoteDirOps() + 
 		", cached " + getCachedOps() + ", nonBlocking " + getNonblockingOps() + ", blocking " + getBlockingOps() +
 		", prefetched " + getPrefetchedOps() + ", prefetchedNonBlocking " + getPrefetchedNonblockingOps() + ", prefetchedBlocking " + getPrefetchedBlockingOps() +
 		", capacity " + getCapacity() + ", totalStreams " + getTotalStreams() + ", avgCapacity " + getAvgCapacity() +
@@ -93,6 +94,27 @@ public class CoreIOStatistics implements CrailStatistics.StatisticsProvider {
 		this.capacity.set(0);
 		this.totalStreams.set(0);
 		this.totalSeeks.set(0);
+	}
+	
+	public void mergeStatistics(StatisticsProvider provider){
+		if (provider instanceof CoreIOStatistics){
+			CoreIOStatistics newProvider = (CoreIOStatistics) provider;
+			totalOps.addAndGet(newProvider.getTotalOps());
+			localOps.addAndGet(newProvider.getLocalOps());
+			remoteOps.addAndGet(newProvider.getRemoteOps());
+			localDirOps.addAndGet(newProvider.getLocalDirOps());
+			remoteDirOps.addAndGet(newProvider.getRemoteDirOps());
+			cachedOps.addAndGet(newProvider.getCachedOps());
+			nonblockingOps.addAndGet(newProvider.getNonblockingOps());
+			blockingOps.addAndGet(newProvider.getBlockingOps());
+			prefetchedOps.addAndGet(newProvider.getPrefetchedOps());
+			prefetchedNonblockingOps.addAndGet(newProvider.getPrefetchedNonblockingOps());
+			prefetchedBlockingOps.addAndGet(newProvider.getPrefetchedBlockingOps());
+			opLen.addAndGet(newProvider.getOpLen());
+			capacity.addAndGet(newProvider.getCapacity());
+			totalSeeks.addAndGet(newProvider.getTotalSeeks());
+			totalStreams.incrementAndGet();
+		}
 	}
 	
 	public long getTotalOps() {
@@ -227,22 +249,4 @@ public class CoreIOStatistics implements CrailStatistics.StatisticsProvider {
 	void incTotalSeekds() {
 		this.totalSeeks.incrementAndGet();
 	}	
-
-	void add(CoreIOStatistics coreStatistics) {
-		totalOps.addAndGet(coreStatistics.getTotalOps());
-		localOps.addAndGet(coreStatistics.getLocalOps());
-		remoteOps.addAndGet(coreStatistics.getRemoteOps());
-		localDirOps.addAndGet(coreStatistics.getLocalDirOps());
-		remoteDirOps.addAndGet(coreStatistics.getRemoteDirOps());
-		cachedOps.addAndGet(coreStatistics.getCachedOps());
-		nonblockingOps.addAndGet(coreStatistics.getNonblockingOps());
-		blockingOps.addAndGet(coreStatistics.getBlockingOps());
-		prefetchedOps.addAndGet(coreStatistics.getPrefetchedOps());
-		prefetchedNonblockingOps.addAndGet(coreStatistics.getPrefetchedNonblockingOps());
-		prefetchedBlockingOps.addAndGet(coreStatistics.getPrefetchedBlockingOps());
-		opLen.addAndGet(coreStatistics.getOpLen());
-		capacity.addAndGet(coreStatistics.getCapacity());
-		totalSeeks.addAndGet(coreStatistics.getTotalSeeks());
-		totalStreams.incrementAndGet();
-	}
 }

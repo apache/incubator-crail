@@ -24,6 +24,7 @@ package com.ibm.crail.utils;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import com.ibm.crail.CrailStatistics.StatisticsProvider;
 import com.ibm.crail.conf.CrailConstants;
 
 import java.util.concurrent.LinkedBlockingQueue;
@@ -57,7 +58,7 @@ public class DirectBufferCache implements CrailStatistics.StatisticsProvider {
 
 	@Override
 	public String printStatistics() {
-		return ", cacheGet " + get() + ", cachePut " + put() + ", cacheMiss " + missed() + ", cacheSize " + size() +  ", cacheMax " + max();
+		return "cacheGet " + get() + ", cachePut " + put() + ", cacheMiss " + missed() + ", cacheSize " + size() +  ", cacheMax " + max();
 	}
 	
 	public void resetStatistics(){
@@ -67,6 +68,10 @@ public class DirectBufferCache implements CrailStatistics.StatisticsProvider {
 		this.cacheOut.set(0);
 		this.cacheMax.set(0);
 	}	
+	
+	public void mergeStatistics(StatisticsProvider provider){
+		
+	}
 	
 	public ByteBuffer getBuffer() throws IOException {
 		cacheGet.incrementAndGet();
@@ -131,13 +136,5 @@ public class DirectBufferCache implements CrailStatistics.StatisticsProvider {
 	public ByteBuffer getAllocationBuffer(ByteBuffer buffer) {
 		return null;
 	}
-
-//	public long missedHeap() {
-//		return 0;
-//	}
-//
-//	public long missedMap() {
-//		return 0;
-//	}
 }
 
