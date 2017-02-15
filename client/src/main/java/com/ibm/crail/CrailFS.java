@@ -24,7 +24,9 @@ package com.ibm.crail;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicLong;
+
 import org.slf4j.Logger;
+
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.core.CoreFileSystem;
@@ -45,8 +47,7 @@ public abstract class CrailFS {
 	public abstract ByteBuffer allocateBuffer() throws Exception;
 	public abstract void freeBuffer(ByteBuffer buffer) throws Exception;
 	public abstract int getHostHash();
-	public abstract void printStatistics(String message);
-	public abstract void resetStatistics();
+	public abstract CrailStatistics getStatistics();
 	protected abstract void closeFileSystem() throws Exception;
 	
 	public void close() throws Exception {

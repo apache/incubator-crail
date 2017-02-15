@@ -23,7 +23,10 @@ package com.ibm.crail.core;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public class CoreIOStatistics {
+import com.ibm.crail.CrailStatistics;
+
+public class CoreIOStatistics implements CrailStatistics.StatisticsProvider {
+	private String mode;
 	private AtomicLong totalOps;
 	private AtomicLong localOps;
 	private AtomicLong remoteOps;
@@ -40,7 +43,8 @@ public class CoreIOStatistics {
 	private AtomicLong totalStreams;
 	private AtomicLong totalSeeks;
 	
-	public CoreIOStatistics(){
+	public CoreIOStatistics(String mode){
+		this.mode = mode;
 		this.totalOps = new AtomicLong(0);
 		this.localOps = new AtomicLong(0);
 		this.remoteOps = new AtomicLong(0);
@@ -58,6 +62,20 @@ public class CoreIOStatistics {
 		this.totalSeeks = new AtomicLong(0);
 		reset();
 	}
+	
+	@Override
+	public String providerName() {
+		return "IOStatistics, " + mode;
+	}
+
+	@Override
+	public String printStatistics() {
+		return ", total " + getTotalOps() + ", localOps " + getLocalOps() + ", remoteOps " + getRemoteOps() + ", localDirOps " + getLocalDirOps() + ", remoteDirOps " + getRemoteDirOps() + 
+		", cached " + getCachedOps() + ", nonBlocking " + getNonblockingOps() + ", blocking " + getBlockingOps() +
+		", prefetched " + getPrefetchedOps() + ", prefetchedNonBlocking " + getPrefetchedNonblockingOps() + ", prefetchedBlocking " + getPrefetchedBlockingOps() +
+		", capacity " + getCapacity() + ", totalStreams " + getTotalStreams() + ", avgCapacity " + getAvgCapacity() +
+		", avgOpLen " + getAvgOpLen();
+	}	
 	
 	public void reset(){
 		this.totalOps.set(0);

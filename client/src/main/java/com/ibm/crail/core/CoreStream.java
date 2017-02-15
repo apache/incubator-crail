@@ -79,7 +79,7 @@ public abstract class CoreStream {
 		this.position = fileOffset;
 		this.syncedCapacity = fileInfo.getCapacity();
 		this.streamId = streamId;
-		this.ioStats = new CoreIOStatistics();
+		this.ioStats = new CoreIOStatistics("core");
 		
 		this.blockMap = new HashMap<Integer, CoreSubOperation>();
 		this.pendingBlocks = new LinkedBlockingQueue<RpcNameNodeFuture<RpcResponseMessage.GetBlockRes>>();

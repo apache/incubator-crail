@@ -83,7 +83,7 @@ public class CrailBenchmark {
 		
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
+		fs.getStatistics().resetStatistics();
 		long _loop = (long) loop;
 		long _bufsize = (long) CrailConstants.BUFFER_SIZE;
 		long _capacity = _loop*_bufsize;
@@ -127,7 +127,8 @@ public class CrailBenchmark {
 		System.out.println("throughput " + throughput);
 		System.out.println("latency " + latency);
 		
-		fs.printStatistics("close");
+//		fs.printStatistics("close");
+		fs.getStatistics().printStatistics("close");
 		fs.close();		
 	}
 	
@@ -154,7 +155,7 @@ public class CrailBenchmark {
 		System.out.println("starting benchmark...");
 		LinkedBlockingQueue<Future<CrailResult>> futureQueue = new LinkedBlockingQueue<Future<CrailResult>>();
 		HashMap<Integer, ByteBuffer> futureMap = new HashMap<Integer, ByteBuffer>();
-		fs.resetStatistics();
+		fs.getStatistics().resetStatistics();
 		long _loop = (long) loop;
 		long _bufsize = (long) CrailConstants.BUFFER_SIZE;
 		long _capacity = _loop*_bufsize;
@@ -210,7 +211,8 @@ public class CrailBenchmark {
 		System.out.println("throughput " + throughput);
 		System.out.println("latency " + latency);
 		
-		fs.printStatistics("close");
+//		fs.printStatistics("close");
+		fs.getStatistics().printStatistics("close");
 		fs.close();		
 	}
 
@@ -238,7 +240,8 @@ public class CrailBenchmark {
 		
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
+		fs.getStatistics().resetStatistics();
+//		fs.resetStatistics();
 		double sumbytes = 0;
 		double ops = 0;
 		long start = System.currentTimeMillis();
@@ -292,7 +295,7 @@ public class CrailBenchmark {
 		System.out.println("throughput " + throughput);
 		System.out.println("latency " + latency);
 		
-		fs.printStatistics("close");
+		fs.getStatistics().printStatistics("close");
 		fs.close();
 	}
 	
@@ -315,7 +318,7 @@ public class CrailBenchmark {
 		
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
+		fs.getStatistics().resetStatistics();
 		CrailFile file = fs.lookupNode(filename).get().asFile();
 		CrailBufferedInputStream bufferedStream = file.getBufferedInputStream(file.getCapacity());
 		CrailInputStream directStream = file.getDirectInputStream(file.getCapacity());		
@@ -373,7 +376,7 @@ public class CrailBenchmark {
 		System.out.println("throughput " + throughput);
 		System.out.println("latency " + latency);
 		
-		fs.printStatistics("close");
+		fs.getStatistics().printStatistics("close");
 		fs.close();
 	}	
 	
@@ -395,7 +398,7 @@ public class CrailBenchmark {
 		System.out.println("starting benchmark...");
 		double sumbytes = 0;
 		double ops = 0;
-		fs.resetStatistics();
+		fs.getStatistics().resetStatistics();
 		CrailFile file = fs.lookupNode(filename).get().asFile();
 		CrailInputStream directStream = file.getDirectInputStream(file.getCapacity());			
 		HashMap<Integer, ByteBuffer> futureMap = new HashMap<Integer, ByteBuffer>();
@@ -448,7 +451,7 @@ public class CrailBenchmark {
 		System.out.println("throughput " + throughput);
 		System.out.println("latency " + latency);
 		
-		fs.printStatistics("close");		
+		fs.getStatistics().printStatistics("close");
 		fs.close();		
 	}
 
@@ -471,7 +474,7 @@ public class CrailBenchmark {
 		
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
+		fs.getStatistics().resetStatistics();
 		ByteBuffer buf = ByteBuffer.allocate(size);
 		for (int i = 0; i < loop; i++){
 			CrailMultiStream multiStream = fs.lookupNode(filename).get().asDirectory().getMultiStream(batch);
@@ -509,7 +512,7 @@ public class CrailBenchmark {
 			System.out.println("latency " + latency);
 		}
 	
-		fs.printStatistics("close");
+		fs.getStatistics().printStatistics("close");
 		fs.close();
 	}
 	
@@ -528,7 +531,7 @@ public class CrailBenchmark {
 		
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
+		fs.getStatistics().resetStatistics();
 		double ops = 0;
 		long start = System.currentTimeMillis();
 		while (ops < loop) {
@@ -545,7 +548,7 @@ public class CrailBenchmark {
 		System.out.println("ops " + ops);
 		System.out.println("latency " + latency);
 		
-		fs.printStatistics("close");
+		fs.getStatistics().printStatistics("close");
 		fs.close();
 	}
 	
@@ -563,7 +566,7 @@ public class CrailBenchmark {
 		
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
+		fs.getStatistics().resetStatistics();
 		LinkedBlockingQueue<Future<CrailNode>> fileQueue = new LinkedBlockingQueue<Future<CrailNode>>();
 		long start = System.currentTimeMillis();
 		for (int i = 0; i < loop; i++){
@@ -583,7 +586,7 @@ public class CrailBenchmark {
 		System.out.println("execution time [ms] " + executionTime);
 		System.out.println("latency [us] " + latency);
 		
-		fs.printStatistics("close");
+		fs.getStatistics().printStatistics("close");
 		fs.close();
 	}
 	
@@ -601,7 +604,7 @@ public class CrailBenchmark {
 		
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
+		fs.getStatistics().resetStatistics();
 		LinkedBlockingQueue<String> pathQueue = new LinkedBlockingQueue<String>();
 		fs.makeDirectory(filename).get().syncDir();
 		int filecounter = 0;
@@ -628,7 +631,7 @@ public class CrailBenchmark {
 		System.out.println("ops " + ops);
 		System.out.println("latency " + latency);
 		
-		fs.printStatistics("close");
+		fs.getStatistics().printStatistics("close");
 		fs.close();
 	}	
 	
@@ -646,7 +649,7 @@ public class CrailBenchmark {
 		
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
+		fs.getStatistics().resetStatistics();
 		LinkedBlockingQueue<Future<CrailFile>> futureQueue = new LinkedBlockingQueue<Future<CrailFile>>();
 		LinkedBlockingQueue<CrailFile> fileQueue = new LinkedBlockingQueue<CrailFile>();
 		LinkedBlockingQueue<String> pathQueue = new LinkedBlockingQueue<String>();
@@ -684,8 +687,7 @@ public class CrailBenchmark {
 
 		fs.delete(filename, true).get().syncDir();
 		
-		
-		fs.printStatistics("close");
+		fs.getStatistics().printStatistics("close");
 		fs.close();
 		
 	}	
@@ -704,7 +706,7 @@ public class CrailBenchmark {
 
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
+		fs.getStatistics().resetStatistics();
 		long start = System.currentTimeMillis();
 		for (int i = 0; i < loop; i++) {
 			// single operation == loop
@@ -719,7 +721,7 @@ public class CrailBenchmark {
 		System.out.println("execution time [ms] " + executionTime);
 		System.out.println("latency [us] " + latency);
 
-		fs.printStatistics("close");
+		fs.getStatistics().printStatistics("close");
 		fs.close();
 	}
 	
@@ -737,7 +739,7 @@ public class CrailBenchmark {
 		
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
+		fs.getStatistics().resetStatistics();
 		long start = System.currentTimeMillis();
 		for (int i = 0; i < loop; i++){
 			CrailInputStream directInputStream = fs.lookupNode(filename).get().asFile().getDirectInputStream(0);
@@ -751,7 +753,7 @@ public class CrailBenchmark {
 		System.out.println("execution time [ms] " + executionTime);
 		System.out.println("latency [us] " + latency);		
 		
-		fs.printStatistics("close");
+		fs.getStatistics().printStatistics("close");
 		fs.close();
 	}	
 	

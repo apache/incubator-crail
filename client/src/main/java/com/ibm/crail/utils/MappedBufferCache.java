@@ -35,8 +35,9 @@ import org.slf4j.Logger;
 
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.disni.util.MemoryUtils;
+import com.ibm.crail.CrailStatistics;
 
-public class MappedBufferCache extends DirectBufferCache {
+public class MappedBufferCache extends DirectBufferCache implements CrailStatistics.StatisticsProvider {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	private ConcurrentHashMap<Long, MappedByteBuffer> allocationMap;
@@ -74,6 +75,22 @@ public class MappedBufferCache extends DirectBufferCache {
 		
 		LOG.info("buffer cache, allocationCount " + allocationCount + ", bufferCount " + bufferCount);
 	}
+	
+	@Override
+	public String providerName() {
+		return "MappedBufferCache";
+	}
+
+	@Override
+	public String printStatistics() {
+		return super.printStatistics() + ", cacheMissMap " + missedMap() + ", cacheMissHeap " + missedHeap();
+	}	
+	
+	public void reset(){
+		super.reset();
+		this.cacheMissesMap.set(0);
+		this.cacheMissesHeap.set(0);
+	}	
 
 	@Override
 	public ByteBuffer getAllocationBuffer(ByteBuffer buffer) {
@@ -89,12 +106,6 @@ public class MappedBufferCache extends DirectBufferCache {
 		return cacheMissesHeap.get();
 	}
 	
-	public void reset(){
-		super.reset();
-		this.cacheMissesMap.set(0);
-		this.cacheMissesHeap.set(0);
-	}	
-
 	@Override
 	public void close() {
 		super.close();

@@ -44,6 +44,7 @@ import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailFS;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailResult;
+import com.ibm.crail.CrailStatistics;
 import com.ibm.crail.Upcoming;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
@@ -94,6 +95,7 @@ public class CoreFileSystem extends CrailFS {
 	private CoreIOStatistics ioStatsIn;
 	private CoreIOStatistics ioStatsOut;
 	private CoreStreamStatistics streamStats;
+	private CrailStatistics statistics;
 	
 	public CoreFileSystem(CrailConfiguration conf) throws Exception {
 		CrailConstants.updateConstants(conf);
@@ -129,8 +131,12 @@ public class CoreFileSystem extends CrailFS {
 		this.streamCounter = new AtomicLong(0);
 		this.isOpen = true;
 		this.bufferCheckpoint = new BufferCheckpoint();
-		this.ioStatsIn = new CoreIOStatistics();
-		this.ioStatsOut = new CoreIOStatistics();
+		
+		this.statistics = new CrailStatistics();
+		this.ioStatsIn = new CoreIOStatistics("input");
+		statistics.addProvider(ioStatsIn);
+		this.ioStatsOut = new CoreIOStatistics("output");
+		statistics.addProvider(ioStatsOut);
 		this.streamStats = new CoreStreamStatistics();
 	}
 	
@@ -529,29 +535,32 @@ public class CoreFileSystem extends CrailFS {
 		this.bufferCache.reset();
 	}
 	
-	public void printStatistics(String message) {
-		if (CrailConstants.STATISTICS){
-			LOG.info("CoreFileSystem statistics, message " + message + 
-					", total " + ioStatsIn.getTotalOps() + ", localOps " + ioStatsIn.getLocalOps() + ", remoteOps " + ioStatsIn.getRemoteOps() + ", localDirOps " + ioStatsIn.getLocalDirOps() + ", remoteDirOps " + ioStatsIn.getRemoteDirOps() + 
-					", cached " + ioStatsIn.getCachedOps() + ", nonBlocking " + ioStatsIn.getNonblockingOps() + ", blocking " + ioStatsIn.getBlockingOps() +
-					", prefetched " + ioStatsIn.getPrefetchedOps() + ", prefetchedNonBlocking " + ioStatsIn.getPrefetchedNonblockingOps() + ", prefetchedBlocking " + ioStatsIn.getPrefetchedBlockingOps() +
-					", capacity " + ioStatsIn.getCapacity() + ", totalStreams " + ioStatsIn.getTotalStreams() + ", avgCapacity " + ioStatsIn.getAvgCapacity() +
-					", avgOpLen " + ioStatsIn.getAvgOpLen() + 
-					
-					", total " + ioStatsOut.getTotalOps() + ", localOps " + ioStatsOut.getLocalOps() + ", remoteOps " + ioStatsOut.getRemoteOps() + ", localDirOps " + ioStatsOut.getLocalDirOps() + ", remoteDirOps " + ioStatsOut.getRemoteDirOps() + 
-					", cached " + ioStatsOut.getCachedOps() + ", nonBlocking " + ioStatsOut.getNonblockingOps() + ", blocking " + ioStatsOut.getBlockingOps() +
-					", prefetched " + ioStatsOut.getPrefetchedOps() + ", prefetchedNonBlocking " + ioStatsOut.getPrefetchedNonblockingOps() + ", prefetchedBlocking " + ioStatsOut.getPrefetchedBlockingOps() +
-					", capacity " + ioStatsOut.getCapacity() + ", totalStreams " + ioStatsOut.getTotalStreams() + ", avgCapacity " + ioStatsOut.getAvgCapacity() +
-					", avgOpLen " + ioStatsOut.getAvgOpLen() + 
-					
-					", cacheGet " + bufferCache.get() + ", cachePut " + bufferCache.put() + ", cacheMiss " + bufferCache.missed() + ", cacheMissMap " + bufferCache.missedMap() + ", cacheMissHeap " + bufferCache.missedHeap() + ", cacheSize " + bufferCache.size() +  ", cacheMax " + bufferCache.max() +
-//					", mrOps " + mrCache.ops() + ", mrMisses " + mrCache.missed() +
-					", endpointCache " + datanodeEndpointCache.size() + 
-					", open " + streamStats.getOpen() + ", openInput " + streamStats.getOpenInput() + ", openOutput " + streamStats.getOpenOutput() + ", openInputDir " + streamStats.getOpenInputDir() + ", openOutputDir " + streamStats.getOpenOutputDir() + 
-					", close " + streamStats.getClose() + ", closeInput " + streamStats.getCloseInput() + ", closeOutput " + streamStats.getCloseOutput() + ", closeInputDir " + streamStats.getCloseInputDir() + ", closeOutputDir " + streamStats.getCloseOutputDir() + 
-					", maxInput " + streamStats.getMaxInput() + ", maxOutput " + streamStats.getMaxOutput());
-		}
-	}	
+//	public void printStatistics(String message) {
+//		if (CrailConstants.STATISTICS){
+//			LOG.info("CoreFileSystem statistics, message " + message + 
+//					", total " + ioStatsIn.getTotalOps() + ", localOps " + ioStatsIn.getLocalOps() + ", remoteOps " + ioStatsIn.getRemoteOps() + ", localDirOps " + ioStatsIn.getLocalDirOps() + ", remoteDirOps " + ioStatsIn.getRemoteDirOps() + 
+//					", cached " + ioStatsIn.getCachedOps() + ", nonBlocking " + ioStatsIn.getNonblockingOps() + ", blocking " + ioStatsIn.getBlockingOps() +
+//					", prefetched " + ioStatsIn.getPrefetchedOps() + ", prefetchedNonBlocking " + ioStatsIn.getPrefetchedNonblockingOps() + ", prefetchedBlocking " + ioStatsIn.getPrefetchedBlockingOps() +
+//					", capacity " + ioStatsIn.getCapacity() + ", totalStreams " + ioStatsIn.getTotalStreams() + ", avgCapacity " + ioStatsIn.getAvgCapacity() +
+//					", avgOpLen " + ioStatsIn.getAvgOpLen() + 
+//					
+//					", total " + ioStatsOut.getTotalOps() + ", localOps " + ioStatsOut.getLocalOps() + ", remoteOps " + ioStatsOut.getRemoteOps() + ", localDirOps " + ioStatsOut.getLocalDirOps() + ", remoteDirOps " + ioStatsOut.getRemoteDirOps() + 
+//					", cached " + ioStatsOut.getCachedOps() + ", nonBlocking " + ioStatsOut.getNonblockingOps() + ", blocking " + ioStatsOut.getBlockingOps() +
+//					", prefetched " + ioStatsOut.getPrefetchedOps() + ", prefetchedNonBlocking " + ioStatsOut.getPrefetchedNonblockingOps() + ", prefetchedBlocking " + ioStatsOut.getPrefetchedBlockingOps() +
+//					", capacity " + ioStatsOut.getCapacity() + ", totalStreams " + ioStatsOut.getTotalStreams() + ", avgCapacity " + ioStatsOut.getAvgCapacity() +
+//					", avgOpLen " + ioStatsOut.getAvgOpLen() + 
+//					
+//					", cacheGet " + bufferCache.get() + ", cachePut " + bufferCache.put() + ", cacheMiss " + bufferCache.missed() + ", cacheMissMap " + bufferCache.missedMap() + ", cacheMissHeap " + bufferCache.missedHeap() + ", cacheSize " + bufferCache.size() +  ", cacheMax " + bufferCache.max() +
+//					", endpointCache " + datanodeEndpointCache.size() + 
+//					", open " + streamStats.getOpen() + ", openInput " + streamStats.getOpenInput() + ", openOutput " + streamStats.getOpenOutput() + ", openInputDir " + streamStats.getOpenInputDir() + ", openOutputDir " + streamStats.getOpenOutputDir() + 
+//					", close " + streamStats.getClose() + ", closeInput " + streamStats.getCloseInput() + ", closeOutput " + streamStats.getCloseOutput() + ", closeInputDir " + streamStats.getCloseInputDir() + ", closeOutputDir " + streamStats.getCloseOutputDir() + 
+//					", maxInput " + streamStats.getMaxInput() + ", maxOutput " + streamStats.getMaxOutput());
+//		}
+//	}	
+	
+	public CrailStatistics getStatistics(){
+		return statistics;
+	}
 	
 	public void closeFileSystem() throws Exception {
 		if (!isOpen) {
