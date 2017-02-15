@@ -27,10 +27,11 @@ import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.namenode.protocol.DataNodeInfo;
 import com.ibm.crail.namenode.protocol.FileInfo;
 import com.ibm.crail.namenode.protocol.FileName;
+import com.ibm.crail.namenode.protocol.FileType;
 
 public interface RpcNameNodeClient {
 	public abstract RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> createFile(
-			FileName filename, boolean isDir, int storageAffinity, int locationAffinity) throws IOException;
+			FileName filename, FileType type, int storageAffinity, int locationAffinity) throws IOException;
 
 	public abstract RpcNameNodeFuture<RpcResponseMessage.GetFileRes> getFile(FileName filename,
 			boolean writeable) throws IOException;

@@ -26,12 +26,13 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.ibm.crail.namenode.protocol.BlockInfo;
+import com.ibm.crail.namenode.protocol.FileType;
 
 public class DirectoryBlocks extends AbstractNode {
 	private ConcurrentHashMap<Integer, BlockInfo> blocks;
 	
 	DirectoryBlocks(int fileComponent) {
-		super(fileComponent, true);
+		super(fileComponent, FileType.DIRECTORY);
 		this.blocks = new ConcurrentHashMap<Integer, BlockInfo>();
 	}
 

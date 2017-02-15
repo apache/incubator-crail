@@ -30,6 +30,7 @@ import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.namenode.protocol.DataNodeInfo;
 import com.ibm.crail.namenode.protocol.FileInfo;
 import com.ibm.crail.namenode.protocol.FileName;
+import com.ibm.crail.namenode.protocol.FileType;
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
 import com.ibm.crail.namenode.rpc.RpcNameNodeClient;
 import com.ibm.crail.namenode.rpc.RpcNameNodeFuture;
@@ -52,12 +53,12 @@ public class DaRPCNameNodeClient implements RpcNameNodeClient {
 	}	
 	
 	@Override
-	public RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> createFile(FileName filename, boolean isDir, int storageAffinity, int locationAffinity) throws IOException {
+	public RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> createFile(FileName filename, FileType type, int storageAffinity, int locationAffinity) throws IOException {
 		if (CrailConstants.DEBUG){
-			LOG.debug("RPC: createFile, isDir " + isDir + ", affinity " + locationAffinity);
+			LOG.debug("RPC: createFile, fileType " + type + ", affinity " + locationAffinity);
 		}
 		
-		RpcRequestMessage.CreateFileReq createFileReq = new RpcRequestMessage.CreateFileReq(filename, isDir, storageAffinity, locationAffinity);
+		RpcRequestMessage.CreateFileReq createFileReq = new RpcRequestMessage.CreateFileReq(filename, type, storageAffinity, locationAffinity);
 		DaRPCNameNodeRequest request = new DaRPCNameNodeRequest(createFileReq);
 		request.setCommand(NameNodeProtocol.CMD_CREATE_FILE);
 		

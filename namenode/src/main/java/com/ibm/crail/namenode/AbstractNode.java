@@ -33,6 +33,7 @@ import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.namenode.protocol.FileInfo;
 import com.ibm.crail.namenode.protocol.FileName;
+import com.ibm.crail.namenode.protocol.FileType;
 
 public abstract class AbstractNode extends FileInfo implements Delayed {
 	private static AtomicLong fdcount = new AtomicLong(0);
@@ -46,16 +47,16 @@ public abstract class AbstractNode extends FileInfo implements Delayed {
 		return new DirectoryBlocks(new FileName("/").getFileComponent());
 	}
 	
-	public static AbstractNode createNode(int fileComponent, boolean isDir) throws IOException {
-		if (isDir){
+	public static AbstractNode createNode(int fileComponent, FileType type) throws IOException {
+		if (type == FileType.DIRECTORY){
 			return new DirectoryBlocks(fileComponent);
 		} else {
 			return new FileBlocks(fileComponent);
 		}
 	}
 	
-	public AbstractNode(int fileComponent, boolean isDir){
-		super(fdcount.incrementAndGet(), isDir);
+	public AbstractNode(int fileComponent, FileType type){
+		super(fdcount.incrementAndGet(), type);
 		
 		this.fileComponent = fileComponent;
 		this.children = new ConcurrentHashMap<Integer, AbstractNode>();

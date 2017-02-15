@@ -53,6 +53,7 @@ import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.namenode.protocol.DataNodeInfo;
 import com.ibm.crail.namenode.protocol.FileInfo;
 import com.ibm.crail.namenode.protocol.FileName;
+import com.ibm.crail.namenode.protocol.FileType;
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
 import com.ibm.crail.namenode.rpc.RpcNameNode;
 import com.ibm.crail.namenode.rpc.RpcNameNodeClient;
@@ -150,7 +151,7 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("createFile: name " + path + ", storageAffinity " + storageAffinity + ", locationAffinity " + locationAffinity);
 		}
 
-		RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> fileRes = namenodeClientRpc.createFile(name, false, storageAffinity, locationAffinity);
+		RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> fileRes = namenodeClientRpc.createFile(name, FileType.DATAFILE, storageAffinity, locationAffinity);
 		return new CreateFileFuture(this, path, fileRes, storageAffinity, locationAffinity);
 	}	
 	
@@ -199,7 +200,7 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("makeDirectory: name " + path);
 		}
 
-		RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> fileRes = namenodeClientRpc.createFile(name, true, 0, 0);
+		RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> fileRes = namenodeClientRpc.createFile(name, FileType.DIRECTORY, 0, 0);
 		return new MakeDirFuture(this, path, fileRes);
 	}	
 	

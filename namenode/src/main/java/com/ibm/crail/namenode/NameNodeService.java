@@ -33,6 +33,7 @@ import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.namenode.protocol.DataNodeInfo;
 import com.ibm.crail.namenode.protocol.FileInfo;
 import com.ibm.crail.namenode.protocol.FileName;
+import com.ibm.crail.namenode.protocol.FileType;
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
 import com.ibm.crail.namenode.rpc.RpcNameNodeService;
 import com.ibm.crail.namenode.rpc.RpcNameNodeState;
@@ -69,13 +70,13 @@ public class NameNodeService implements RpcNameNodeService {
 
 		//get params
 		FileName fileHash = request.getFileName();
-		boolean isDir = request.isDir();
-		boolean writeable = isDir ? false : true; 
+		FileType type = request.getFileType();
+		boolean writeable = type.isDir() ? false : true; 
 		int storageAffinity = request.getStorageAffinity();
 		int locationAffinity = request.getLocationAffinity();
 		
 		//check params
-		if (isDir && locationAffinity > 0){
+		if (type.isDir() && locationAffinity > 0){
 			return NameNodeProtocol.ERR_DIR_LOCATION_AFFINITY_MISMATCH;
 		}
 		
@@ -91,7 +92,7 @@ public class NameNodeService implements RpcNameNodeService {
 			return NameNodeProtocol.ERR_PARENT_NOT_DIR;
 		}
 		
-		AbstractNode fileInfo = FileBlocks.createNode(fileHash.getFileComponent(), isDir);
+		AbstractNode fileInfo = FileBlocks.createNode(fileHash.getFileComponent(), type);
 		if (!parentInfo.addChild(fileInfo)){
 			return NameNodeProtocol.ERR_FILE_EXISTS;
 		}

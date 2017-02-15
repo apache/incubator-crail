@@ -28,26 +28,27 @@ import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.namenode.protocol.DataNodeInfo;
 import com.ibm.crail.namenode.protocol.FileInfo;
 import com.ibm.crail.namenode.protocol.FileName;
+import com.ibm.crail.namenode.protocol.FileType;
 
 public class RpcRequestMessage {
 	public static class CreateFileReq implements NameNodeProtocol.NameNodeRpcMessage {
 		public static int CSIZE = FileName.CSIZE + 12;
 		
 		protected FileName filename;
-		protected boolean isDir;
+		protected FileType type;
 		protected int storageAffinity;
 		protected int locationAffinity;
 		
 		public CreateFileReq(){
 			this.filename = new FileName();
-			this.isDir = false;
+			this.type = FileType.DATAFILE;
 			this.storageAffinity = 0;
 			this.locationAffinity = 0;
 		}
 		
-		public CreateFileReq(FileName filename, boolean isDir, int storageAffinity, int locationAffinity) {
+		public CreateFileReq(FileName filename, FileType type, int storageAffinity, int locationAffinity) {
 			this.filename = filename;
-			this.isDir = isDir;
+			this.type = type;
 			this.storageAffinity = storageAffinity;
 			this.locationAffinity = locationAffinity;
 		}
@@ -56,8 +57,8 @@ public class RpcRequestMessage {
 			return filename;
 		}
 
-		public boolean isDir(){
-			return isDir;
+		public FileType getFileType(){
+			return type;
 		}
 		
 		public int getStorageAffinity() {
@@ -79,7 +80,7 @@ public class RpcRequestMessage {
 		
 		public int write(ByteBuffer buffer) {
 			int written = filename.write(buffer);
-			buffer.putInt(isDir ? 1 : 0);
+			buffer.putInt(type.value());
 			buffer.putInt(storageAffinity);
 			buffer.putInt(locationAffinity);
 			written += 12;
@@ -90,7 +91,7 @@ public class RpcRequestMessage {
 		public void update(ByteBuffer buffer) {
 			filename.update(buffer);
 			int tmp = buffer.getInt();
-			isDir = (tmp == 1) ? true : false;
+			type = FileType.parse(tmp);
 			storageAffinity = buffer.getInt();
 			locationAffinity = buffer.getInt();
 		}
