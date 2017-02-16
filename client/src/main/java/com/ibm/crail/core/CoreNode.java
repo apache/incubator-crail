@@ -23,10 +23,18 @@ package com.ibm.crail.core;
 
 import java.util.concurrent.Future;
 
+import org.slf4j.Logger;
+
+import com.ibm.crail.CrailBlockLocation;
+import com.ibm.crail.CrailDirectory;
+import com.ibm.crail.CrailFS;
+import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailInputStream;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailOutputStream;
 import com.ibm.crail.namenode.protocol.FileInfo;
+import com.ibm.crail.namenode.protocol.FileType;
+import com.ibm.crail.utils.CrailUtils;
 
 public class CoreNode implements CrailNode {
 	protected CoreFileSystem fs;
@@ -111,6 +119,37 @@ public class CoreNode implements CrailNode {
 	}	
 }
 
+class CoreCreateNode extends CoreNode {
+	private Future<?> dirFuture;
+	private DirectoryOutputStream dirStream;	
+	
+	public CoreCreateNode(CoreFileSystem fs, String path, FileType type, int storageAffinity, int locationAffinity, FileInfo fileInfo, Future<?> dirFuture, DirectoryOutputStream dirStream){
+		super(fs, fileInfo, path, 0, 0);
+		this.dirFuture = dirFuture;
+		this.dirStream = dirStream;
+	}
+	
+	@Override
+	public synchronized CoreNode syncDir() throws Exception {
+		if (dirFuture != null) {
+			dirFuture.get();
+			dirFuture = null;
+		}
+		if (dirStream != null){
+			dirStream.close();
+			dirStream = null;
+		}
+		return this;
+	}
+
+	@Override
+	void closeOutputStream(CoreOutputStream coreStream) throws Exception {
+		syncDir();
+		super.closeOutputStream(coreStream);
+	}
+	
+}
+
 class CoreRenamedNode extends CoreNode {
 	private Future<?> srcDirFuture;
 	private Future<?> dstDirFuture;
@@ -182,5 +221,91 @@ class CoreDeleteNode extends CoreNode {
 		syncDir();
 		super.closeOutputStream(coreStream);
 	}
+}
+
+class CoreEarlyNode implements CrailNode {
+	private static final Logger LOG = CrailUtils.getLogger();
 	
+	private CreateNodeFuture createFileFuture;
+	private CrailNode file;
+	private String path;
+	private CoreFileSystem fs;
+	private int storageAffinity;
+	private int locationAffinity;
+
+	public CoreEarlyNode(CreateNodeFuture createFileFuture, String path, CoreFileSystem fs, int storageAffinity, int locationAffinity) {
+		this.createFileFuture = createFileFuture;
+		this.file = null;
+		this.path = path;
+		this.fs = fs;
+		this.storageAffinity = storageAffinity;
+		this.locationAffinity = locationAffinity;
+	}
+
+	@Override
+	public CrailFS getFileSystem() {
+		return fs;
+	}
+
+	@Override
+	public String getPath() {
+		return path;
+	}
+
+	@Override
+	public CrailNode syncDir() throws Exception {
+		return file().syncDir();
+	}
+
+	@Override
+	public long getModificationTime() {
+		try {
+			return file().getModificationTime();
+		} catch(Exception e){
+			LOG.info("Error: " + e.getMessage());
+			return -1;
+		}
+	}
+
+	@Override
+	public long getCapacity() {
+		try {
+			return file().getCapacity();
+		} catch(Exception e){
+			LOG.info("Error: " + e.getMessage());
+			return -1;
+		}
+	}
+
+	@Override
+	public boolean isDir() {
+		try {
+			return file().isDir();
+		} catch(Exception e){
+			LOG.info("Error: " + e.getMessage());
+			return false;
+		}
+	}
+
+	@Override
+	public CrailFile asFile() throws Exception {
+		try {
+			return file().asFile();
+		} catch(Exception e){
+			LOG.info("Error: " + e.getMessage());
+			return null;
+		}
+	}
+
+	@Override
+	public CrailDirectory asDirectory() throws Exception {
+		return file().asDirectory();
+	}
+
+	private synchronized CrailNode file() throws Exception {
+		if (file == null){
+			file = this.createFileFuture.get();
+		}
+		return file;
+	}
 }

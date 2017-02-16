@@ -144,25 +144,25 @@ public class CoreFileSystem extends CrailFS {
 		statistics.addProvider(datanodeEndpointCache);
 	}
 	
-	public Upcoming<CrailFile> createFile(String path, int storageAffinity, int locationAffinity) throws Exception {
+	public Upcoming<CrailNode> create(String path, FileType type, int storageAffinity, int locationAffinity) throws Exception {
 		FileName name = new FileName(path);
 		
 		if (CrailConstants.DEBUG){
-			LOG.info("createFile: name " + path + ", storageAffinity " + storageAffinity + ", locationAffinity " + locationAffinity);
+			LOG.info("createNode: name " + path + ", type " + type + ", storageAffinity " + storageAffinity + ", locationAffinity " + locationAffinity);
 		}
 
-		RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> fileRes = namenodeClientRpc.createFile(name, FileType.DATAFILE, storageAffinity, locationAffinity);
-		return new CreateFileFuture(this, path, fileRes, storageAffinity, locationAffinity);
+		RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> fileRes = namenodeClientRpc.createFile(name, type, storageAffinity, locationAffinity);
+		return new CreateNodeFuture(this, path, type, storageAffinity, locationAffinity, fileRes);
 	}	
 	
-	CoreFile _createFile(RpcResponseMessage.CreateFileRes fileRes, String path, int storageAffinity, int locationAffinity) throws Exception {
+	CoreNode _createNode(String path, FileType type, int storageAffinity, int locationAffinity, RpcResponseMessage.CreateFileRes fileRes) throws Exception {
 		if (fileRes.getError() == NameNodeProtocol.ERR_PARENT_MISSING){
-			throw new IOException("create: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
+			throw new IOException("createNode: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
 		} else if  (fileRes.getError() == NameNodeProtocol.ERR_FILE_EXISTS){
-			throw new IOException("create: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
+			throw new IOException("createNode: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
 		} else if (fileRes.getError() != NameNodeProtocol.ERR_OK){
-			LOG.info("create: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
-			throw new IOException("createFile: " + NameNodeProtocol.messages[fileRes.getError()] + ", error " + fileRes.getError());
+			LOG.info("createNode: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
+			throw new IOException("createNode: " + NameNodeProtocol.messages[fileRes.getError()] + ", error " + fileRes.getError());
 		}		
 		
 		FileInfo fileInfo = fileRes.getFile();
@@ -190,58 +190,17 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("createFile: name " + path + ", success, fd " + fileInfo.getFd() + ", token " + fileInfo.getToken());
 		}
 		
-		return new CoreCreateFile(this, fileInfo, path, storageAffinity, locationAffinity, future, stream);		
-	}
-	
-	public Upcoming<CrailDirectory> makeDirectory(String path) throws Exception {
-		FileName name = new FileName(path);
-		
-		if (CrailConstants.DEBUG){
-			LOG.info("makeDirectory: name " + path);
+		switch(type){
+		case DATAFILE:
+			return new CoreCreateFile(this, fileInfo, path, storageAffinity, locationAffinity, future, stream);		
+		case DIRECTORY:
+			return new CoreMakeDirectory(this, fileInfo, path, future, stream);		
+		default:
+			return new CoreCreateNode(this, path, type, storageAffinity, locationAffinity, fileInfo, future, stream);	
 		}
-
-		RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> fileRes = namenodeClientRpc.createFile(name, FileType.DIRECTORY, 0, 0);
-		return new MakeDirFuture(this, path, fileRes);
 	}	
 	
-	CoreDirectory _makeDirectory(RpcResponseMessage.CreateFileRes fileRes, String path) throws Exception {
-		if (fileRes.getError() == NameNodeProtocol.ERR_PARENT_MISSING){
-			throw new IOException("makeDirectory: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
-		} else if  (fileRes.getError() == NameNodeProtocol.ERR_FILE_EXISTS){
-			throw new IOException("makeDirectory: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
-		} else if (fileRes.getError() != NameNodeProtocol.ERR_OK){
-			LOG.info("makeDirectory: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
-			throw new IOException("makeDirectory: " + NameNodeProtocol.messages[fileRes.getError()] + ", error " + fileRes.getError());
-		}		
-		
-		FileInfo fileInfo = fileRes.getFile();
-		FileInfo dirInfo = fileRes.getParent();
-		if (fileInfo == null || dirInfo == null){
-			throw new IOException("makeDirectory: " + NameNodeProtocol.messages[NameNodeProtocol.ERR_UNKNOWN]);
-		}
-
-		blockCache.remove(fileInfo.getFd());
-		nextBlockCache.remove(fileInfo.getFd());
-		
-		BlockInfo fileBlock = fileRes.getFileBlock();
-		getBlockCache(fileInfo.getFd()).put(CoreSubOperation.createKey(fileInfo.getFd(), 0), fileBlock);
-		BlockInfo dirBlock = fileRes.getDirBlock();
-		getBlockCache(dirInfo.getFd()).put(CoreSubOperation.createKey(dirInfo.getFd(), fileInfo.getDirOffset()), dirBlock);
-		
-		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path));
-		DirectoryOutputStream stream = dirFile.getDirectoryOutputStream();
-		DirectoryRecord record = new DirectoryRecord(true, path);
-		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());		
-		
-		if (CrailConstants.DEBUG){
-			LOG.info("makeDirectory: name " + path + ", success, fd " + fileInfo.getFd() + ", token " + fileInfo.getToken());
-		}
-		
-		return new CoreMakeDirectory(this, fileInfo, path, future, stream);		
-	}
-	
-	
-	public Upcoming<CrailNode> lookupNode(String path) throws Exception {
+	public Upcoming<CrailNode> lookup(String path) throws Exception {
 		FileName name = new FileName(path);
 		
 		if (CrailConstants.DEBUG){

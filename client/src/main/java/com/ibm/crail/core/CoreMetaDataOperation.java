@@ -32,6 +32,7 @@ import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.Upcoming;
 import com.ibm.crail.conf.CrailConstants;
+import com.ibm.crail.namenode.protocol.FileType;
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
 import com.ibm.crail.namenode.rpc.RpcResponseMessage;
 
@@ -144,45 +145,30 @@ public abstract class CoreMetaDataOperation<R,T> implements Upcoming<T> {
 	}	
 }
 
-class CreateFileFuture extends CoreMetaDataOperation<RpcResponseMessage.CreateFileRes, CrailFile> {
-	private String path;
+class CreateNodeFuture extends CoreMetaDataOperation<RpcResponseMessage.CreateFileRes, CrailNode> {
 	private CoreFileSystem fs;
+	private String path;
+	private FileType type;
 	private int storageAffinity;
 	private int locationAffinity;
 
-	public CreateFileFuture(CoreFileSystem fs, String path, Future<RpcResponseMessage.CreateFileRes> fileRes, int storageAffinity, int locationAffinity) {
+	public CreateNodeFuture(CoreFileSystem fs, String path, FileType type, int storageAffinity, int locationAffinity, Future<RpcResponseMessage.CreateFileRes> fileRes) {
 		super(fileRes);
 		this.fs = fs;
 		this.path = path;
+		this.type = type;
 		this.storageAffinity = storageAffinity;
 		this.locationAffinity = locationAffinity;
 	}
 
 	@Override
-	CrailFile process(RpcResponseMessage.CreateFileRes tmp) throws Exception {
-		return fs._createFile(tmp, path, storageAffinity, locationAffinity);
+	CrailNode process(RpcResponseMessage.CreateFileRes response) throws Exception {
+		return fs._createNode(path, type, storageAffinity, locationAffinity, response);
 	}
 
 	@Override
 	public CrailFile early() throws Exception {
-		return new CoreEarlyFile(this, this.path , this.fs, this.storageAffinity, this.locationAffinity);
-	}
-
-}
-
-class MakeDirFuture extends CoreMetaDataOperation<RpcResponseMessage.CreateFileRes, CrailDirectory> {
-	private String path;
-	private CoreFileSystem fs;
-
-	public MakeDirFuture(CoreFileSystem fs, String path, Future<RpcResponseMessage.CreateFileRes> fileRes) {
-		super(fileRes);
-		this.fs = fs;
-		this.path = path;
-	}
-
-	@Override
-	CrailDirectory process(RpcResponseMessage.CreateFileRes tmp) throws Exception {
-		return fs._makeDirectory(tmp, path);
+		return null;
 	}
 
 }

@@ -295,7 +295,7 @@ public class CrailMultiStream extends InputStream {
 		SubStream substream = null;
 		while (paths.hasNext() && substream == null){
 			String path = paths.next();
-			CrailFile file = fs.lookupNode(path).get().asFile();
+			CrailFile file = fs.lookup(path).get().asFile();
 			if (file == null){
 				throw new Exception("File not found, name " + path);
 			}
