@@ -168,6 +168,9 @@ public class CoreFileSystem extends CrailFS {
 		if (fileInfo == null || dirInfo == null){
 			throw new IOException("createFile: " + NameNodeProtocol.messages[NameNodeProtocol.ERR_UNKNOWN]);
 		}
+		if (fileInfo.getType() != type){
+			throw new IOException("createFile: " + "file type mismatch");
+		}
 
 		blockCache.remove(fileInfo.getFd());
 		nextBlockCache.remove(fileInfo.getFd());
@@ -188,13 +191,10 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("createFile: name " + path + ", success, fd " + fileInfo.getFd() + ", token " + fileInfo.getToken());
 		}
 		
-		switch(type){
-		case DATAFILE:
+		if (fileInfo.getType().isContainer()){
+			return new CoreCreateDirectory(this, fileInfo, path, future, stream);		
+		} else {
 			return new CoreCreateFile(this, fileInfo, path, storageAffinity, locationAffinity, future, stream);		
-		case DIRECTORY:
-			return new CoreMakeDirectory(this, fileInfo, path, future, stream);		
-		default:
-			return new CoreCreateNode(this, path, type, storageAffinity, locationAffinity, fileInfo, future, stream);	
 		}
 	}	
 	
@@ -227,7 +227,7 @@ public class CoreFileSystem extends CrailFS {
 			BlockInfo fileBlock = fileRes.getFileBlock();
 			getBlockCache(fileInfo.getFd()).put(CoreSubOperation.createKey(fileInfo.getFd(), 0), fileBlock);
 			
-			if (fileInfo.getType().isDirectory()){
+			if (fileInfo.getType().isContainer()){
 				return new CoreDirectory(this, fileInfo, path);
 			} else {
 				return new CoreLookupFile(this, fileInfo, path);
@@ -358,7 +358,7 @@ public class CoreFileSystem extends CrailFS {
 		}
 		
 		FileInfo dirInfo = fileRes.getFile();
-		if (!dirInfo.getType().isDirectory()){
+		if (!dirInfo.getType().isContainer()){
 			LOG.info("getDirectoryList: " + NameNodeProtocol.messages[NameNodeProtocol.ERR_FILE_IS_NOT_DIR]);
 			throw new FileNotFoundException(NameNodeProtocol.messages[NameNodeProtocol.ERR_FILE_IS_NOT_DIR]);
 		}

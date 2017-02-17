@@ -192,7 +192,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 					if (directFile.getType().isDirectory()) {
 						permission = FsPermission.getDirDefault();
 					}
-					FileStatus status = new FileStatus(directFile.getCapacity(), directFile.getType().isDirectory(), CrailConstants.SHADOW_REPLICATION, CrailConstants.BLOCK_SIZE, directFile.getModificationTime(), directFile.getModificationTime(), permission, CrailConstants.USER, CrailConstants.USER, new Path(filepath).makeQualified(this.getUri(), this.workingDir));	
+					FileStatus status = new FileStatus(directFile.getCapacity(), directFile.getType().isContainer(), CrailConstants.SHADOW_REPLICATION, CrailConstants.BLOCK_SIZE, directFile.getModificationTime(), directFile.getModificationTime(), permission, CrailConstants.USER, CrailConstants.USER, new Path(filepath).makeQualified(this.getUri(), this.workingDir));	
 					statusList.add(status);
 				}
 			}
@@ -248,7 +248,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 		if (directFile.getType().isDirectory()) {
 			permission = FsPermission.getDirDefault();
 		}
-		FileStatus status = new FileStatus(directFile.getCapacity(), directFile.getType().isDirectory(), CrailConstants.SHADOW_REPLICATION, CrailConstants.BLOCK_SIZE, directFile.getModificationTime(), directFile.getModificationTime(), permission, CrailConstants.USER, CrailConstants.USER, path.makeQualified(this.getUri(), this.workingDir));
+		FileStatus status = new FileStatus(directFile.getCapacity(), directFile.getType().isContainer(), CrailConstants.SHADOW_REPLICATION, CrailConstants.BLOCK_SIZE, directFile.getModificationTime(), directFile.getModificationTime(), permission, CrailConstants.USER, CrailConstants.USER, path.makeQualified(this.getUri(), this.workingDir));
 		return status;
 	}
 

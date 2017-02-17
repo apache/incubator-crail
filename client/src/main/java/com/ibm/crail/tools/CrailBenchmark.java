@@ -478,7 +478,7 @@ public class CrailBenchmark {
 		fs.getStatistics().reset();
 		ByteBuffer buf = ByteBuffer.allocate(size);
 		for (int i = 0; i < loop; i++){
-			CrailMultiStream multiStream = fs.lookup(filename).get().asDirectory().getMultiStream(batch);
+			CrailMultiStream multiStream = fs.lookup(filename).get().asMultiFile().getMultiStream(batch);
 			double sumbytes = 0;
 			long _sumbytes = 0;
 			double ops = 0;
@@ -726,6 +726,14 @@ public class CrailBenchmark {
 		fs.close();
 	}
 	
+	void createMultiFile(String filename) throws Exception, InterruptedException {
+		System.out.println("createMultiFile, filename " + filename);
+		CrailConfiguration conf = new CrailConfiguration();
+		CrailFS fs = CrailFS.newInstance(conf);	
+		fs.create(filename, CrailNodeType.MULTIFILE, 0, 0).get().syncDir();
+		fs.close();
+	}
+	
 	void keyGet(String filename, int size, int loop) throws Exception {
 		System.out.println("keyGet, path " + filename + ", size " + size + ", loop " + loop);
 		CrailConfiguration conf = new CrailConfiguration();
@@ -905,6 +913,8 @@ public class CrailBenchmark {
 				System.out.println("experiment " + i);
 				benchmark.keyGet(filename, size, loop);
 			}
+		} else if (type.equalsIgnoreCase("createMultiFile")) {
+			benchmark.createMultiFile(filename);
 		} else {
 			usage();
 			System.exit(0);

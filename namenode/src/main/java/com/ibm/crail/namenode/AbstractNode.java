@@ -44,14 +44,16 @@ public abstract class AbstractNode extends FileInfo implements Delayed {
 	private long delay;
 	
 	public static AbstractNode createRoot() throws IOException {
-		return new DirectoryBlocks(new FileName("/").getFileComponent());
+		return new DirectoryBlocks(new FileName("/").getFileComponent(), CrailNodeType.DIRECTORY);
 	}
 	
 	public static AbstractNode createNode(int fileComponent, CrailNodeType type) throws IOException {
 		if (type == CrailNodeType.DIRECTORY){
-			return new DirectoryBlocks(fileComponent);
+			return new DirectoryBlocks(fileComponent, CrailNodeType.DIRECTORY);
+		} else if (type == CrailNodeType.MULTIFILE){
+			return new DirectoryBlocks(fileComponent, CrailNodeType.MULTIFILE);
 		} else {
-			return new FileBlocks(fileComponent);
+			return new FileBlocks(fileComponent, CrailNodeType.DATAFILE);
 		}
 	}
 	
@@ -66,7 +68,7 @@ public abstract class AbstractNode extends FileInfo implements Delayed {
 	}
 	
 	boolean addChild(AbstractNode child) throws Exception {
-		if (!this.getType().isDirectory()){
+		if (!this.getType().isContainer()){
 			return false;
 		} 
 		

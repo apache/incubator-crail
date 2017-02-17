@@ -31,8 +31,8 @@ import com.ibm.crail.namenode.protocol.BlockInfo;
 public class DirectoryBlocks extends AbstractNode {
 	private ConcurrentHashMap<Integer, BlockInfo> blocks;
 	
-	DirectoryBlocks(int fileComponent) {
-		super(fileComponent, CrailNodeType.DIRECTORY);
+	DirectoryBlocks(int fileComponent, CrailNodeType type) {
+		super(fileComponent, type);
 		this.blocks = new ConcurrentHashMap<Integer, BlockInfo>();
 	}
 

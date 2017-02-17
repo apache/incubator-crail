@@ -75,7 +75,7 @@ public class NameNodeService implements RpcNameNodeService {
 		int locationAffinity = request.getLocationAffinity();
 		
 		//check params
-		if (type.isDirectory() && locationAffinity > 0){
+		if (type.isContainer() && locationAffinity > 0){
 			return NameNodeProtocol.ERR_DIR_LOCATION_AFFINITY_MISMATCH;
 		}
 		
@@ -87,7 +87,7 @@ public class NameNodeService implements RpcNameNodeService {
 		if (parentInfo == null) {
 			return NameNodeProtocol.ERR_PARENT_MISSING;
 		} 	
-		if (!parentInfo.getType().isDirectory()){
+		if (!parentInfo.getType().isContainer()){
 			return NameNodeProtocol.ERR_PARENT_NOT_DIR;
 		}
 		

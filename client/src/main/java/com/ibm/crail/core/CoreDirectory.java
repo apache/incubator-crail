@@ -25,10 +25,11 @@ import java.util.Iterator;
 import java.util.concurrent.Future;
 
 import com.ibm.crail.CrailDirectory;
+import com.ibm.crail.CrailMultiFile;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.protocol.FileInfo;
 
-class CoreDirectory extends CoreNode implements CrailDirectory {
+class CoreDirectory extends CoreNode implements CrailDirectory, CrailMultiFile {
 	
 	protected CoreDirectory(CoreFileSystem fs, FileInfo fileInfo, String path){
 		super(fs, fileInfo, path, 0, 0);
@@ -49,8 +50,19 @@ class CoreDirectory extends CoreNode implements CrailDirectory {
 
 	@Override
 	public CoreDirectory asDirectory() throws Exception {
+		if (!getType().isDirectory()){
+			throw new Exception("file type mismatch, type " + getType());
+		}
 		return this;
 	}
+	
+	@Override
+	public CrailMultiFile asMultiFile() throws Exception {
+		if (!getType().isMultiFile()){
+			throw new Exception("file type mismatch, type " + getType());
+		}
+		return this;
+	}	
 	
 	DirectoryOutputStream getDirectoryOutputStream() throws Exception {
 		CoreOutputStream outputStream = super.getOutputStream(0);
@@ -63,11 +75,11 @@ class CoreDirectory extends CoreNode implements CrailDirectory {
 	}	
 }
 
-class CoreMakeDirectory extends CoreDirectory {
+class CoreCreateDirectory extends CoreDirectory {
 	private Future<?> dirFuture;
 	private DirectoryOutputStream dirStream;			
 
-	protected CoreMakeDirectory(CoreFileSystem fs, FileInfo fileInfo, String path, Future<?> dirFuture, DirectoryOutputStream dirStream) {
+	protected CoreCreateDirectory(CoreFileSystem fs, FileInfo fileInfo, String path, Future<?> dirFuture, DirectoryOutputStream dirStream) {
 		super(fs, fileInfo, path);
 		this.dirFuture = dirFuture;
 		this.dirStream = dirStream;				

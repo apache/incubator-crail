@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFS;
 import com.ibm.crail.CrailFile;
+import com.ibm.crail.CrailMultiFile;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.namenode.protocol.FileInfo;
@@ -94,6 +95,10 @@ public class CoreNode implements CrailNode {
 	public CoreDirectory asDirectory() throws Exception {
 		throw new Exception("Type of file unclear");
 	}	
+	
+	public CrailMultiFile asMultiFile() throws Exception {
+		throw new Exception("Type of file unclear");
+	}		
 	
 	protected CoreInputStream getInputStream(long readHint) throws Exception{
 		return fs.getInputStream(this, readHint);
@@ -298,6 +303,11 @@ class CoreEarlyNode implements CrailNode {
 	public CrailDirectory asDirectory() throws Exception {
 		return file().asDirectory();
 	}
+	
+	@Override
+	public CrailMultiFile asMultiFile() throws Exception {
+		return file().asMultiFile();
+	}	
 
 	private synchronized CrailNode file() throws Exception {
 		if (file == null){

@@ -29,6 +29,10 @@ public enum CrailNodeType {
 		return this == STREAMFILE;
 	}
 	
+	public boolean isContainer(){
+		return this == DIRECTORY || this == MULTIFILE;
+	}	
+	
 	public static CrailNodeType parse(int label) {
 		for (CrailNodeType val : CrailNodeType.values()) {
 			if (val.getLabel() == label) {
