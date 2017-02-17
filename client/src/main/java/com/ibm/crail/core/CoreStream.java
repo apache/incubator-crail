@@ -27,17 +27,19 @@ import java.util.HashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
+
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.datanode.DataNodeEndpoint;
-import com.ibm.crail.datanode.DataResult;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.namenode.protocol.FileInfo;
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
 import com.ibm.crail.namenode.rpc.RpcNameNodeClient;
 import com.ibm.crail.namenode.rpc.RpcNameNodeFuture;
 import com.ibm.crail.namenode.rpc.RpcResponseMessage;
+import com.ibm.crail.storage.StorageEndpoint;
+import com.ibm.crail.storage.DataResult;
 import com.ibm.crail.utils.BufferCheckpoint;
 import com.ibm.crail.utils.EndpointCache;
 import com.ibm.crail.utils.CrailUtils;
@@ -63,7 +65,7 @@ public abstract class CoreStream {
 	private HashMap<Integer, CoreSubOperation> blockMap;
 	private LinkedBlockingQueue<RpcNameNodeFuture<RpcResponseMessage.GetBlockRes>> pendingBlocks;
 	
-	abstract Future<DataResult> trigger(DataNodeEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception;
+	abstract Future<DataResult> trigger(StorageEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception;
 	abstract void update(long newCapacity);	
 	
 	CoreStream(CoreNode node, long streamId, long fileOffset) throws Exception {
@@ -230,7 +232,7 @@ public abstract class CoreStream {
 	
 	private Future<DataResult> prepareAndTrigger(CoreSubOperation opDesc, ByteBuffer dataBuf, BlockInfo block) throws Exception {
 		try {
-			DataNodeEndpoint endpoint = endpointCache.getDataEndpoint(block.getDnInfo());
+			StorageEndpoint endpoint = endpointCache.getDataEndpoint(block.getDnInfo());
 			ByteBuffer region = fs.getBufferCache().getAllocationBuffer(dataBuf);
 			region = region != null ? region : dataBuf;
 			dataBuf.position(opDesc.getBufferPosition());

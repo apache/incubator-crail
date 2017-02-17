@@ -19,7 +19,7 @@
  *
  */
 
-package com.ibm.crail.datanode.rdma.client;
+package com.ibm.crail.storage.rdma.client;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -30,12 +30,12 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.datanode.DataNodeEndpoint;
-import com.ibm.crail.datanode.DataResult;
-import com.ibm.crail.datanode.rdma.MrCache;
-import com.ibm.crail.datanode.rdma.MrCache.DeviceMrCache;
-import com.ibm.crail.datanode.rdma.RdmaConstants;
 import com.ibm.crail.namenode.protocol.BlockInfo;
+import com.ibm.crail.storage.StorageEndpoint;
+import com.ibm.crail.storage.DataResult;
+import com.ibm.crail.storage.rdma.MrCache;
+import com.ibm.crail.storage.rdma.RdmaConstants;
+import com.ibm.crail.storage.rdma.MrCache.DeviceMrCache;
 import com.ibm.crail.utils.AtomicIntegerModulo;
 import com.ibm.disni.util.MemoryUtils;
 import com.ibm.disni.rdma.verbs.*;
@@ -43,7 +43,7 @@ import com.ibm.disni.rdma.verbs.SVCPostSend.SendWRMod;
 import com.ibm.disni.rdma.verbs.SVCPostSend.SgeMod;
 import com.ibm.disni.rdma.*;
 
-public class RdmaDataNodeActiveEndpoint extends RdmaActiveEndpoint implements DataNodeEndpoint {
+public class RdmaDataNodeActiveEndpoint extends RdmaActiveEndpoint implements StorageEndpoint {
 	private LinkedBlockingQueue<SVCPostSend> writeOps;
 	private LinkedBlockingQueue<SVCPostSend> readOps;
 	private AtomicIntegerModulo opcount;

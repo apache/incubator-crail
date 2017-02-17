@@ -19,7 +19,7 @@
  *
  */
 
-package com.ibm.crail.datanode;
+package com.ibm.crail.storage;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -27,7 +27,7 @@ import java.util.concurrent.Future;
 
 import com.ibm.crail.namenode.protocol.BlockInfo;
 
-public interface DataNodeEndpoint{
+public interface StorageEndpoint{
 
 	public abstract Future<DataResult> write(ByteBuffer buffer, ByteBuffer region, BlockInfo remoteMr, long remoteOffset) throws IOException,
 			InterruptedException;

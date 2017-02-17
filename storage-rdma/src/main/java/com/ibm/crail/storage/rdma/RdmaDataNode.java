@@ -19,7 +19,7 @@
  *
  */
 
-package com.ibm.crail.datanode.rdma;
+package com.ibm.crail.storage.rdma;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -38,20 +38,20 @@ import org.slf4j.Logger;
 
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.datanode.DataNode;
-import com.ibm.crail.datanode.DataNodeEndpoint;
-import com.ibm.crail.datanode.rdma.client.RdmaBlockIndex;
-import com.ibm.crail.datanode.rdma.client.RdmaDataNodeActiveEndpointFactory;
-import com.ibm.crail.datanode.rdma.client.RdmaDataNodeActiveGroup;
-import com.ibm.crail.datanode.rdma.client.RdmaDataNodePassiveEndpointFactory;
-import com.ibm.crail.datanode.rdma.client.RdmaDataNodePassiveGroup;
 import com.ibm.crail.namenode.protocol.DataNodeStatistics;
+import com.ibm.crail.storage.StorageTier;
+import com.ibm.crail.storage.StorageEndpoint;
+import com.ibm.crail.storage.rdma.client.RdmaBlockIndex;
+import com.ibm.crail.storage.rdma.client.RdmaDataNodeActiveEndpointFactory;
+import com.ibm.crail.storage.rdma.client.RdmaDataNodeActiveGroup;
+import com.ibm.crail.storage.rdma.client.RdmaDataNodePassiveEndpointFactory;
+import com.ibm.crail.storage.rdma.client.RdmaDataNodePassiveGroup;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.disni.rdma.*;
 import com.ibm.disni.util.*;
 import com.ibm.disni.rdma.verbs.IbvMr;
 
-public class RdmaDataNode extends DataNode {
+public class RdmaDataNode extends StorageTier {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	//server-side
@@ -93,7 +93,7 @@ public class RdmaDataNode extends DataNode {
 	}
 	
 	@Override
-	public DataNodeEndpoint createEndpoint(InetSocketAddress inetAddress)
+	public StorageEndpoint createEndpoint(InetSocketAddress inetAddress)
 			throws IOException {
 		if (clientMrCache == null){
 			synchronized(this){

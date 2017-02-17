@@ -19,7 +19,7 @@
  *
  */
 
-package com.ibm.crail.datanode;
+package com.ibm.crail.storage;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -42,11 +42,11 @@ import com.ibm.crail.namenode.rpc.RpcResponseMessage;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.disni.util.*;
 
-public abstract class DataNode {
+public abstract class StorageTier {
 	public static final Logger LOG = CrailUtils.getLogger();
 
 	public abstract void init(CrailConfiguration conf, String[] args) throws IOException;
-	public abstract DataNodeEndpoint createEndpoint(InetSocketAddress inetAddress) throws IOException;	
+	public abstract StorageEndpoint createEndpoint(InetSocketAddress inetAddress) throws IOException;	
 	public abstract void run() throws Exception;	
 	public abstract void close() throws Exception;
 	public abstract InetSocketAddress getAddress();
@@ -57,7 +57,7 @@ public abstract class DataNode {
 	private boolean isConnected;
 	private ConcurrentHashMap<String, Integer> dataNodeTypes;
 
-	public DataNode(){
+	public StorageTier(){
 		this.isConnected = false;
 	}	
 	
@@ -117,7 +117,7 @@ public abstract class DataNode {
 			GetOpt go = new GetOpt(args, "t:");
 			go.optErr = true;
 			int ch = -1;
-			String name = "com.ibm.crail.datanode.rdma.RdmaDataNode";
+			String name = "com.ibm.crail.storage.rdma.RdmaDataNode";
 			CrailConfiguration conf = new CrailConfiguration();
 			
 			while ((ch = go.getopt()) != GetOpt.optEOF) {
@@ -130,7 +130,7 @@ public abstract class DataNode {
 			CrailConstants.printConf();
 			CrailConstants.verify();				
 	
-			DataNode dataNode = createInstance(name);
+			StorageTier dataNode = createInstance(name);
 			if (dataNode == null){
 				throw new Exception("Cannot instantiate datanode of type " + name);
 			}
@@ -145,11 +145,11 @@ public abstract class DataNode {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static DataNode createInstance(String name) throws Exception {
+	public static StorageTier createInstance(String name) throws Exception {
 		Class<?> nodeClass = Class.forName(name);
-		if (DataNode.class.isAssignableFrom(nodeClass)){
-			Class<? extends DataNode> dataNodeClass = (Class<? extends DataNode>) nodeClass;
-			DataNode dataNode = dataNodeClass.newInstance();
+		if (StorageTier.class.isAssignableFrom(nodeClass)){
+			Class<? extends StorageTier> dataNodeClass = (Class<? extends StorageTier>) nodeClass;
+			StorageTier dataNode = dataNodeClass.newInstance();
 			return dataNode;
 		} else {
 			throw new Exception("Cannot instantiate datanode of type " + name);

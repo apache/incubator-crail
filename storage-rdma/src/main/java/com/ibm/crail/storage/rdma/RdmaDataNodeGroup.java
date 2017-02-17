@@ -19,10 +19,18 @@
  *
  */
 
-package com.ibm.crail.datanode;
+package com.ibm.crail.storage.rdma;
 
-public interface DataResult {
+import java.io.IOException;
+import java.net.InetSocketAddress;
 
-	public int getLen();
+import com.ibm.crail.storage.StorageEndpoint;
+
+public interface RdmaDataNodeGroup {
+
+	public StorageEndpoint createEndpoint(InetSocketAddress inetAddress) throws IOException;
+
+	public void close() throws InterruptedException, IOException;
 	
+	public int getType();
 }

@@ -19,7 +19,7 @@
  *
  */
 
-package com.ibm.crail.datanode.rdma;
+package com.ibm.crail.storage.rdma;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;

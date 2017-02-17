@@ -19,18 +19,24 @@
  *
  */
 
-package com.ibm.crail.datanode.rdma;
+package com.ibm.crail.storage.rdma;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 
-import com.ibm.crail.datanode.DataNodeEndpoint;
+import com.ibm.disni.rdma.*;
+import com.ibm.disni.rdma.verbs.*;
 
-public interface RdmaDataNodeGroup {
-
-	public DataNodeEndpoint createEndpoint(InetSocketAddress inetAddress) throws IOException;
-
-	public void close() throws InterruptedException, IOException;
+public class RdmaDataNodeServerEndpointFactory implements RdmaEndpointFactory<RdmaDataNodeServerEndpoint> {
+	private RdmaDataNodeServer closer;
+	private RdmaPassiveEndpointGroup<RdmaDataNodeServerEndpoint> group;
 	
-	public int getType();
+	public RdmaDataNodeServerEndpointFactory(RdmaPassiveEndpointGroup<RdmaDataNodeServerEndpoint> group, RdmaDataNodeServer closer){
+		this.group = group;
+		this.closer = closer;
+	}
+	
+	@Override
+	public RdmaDataNodeServerEndpoint createEndpoint(RdmaCmId id, boolean serverSide) throws IOException {
+		return new RdmaDataNodeServerEndpoint(group, id, closer, serverSide);
+	}
 }

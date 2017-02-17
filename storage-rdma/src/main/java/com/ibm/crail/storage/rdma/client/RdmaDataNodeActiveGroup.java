@@ -19,16 +19,16 @@
  *
  */
 
-package com.ibm.crail.datanode.rdma.client;
+package com.ibm.crail.storage.rdma.client;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import com.ibm.crail.datanode.DataNodeEndpoint;
-import com.ibm.crail.datanode.rdma.MrCache;
-import com.ibm.crail.datanode.rdma.RdmaConstants;
-import com.ibm.crail.datanode.rdma.RdmaDataNode;
-import com.ibm.crail.datanode.rdma.RdmaDataNodeGroup;
+import com.ibm.crail.storage.StorageEndpoint;
+import com.ibm.crail.storage.rdma.MrCache;
+import com.ibm.crail.storage.rdma.RdmaConstants;
+import com.ibm.crail.storage.rdma.RdmaDataNode;
+import com.ibm.crail.storage.rdma.RdmaDataNodeGroup;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.disni.rdma.*;
 
@@ -52,7 +52,7 @@ public class RdmaDataNodeActiveGroup extends RdmaActiveEndpointGroup<RdmaDataNod
 	}
 
 //	@Override
-	public DataNodeEndpoint createEndpoint(InetSocketAddress inetAddress) throws IOException {
+	public StorageEndpoint createEndpoint(InetSocketAddress inetAddress) throws IOException {
 		if (localEndpoint != null && RdmaConstants.DATANODE_RDMA_LOCAL_MAP && CrailUtils.isLocalAddress(inetAddress.getAddress())){
 			return this.localEndpoint;
 		} 

@@ -1,4 +1,4 @@
-package com.ibm.crail.datanode.rdma;
+package com.ibm.crail.storage.rdma;
 
 import java.io.IOException;
 

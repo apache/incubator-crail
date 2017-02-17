@@ -47,7 +47,6 @@ import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.Upcoming;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.datanode.DataNode;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.namenode.protocol.DataNodeInfo;
 import com.ibm.crail.namenode.protocol.FileInfo;
@@ -57,6 +56,7 @@ import com.ibm.crail.namenode.rpc.RpcNameNode;
 import com.ibm.crail.namenode.rpc.RpcNameNodeClient;
 import com.ibm.crail.namenode.rpc.RpcNameNodeFuture;
 import com.ibm.crail.namenode.rpc.RpcResponseMessage;
+import com.ibm.crail.storage.StorageTier;
 import com.ibm.crail.utils.BlockCache;
 import com.ibm.crail.utils.BufferCheckpoint;
 import com.ibm.crail.utils.DirectBufferCache;
@@ -103,10 +103,10 @@ public class CoreFileSystem extends CrailFS {
 		
 		//Datanodes
 		StringTokenizer tokenizer = new StringTokenizer(CrailConstants.DATANODE_TYPES, ",");
-		LinkedList<DataNode> dataNodeClients = new LinkedList<DataNode>(); 
+		LinkedList<StorageTier> dataNodeClients = new LinkedList<StorageTier>(); 
 		while (tokenizer.hasMoreTokens()){
 			String name = tokenizer.nextToken();
-			DataNode dataNode = DataNode.createInstance(name);
+			StorageTier dataNode = StorageTier.createInstance(name);
 			dataNode.init(conf, null);
 			dataNode.printConf(LOG);
 			dataNodeClients.add(dataNode);

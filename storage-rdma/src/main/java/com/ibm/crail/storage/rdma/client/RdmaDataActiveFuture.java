@@ -19,14 +19,14 @@
  *
  */
 
-package com.ibm.crail.datanode.rdma.client;
+package com.ibm.crail.storage.rdma.client;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.ibm.crail.datanode.DataResult;
+import com.ibm.crail.storage.DataResult;
 
 public class RdmaDataActiveFuture implements Future<DataResult>, DataResult {
 	protected static int RPC_PENDING = 0;

@@ -19,7 +19,7 @@
  *
  */
 
-package com.ibm.crail.datanode.rdma.client;
+package com.ibm.crail.storage.rdma.client;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,17 +36,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.datanode.DataNodeEndpoint;
-import com.ibm.crail.datanode.DataResult;
-import com.ibm.crail.datanode.rdma.RdmaConstants;
-import com.ibm.crail.datanode.rdma.RdmaDataNode;
 import com.ibm.crail.namenode.protocol.BlockInfo;
+import com.ibm.crail.storage.StorageEndpoint;
+import com.ibm.crail.storage.DataResult;
+import com.ibm.crail.storage.rdma.RdmaConstants;
+import com.ibm.crail.storage.rdma.RdmaDataNode;
 import com.ibm.disni.rdma.verbs.*;
 import com.ibm.disni.util.*;
 
 import sun.misc.Unsafe;
 
-public class RdmaDataNodeLocalEndpoint implements DataNodeEndpoint {
+public class RdmaDataNodeLocalEndpoint implements StorageEndpoint {
 	private String indexDirPath;
 	private ConcurrentHashMap<Integer, MappedByteBuffer> bufferMap;
 	private ConcurrentHashMap<Integer, RdmaBlockIndex> indexMap;

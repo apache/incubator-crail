@@ -19,7 +19,7 @@
  *
  */
 
-package com.ibm.crail.datanode.rdma.client;
+package com.ibm.crail.storage.rdma.client;
 
 import java.io.IOException;
 

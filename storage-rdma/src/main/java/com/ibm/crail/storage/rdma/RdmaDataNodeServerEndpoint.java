@@ -19,21 +19,28 @@
  *
  */
 
-package com.ibm.crail.datanode.rdma.client;
+package com.ibm.crail.storage.rdma;
 
 import java.io.IOException;
+
 import com.ibm.disni.rdma.verbs.*;
 import com.ibm.disni.rdma.*;
 
-public class RdmaDataNodePassiveEndpointFactory implements RdmaEndpointFactory<RdmaDataNodePassiveEndpoint> {
-	private RdmaDataNodePassiveGroup group;
+public class RdmaDataNodeServerEndpoint extends RdmaEndpoint {
+	private RdmaDataNodeServer closer;
+
+	public RdmaDataNodeServerEndpoint(RdmaPassiveEndpointGroup<RdmaDataNodeServerEndpoint> endpointGroup, RdmaCmId idPriv, RdmaDataNodeServer closer, boolean serverSide) throws IOException {	
+		super(endpointGroup, idPriv, serverSide);
+		this.closer = closer;
+	}	
 	
-	public RdmaDataNodePassiveEndpointFactory(RdmaDataNodePassiveGroup group){
-		this.group = group;
-	}
-	
-	@Override
-	public RdmaDataNodePassiveEndpoint createEndpoint(RdmaCmId id, boolean serverSide) throws IOException {
-		return new RdmaDataNodePassiveEndpoint(group, id, serverSide);
+	public synchronized void dispatchCmEvent(RdmaCmEvent cmEvent)
+			throws IOException {
+		super.dispatchCmEvent(cmEvent);
+		int eventType = cmEvent.getEvent();
+		if (eventType == RdmaCmEvent.EventType.RDMA_CM_EVENT_DISCONNECTED
+				.ordinal()) {
+			closer.close(this);
+		}
 	}
 }

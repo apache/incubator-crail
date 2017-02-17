@@ -19,7 +19,7 @@
  *
  */
 
-package com.ibm.crail.datanode.rdma.client;
+package com.ibm.crail.storage.rdma.client;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 
-import com.ibm.crail.datanode.DataResult;
+import com.ibm.crail.storage.DataResult;
 import com.ibm.crail.utils.CrailUtils;
 
 public class RdmaDataPassiveFuture implements Future<DataResult>, DataResult {

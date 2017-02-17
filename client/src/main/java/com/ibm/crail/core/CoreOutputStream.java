@@ -31,9 +31,9 @@ import org.slf4j.Logger;
 import com.ibm.crail.CrailOutputStream;
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.datanode.DataNodeEndpoint;
-import com.ibm.crail.datanode.DataResult;
 import com.ibm.crail.namenode.protocol.BlockInfo;
+import com.ibm.crail.storage.StorageEndpoint;
+import com.ibm.crail.storage.DataResult;
 import com.ibm.crail.utils.CrailImmediateOperation;
 import com.ibm.crail.utils.CrailUtils;
 
@@ -109,7 +109,7 @@ public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 	
 	// ----------------------
 	
-	Future<DataResult> trigger(DataNodeEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception {
+	Future<DataResult> trigger(StorageEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception {
 		Future<DataResult> dataFuture = endpoint.write(buffer, region, block, opDesc.getBlockOffset());
 		return dataFuture;		
 	}	
