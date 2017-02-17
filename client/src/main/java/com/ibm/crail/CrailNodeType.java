@@ -3,17 +3,17 @@ package com.ibm.crail;
 public enum CrailNodeType {
 	DATAFILE(0), DIRECTORY(1), MULTIFILE(2), STREAMFILE(3);
 	
-	private int value;
+	private int label;
 	
-	CrailNodeType(int value){
-		this.value = value;
+	CrailNodeType(int label){
+		this.label = label;
 	}
 	
-	public int value(){
-		return this.value;
+	public int getLabel(){
+		return this.label;
 	}
 	
-	public boolean isDir(){
+	public boolean isDirectory(){
 		return this == DIRECTORY;
 	}
 	
@@ -29,17 +29,12 @@ public enum CrailNodeType {
 		return this == STREAMFILE;
 	}
 	
-	public static CrailNodeType parse(int value){
-		switch(value){
-		case 0:
-				return DATAFILE;
-		case 1:
-				return DIRECTORY;
-		case 2:
-				return MULTIFILE;
-		case 3:
-				return STREAMFILE;
+	public static CrailNodeType parse(int label) {
+		for (CrailNodeType val : CrailNodeType.values()) {
+			if (val.getLabel() == label) {
+				return val;
+			}
 		}
-		return null;
-	}
+		throw new IllegalArgumentException();
+	}	
 }

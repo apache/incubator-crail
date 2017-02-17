@@ -70,12 +70,12 @@ public class NameNodeService implements RpcNameNodeService {
 		//get params
 		FileName fileHash = request.getFileName();
 		CrailNodeType type = request.getFileType();
-		boolean writeable = type.isDir() ? false : true; 
+		boolean writeable = type.isDirectory() ? false : true; 
 		int storageAffinity = request.getStorageAffinity();
 		int locationAffinity = request.getLocationAffinity();
 		
 		//check params
-		if (type.isDir() && locationAffinity > 0){
+		if (type.isDirectory() && locationAffinity > 0){
 			return NameNodeProtocol.ERR_DIR_LOCATION_AFFINITY_MISMATCH;
 		}
 		
@@ -87,7 +87,7 @@ public class NameNodeService implements RpcNameNodeService {
 		if (parentInfo == null) {
 			return NameNodeProtocol.ERR_PARENT_MISSING;
 		} 	
-		if (!parentInfo.getType().isDir()){
+		if (!parentInfo.getType().isDirectory()){
 			return NameNodeProtocol.ERR_PARENT_NOT_DIR;
 		}
 		
@@ -178,7 +178,7 @@ public class NameNodeService implements RpcNameNodeService {
 		}
 		
 		if (CrailConstants.DEBUG){
-			LOG.info("getFile: fd " + fileInfo.getFd() + ", isDir " + fileInfo.getType().isDir() + ", token " + fileInfo.getToken() + ", capacity " + fileInfo.getCapacity());
+			LOG.info("getFile: fd " + fileInfo.getFd() + ", isDir " + fileInfo.getType().isDirectory() + ", token " + fileInfo.getToken() + ", capacity " + fileInfo.getCapacity());
 		}			
 		
 		return NameNodeProtocol.ERR_OK;
@@ -201,7 +201,7 @@ public class NameNodeService implements RpcNameNodeService {
 			return NameNodeProtocol.ERR_FILE_NOT_OPEN;			
 		}
 		
-		if (!storedFile.getType().isDir() && storedFile.getToken() > 0 && storedFile.getToken() == fileInfo.getToken()){
+		if (!storedFile.getType().isDirectory() && storedFile.getToken() > 0 && storedFile.getToken() == fileInfo.getToken()){
 			storedFile.setCapacity(fileInfo.getCapacity());	
 		}
 		
@@ -310,10 +310,10 @@ public class NameNodeService implements RpcNameNodeService {
 		} 
 		
 		AbstractNode dstFile = fileTree.retrieveFile(dstFileHash, errorState);
-		if (dstFile != null && !dstFile.getType().isDir()){
+		if (dstFile != null && !dstFile.getType().isDirectory()){
 			return NameNodeProtocol.ERR_FILE_EXISTS;
 		}		
-		if (dstFile != null && dstFile.getType().isDir()){
+		if (dstFile != null && dstFile.getType().isDirectory()){
 			dstParent = dstFile;
 		} 
 		

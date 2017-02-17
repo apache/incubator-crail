@@ -227,7 +227,7 @@ public class CoreFileSystem extends CrailFS {
 			BlockInfo fileBlock = fileRes.getFileBlock();
 			getBlockCache(fileInfo.getFd()).put(CoreSubOperation.createKey(fileInfo.getFd(), 0), fileBlock);
 			
-			if (fileInfo.getType().isDir()){
+			if (fileInfo.getType().isDirectory()){
 				return new CoreDirectory(this, fileInfo, path);
 			} else {
 				return new CoreLookupFile(this, fileInfo, path);
@@ -358,7 +358,7 @@ public class CoreFileSystem extends CrailFS {
 		}
 		
 		FileInfo dirInfo = fileRes.getFile();
-		if (!dirInfo.getType().isDir()){
+		if (!dirInfo.getType().isDirectory()){
 			LOG.info("getDirectoryList: " + NameNodeProtocol.messages[NameNodeProtocol.ERR_FILE_IS_NOT_DIR]);
 			throw new FileNotFoundException(NameNodeProtocol.messages[NameNodeProtocol.ERR_FILE_IS_NOT_DIR]);
 		}
@@ -537,7 +537,7 @@ public class CoreFileSystem extends CrailFS {
 			streamStats.incOpenOutput();
 			streamStats.incCurrentOutput();
 			streamStats.incMaxOutput();
-			if (file.getType().isDir()){
+			if (file.getType().isDirectory()){
 				streamStats.incOpenOutputDir();
 			}
 		}
@@ -553,7 +553,7 @@ public class CoreFileSystem extends CrailFS {
 			streamStats.incOpenInput();
 			streamStats.incCurrentInput();
 			streamStats.incMaxInput();
-			if (file.getType().isDir()){
+			if (file.getType().isDirectory()){
 				streamStats.incOpenInputDir();
 			}
 		}
@@ -567,7 +567,7 @@ public class CoreFileSystem extends CrailFS {
 			streamStats.incCloseInput();
 			this.ioStatsIn.mergeStatistics(stream.getCoreStatistics());
 			streamStats.decCurrentInput();
-			if (stream.getFile().getType().isDir()){
+			if (stream.getFile().getType().isDirectory()){
 				streamStats.incCloseInputDir();
 			}
 		}
@@ -582,7 +582,7 @@ public class CoreFileSystem extends CrailFS {
 			streamStats.incCloseOutput();
 			this.ioStatsOut.mergeStatistics(stream.getCoreStatistics());
 			streamStats.decCurrentOutput();
-			if (stream.getFile().getType().isDir()){
+			if (stream.getFile().getType().isDirectory()){
 				streamStats.incCloseOutputDir();
 			}
 		}

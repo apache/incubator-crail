@@ -65,7 +65,7 @@ public class FileInfo {
 	public int write(ByteBuffer buffer, boolean shipToken){
 		buffer.putLong(fd);
 		buffer.putLong(capacity.get());
-		buffer.putInt(type.value());
+		buffer.putInt(type.getLabel());
 		buffer.putLong(dirOffset);
 		if (shipToken){
 			buffer.putLong(token);
@@ -118,7 +118,7 @@ public class FileInfo {
 	}
 
 	public void updateToken(){
-		if (!type.isDir()){
+		if (!type.isDirectory()){
 			this.token = System.nanoTime() + TimeUnit.SECONDS.toNanos(CrailConstants.TOKEN_EXPIRATION);
 		}
 	}
@@ -144,7 +144,7 @@ public class FileInfo {
 	}
 
 	public String toString() {
-		return "fd " + fd + ", capacity " + capacity + ", type " + type.value() + ", dirOffset " + dirOffset + ", token " + token;
+		return "fd " + fd + ", capacity " + capacity + ", type " + type.getLabel() + ", dirOffset " + dirOffset + ", token " + token;
 	}
 
 	public CrailNodeType getType(){

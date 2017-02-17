@@ -248,12 +248,12 @@ public abstract class CoreStream {
 		if (CrailConstants.STATISTICS){
 			if (isLocal){
 				ioStats.incLocalOps();
-				if (fileInfo.getType().isDir()){
+				if (fileInfo.getType().isDirectory()){
 					ioStats.incLocalDirOps();
 				}
 			} else {
 				ioStats.incRemoteOps();
-				if (fileInfo.getType().isDir()){
+				if (fileInfo.getType().isDirectory()){
 					ioStats.incRemoteDirOps();
 				}
 			}

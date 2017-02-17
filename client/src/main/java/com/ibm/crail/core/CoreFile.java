@@ -39,7 +39,7 @@ abstract class CoreFile extends CoreNode implements CrailFile {
 	}
 	
 	public CrailInputStream getDirectInputStream(long readHint) throws Exception{
-		if (fileInfo.getType().isDir()){
+		if (fileInfo.getType().isDirectory()){
 			throw new Exception("Cannot open stream for directory");
 		}		
 		
@@ -47,7 +47,7 @@ abstract class CoreFile extends CoreNode implements CrailFile {
 	}	
 	
 	public synchronized CrailOutputStream getDirectOutputStream(long writeHint) throws Exception {
-		if (fileInfo.getType().isDir()){
+		if (fileInfo.getType().isDirectory()){
 			throw new Exception("Cannot open stream for directory");
 		}		
 		if (fileInfo.getToken() == 0){

@@ -80,7 +80,7 @@ public class RpcRequestMessage {
 		
 		public int write(ByteBuffer buffer) {
 			int written = filename.write(buffer);
-			buffer.putInt(type.value());
+			buffer.putInt(type.getLabel());
 			buffer.putInt(storageAffinity);
 			buffer.putInt(locationAffinity);
 			written += 12;

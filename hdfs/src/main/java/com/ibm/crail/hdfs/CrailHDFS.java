@@ -244,10 +244,10 @@ public class CrailHDFS extends AbstractFileSystem {
 		}
 		
 		FsPermission permission = FsPermission.getFileDefault();
-		if (directFile.getType().isDir()) {
+		if (directFile.getType().isDirectory()) {
 			permission = FsPermission.getDirDefault();
 		}		
-		FileStatus status = new FileStatus(directFile.getCapacity(), directFile.getType().isDir(), CrailConstants.SHADOW_REPLICATION, CrailConstants.BLOCK_SIZE, directFile.getModificationTime(), directFile.getModificationTime(), permission, CrailConstants.USER, CrailConstants.USER, path.makeQualified(this.getUri(), this.workingDir));
+		FileStatus status = new FileStatus(directFile.getCapacity(), directFile.getType().isDirectory(), CrailConstants.SHADOW_REPLICATION, CrailConstants.BLOCK_SIZE, directFile.getModificationTime(), directFile.getModificationTime(), permission, CrailConstants.USER, CrailConstants.USER, path.makeQualified(this.getUri(), this.workingDir));
 		return status;
 	}
 
@@ -286,10 +286,10 @@ public class CrailHDFS extends AbstractFileSystem {
 				CrailNode directFile = dfs.lookup(filepath).get();
 				if (directFile != null){
 					FsPermission permission = FsPermission.getFileDefault();
-					if (directFile.getType().isDir()) {
+					if (directFile.getType().isDirectory()) {
 						permission = FsPermission.getDirDefault();
 					}
-					FileStatus status = new FileStatus(directFile.getCapacity(), directFile.getType().isDir(), CrailConstants.SHADOW_REPLICATION, CrailConstants.BLOCK_SIZE, directFile.getModificationTime(), directFile.getModificationTime(), permission, CrailConstants.USER, CrailConstants.USER, new Path(filepath).makeQualified(this.getUri(), workingDir));	
+					FileStatus status = new FileStatus(directFile.getCapacity(), directFile.getType().isDirectory(), CrailConstants.SHADOW_REPLICATION, CrailConstants.BLOCK_SIZE, directFile.getModificationTime(), directFile.getModificationTime(), permission, CrailConstants.USER, CrailConstants.USER, new Path(filepath).makeQualified(this.getUri(), workingDir));	
 					statusList.add(status);
 				}
 			}

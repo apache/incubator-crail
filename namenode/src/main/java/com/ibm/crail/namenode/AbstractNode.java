@@ -66,7 +66,7 @@ public abstract class AbstractNode extends FileInfo implements Delayed {
 	}
 	
 	boolean addChild(AbstractNode child) throws Exception {
-		if (!this.getType().isDir()){
+		if (!this.getType().isDirectory()){
 			return false;
 		} 
 		
@@ -119,7 +119,7 @@ public abstract class AbstractNode extends FileInfo implements Delayed {
 	
 	@Override
 	public String toString() {
-		return String.format("%08d\t%08d\t\t%08d\t\t%08d\t\t%08d", getFd(), fileComponent, getCapacity(), getType().value(), getDirOffset());
+		return String.format("%08d\t%08d\t\t%08d\t\t%08d\t\t%08d", getFd(), fileComponent, getCapacity(), getType().getLabel(), getDirOffset());
 	}	
 
 	@Override

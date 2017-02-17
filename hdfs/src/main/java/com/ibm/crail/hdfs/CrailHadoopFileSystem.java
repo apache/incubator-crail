@@ -189,10 +189,10 @@ public class CrailHadoopFileSystem extends FileSystem {
 				CrailNode directFile = dfs.lookup(filepath).get();
 				if (directFile != null){
 					FsPermission permission = FsPermission.getFileDefault();
-					if (directFile.getType().isDir()) {
+					if (directFile.getType().isDirectory()) {
 						permission = FsPermission.getDirDefault();
 					}
-					FileStatus status = new FileStatus(directFile.getCapacity(), directFile.getType().isDir(), CrailConstants.SHADOW_REPLICATION, CrailConstants.BLOCK_SIZE, directFile.getModificationTime(), directFile.getModificationTime(), permission, CrailConstants.USER, CrailConstants.USER, new Path(filepath).makeQualified(this.getUri(), this.workingDir));	
+					FileStatus status = new FileStatus(directFile.getCapacity(), directFile.getType().isDirectory(), CrailConstants.SHADOW_REPLICATION, CrailConstants.BLOCK_SIZE, directFile.getModificationTime(), directFile.getModificationTime(), permission, CrailConstants.USER, CrailConstants.USER, new Path(filepath).makeQualified(this.getUri(), this.workingDir));	
 					statusList.add(status);
 				}
 			}
@@ -245,10 +245,10 @@ public class CrailHadoopFileSystem extends FileSystem {
 			throw new FileNotFoundException("File does not exist: " + path);
 		}
 		FsPermission permission = FsPermission.getFileDefault();
-		if (directFile.getType().isDir()) {
+		if (directFile.getType().isDirectory()) {
 			permission = FsPermission.getDirDefault();
 		}
-		FileStatus status = new FileStatus(directFile.getCapacity(), directFile.getType().isDir(), CrailConstants.SHADOW_REPLICATION, CrailConstants.BLOCK_SIZE, directFile.getModificationTime(), directFile.getModificationTime(), permission, CrailConstants.USER, CrailConstants.USER, path.makeQualified(this.getUri(), this.workingDir));
+		FileStatus status = new FileStatus(directFile.getCapacity(), directFile.getType().isDirectory(), CrailConstants.SHADOW_REPLICATION, CrailConstants.BLOCK_SIZE, directFile.getModificationTime(), directFile.getModificationTime(), permission, CrailConstants.USER, CrailConstants.USER, path.makeQualified(this.getUri(), this.workingDir));
 		return status;
 	}
 

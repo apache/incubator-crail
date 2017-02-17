@@ -53,7 +53,7 @@ public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 		this.noOp = new CrailImmediateOperation(0);
 		this.open = true;
 		if (CrailConstants.DEBUG){
-			LOG.info("CoreOutputStream, open, path " + file.getPath() + ", fd " + file.getFd() + ", streamId " + streamId + ", isDir " + file.getType().isDir() + ", writeHint " + this.writeHint);
+			LOG.info("CoreOutputStream, open, path " + file.getPath() + ", fd " + file.getFd() + ", streamId " + streamId + ", isDir " + file.getType().isDirectory() + ", writeHint " + this.writeHint);
 		}
 	}
 	
