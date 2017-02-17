@@ -69,7 +69,7 @@ public class CrailConstants {
 	public static int NAMENODE_DARPC_CLUSTERSIZE = 128;		
 	
 	public static final String DATANODE_TYPES_KEY = "crail.datanode.types";
-	public static String DATANODE_TYPES = "com.ibm.crail.datanode.rdma.RdmaDataNode";		
+	public static String DATANODE_TYPES = "com.ibm.crail.storage.rdma.RdmaDataNode";		
 
 	public static final String DIRECTORY_DEPTH_KEY = "crail.directory.depth";
 	public static int DIRECTORY_DEPTH = 16;
