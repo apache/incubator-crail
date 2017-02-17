@@ -29,11 +29,11 @@ import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.namenode.protocol.FileInfo;
 import com.ibm.crail.namenode.protocol.FileName;
-import com.ibm.crail.namenode.protocol.FileType;
 
 public abstract class AbstractNode extends FileInfo implements Delayed {
 	private static AtomicLong fdcount = new AtomicLong(0);
@@ -47,15 +47,15 @@ public abstract class AbstractNode extends FileInfo implements Delayed {
 		return new DirectoryBlocks(new FileName("/").getFileComponent());
 	}
 	
-	public static AbstractNode createNode(int fileComponent, FileType type) throws IOException {
-		if (type == FileType.DIRECTORY){
+	public static AbstractNode createNode(int fileComponent, CrailNodeType type) throws IOException {
+		if (type == CrailNodeType.DIRECTORY){
 			return new DirectoryBlocks(fileComponent);
 		} else {
 			return new FileBlocks(fileComponent);
 		}
 	}
 	
-	public AbstractNode(int fileComponent, FileType type){
+	public AbstractNode(int fileComponent, CrailNodeType type){
 		super(fdcount.incrementAndGet(), type);
 		
 		this.fileComponent = fileComponent;
@@ -66,7 +66,7 @@ public abstract class AbstractNode extends FileInfo implements Delayed {
 	}
 	
 	boolean addChild(AbstractNode child) throws Exception {
-		if (!this.isDir()){
+		if (!this.getType().isDir()){
 			return false;
 		} 
 		
@@ -119,7 +119,7 @@ public abstract class AbstractNode extends FileInfo implements Delayed {
 	
 	@Override
 	public String toString() {
-		return String.format("%08d\t%08d\t\t%08d\t\t%08d\t\t%08d", getFd(), fileComponent, getCapacity(), isDir() ? 1 : 0, getDirOffset());
+		return String.format("%08d\t%08d\t\t%08d\t\t%08d\t\t%08d", getFd(), fileComponent, getCapacity(), getType().value(), getDirOffset());
 	}	
 
 	@Override

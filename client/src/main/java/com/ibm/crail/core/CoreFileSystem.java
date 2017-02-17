@@ -39,12 +39,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 
 import com.ibm.crail.CrailBlockLocation;
-import com.ibm.crail.CrailDirectory;
-import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailFS;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.CrailStatistics;
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.Upcoming;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
@@ -53,7 +52,6 @@ import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.namenode.protocol.DataNodeInfo;
 import com.ibm.crail.namenode.protocol.FileInfo;
 import com.ibm.crail.namenode.protocol.FileName;
-import com.ibm.crail.namenode.protocol.FileType;
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
 import com.ibm.crail.namenode.rpc.RpcNameNode;
 import com.ibm.crail.namenode.rpc.RpcNameNodeClient;
@@ -144,7 +142,7 @@ public class CoreFileSystem extends CrailFS {
 		statistics.addProvider(datanodeEndpointCache);
 	}
 	
-	public Upcoming<CrailNode> create(String path, FileType type, int storageAffinity, int locationAffinity) throws Exception {
+	public Upcoming<CrailNode> create(String path, CrailNodeType type, int storageAffinity, int locationAffinity) throws Exception {
 		FileName name = new FileName(path);
 		
 		if (CrailConstants.DEBUG){
@@ -155,7 +153,7 @@ public class CoreFileSystem extends CrailFS {
 		return new CreateNodeFuture(this, path, type, storageAffinity, locationAffinity, fileRes);
 	}	
 	
-	CoreNode _createNode(String path, FileType type, int storageAffinity, int locationAffinity, RpcResponseMessage.CreateFileRes fileRes) throws Exception {
+	CoreNode _createNode(String path, CrailNodeType type, int storageAffinity, int locationAffinity, RpcResponseMessage.CreateFileRes fileRes) throws Exception {
 		if (fileRes.getError() == NameNodeProtocol.ERR_PARENT_MISSING){
 			throw new IOException("createNode: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
 		} else if  (fileRes.getError() == NameNodeProtocol.ERR_FILE_EXISTS){
@@ -229,7 +227,7 @@ public class CoreFileSystem extends CrailFS {
 			BlockInfo fileBlock = fileRes.getFileBlock();
 			getBlockCache(fileInfo.getFd()).put(CoreSubOperation.createKey(fileInfo.getFd(), 0), fileBlock);
 			
-			if (fileInfo.isDir()){
+			if (fileInfo.getType().isDir()){
 				return new CoreDirectory(this, fileInfo, path);
 			} else {
 				return new CoreLookupFile(this, fileInfo, path);
@@ -360,7 +358,7 @@ public class CoreFileSystem extends CrailFS {
 		}
 		
 		FileInfo dirInfo = fileRes.getFile();
-		if (!dirInfo.isDir()){
+		if (!dirInfo.getType().isDir()){
 			LOG.info("getDirectoryList: " + NameNodeProtocol.messages[NameNodeProtocol.ERR_FILE_IS_NOT_DIR]);
 			throw new FileNotFoundException(NameNodeProtocol.messages[NameNodeProtocol.ERR_FILE_IS_NOT_DIR]);
 		}
@@ -539,7 +537,7 @@ public class CoreFileSystem extends CrailFS {
 			streamStats.incOpenOutput();
 			streamStats.incCurrentOutput();
 			streamStats.incMaxOutput();
-			if (file.isDir()){
+			if (file.getType().isDir()){
 				streamStats.incOpenOutputDir();
 			}
 		}
@@ -555,7 +553,7 @@ public class CoreFileSystem extends CrailFS {
 			streamStats.incOpenInput();
 			streamStats.incCurrentInput();
 			streamStats.incMaxInput();
-			if (file.isDir()){
+			if (file.getType().isDir()){
 				streamStats.incOpenInputDir();
 			}
 		}
@@ -569,7 +567,7 @@ public class CoreFileSystem extends CrailFS {
 			streamStats.incCloseInput();
 			this.ioStatsIn.mergeStatistics(stream.getCoreStatistics());
 			streamStats.decCurrentInput();
-			if (stream.getFile().isDir()){
+			if (stream.getFile().getType().isDir()){
 				streamStats.incCloseInputDir();
 			}
 		}
@@ -584,7 +582,7 @@ public class CoreFileSystem extends CrailFS {
 			streamStats.incCloseOutput();
 			this.ioStatsOut.mergeStatistics(stream.getCoreStatistics());
 			streamStats.decCurrentOutput();
-			if (stream.getFile().isDir()){
+			if (stream.getFile().getType().isDir()){
 				streamStats.incCloseOutputDir();
 			}
 		}

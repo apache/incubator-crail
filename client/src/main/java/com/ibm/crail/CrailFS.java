@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.core.CoreFileSystem;
-import com.ibm.crail.namenode.protocol.FileType;
 import com.ibm.crail.utils.CrailUtils;
 
 public abstract class CrailFS {
@@ -38,7 +37,7 @@ public abstract class CrailFS {
 	private static AtomicLong referenceCounter = new AtomicLong(0);
 	private static CrailFS instance = null;
 	
-	public abstract Upcoming<CrailNode> create(String path, FileType type, int locationAffinity, int storageAffinity) throws Exception;
+	public abstract Upcoming<CrailNode> create(String path, CrailNodeType type, int locationAffinity, int storageAffinity) throws Exception;
 	public abstract Upcoming<CrailNode> lookup(String path) throws Exception;
 	public abstract Upcoming<CrailNode> rename(String srcPath, String dstPath) throws Exception;
 	public abstract Upcoming<CrailNode> delete(String path, boolean recursive) throws Exception;

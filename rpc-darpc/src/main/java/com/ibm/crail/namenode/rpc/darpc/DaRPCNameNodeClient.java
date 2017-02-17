@@ -25,12 +25,12 @@ import java.io.IOException;
 
 import org.slf4j.Logger;
 
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.namenode.protocol.DataNodeInfo;
 import com.ibm.crail.namenode.protocol.FileInfo;
 import com.ibm.crail.namenode.protocol.FileName;
-import com.ibm.crail.namenode.protocol.FileType;
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
 import com.ibm.crail.namenode.rpc.RpcNameNodeClient;
 import com.ibm.crail.namenode.rpc.RpcNameNodeFuture;
@@ -53,7 +53,7 @@ public class DaRPCNameNodeClient implements RpcNameNodeClient {
 	}	
 	
 	@Override
-	public RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> createFile(FileName filename, FileType type, int storageAffinity, int locationAffinity) throws IOException {
+	public RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> createFile(FileName filename, CrailNodeType type, int storageAffinity, int locationAffinity) throws IOException {
 		if (CrailConstants.DEBUG){
 			LOG.debug("RPC: createFile, fileType " + type + ", affinity " + locationAffinity);
 		}

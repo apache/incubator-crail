@@ -25,15 +25,12 @@ import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 
-import com.ibm.crail.CrailBlockLocation;
 import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFS;
 import com.ibm.crail.CrailFile;
-import com.ibm.crail.CrailInputStream;
 import com.ibm.crail.CrailNode;
-import com.ibm.crail.CrailOutputStream;
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.namenode.protocol.FileInfo;
-import com.ibm.crail.namenode.protocol.FileType;
 import com.ibm.crail.utils.CrailUtils;
 
 public class CoreNode implements CrailNode {
@@ -69,8 +66,8 @@ public class CoreNode implements CrailNode {
 		return fileInfo.getCapacity();
 	}
 	
-	public boolean isDir() {
-		return fileInfo.isDir();
+	public CrailNodeType getType() {
+		return fileInfo.getType();
 	}
 	
 	public int storageAffinity(){
@@ -123,7 +120,7 @@ class CoreCreateNode extends CoreNode {
 	private Future<?> dirFuture;
 	private DirectoryOutputStream dirStream;	
 	
-	public CoreCreateNode(CoreFileSystem fs, String path, FileType type, int storageAffinity, int locationAffinity, FileInfo fileInfo, Future<?> dirFuture, DirectoryOutputStream dirStream){
+	public CoreCreateNode(CoreFileSystem fs, String path, CrailNodeType type, int storageAffinity, int locationAffinity, FileInfo fileInfo, Future<?> dirFuture, DirectoryOutputStream dirStream){
 		super(fs, fileInfo, path, 0, 0);
 		this.dirFuture = dirFuture;
 		this.dirStream = dirStream;
@@ -276,16 +273,16 @@ class CoreEarlyNode implements CrailNode {
 			return -1;
 		}
 	}
-
+	
 	@Override
-	public boolean isDir() {
+	public CrailNodeType getType() {
 		try {
-			return file().isDir();
+			return file().getType();
 		} catch(Exception e){
 			LOG.info("Error: " + e.getMessage());
-			return false;
+			return CrailNodeType.DATAFILE;
 		}
-	}
+	}	
 
 	@Override
 	public CrailFile asFile() throws Exception {

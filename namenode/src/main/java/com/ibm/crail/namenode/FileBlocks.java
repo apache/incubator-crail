@@ -27,9 +27,9 @@ import java.util.Iterator;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.protocol.BlockInfo;
-import com.ibm.crail.namenode.protocol.FileType;
 
 public class FileBlocks extends AbstractNode {
 	private ArrayList<BlockInfo> blocks;
@@ -38,7 +38,7 @@ public class FileBlocks extends AbstractNode {
 	private final Lock writeLock;
 	
 	public FileBlocks(int fileComponent) {
-		super(fileComponent, FileType.DATAFILE);
+		super(fileComponent, CrailNodeType.DATAFILE);
 		this.blocks = new ArrayList<BlockInfo>(CrailConstants.NAMENODE_FILEBLOCKS);
 		this.lock = new ReentrantReadWriteLock();
 		this.readLock = lock.readLock();

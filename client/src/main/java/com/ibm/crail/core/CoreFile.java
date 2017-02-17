@@ -24,17 +24,11 @@ package com.ibm.crail.core;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 
-import org.slf4j.Logger;
-
 import com.ibm.crail.CrailBlockLocation;
-import com.ibm.crail.CrailDirectory;
-import com.ibm.crail.CrailFS;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailInputStream;
-import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailOutputStream;
 import com.ibm.crail.namenode.protocol.FileInfo;
-import com.ibm.crail.utils.CrailUtils;
 
 abstract class CoreFile extends CoreNode implements CrailFile {
 	private Semaphore outputStreams;
@@ -45,7 +39,7 @@ abstract class CoreFile extends CoreNode implements CrailFile {
 	}
 	
 	public CrailInputStream getDirectInputStream(long readHint) throws Exception{
-		if (fileInfo.isDir()){
+		if (fileInfo.getType().isDir()){
 			throw new Exception("Cannot open stream for directory");
 		}		
 		
@@ -53,7 +47,7 @@ abstract class CoreFile extends CoreNode implements CrailFile {
 	}	
 	
 	public synchronized CrailOutputStream getDirectOutputStream(long writeHint) throws Exception {
-		if (fileInfo.isDir()){
+		if (fileInfo.getType().isDir()){
 			throw new Exception("Cannot open stream for directory");
 		}		
 		if (fileInfo.getToken() == 0){

@@ -46,9 +46,9 @@ import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailFS;
 import com.ibm.crail.CrailNode;
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.namenode.protocol.FileType;
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
 import com.ibm.crail.utils.CrailUtils;
 
@@ -112,7 +112,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 			long blockSize, Progressable progress) throws IOException {
 		CrailFile fileInfo = null;
 		try {
-			fileInfo = dfs.create(path.toUri().getRawPath(), FileType.DATAFILE, CrailHDFSConstants.STORAGE_AFFINITY, localAffinity).get().asFile();
+			fileInfo = dfs.create(path.toUri().getRawPath(), CrailNodeType.DATAFILE, CrailHDFSConstants.STORAGE_AFFINITY, localAffinity).get().asFile();
 		} catch (Exception e) {
 			if (e.getMessage().contains(NameNodeProtocol.messages[NameNodeProtocol.ERR_PARENT_MISSING])) {
 				fileInfo = null;
@@ -125,7 +125,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 			Path parent = path.getParent();
 			this.mkdirs(parent, FsPermission.getDirDefault());
 			try {
-				fileInfo = dfs.create(path.toUri().getRawPath(), FileType.DATAFILE, CrailHDFSConstants.STORAGE_AFFINITY, localAffinity).get().asFile();
+				fileInfo = dfs.create(path.toUri().getRawPath(), CrailNodeType.DATAFILE, CrailHDFSConstants.STORAGE_AFFINITY, localAffinity).get().asFile();
 			} catch (Exception e) {
 				throw new IOException(e);
 			}
@@ -189,10 +189,10 @@ public class CrailHadoopFileSystem extends FileSystem {
 				CrailNode directFile = dfs.lookup(filepath).get();
 				if (directFile != null){
 					FsPermission permission = FsPermission.getFileDefault();
-					if (directFile.isDir()) {
+					if (directFile.getType().isDir()) {
 						permission = FsPermission.getDirDefault();
 					}
-					FileStatus status = new FileStatus(directFile.getCapacity(), directFile.isDir(), CrailConstants.SHADOW_REPLICATION, CrailConstants.BLOCK_SIZE, directFile.getModificationTime(), directFile.getModificationTime(), permission, CrailConstants.USER, CrailConstants.USER, new Path(filepath).makeQualified(this.getUri(), this.workingDir));	
+					FileStatus status = new FileStatus(directFile.getCapacity(), directFile.getType().isDir(), CrailConstants.SHADOW_REPLICATION, CrailConstants.BLOCK_SIZE, directFile.getModificationTime(), directFile.getModificationTime(), permission, CrailConstants.USER, CrailConstants.USER, new Path(filepath).makeQualified(this.getUri(), this.workingDir));	
 					statusList.add(status);
 				}
 			}
@@ -217,7 +217,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 	@Override
 	public boolean mkdirs(Path path, FsPermission permission) throws IOException {
 		try {
-			CrailDirectory file = dfs.create(path.toUri().getRawPath(), FileType.DIRECTORY, 0, 0).get().asDirectory();
+			CrailDirectory file = dfs.create(path.toUri().getRawPath(), CrailNodeType.DIRECTORY, 0, 0).get().asDirectory();
 			file.syncDir();
 			return true;
 		} catch(Exception e){
@@ -245,10 +245,10 @@ public class CrailHadoopFileSystem extends FileSystem {
 			throw new FileNotFoundException("File does not exist: " + path);
 		}
 		FsPermission permission = FsPermission.getFileDefault();
-		if (directFile.isDir()) {
+		if (directFile.getType().isDir()) {
 			permission = FsPermission.getDirDefault();
 		}
-		FileStatus status = new FileStatus(directFile.getCapacity(), directFile.isDir(), CrailConstants.SHADOW_REPLICATION, CrailConstants.BLOCK_SIZE, directFile.getModificationTime(), directFile.getModificationTime(), permission, CrailConstants.USER, CrailConstants.USER, path.makeQualified(this.getUri(), this.workingDir));
+		FileStatus status = new FileStatus(directFile.getCapacity(), directFile.getType().isDir(), CrailConstants.SHADOW_REPLICATION, CrailConstants.BLOCK_SIZE, directFile.getModificationTime(), directFile.getModificationTime(), permission, CrailConstants.USER, CrailConstants.USER, path.makeQualified(this.getUri(), this.workingDir));
 		return status;
 	}
 

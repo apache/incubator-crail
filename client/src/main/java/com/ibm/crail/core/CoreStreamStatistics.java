@@ -21,7 +21,6 @@
 
 package com.ibm.crail.core;
 
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.ibm.crail.*;

@@ -27,12 +27,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailNode;
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.Upcoming;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.namenode.protocol.FileType;
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
 import com.ibm.crail.namenode.rpc.RpcResponseMessage;
 
@@ -148,11 +147,11 @@ public abstract class CoreMetaDataOperation<R,T> implements Upcoming<T> {
 class CreateNodeFuture extends CoreMetaDataOperation<RpcResponseMessage.CreateFileRes, CrailNode> {
 	private CoreFileSystem fs;
 	private String path;
-	private FileType type;
+	private CrailNodeType type;
 	private int storageAffinity;
 	private int locationAffinity;
 
-	public CreateNodeFuture(CoreFileSystem fs, String path, FileType type, int storageAffinity, int locationAffinity, Future<RpcResponseMessage.CreateFileRes> fileRes) {
+	public CreateNodeFuture(CoreFileSystem fs, String path, CrailNodeType type, int storageAffinity, int locationAffinity, Future<RpcResponseMessage.CreateFileRes> fileRes) {
 		super(fileRes);
 		this.fs = fs;
 		this.path = path;

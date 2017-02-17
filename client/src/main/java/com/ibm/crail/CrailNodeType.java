@@ -1,11 +1,11 @@
-package com.ibm.crail.namenode.protocol;
+package com.ibm.crail;
 
-public enum FileType {
+public enum CrailNodeType {
 	DATAFILE(0), DIRECTORY(1), MULTIFILE(2), STREAMFILE(3);
 	
 	private int value;
 	
-	FileType(int value){
+	CrailNodeType(int value){
 		this.value = value;
 	}
 	
@@ -17,7 +17,19 @@ public enum FileType {
 		return this == DIRECTORY;
 	}
 	
-	public static FileType parse(int value){
+	public boolean isDataFile(){
+		return this == DATAFILE;
+	}	
+	
+	public boolean isMultiFile(){
+		return this == MULTIFILE;
+	}
+	
+	public boolean isStreamFile(){
+		return this == STREAMFILE;
+	}
+	
+	public static CrailNodeType parse(int value){
 		switch(value){
 		case 0:
 				return DATAFILE;

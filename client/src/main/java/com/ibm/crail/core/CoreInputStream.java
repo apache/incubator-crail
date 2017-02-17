@@ -53,7 +53,7 @@ public class CoreInputStream extends CoreStream implements CrailInputStream {
 		this.noOp = new CrailImmediateOperation(0);
 		this.open = true;
 		if (CrailConstants.DEBUG){
-			LOG.info("CoreInputStream: open, path  " + file.getPath() + ", fd " + file.getFd() + ", streamId " + streamId + ", isDir " + file.isDir() + ", readHint " + this.readHint);
+			LOG.info("CoreInputStream: open, path  " + file.getPath() + ", fd " + file.getFd() + ", streamId " + streamId + ", isDir " + file.getType().isDir() + ", readHint " + this.readHint);
 		}
 	}
 	

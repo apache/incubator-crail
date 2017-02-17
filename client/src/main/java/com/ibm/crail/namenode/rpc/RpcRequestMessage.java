@@ -24,29 +24,29 @@ package com.ibm.crail.namenode.rpc;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.namenode.protocol.DataNodeInfo;
 import com.ibm.crail.namenode.protocol.FileInfo;
 import com.ibm.crail.namenode.protocol.FileName;
-import com.ibm.crail.namenode.protocol.FileType;
 
 public class RpcRequestMessage {
 	public static class CreateFileReq implements NameNodeProtocol.NameNodeRpcMessage {
 		public static int CSIZE = FileName.CSIZE + 12;
 		
 		protected FileName filename;
-		protected FileType type;
+		protected CrailNodeType type;
 		protected int storageAffinity;
 		protected int locationAffinity;
 		
 		public CreateFileReq(){
 			this.filename = new FileName();
-			this.type = FileType.DATAFILE;
+			this.type = CrailNodeType.DATAFILE;
 			this.storageAffinity = 0;
 			this.locationAffinity = 0;
 		}
 		
-		public CreateFileReq(FileName filename, FileType type, int storageAffinity, int locationAffinity) {
+		public CreateFileReq(FileName filename, CrailNodeType type, int storageAffinity, int locationAffinity) {
 			this.filename = filename;
 			this.type = type;
 			this.storageAffinity = storageAffinity;
@@ -57,7 +57,7 @@ public class RpcRequestMessage {
 			return filename;
 		}
 
-		public FileType getFileType(){
+		public CrailNodeType getFileType(){
 			return type;
 		}
 		
@@ -91,7 +91,7 @@ public class RpcRequestMessage {
 		public void update(ByteBuffer buffer) {
 			filename.update(buffer);
 			int tmp = buffer.getInt();
-			type = FileType.parse(tmp);
+			type = CrailNodeType.parse(tmp);
 			storageAffinity = buffer.getInt();
 			locationAffinity = buffer.getInt();
 		}

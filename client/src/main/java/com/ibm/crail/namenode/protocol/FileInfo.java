@@ -26,6 +26,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.conf.CrailConstants;
 
 public class FileInfo {
@@ -33,16 +34,16 @@ public class FileInfo {
 	
 	private long fd;
 	protected AtomicLong capacity;
-	private FileType type;
+	private CrailNodeType type;
 	private long dirOffset;
 	private long token;
 	private long modificationTime;
 	
 	public FileInfo(){
-		this(-1, FileType.DATAFILE);
+		this(-1, CrailNodeType.DATAFILE);
 	}
 	
-	protected FileInfo(long fd, FileType type){
+	protected FileInfo(long fd, CrailNodeType type){
 		this.fd = fd;
 		this.type = type;
 		this.dirOffset = 0;
@@ -79,7 +80,7 @@ public class FileInfo {
 	public void update(ByteBuffer buffer) throws UnknownHostException{
 		fd = buffer.getLong();
 		capacity.set(buffer.getLong());
-		type = FileType.parse(buffer.getInt());
+		type = CrailNodeType.parse(buffer.getInt());
 		dirOffset = buffer.getLong();
 		token = buffer.getLong();
 		modificationTime = buffer.getLong();
@@ -117,7 +118,7 @@ public class FileInfo {
 	}
 
 	public void updateToken(){
-		if (!isDir()){
+		if (!type.isDir()){
 			this.token = System.nanoTime() + TimeUnit.SECONDS.toNanos(CrailConstants.TOKEN_EXPIRATION);
 		}
 	}
@@ -143,14 +144,10 @@ public class FileInfo {
 	}
 
 	public String toString() {
-		return "fd " + fd + ", capacity " + capacity + ", isdir " + isDir() + ", dirOffset " + dirOffset + ", token " + token;
+		return "fd " + fd + ", capacity " + capacity + ", type " + type.value() + ", dirOffset " + dirOffset + ", token " + token;
 	}
 
-	public boolean isDir() {
-		return type.isDir();
-	}
-	
-	public FileType getType(){
+	public CrailNodeType getType(){
 		return type;
 	}
 
