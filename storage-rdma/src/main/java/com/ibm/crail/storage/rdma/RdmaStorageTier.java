@@ -51,7 +51,7 @@ import com.ibm.disni.rdma.*;
 import com.ibm.disni.util.*;
 import com.ibm.disni.rdma.verbs.IbvMr;
 
-public class RdmaDataNode extends StorageTier {
+public class RdmaStorageTier extends StorageTier {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	//server-side
@@ -59,9 +59,9 @@ public class RdmaDataNode extends StorageTier {
 	
 	//client-side
 	private MrCache clientMrCache = null;
-	private RdmaDataNodeGroup clientGroup = null;
+	private RdmaStorageGroup clientGroup = null;
 	
-	public RdmaDataNode(){
+	public RdmaStorageTier(){
 		this.serverAddr = null;
 		this.clientGroup = null;
 		this.clientMrCache = null;
@@ -143,12 +143,12 @@ public class RdmaDataNode extends StorageTier {
 			return;
 		}
 		
-		RdmaPassiveEndpointGroup<RdmaDataNodeServerEndpoint> datanodeGroup = new RdmaPassiveEndpointGroup<RdmaDataNodeServerEndpoint>(-1, RdmaConstants.DATANODE_RDMA_QUEUESIZE, 4, RdmaConstants.DATANODE_RDMA_QUEUESIZE*100);
-		RdmaServerEndpoint<RdmaDataNodeServerEndpoint> datanodeServerEndpoint = datanodeGroup.createServerEndpoint();
-		RdmaDataNodeServer datanodeServer = new RdmaDataNodeServer(datanodeServerEndpoint, serverAddr);
+		RdmaPassiveEndpointGroup<RdmaStorageServerEndpoint> datanodeGroup = new RdmaPassiveEndpointGroup<RdmaStorageServerEndpoint>(-1, RdmaConstants.DATANODE_RDMA_QUEUESIZE, 4, RdmaConstants.DATANODE_RDMA_QUEUESIZE*100);
+		RdmaServerEndpoint<RdmaStorageServerEndpoint> datanodeServerEndpoint = datanodeGroup.createServerEndpoint();
+		RdmaStorageServer datanodeServer = new RdmaStorageServer(datanodeServerEndpoint, serverAddr);
 		
 		try {
-			datanodeGroup.init(new RdmaDataNodeServerEndpointFactory(datanodeGroup, datanodeServer));
+			datanodeGroup.init(new RdmaStorageEndpointFactory(datanodeGroup, datanodeServer));
 			datanodeServerEndpoint.bind(serverAddr, 100);
 		} catch(Exception e){
 			LOG.info("######## port already occupied");

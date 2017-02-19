@@ -23,20 +23,24 @@ package com.ibm.crail.storage.rdma;
 
 import java.io.IOException;
 
-import com.ibm.disni.rdma.*;
 import com.ibm.disni.rdma.verbs.*;
+import com.ibm.disni.rdma.*;
 
-public class RdmaDataNodeServerEndpointFactory implements RdmaEndpointFactory<RdmaDataNodeServerEndpoint> {
-	private RdmaDataNodeServer closer;
-	private RdmaPassiveEndpointGroup<RdmaDataNodeServerEndpoint> group;
-	
-	public RdmaDataNodeServerEndpointFactory(RdmaPassiveEndpointGroup<RdmaDataNodeServerEndpoint> group, RdmaDataNodeServer closer){
-		this.group = group;
+public class RdmaStorageServerEndpoint extends RdmaEndpoint {
+	private RdmaStorageServer closer;
+
+	public RdmaStorageServerEndpoint(RdmaPassiveEndpointGroup<RdmaStorageServerEndpoint> endpointGroup, RdmaCmId idPriv, RdmaStorageServer closer, boolean serverSide) throws IOException {	
+		super(endpointGroup, idPriv, serverSide);
 		this.closer = closer;
-	}
+	}	
 	
-	@Override
-	public RdmaDataNodeServerEndpoint createEndpoint(RdmaCmId id, boolean serverSide) throws IOException {
-		return new RdmaDataNodeServerEndpoint(group, id, closer, serverSide);
+	public synchronized void dispatchCmEvent(RdmaCmEvent cmEvent)
+			throws IOException {
+		super.dispatchCmEvent(cmEvent);
+		int eventType = cmEvent.getEvent();
+		if (eventType == RdmaCmEvent.EventType.RDMA_CM_EVENT_DISCONNECTED
+				.ordinal()) {
+			closer.close(this);
+		}
 	}
 }

@@ -29,14 +29,14 @@ import org.slf4j.Logger;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.disni.rdma.*;
 
-public class RdmaDataNodeServer implements Runnable {
+public class RdmaStorageServer implements Runnable {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	private InetSocketAddress datanodeAddr;
-	private RdmaServerEndpoint<RdmaDataNodeServerEndpoint> datanodeServerEndpoint;
+	private RdmaServerEndpoint<RdmaStorageServerEndpoint> datanodeServerEndpoint;
 	private ConcurrentHashMap<Integer, RdmaEndpoint> allEndpoints; 
 	
-	public RdmaDataNodeServer(RdmaServerEndpoint<RdmaDataNodeServerEndpoint> serverEndpoint, InetSocketAddress datanodeAddr) {
+	public RdmaStorageServer(RdmaServerEndpoint<RdmaStorageServerEndpoint> serverEndpoint, InetSocketAddress datanodeAddr) {
 		this.datanodeAddr = datanodeAddr;
 		this.datanodeServerEndpoint = serverEndpoint;
 		this.allEndpoints = new ConcurrentHashMap<Integer, RdmaEndpoint>();
@@ -65,7 +65,7 @@ public class RdmaDataNodeServer implements Runnable {
 		}
 	}
 
-	public RdmaServerEndpoint<RdmaDataNodeServerEndpoint> getDatanodeServerEndpoint() {
+	public RdmaServerEndpoint<RdmaStorageServerEndpoint> getDatanodeServerEndpoint() {
 		return datanodeServerEndpoint;
 	}
 

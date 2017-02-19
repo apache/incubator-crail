@@ -27,12 +27,12 @@ import java.net.InetSocketAddress;
 import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.storage.rdma.MrCache;
 import com.ibm.crail.storage.rdma.RdmaConstants;
-import com.ibm.crail.storage.rdma.RdmaDataNode;
-import com.ibm.crail.storage.rdma.RdmaDataNodeGroup;
+import com.ibm.crail.storage.rdma.RdmaStorageTier;
+import com.ibm.crail.storage.rdma.RdmaStorageGroup;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.disni.rdma.*;
 
-public class RdmaDataNodePassiveGroup extends RdmaPassiveEndpointGroup<RdmaDataNodePassiveEndpoint> implements RdmaDataNodeGroup {
+public class RdmaDataNodePassiveGroup extends RdmaPassiveEndpointGroup<RdmaDataNodePassiveEndpoint> implements RdmaStorageGroup {
 	private RdmaDataNodeLocalEndpoint localEndpoint;
 	private MrCache mrCache;
 
@@ -41,7 +41,7 @@ public class RdmaDataNodePassiveGroup extends RdmaPassiveEndpointGroup<RdmaDataN
 		super(timeout, maxWR, maxSge, cqSize);
 		try {
 			this.mrCache = mrCache;
-			InetSocketAddress datanodeAddr = RdmaDataNode.getDataNodeAddress();
+			InetSocketAddress datanodeAddr = RdmaStorageTier.getDataNodeAddress();
 			if (datanodeAddr != null){
 				this.localEndpoint = new RdmaDataNodeLocalEndpoint(datanodeAddr);
 			} else {

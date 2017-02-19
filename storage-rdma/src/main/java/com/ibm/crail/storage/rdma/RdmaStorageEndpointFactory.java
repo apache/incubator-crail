@@ -22,15 +22,21 @@
 package com.ibm.crail.storage.rdma;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 
-import com.ibm.crail.storage.StorageEndpoint;
+import com.ibm.disni.rdma.*;
+import com.ibm.disni.rdma.verbs.*;
 
-public interface RdmaDataNodeGroup {
-
-	public StorageEndpoint createEndpoint(InetSocketAddress inetAddress) throws IOException;
-
-	public void close() throws InterruptedException, IOException;
+public class RdmaStorageEndpointFactory implements RdmaEndpointFactory<RdmaStorageServerEndpoint> {
+	private RdmaStorageServer closer;
+	private RdmaPassiveEndpointGroup<RdmaStorageServerEndpoint> group;
 	
-	public int getType();
+	public RdmaStorageEndpointFactory(RdmaPassiveEndpointGroup<RdmaStorageServerEndpoint> group, RdmaStorageServer closer){
+		this.group = group;
+		this.closer = closer;
+	}
+	
+	@Override
+	public RdmaStorageServerEndpoint createEndpoint(RdmaCmId id, boolean serverSide) throws IOException {
+		return new RdmaStorageServerEndpoint(group, id, closer, serverSide);
+	}
 }
