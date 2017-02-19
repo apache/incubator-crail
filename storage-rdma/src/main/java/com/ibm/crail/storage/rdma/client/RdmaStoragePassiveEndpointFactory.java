@@ -22,19 +22,18 @@
 package com.ibm.crail.storage.rdma.client;
 
 import java.io.IOException;
-
 import com.ibm.disni.rdma.verbs.*;
 import com.ibm.disni.rdma.*;
 
-public class RdmaDataNodeActiveEndpointFactory implements RdmaEndpointFactory<RdmaDataNodeActiveEndpoint> {
-	private RdmaDataNodeActiveGroup group;
+public class RdmaStoragePassiveEndpointFactory implements RdmaEndpointFactory<RdmaStoragePassiveEndpoint> {
+	private RdmaStoragePassiveGroup group;
 	
-	public RdmaDataNodeActiveEndpointFactory(RdmaDataNodeActiveGroup group){
+	public RdmaStoragePassiveEndpointFactory(RdmaStoragePassiveGroup group){
 		this.group = group;
 	}
 	
 	@Override
-	public RdmaDataNodeActiveEndpoint createEndpoint(RdmaCmId id, boolean serverSide) throws IOException {
-		return new RdmaDataNodeActiveEndpoint(group, id, serverSide);
+	public RdmaStoragePassiveEndpoint createEndpoint(RdmaCmId id, boolean serverSide) throws IOException {
+		return new RdmaStoragePassiveEndpoint(group, id, serverSide);
 	}
 }

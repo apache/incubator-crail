@@ -28,6 +28,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
+
+import org.slf4j.Logger;
 
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.protocol.BlockInfo;
@@ -37,28 +41,35 @@ import com.ibm.crail.storage.rdma.MrCache;
 import com.ibm.crail.storage.rdma.RdmaConstants;
 import com.ibm.crail.storage.rdma.MrCache.DeviceMrCache;
 import com.ibm.crail.utils.AtomicIntegerModulo;
+import com.ibm.crail.utils.CrailUtils;
 import com.ibm.disni.util.MemoryUtils;
 import com.ibm.disni.rdma.verbs.*;
 import com.ibm.disni.rdma.verbs.SVCPostSend.SendWRMod;
 import com.ibm.disni.rdma.verbs.SVCPostSend.SgeMod;
 import com.ibm.disni.rdma.*;
 
-public class RdmaDataNodeActiveEndpoint extends RdmaActiveEndpoint implements StorageEndpoint {
+public class RdmaStoragePassiveEndpoint extends RdmaEndpoint implements StorageEndpoint {
+	private static final Logger LOG = CrailUtils.getLogger();
+	
 	private LinkedBlockingQueue<SVCPostSend> writeOps;
 	private LinkedBlockingQueue<SVCPostSend> readOps;
 	private AtomicIntegerModulo opcount;
+	private ReentrantLock lock;
+	private IbvWC[] wcList;
+	private SVCPollCq poll;	
 	private Semaphore sendQueueAvailable;
-	private ConcurrentHashMap<Long, RdmaDataActiveFuture> futureMap;
+	private ConcurrentHashMap<Long, RdmaPassiveFuture> futureMap;
 	private MrCache mrCache;
 	private DeviceMrCache deviceCache;
 	
-	public RdmaDataNodeActiveEndpoint(RdmaDataNodeActiveGroup group, RdmaCmId id, boolean serverSide) throws IOException {
+	public RdmaStoragePassiveEndpoint(RdmaStoragePassiveGroup group, RdmaCmId id, boolean serverSide) throws IOException {
 		super(group, id, serverSide);
 		writeOps = new LinkedBlockingQueue<SVCPostSend>();
 		readOps = new LinkedBlockingQueue<SVCPostSend>();
 		this.opcount = new AtomicIntegerModulo();
-		this.futureMap = new ConcurrentHashMap<Long, RdmaDataActiveFuture>();
+		this.lock = new ReentrantLock();
 		this.sendQueueAvailable = new Semaphore(RdmaConstants.DATANODE_RDMA_QUEUESIZE);
+		this.futureMap = new ConcurrentHashMap<Long, RdmaPassiveFuture>();
 		this.mrCache = group.getMrCache();
 		this.deviceCache = null;
 	}
@@ -73,6 +84,13 @@ public class RdmaDataNodeActiveEndpoint extends RdmaActiveEndpoint implements St
 			SVCPostSend read = initReadOp();
 			readOps.add(read);
 		}
+		
+		IbvCQ cq = getCqProvider().getCQ();
+		this.wcList = new IbvWC[getCqProvider().getCqSize()];
+		for (int i = 0; i < wcList.length; i++){
+			wcList[i] = new IbvWC();
+		}		
+		this.poll = cq.poll(wcList, wcList.length);			
 	}
 	
 	private SVCPostSend initWriteOp() throws IOException {
@@ -81,6 +99,7 @@ public class RdmaDataNodeActiveEndpoint extends RdmaActiveEndpoint implements St
 		IbvSendWR writeWR = new IbvSendWR();
 		writeWR.setWr_id(opcount.getAndIncrement());
 		writeWR.setOpcode(IbvSendWR.IBV_WR_RDMA_WRITE);
+		writeWR.setSend_flags(0);
 		LinkedList<IbvSge> sgeListWrite = new LinkedList<IbvSge>();
 		IbvSge sgeSendWrite = new IbvSge();
 		sgeListWrite.add(sgeSendWrite);
@@ -100,6 +119,7 @@ public class RdmaDataNodeActiveEndpoint extends RdmaActiveEndpoint implements St
 		wrList_send.add(readWR);
 		
 		SVCPostSend rdmaOp = this.postSend(wrList_send);
+		
 		return rdmaOp;
 	}
 
@@ -121,7 +141,6 @@ public class RdmaDataNodeActiveEndpoint extends RdmaActiveEndpoint implements St
 		return rdmaOp;
 	}
 	
-	@Override
 	public Future<DataResult> write(ByteBuffer buffer, ByteBuffer region, BlockInfo remoteMr, long remoteOffset) throws IOException, InterruptedException {
 		if (buffer.remaining() > CrailConstants.BLOCK_SIZE){
 			throw new IOException("write size too large " + buffer.remaining());
@@ -129,6 +148,9 @@ public class RdmaDataNodeActiveEndpoint extends RdmaActiveEndpoint implements St
 		if (buffer.remaining() <= 0){
 			throw new IOException("write size too small, len " + buffer.remaining());
 		}	
+		if (buffer.position() < 0){
+			throw new IOException("local offset too small " + buffer.position());
+		}
 		if (remoteOffset < 0){
 			throw new IOException("remote offset too small " + remoteOffset);
 		}	
@@ -137,7 +159,7 @@ public class RdmaDataNodeActiveEndpoint extends RdmaActiveEndpoint implements St
 		}		
 		if (remoteMr.getLkey() == 0){
 			throw new IOException("remote key is 0 " + remoteMr.getLkey());
-		}
+		}	
 		
 		if (deviceCache == null){
 			deviceCache = mrCache.getDeviceCache(this.getPd());
@@ -169,33 +191,32 @@ public class RdmaDataNodeActiveEndpoint extends RdmaActiveEndpoint implements St
 		SgeMod sgeSendRead = writeOp.getWrMod(1).getSgeMod(0);
 		sgeSendRead.setAddr(bufferAddress + buffer.position());
 		sgeSendRead.setLkey(localMr.getLkey());
+
+		while(!sendQueueAvailable.tryAcquire()){
+			this.pollOnce();
+		}	
+		while(!sendQueueAvailable.tryAcquire()){
+			this.pollOnce();
+		}			
 		
-		sendQueueAvailable.acquire();
-		sendQueueAvailable.acquire();
+		RdmaPassiveFuture future = new RdmaPassiveFuture(this, sendReadWR.getWr_id(), sgeSendWrite.getLength(), true);
 		
-		if (writeOp.getWrMod(0).getRdmaMod().getRkey() == 0){
-			throw new IOException("stag is zero, can't be");
-		}
-		if (writeOp.getWrMod(1).getRdmaMod().getRkey() == 0){
-			throw new IOException("stag is zero, can't be");
-		}
-		
-		RdmaDataActiveFuture future = new RdmaDataActiveFuture(sendReadWR.getWr_id(), sgeSendWrite.getLength(), true);
-		
-		futureMap.put(future.getWrid(), future);
+		futureMap.put(future.getWrid(), future);	
 		writeOp.execute();
 		writeOps.add(writeOp);
 		
 		return future;
 	}
 
-	@Override
 	public Future<DataResult> read(ByteBuffer buffer, ByteBuffer region, BlockInfo remoteMr, long remoteOffset) throws IOException, InterruptedException {
 		if (buffer.remaining() > CrailConstants.BLOCK_SIZE){
 			throw new IOException("read size too large");
 		}	
 		if (buffer.remaining() <= 0){
 			throw new IOException("read size too small, len " + buffer.remaining());
+		}
+		if (buffer.position() < 0){
+			throw new IOException("local offset too small " + buffer.position());
 		}
 		if (remoteOffset < 0){
 			throw new IOException("remote offset too small " + remoteOffset);
@@ -205,7 +226,7 @@ public class RdmaDataNodeActiveEndpoint extends RdmaActiveEndpoint implements St
 		}		
 		if (remoteMr.getLkey() == 0){
 			throw new IOException("remote key is 0 " + remoteMr.getLkey());
-		}	
+		}
 		
 		if (deviceCache == null){
 			deviceCache = mrCache.getDeviceCache(this.getPd());
@@ -216,7 +237,7 @@ public class RdmaDataNodeActiveEndpoint extends RdmaActiveEndpoint implements St
 			deviceCache.put(localMr);
 		}
 		long bufferAddress = MemoryUtils.getAddress(buffer);
-				
+		
 		SVCPostSend readOp = readOps.take();
 		
 		SendWRMod sendWR = readOp.getWrMod(0);
@@ -229,13 +250,11 @@ public class RdmaDataNodeActiveEndpoint extends RdmaActiveEndpoint implements St
 		sendWR.getRdmaMod().setRemote_addr(remoteMr.getAddr() + remoteOffset);
 		sendWR.getRdmaMod().setRkey(remoteMr.getLkey());
 		
-		sendQueueAvailable.acquire();
-		
-		if (readOp.getWrMod(0).getRdmaMod().getRkey() == 0){
-			throw new IOException("stag is zero, can't be");
+		while(!sendQueueAvailable.tryAcquire()){
+			this.pollOnce();
 		}
 		
-		RdmaDataActiveFuture future = new RdmaDataActiveFuture(sendWR.getWr_id(), sgeSend.getLength(), false);
+		RdmaPassiveFuture future = new RdmaPassiveFuture(this, sendWR.getWr_id(), sgeSend.getLength(), false);
 		
 		futureMap.put(future.getWrid(), future);
 		readOp.execute();
@@ -244,39 +263,117 @@ public class RdmaDataNodeActiveEndpoint extends RdmaActiveEndpoint implements St
 		return future;		
 	}
 	
-	@Override
-	public void dispatchCqEvent(IbvWC wc) throws IOException {
-		if (wc.getStatus() == 0){
-			RdmaDataActiveFuture future = futureMap.remove(wc.getWr_id());
+	public int pollOnce() throws IOException {
+		int res = 0;
+		if (!lock.tryLock()){
+//			LOG.info("cannot get lock on ep " + this.getEndpointId());
+			return res;
+		}
+		
+//		LOG.info("got lock on ep " + this.getEndpointId());
+		try {
+			res = _pollOnce();
+//			while (_poll() <= 0);
+		} finally {
+			lock.unlock();
+		}
+		return res;
+	}	
+	
+	public void pollUntil(AtomicInteger future, long timeout) throws IOException {
+		boolean locked = false;
+		while(true){
+			locked = lock.tryLock();
+			if (future.get() > 0 || locked){
+				break;
+			}
+		}
+
+		try {
+			if (future.get() == 0){
+				_pollUntil(future, timeout);
+			}
+		} finally {
+			if (locked){
+				lock.unlock();
+			}
+		}
+	}	
+	
+	private int _pollOnce() throws IOException {
+		int res = poll.execute().getPolls();
+		if (res > 0) {
+			for (int i = 0; i < res; i++){
+				IbvWC wc = wcList[i];
+				dispatchCqEvent(wc);
+			}
+			
+		} 
+		return res;
+	}	
+	
+	private int _pollUntil(AtomicInteger future, long timeout) throws IOException {
+		long count = 0;
+		final long checkTimeOut = 1 << 14 /* 16384 */;
+		long startTime = System.nanoTime();
+		while (future.get() == 0) {
+			int res = poll.execute().getPolls();
+			if (res > 0) {
+				for (int i = 0; i < res; i++) {
+					IbvWC wc = wcList[i];
+					dispatchCqEvent(wc);
+				}
+			}
+			if (count == checkTimeOut) {
+				count = 0;
+				if ((System.nanoTime() - startTime) / 1e6 > timeout) {
+					break;
+				}
+			}			
+			count++;
+		}
+		return 1;
+	}
+	
+	private void dispatchCqEvent(IbvWC wc) throws IOException {
+		if (wc.getStatus() == 5){
+//			logger.info("flush wc");
+		} else if (wc.getStatus() != 0){
+			LOG.info("faulty request, status " + wc.getStatus());
+		} else {
+			RdmaPassiveFuture future = futureMap.remove(wc.getWr_id());
 			if (future != null){
-				future.signal();
+				future.signal(wc.getStatus());
 				if (future.isWrite()){
 					sendQueueAvailable.release(2);
 				} else {
 					sendQueueAvailable.release();
 				}
 			} else {
-				throw new IOException("cannot find future object for wrid " + wc.getWr_id() + ", status " + wc.getStatus() + ", opcount " + opcount + ", wc.qpnum " + wc.getQp_num() + ", this.qp.num " + this.qp.getQp_num() + ", connstate " + this.getConnState() + ", futureMap.size " + futureMap.size());
+				throw new IOException("cannot find future object for wrid " + wc.getWr_id() + ", status " + wc.getStatus() + ", opcount " + opcount + ", ep " + this.getEndpointId() + ", wc.qpnum " + wc.getQp_num() + ", this.qp.num " + this.qp.getQp_num() + ", connstate " + this.getConnState() + ", futureMap.size " + futureMap.size());
 			}
-		} else if (wc.getStatus() == 5){
-		} else {
-			throw new IOException("error in wc, status " + wc.getStatus());			
 		}
 	}
 
 	@Override
 	public void close() throws IOException, InterruptedException {
+		lock.lock();
+		try {
+			while (pollOnce() > 0);
+		} finally {
+			lock.unlock();
+		}		
 		super.close();
 	}
-
+	
 	public int getFreeSlots() {
 		return this.sendQueueAvailable.availablePermits();
 	}
-
+	
 	public String getAddress() throws IOException {
 		return super.getDstAddr().toString();
 	}
-
+	
 	public RdmaCmId getContext() {
 		return super.getIdPriv();
 	}
@@ -284,5 +381,5 @@ public class RdmaDataNodeActiveEndpoint extends RdmaActiveEndpoint implements St
 	@Override
 	public boolean isLocal() {
 		return false;
-	}
+	}	
 }

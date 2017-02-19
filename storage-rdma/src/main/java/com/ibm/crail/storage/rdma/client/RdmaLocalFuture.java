@@ -28,10 +28,10 @@ import java.util.concurrent.TimeoutException;
 
 import com.ibm.crail.storage.DataResult;
 
-public class RdmaDataLocalFuture implements Future<DataResult>, DataResult {
+public class RdmaLocalFuture implements Future<DataResult>, DataResult {
 	private int len;
 
-	public RdmaDataLocalFuture(int len) {
+	public RdmaLocalFuture(int len) {
 		this.len = len;
 	}		
 	

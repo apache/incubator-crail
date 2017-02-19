@@ -46,13 +46,13 @@ import com.ibm.disni.util.*;
 
 import sun.misc.Unsafe;
 
-public class RdmaDataNodeLocalEndpoint implements StorageEndpoint {
+public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 	private String indexDirPath;
 	private ConcurrentHashMap<Integer, MappedByteBuffer> bufferMap;
 	private ConcurrentHashMap<Integer, RdmaBlockIndex> indexMap;
 	private Unsafe unsafe;
 	
-	public RdmaDataNodeLocalEndpoint(InetSocketAddress datanodeAddr) throws IOException {
+	public RdmaStorageLocalEndpoint(InetSocketAddress datanodeAddr) throws IOException {
 		if (datanodeAddr == null){
 			throw new IOException("Datanode address not valid!");
 		}
@@ -117,7 +117,7 @@ public class RdmaDataNodeLocalEndpoint implements StorageEndpoint {
 		long srcAddr = MemoryUtils.getAddress(buffer) + buffer.position();
 		long dstAddr = MemoryUtils.getAddress(mappedBuffer) + blockOffset + remoteOffset; 
 		unsafe.copyMemory(srcAddr, dstAddr, buffer.remaining());
-		RdmaDataLocalFuture future = new RdmaDataLocalFuture(buffer.remaining());
+		RdmaLocalFuture future = new RdmaLocalFuture(buffer.remaining());
 		return future;
 	}
 
@@ -154,7 +154,7 @@ public class RdmaDataNodeLocalEndpoint implements StorageEndpoint {
 		long srcAddr = MemoryUtils.getAddress(mappedBuffer) + blockOffset + remoteOffset;
 		long dstAddr = MemoryUtils.getAddress(buffer) + buffer.position();
 		unsafe.copyMemory(srcAddr, dstAddr, buffer.remaining());
-		RdmaDataLocalFuture future = new RdmaDataLocalFuture(buffer.remaining());
+		RdmaLocalFuture future = new RdmaLocalFuture(buffer.remaining());
 		return future;
 	}
 

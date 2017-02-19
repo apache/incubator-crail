@@ -32,31 +32,31 @@ import com.ibm.crail.storage.rdma.RdmaStorageGroup;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.disni.rdma.*;
 
-public class RdmaDataNodePassiveGroup extends RdmaPassiveEndpointGroup<RdmaDataNodePassiveEndpoint> implements RdmaStorageGroup {
-	private RdmaDataNodeLocalEndpoint localEndpoint;
+public class RdmaStorageActiveGroup extends RdmaActiveEndpointGroup<RdmaStorageActiveEndpoint> implements RdmaStorageGroup {
+	private RdmaStorageLocalEndpoint localEndpoint;
 	private MrCache mrCache;
-
-	public RdmaDataNodePassiveGroup(int timeout, int maxWR, int maxSge, int cqSize, MrCache mrCache)
-			throws IOException {
-		super(timeout, maxWR, maxSge, cqSize);
+	
+	public RdmaStorageActiveGroup(int timeout, boolean polling, int maxWR, int maxSge, int cqSize, MrCache mrCache) throws IOException {
+		super(timeout, polling, maxWR, maxSge, cqSize);
 		try {
-			this.mrCache = mrCache;
 			InetSocketAddress datanodeAddr = RdmaStorageTier.getDataNodeAddress();
 			if (datanodeAddr != null){
-				this.localEndpoint = new RdmaDataNodeLocalEndpoint(datanodeAddr);
+				this.localEndpoint = new RdmaStorageLocalEndpoint(datanodeAddr);
 			} else {
 				this.localEndpoint = null;
 			}
+			this.mrCache = mrCache;
 		} catch(Exception e){
 			throw new IOException(e);
 		}
 	}
 
+//	@Override
 	public StorageEndpoint createEndpoint(InetSocketAddress inetAddress) throws IOException {
-		if (RdmaConstants.DATANODE_RDMA_LOCAL_MAP && CrailUtils.isLocalAddress(inetAddress.getAddress())){
+		if (localEndpoint != null && RdmaConstants.DATANODE_RDMA_LOCAL_MAP && CrailUtils.isLocalAddress(inetAddress.getAddress())){
 			return this.localEndpoint;
 		} 
-		RdmaDataNodePassiveEndpoint endpoint = super.createEndpoint();
+		RdmaStorageActiveEndpoint endpoint = super.createEndpoint();
 		try {
 			endpoint.connect(inetAddress, 1000);
 		} catch(Exception e){
@@ -64,11 +64,11 @@ public class RdmaDataNodePassiveGroup extends RdmaPassiveEndpointGroup<RdmaDataN
 		}
 		return endpoint;
 	}
-	
+
 	public int getType() {
 		return 0;
-	}	
-	
+	}
+
 	@Override
 	public String toString() {
 		return "maxWR " + getMaxWR() + ", maxSge " + getMaxSge() + ", cqSize " + getCqSize();
@@ -76,5 +76,5 @@ public class RdmaDataNodePassiveGroup extends RdmaPassiveEndpointGroup<RdmaDataN
 
 	public MrCache getMrCache() {
 		return mrCache;
-	}	
+	}
 }

@@ -24,37 +24,40 @@ package com.ibm.crail.storage.rdma.client;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.ibm.crail.storage.DataResult;
+import org.slf4j.Logger;
 
-public class RdmaDataActiveFuture implements Future<DataResult>, DataResult {
+import com.ibm.crail.storage.DataResult;
+import com.ibm.crail.utils.CrailUtils;
+
+public class RdmaPassiveFuture implements Future<DataResult>, DataResult {
+	private static final Logger LOG = CrailUtils.getLogger();
 	protected static int RPC_PENDING = 0;
 	protected static int RPC_DONE = 1;
-	protected static int RPC_ERROR = 2;		
+	protected static int RPC_ERROR = 2;			
 	
+	private RdmaStoragePassiveEndpoint endpoint;
 	private long wrid;
 	private int len;
 	private boolean isWrite;
 	private AtomicInteger status;
 
-	public RdmaDataActiveFuture(long wrid, int len, boolean isWrite) {
+	public RdmaPassiveFuture(RdmaStoragePassiveEndpoint endpoint, long wrid, int len, boolean isWrite) {
+		this.endpoint = endpoint;
 		this.wrid = wrid;
 		this.len = len;
-		this.isWrite = isWrite;	
+		this.isWrite = isWrite;			
 		this.status = new AtomicInteger(RPC_PENDING);
 	}	
 	
-	public long getWrid() {
-		return wrid;
-	}
-	
 	@Override
-	public synchronized DataResult get() throws InterruptedException, ExecutionException {
+	public RdmaPassiveFuture get() throws InterruptedException, ExecutionException {
 		if (status.get() == RPC_PENDING){
 			try {
-				wait();
-			} catch (Exception e) {
+				endpoint.pollUntil(status, Long.MAX_VALUE);
+			} catch(Exception e){
 				status.set(RPC_ERROR);
 				throw new InterruptedException(e.getMessage());
 			}
@@ -70,11 +73,12 @@ public class RdmaDataActiveFuture implements Future<DataResult>, DataResult {
 	}
 
 	@Override
-	public synchronized DataResult get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException {
+	public RdmaPassiveFuture get(long timeout, TimeUnit unit) throws InterruptedException,
+			ExecutionException, TimeoutException {
 		if (status.get() == RPC_PENDING){
 			try {
-				wait(timeout);
-			} catch (Exception e) {
+				endpoint.pollUntil(status, timeout);
+			} catch(Exception e){
 				status.set(RPC_ERROR);
 				throw new InterruptedException(e.getMessage());
 			}
@@ -86,18 +90,31 @@ public class RdmaDataActiveFuture implements Future<DataResult>, DataResult {
 			throw new InterruptedException("RPC timeout");
 		} else {
 			throw new InterruptedException("RPC error");
-		}
-	}	
+		}	
+	}		
 	
-	public boolean isDone(){
+	public boolean isDone() {
+		if (status.get() == 0) {
+			try {
+				endpoint.pollOnce();
+			} catch(Exception e){
+				status.set(RPC_ERROR);
+				LOG.info(e.getMessage());
+			}
+		}
 		return status.get() > 0;
 	}
 	
-	public synchronized void signal(){
-		status.set(RPC_DONE);
-		notify();
+	public void signal(int wcstatus) {
+		if (status.get() == 0){
+			if (wcstatus == 0){
+				status.set(RPC_DONE);
+			} else {
+				status.set(RPC_ERROR);
+			}
+		}
 	}
-
+	
 	public int getLen() {
 		if (status.get() == RPC_DONE){
 			return len;
@@ -106,6 +123,10 @@ public class RdmaDataActiveFuture implements Future<DataResult>, DataResult {
 		} else {
 			return -1;
 		}
+	}
+
+	public long getWrid() {
+		return wrid;
 	}
 
 	public boolean isWrite() {

@@ -42,10 +42,10 @@ import com.ibm.crail.namenode.protocol.DataNodeStatistics;
 import com.ibm.crail.storage.StorageTier;
 import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.storage.rdma.client.RdmaBlockIndex;
-import com.ibm.crail.storage.rdma.client.RdmaDataNodeActiveEndpointFactory;
-import com.ibm.crail.storage.rdma.client.RdmaDataNodeActiveGroup;
-import com.ibm.crail.storage.rdma.client.RdmaDataNodePassiveEndpointFactory;
-import com.ibm.crail.storage.rdma.client.RdmaDataNodePassiveGroup;
+import com.ibm.crail.storage.rdma.client.RdmaStorageActiveEndpointFactory;
+import com.ibm.crail.storage.rdma.client.RdmaStorageActiveGroup;
+import com.ibm.crail.storage.rdma.client.RdmaStoragePassiveEndpointFactory;
+import com.ibm.crail.storage.rdma.client.RdmaStoragePassiveGroup;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.disni.rdma.*;
 import com.ibm.disni.util.*;
@@ -107,13 +107,13 @@ public class RdmaStorageTier extends StorageTier {
 				if (clientGroup == null){
 					if (RdmaConstants.DATANODE_RDMA_TYPE.equalsIgnoreCase("passive")){
 						LOG.info("passive data client ");
-						RdmaDataNodePassiveGroup _endpointGroup = new RdmaDataNodePassiveGroup(100, RdmaConstants.DATANODE_RDMA_QUEUESIZE, 4, RdmaConstants.DATANODE_RDMA_QUEUESIZE*2, clientMrCache);
-						_endpointGroup.init(new RdmaDataNodePassiveEndpointFactory(_endpointGroup));
+						RdmaStoragePassiveGroup _endpointGroup = new RdmaStoragePassiveGroup(100, RdmaConstants.DATANODE_RDMA_QUEUESIZE, 4, RdmaConstants.DATANODE_RDMA_QUEUESIZE*2, clientMrCache);
+						_endpointGroup.init(new RdmaStoragePassiveEndpointFactory(_endpointGroup));
 						this.clientGroup = _endpointGroup;
 					} else {
 						LOG.info("active data client ");
-						RdmaDataNodeActiveGroup _endpointGroup = new RdmaDataNodeActiveGroup(100, false, RdmaConstants.DATANODE_RDMA_QUEUESIZE, 4, RdmaConstants.DATANODE_RDMA_QUEUESIZE*2, clientMrCache);
-						_endpointGroup.init(new RdmaDataNodeActiveEndpointFactory(_endpointGroup));
+						RdmaStorageActiveGroup _endpointGroup = new RdmaStorageActiveGroup(100, false, RdmaConstants.DATANODE_RDMA_QUEUESIZE, 4, RdmaConstants.DATANODE_RDMA_QUEUESIZE*2, clientMrCache);
+						_endpointGroup.init(new RdmaStorageActiveEndpointFactory(_endpointGroup));
 						this.clientGroup = _endpointGroup;
 					}		
 				}
