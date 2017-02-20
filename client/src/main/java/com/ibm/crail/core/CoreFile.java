@@ -21,19 +21,17 @@
 
 package com.ibm.crail.core;
 
-import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
-
 import com.ibm.crail.CrailBlockLocation;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailInputStream;
 import com.ibm.crail.CrailOutputStream;
 import com.ibm.crail.namenode.protocol.FileInfo;
 
-abstract class CoreFile extends CoreNode implements CrailFile {
+public class CoreFile extends CoreNode implements CrailFile {
 	private Semaphore outputStreams;
 	
-	protected CoreFile(CoreFileSystem fs, FileInfo fileInfo, String path, int storageAffinity, int locationAffinity){
+	public CoreFile(CoreFileSystem fs, FileInfo fileInfo, String path, int storageAffinity, int locationAffinity){
 		super(fs, fileInfo, path, storageAffinity, locationAffinity);
 		this.outputStreams = new Semaphore(1);
 	}
@@ -78,42 +76,6 @@ abstract class CoreFile extends CoreNode implements CrailFile {
 	void closeOutputStream(CoreOutputStream stream) throws Exception {
 		super.closeOutputStream(stream);
 		outputStreams.release();
-	}
-}
-
-class CoreCreateFile extends CoreFile {
-	private Future<?> dirFuture;
-	private DirectoryOutputStream dirStream;	
-	
-	public CoreCreateFile(CoreFileSystem fs, FileInfo fileInfo, String path, int storageAffinity, int locationAffinity, Future<?> dirFuture, DirectoryOutputStream dirStream){
-		super(fs, fileInfo, path, storageAffinity, locationAffinity);
-		this.dirFuture = dirFuture;
-		this.dirStream = dirStream;
-	}
-	
-	public synchronized  CoreNode syncDir() throws Exception {
-		if (dirFuture != null) {
-			dirFuture.get();
-			dirFuture = null;
-		}
-		if (dirStream != null){
-			dirStream.close();
-			dirStream = null;
-		}
-		return this;
-	}
-
-	@Override
-	void closeOutputStream(CoreOutputStream stream) throws Exception {
-		syncDir();
-		super.closeOutputStream(stream);
-	}
-	
-}
-
-class CoreLookupFile extends CoreFile {
-	protected CoreLookupFile(CoreFileSystem fs, FileInfo fileInfo, String path) {
-		super(fs, fileInfo, path, 0, 0);
 	}
 }
 

@@ -21,7 +21,7 @@
 
 package com.ibm.crail.core;
 
-import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.Logger;
 
@@ -40,13 +40,23 @@ public class CoreNode implements CrailNode {
 	protected String path;
 	protected int storageAffinity;
 	protected int locationAffinity;	
+	private LinkedBlockingQueue<CoreSyncOperation> syncOperations;
+	
+	public static CoreNode create(CoreFileSystem fs, FileInfo fileInfo, String path, int storageAffinity, int locationAffinity) {
+		if (fileInfo.getType().isContainer()){
+			return new CoreDirectory(fs, fileInfo, path, storageAffinity, locationAffinity);		
+		} else {
+			return new CoreFile(fs, fileInfo, path, storageAffinity, locationAffinity);
+		}
+	}	
 	
 	protected CoreNode(CoreFileSystem fs, FileInfo fileInfo, String path, int storageAffinity, int locationAffinity){
 		this.fs = fs;
 		this.fileInfo = fileInfo;
 		this.path = path;
 		this.storageAffinity = storageAffinity;
-		this.locationAffinity = locationAffinity;		
+		this.locationAffinity = locationAffinity;
+		this.syncOperations = new LinkedBlockingQueue<CoreSyncOperation>();
 	}	
 
 	@Override
@@ -85,6 +95,10 @@ public class CoreNode implements CrailNode {
 
 	@Override
 	public CoreNode syncDir() throws Exception {
+		while(!syncOperations.isEmpty()){
+			CoreSyncOperation syncOp = syncOperations.poll();
+			syncOp.close();
+		}			
 		return this;
 	}
 	
@@ -113,115 +127,16 @@ public class CoreNode implements CrailNode {
 	}
 	
 	void closeOutputStream(CoreOutputStream coreStream) throws Exception {
+		syncDir();
 		fs.unregisterOutputStream(coreStream);
 	}	
 	
 	FileInfo getFileInfo(){
 		return fileInfo;
 	}	
-}
-
-class CoreCreateNode extends CoreNode {
-	private Future<?> dirFuture;
-	private DirectoryOutputStream dirStream;	
 	
-	public CoreCreateNode(CoreFileSystem fs, String path, CrailNodeType type, int storageAffinity, int locationAffinity, FileInfo fileInfo, Future<?> dirFuture, DirectoryOutputStream dirStream){
-		super(fs, fileInfo, path, 0, 0);
-		this.dirFuture = dirFuture;
-		this.dirStream = dirStream;
-	}
-	
-	@Override
-	public synchronized CoreNode syncDir() throws Exception {
-		if (dirFuture != null) {
-			dirFuture.get();
-			dirFuture = null;
-		}
-		if (dirStream != null){
-			dirStream.close();
-			dirStream = null;
-		}
-		return this;
-	}
-
-	@Override
-	void closeOutputStream(CoreOutputStream coreStream) throws Exception {
-		syncDir();
-		super.closeOutputStream(coreStream);
-	}
-	
-}
-
-class CoreRenamedNode extends CoreNode {
-	private Future<?> srcDirFuture;
-	private Future<?> dstDirFuture;
-	private DirectoryOutputStream srcStream;
-	private DirectoryOutputStream dstStream;
-	
-
-	protected CoreRenamedNode(CoreFileSystem fs, FileInfo fileInfo, String path, Future<?> srcDirFuture, Future<?> dstDirFuture, DirectoryOutputStream srcStream, DirectoryOutputStream dstStream){
-		super(fs, fileInfo, path, 0, 0);
-		this.srcDirFuture = srcDirFuture;
-		this.dstDirFuture = dstDirFuture;
-		this.srcStream = srcStream;
-		this.dstStream = dstStream;
-	}
-
-	@Override
-	public synchronized CoreNode syncDir() throws Exception {
-		if (srcDirFuture != null) {
-			srcDirFuture.get();
-			srcDirFuture = null;
-		}
-		if (dstDirFuture != null) {
-			dstDirFuture.get();
-			dstDirFuture = null;
-		}		
-		if (srcStream != null){
-			srcStream.close();
-			srcStream = null;
-		}
-		if (dstStream != null){
-			dstStream.close();
-			dstStream = null;
-		}
-		return this;
-	}
-
-	@Override
-	void closeOutputStream(CoreOutputStream coreStream) throws Exception {
-		syncDir();
-		super.closeOutputStream(coreStream);
-	}
-}
-
-class CoreDeleteNode extends CoreNode {
-	private Future<?> dirFuture;
-	private DirectoryOutputStream dirStream;	
-	
-	public CoreDeleteNode(CoreFileSystem fs, FileInfo fileInfo, String path, Future<?> dirFuture, DirectoryOutputStream dirStream){
-		super(fs, fileInfo, path, 0, 0);
-		this.dirFuture = dirFuture;
-		this.dirStream = dirStream;
-	}
-	
-	@Override
-	public synchronized CoreNode syncDir() throws Exception {
-		if (dirFuture != null) {
-			dirFuture.get();
-			dirFuture = null;
-		}
-		if (dirStream != null){
-			dirStream.close();
-			dirStream = null;
-		}
-		return this;
-	}
-
-	@Override
-	void closeOutputStream(CoreOutputStream coreStream) throws Exception {
-		syncDir();
-		super.closeOutputStream(coreStream);
+	void addSyncOperation(CoreSyncOperation operation){
+		this.syncOperations.add(operation);
 	}
 }
 

@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.Upcoming;
@@ -166,7 +165,7 @@ class CreateNodeFuture extends CoreMetaDataOperation<RpcResponseMessage.CreateFi
 	}
 
 	@Override
-	public CrailFile early() throws Exception {
+	public CrailNode early() throws Exception {
 		return null;
 	}
 

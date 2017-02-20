@@ -22,8 +22,6 @@
 package com.ibm.crail.core;
 
 import java.util.Iterator;
-import java.util.concurrent.Future;
-
 import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailMultiFile;
 import com.ibm.crail.conf.CrailConstants;
@@ -31,8 +29,8 @@ import com.ibm.crail.namenode.protocol.FileInfo;
 
 class CoreDirectory extends CoreNode implements CrailDirectory, CrailMultiFile {
 	
-	protected CoreDirectory(CoreFileSystem fs, FileInfo fileInfo, String path){
-		super(fs, fileInfo, path, 0, 0);
+	public CoreDirectory(CoreFileSystem fs, FileInfo fileInfo, String path, int storageAffinity, int locationAffinity){
+		super(fs, fileInfo, path, storageAffinity, locationAffinity);
 		this.fs = fs;
 		this.fileInfo = fileInfo;
 		this.path = path;
@@ -75,32 +73,3 @@ class CoreDirectory extends CoreNode implements CrailDirectory, CrailMultiFile {
 	}	
 }
 
-class CoreCreateDirectory extends CoreDirectory {
-	private Future<?> dirFuture;
-	private DirectoryOutputStream dirStream;			
-
-	protected CoreCreateDirectory(CoreFileSystem fs, FileInfo fileInfo, String path, Future<?> dirFuture, DirectoryOutputStream dirStream) {
-		super(fs, fileInfo, path);
-		this.dirFuture = dirFuture;
-		this.dirStream = dirStream;				
-	}
-	
-	@Override
-	public CoreNode syncDir() throws Exception {
-		if (dirFuture != null) {
-			dirFuture.get();
-			dirFuture = null;
-		}
-		if (dirStream != null){
-			dirStream.close();
-			dirStream = null;
-		}
-		return this;
-	}
-
-	@Override
-	void closeOutputStream(CoreOutputStream coreStream) throws Exception {
-		syncDir();
-		super.closeOutputStream(coreStream);
-	}	
-}

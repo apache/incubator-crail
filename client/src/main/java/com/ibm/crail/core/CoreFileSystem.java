@@ -35,9 +35,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
 import org.slf4j.Logger;
-
 import com.ibm.crail.CrailBlockLocation;
 import com.ibm.crail.CrailFS;
 import com.ibm.crail.CrailNode;
@@ -182,20 +180,19 @@ public class CoreFileSystem extends CrailFS {
 		
 		long adjustedCapacity = fileInfo.getDirOffset()*CrailConstants.DIRECTORY_RECORD + CrailConstants.DIRECTORY_RECORD;
 		dirInfo.setCapacity(Math.max(dirInfo.getCapacity(), adjustedCapacity));
-		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path));
+		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path), 0, 0);
 		DirectoryOutputStream stream = dirFile.getDirectoryOutputStream();
 		DirectoryRecord record = new DirectoryRecord(true, path);
 		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());
+		CoreSyncOperation syncOperation = new CoreSyncOperation(stream, future);
 		
 		if (CrailConstants.DEBUG){
 			LOG.info("createFile: name " + path + ", success, fd " + fileInfo.getFd() + ", token " + fileInfo.getToken());
 		}
 		
-		if (fileInfo.getType().isContainer()){
-			return new CoreCreateDirectory(this, fileInfo, path, future, stream);		
-		} else {
-			return new CoreCreateFile(this, fileInfo, path, storageAffinity, locationAffinity, future, stream);		
-		}
+		CoreNode node = CoreNode.create(this, fileInfo, path, storageAffinity, locationAffinity);
+		node.addSyncOperation(syncOperation);
+		return node;
 	}	
 	
 	public Upcoming<CrailNode> lookup(String path) throws Exception {
@@ -220,6 +217,7 @@ public class CoreFileSystem extends CrailFS {
 		
 		FileInfo fileInfo = fileRes.getFile();
 		
+		CoreNode node = null;
 		if (fileInfo != null){
 			if (CrailConstants.DEBUG){
 				LOG.info("lookup: name " + path + ", success, fd " + fileInfo.getFd());
@@ -227,14 +225,9 @@ public class CoreFileSystem extends CrailFS {
 			BlockInfo fileBlock = fileRes.getFileBlock();
 			getBlockCache(fileInfo.getFd()).put(CoreSubOperation.createKey(fileInfo.getFd(), 0), fileBlock);
 			
-			if (fileInfo.getType().isContainer()){
-				return new CoreDirectory(this, fileInfo, path);
-			} else {
-				return new CoreLookupFile(this, fileInfo, path);
-			}
-		} else {
-			return null;
-		}
+			node = CoreNode.create(this, fileInfo, path, 0, 0);
+		} 
+		return node;
 	}	
 	
 
@@ -281,25 +274,30 @@ public class CoreFileSystem extends CrailFS {
 		BlockInfo dirBlock = renameRes.getDstBlock();
 		getBlockCache(dstDir.getFd()).put(CoreSubOperation.createKey(dstDir.getFd(), dstFile.getDirOffset()), dirBlock);		
 		
-		CoreDirectory dirSrc = new CoreDirectory(this, srcParent, CrailUtils.getParent(src));
+		CoreDirectory dirSrc = new CoreDirectory(this, srcParent, CrailUtils.getParent(src), 0, 0);
 		DirectoryOutputStream streamSrc = dirSrc.getDirectoryOutputStream();
 		DirectoryRecord recordSrc = new DirectoryRecord(false, src);
-		Future<CrailResult> futureSrc = streamSrc.writeRecord(recordSrc, srcFile.getDirOffset());			
+		Future<CrailResult> futureSrc = streamSrc.writeRecord(recordSrc, srcFile.getDirOffset());	
+		CoreSyncOperation syncOperationSrc = new CoreSyncOperation(streamSrc, futureSrc);
 		
 		long adjustedCapacity = dstFile.getDirOffset()*CrailConstants.DIRECTORY_RECORD + CrailConstants.DIRECTORY_RECORD;
 		dstDir.setCapacity(Math.max(dstDir.getCapacity(), adjustedCapacity));
-		CoreDirectory dirDst = new CoreDirectory(this, dstDir, CrailUtils.getParent(dst));
+		CoreDirectory dirDst = new CoreDirectory(this, dstDir, CrailUtils.getParent(dst), 0, 0);
 		DirectoryOutputStream streamDst = dirDst.getDirectoryOutputStream();
 		DirectoryRecord recordDst = new DirectoryRecord(true, dst);
 		Future<CrailResult> futureDst = streamDst.writeRecord(recordDst, dstFile.getDirOffset());			
-
+		CoreSyncOperation syncOperationDst = new CoreSyncOperation(streamDst, futureDst);
+		
 		blockCache.remove(srcFile.getFd());
 		
 		if (CrailConstants.DEBUG){
 			LOG.info("rename: srcname " + src + ", dstname " + dst + ", success");
 		}
 		
-		return new CoreRenamedNode(this, dstFile, dst, futureSrc, futureDst, streamSrc, streamDst);		
+		CoreNode node = CoreNode.create(this, dstFile, dst, 0, 0);
+		node.addSyncOperation(syncOperationSrc);
+		node.addSyncOperation(syncOperationDst);
+		return node;
 	}
 	
 	public Upcoming<CrailNode> delete(String path, boolean recursive) throws Exception {
@@ -326,18 +324,21 @@ public class CoreFileSystem extends CrailFS {
 		FileInfo fileInfo = fileRes.getFile();
 		FileInfo dirInfo = fileRes.getParent();
 		
-		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path));
+		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path), 0, 0);
 		DirectoryOutputStream stream = dirFile.getDirectoryOutputStream();
 		DirectoryRecord record = new DirectoryRecord(false, path);
-		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());			
+		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());	
+		CoreSyncOperation syncOperation = new CoreSyncOperation(stream, future);
 		
 		blockCache.remove(fileInfo.getFd());
 		
 		if (CrailConstants.DEBUG){
 			LOG.info("delete: name " + path + ", recursive " + recursive + ", success");
-		}		
+		}
 		
-		return new CoreDeleteNode(this, fileInfo, path, future, stream);
+		CoreNode node = CoreNode.create(this, fileInfo, path, 0, 0);
+		node.addSyncOperation(syncOperation);
+		return node;
 	}	
 	
 	public DirectoryInputStream listEntries(String name) throws Exception {
@@ -363,7 +364,7 @@ public class CoreFileSystem extends CrailFS {
 			throw new FileNotFoundException(NameNodeProtocol.messages[NameNodeProtocol.ERR_FILE_IS_NOT_DIR]);
 		}
 		
-		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, name);
+		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, name, 0, 0);
 		DirectoryInputStream inputStream = dirFile.getDirectoryInputStream(randomize);
 		return inputStream;
 	}	
