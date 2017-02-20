@@ -117,7 +117,7 @@ public abstract class StorageTier {
 			GetOpt go = new GetOpt(args, "t:");
 			go.optErr = true;
 			int ch = -1;
-			String name = "com.ibm.crail.storage.rdma.RdmaDataNode";
+			String name = "com.ibm.crail.storage.rdma.RdmaStorageTier";
 			CrailConfiguration conf = new CrailConfiguration();
 			
 			while ((ch = go.getopt()) != GetOpt.optEOF) {
