@@ -29,6 +29,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
@@ -142,14 +143,14 @@ public class RdmaStorageTier extends StorageTier {
 			LOG.info("Configured network interface " + RdmaConstants.DATANODE_RDMA_INTERFACE + " cannot be found..exiting!!!");
 			return;
 		}
-		
+		URI uri = URI.create("rdma://" + serverAddr.getAddress().getHostAddress() + ":" + serverAddr.getPort());
 		RdmaPassiveEndpointGroup<RdmaStorageServerEndpoint> datanodeGroup = new RdmaPassiveEndpointGroup<RdmaStorageServerEndpoint>(-1, RdmaConstants.DATANODE_RDMA_QUEUESIZE, 4, RdmaConstants.DATANODE_RDMA_QUEUESIZE*100);
 		RdmaServerEndpoint<RdmaStorageServerEndpoint> datanodeServerEndpoint = datanodeGroup.createServerEndpoint();
 		RdmaStorageServer datanodeServer = new RdmaStorageServer(datanodeServerEndpoint, serverAddr);
 		
 		try {
 			datanodeGroup.init(new RdmaStorageEndpointFactory(datanodeGroup, datanodeServer));
-			datanodeServerEndpoint.bind(serverAddr, 100);
+			datanodeServerEndpoint.bind(uri);
 		} catch(Exception e){
 			LOG.info("######## port already occupied");
 		}

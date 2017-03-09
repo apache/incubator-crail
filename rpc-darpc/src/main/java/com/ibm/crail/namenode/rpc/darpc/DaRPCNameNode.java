@@ -22,6 +22,7 @@
 package com.ibm.crail.namenode.rpc.darpc;
 
 import java.net.InetSocketAddress;
+import java.net.URI;
 
 import org.slf4j.Logger;
 
@@ -58,7 +59,8 @@ public class DaRPCNameNode implements RpcNameNode {
 		this.namenodeClientEp = namenodeClientGroup.createEndpoint();
 		InetSocketAddress nnAddr = CrailUtils.getNameNodeAddress();
 		LOG.info("connecting to namenode at " + nnAddr);
-		namenodeClientEp.connect(nnAddr, 1000);
+		URI uri = URI.create("rdma://" + nnAddr.getAddress().getHostAddress() + ":" + nnAddr.getPort());
+		namenodeClientEp.connect(uri);
 		DaRPCNameNodeClient namenodeClientRpc = new DaRPCNameNodeClient(namenodeClientEp);
 		return namenodeClientRpc;
 		
@@ -79,7 +81,8 @@ public class DaRPCNameNode implements RpcNameNode {
 			this.namenodeServerEp = namenodeServerGroup.createServerEndpoint();
 			
 			InetSocketAddress addr = CrailUtils.getNameNodeAddress();
-			namenodeServerEp.bind(addr, 100);
+			URI uri = URI.create("rdma://" + addr.getAddress().getHostAddress() + ":" + addr.getPort());
+			namenodeServerEp.bind(uri);
 			LOG.info("opened server at " + addr);
 			while (true) {
 				RpcServerEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> clientEndpoint = namenodeServerEp.accept();

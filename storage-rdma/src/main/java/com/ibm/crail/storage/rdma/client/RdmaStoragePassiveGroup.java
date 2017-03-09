@@ -23,6 +23,7 @@ package com.ibm.crail.storage.rdma.client;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.URI;
 
 import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.storage.rdma.MrCache;
@@ -58,7 +59,8 @@ public class RdmaStoragePassiveGroup extends RdmaPassiveEndpointGroup<RdmaStorag
 		} 
 		RdmaStoragePassiveEndpoint endpoint = super.createEndpoint();
 		try {
-			endpoint.connect(inetAddress, 1000);
+			URI uri = URI.create("rdma://" + inetAddress.getAddress().getHostAddress() + ":" + inetAddress.getPort());
+			endpoint.connect(uri);
 		} catch(Exception e){
 			throw new IOException(e);
 		}
