@@ -23,16 +23,10 @@ package com.ibm.crail.core;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.slf4j.Logger;
-
-import com.ibm.crail.CrailDirectory;
-import com.ibm.crail.CrailFS;
-import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailMultiFile;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.namenode.protocol.FileInfo;
-import com.ibm.crail.utils.CrailUtils;
 
 public class CoreNode implements CrailNode {
 	protected CoreFileSystem fs;

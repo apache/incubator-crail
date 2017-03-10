@@ -92,7 +92,6 @@ class CoreEarlyFile implements CrailFile {
 	private int locationAffnity;
 	private CreateNodeFuture future;
 	private CrailFile file;
-	private Semaphore outputStreams;
 	
 	public CoreEarlyFile(CoreFileSystem fs, String path, CrailNodeType type, int storageAffinity, int locationAffinity, CreateNodeFuture future) {
 		this.fs = fs;
@@ -100,26 +99,13 @@ class CoreEarlyFile implements CrailFile {
 		this.type = type;
 		this.future = future;
 		this.file = null;
-		this.outputStreams = new Semaphore(1);
 	}
 
 	public CrailInputStream getDirectInputStream(long readHint) throws Exception{
-		if (file().getType().isDirectory()){
-			throw new Exception("Cannot open stream for directory");
-		}		
 		return file().getDirectInputStream(readHint);
 	}	
 	
 	public synchronized CrailOutputStream getDirectOutputStream(long writeHint) throws Exception {
-		if (file().getType().isDirectory()){
-			throw new Exception("Cannot open stream for directory");
-		}		
-		if (file().getToken() == 0){
-			throw new Exception("File is in read mode, cannot create outputstream, fd " + file().getFd());
-		}
-		if (!outputStreams.tryAcquire()){
-			throw new Exception("Only one concurrent output stream per file allowed");
-		}
 		return file().getDirectOutputStream(writeHint);
 	}
 	
@@ -133,17 +119,6 @@ class CoreEarlyFile implements CrailFile {
 
 	public CrailFile asFile() throws Exception {
 		return this;
-	}
-
-	private synchronized CrailFile file() {
-		try {
-			if (file == null){
-				file = this.future.get().asFile();
-			}
-			return file;
-		} catch(Exception e){
-			throw new RuntimeException(e);
-		}
 	}
 
 	@Override
@@ -173,7 +148,7 @@ class CoreEarlyFile implements CrailFile {
 
 	@Override
 	public CrailNodeType getType() {
-		return file().getType();
+		return type;
 	}
 
 	@Override
@@ -199,6 +174,17 @@ class CoreEarlyFile implements CrailFile {
 	@Override
 	public long getFd() {
 		return file().getFd();
+	}
+
+	private synchronized CrailFile file() {
+		try {
+			if (file == null){
+				file = this.future.get().asFile();
+			}
+			return file;
+		} catch(Exception e){
+			throw new RuntimeException(e);
+		}
 	}
 }
 
