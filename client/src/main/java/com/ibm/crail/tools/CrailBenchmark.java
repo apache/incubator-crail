@@ -766,6 +766,32 @@ public class CrailBenchmark {
 		fs.close();
 	}	
 	
+	void early(String filename) throws Exception {
+		CrailConfiguration conf = new CrailConfiguration();
+		CrailFS fs = CrailFS.newInstance(conf);
+		
+		ByteBuffer buf = ByteBuffer.allocateDirect(32);
+		CrailFile file = fs.create(filename, CrailNodeType.DATAFILE, 0, 0).early().asFile();
+		CrailBufferedOutputStream stream = file.getBufferedOutputStream(0);
+		System.out.println("buffered stream initialized");
+		
+		Thread.sleep(1000);
+		stream.write(buf);
+		System.out.println("buffered stream written");
+
+		Thread.sleep(1000);
+		stream.write(buf);
+		System.out.println("buffered stream written");		
+		
+		stream.purge();
+		stream.close();
+		
+		System.out.println("buffered stream closed");
+		
+		fs.getStatistics().print("close");
+		fs.close();		
+	}
+	
 	private void warmUp(CrailFS fs, String filename, int operations, ConcurrentLinkedQueue<ByteBuffer> bufferList) throws Exception {
 		String warmupFilename = filename + ".warmup";
 		System.out.println("warmUp, warmupFile " + warmupFilename + ", operations " + operations);
@@ -915,6 +941,8 @@ public class CrailBenchmark {
 			}
 		} else if (type.equalsIgnoreCase("createMultiFile")) {
 			benchmark.createMultiFile(filename);
+		} else if (type.equalsIgnoreCase("early")) {
+			benchmark.early(filename);
 		} else {
 			usage();
 			System.exit(0);

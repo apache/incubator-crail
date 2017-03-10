@@ -47,7 +47,7 @@ public class CrailBufferedOutputStream extends OutputStream {
 	private Future<CrailResult> future;
 	private boolean open;
 	
-	public CrailBufferedOutputStream(CrailFile file, long writeHint) throws Exception {
+	CrailBufferedOutputStream(CrailFile file, long writeHint) throws Exception {
 		this.crailFS = file.getFileSystem();
 		this.file = file;
 		this.writeHint = writeHint;
