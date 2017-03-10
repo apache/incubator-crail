@@ -23,8 +23,13 @@ package com.ibm.crail.core;
 
 import java.util.concurrent.Semaphore;
 import com.ibm.crail.CrailBlockLocation;
+import com.ibm.crail.CrailDirectory;
+import com.ibm.crail.CrailFS;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailInputStream;
+import com.ibm.crail.CrailMultiFile;
+import com.ibm.crail.CrailNode;
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.CrailOutputStream;
 import com.ibm.crail.namenode.protocol.FileInfo;
 
@@ -76,6 +81,124 @@ public class CoreFile extends CoreNode implements CrailFile {
 	void closeOutputStream(CoreOutputStream stream) throws Exception {
 		super.closeOutputStream(stream);
 		outputStreams.release();
+	}
+}
+
+class CoreEarlyFile implements CrailFile {
+	private CoreFileSystem fs;
+	private String path;
+	private CrailNodeType type;
+	private int storageAffnity;
+	private int locationAffnity;
+	private CreateNodeFuture future;
+	private CrailFile file;
+	private Semaphore outputStreams;
+	
+	public CoreEarlyFile(CoreFileSystem fs, String path, CrailNodeType type, int storageAffinity, int locationAffinity, CreateNodeFuture future) {
+		this.fs = fs;
+		this.path = path;
+		this.type = type;
+		this.future = future;
+		this.file = null;
+		this.outputStreams = new Semaphore(1);
+	}
+
+	public CrailInputStream getDirectInputStream(long readHint) throws Exception{
+		if (file().getType().isDirectory()){
+			throw new Exception("Cannot open stream for directory");
+		}		
+		return file().getDirectInputStream(readHint);
+	}	
+	
+	public synchronized CrailOutputStream getDirectOutputStream(long writeHint) throws Exception {
+		if (file().getType().isDirectory()){
+			throw new Exception("Cannot open stream for directory");
+		}		
+		if (file().getToken() == 0){
+			throw new Exception("File is in read mode, cannot create outputstream, fd " + file().getFd());
+		}
+		if (!outputStreams.tryAcquire()){
+			throw new Exception("Only one concurrent output stream per file allowed");
+		}
+		return file().getDirectOutputStream(writeHint);
+	}
+	
+	public CrailBlockLocation[] getBlockLocations(long start, long len) throws Exception{
+		return fs.getBlockLocations(path, start, len);
+	}	
+	
+	public long getToken() {
+		return file().getToken();
+	}
+
+	public CrailFile asFile() throws Exception {
+		return this;
+	}
+
+	private synchronized CrailFile file() {
+		try {
+			if (file == null){
+				file = this.future.get().asFile();
+			}
+			return file;
+		} catch(Exception e){
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public CrailFS getFileSystem() {
+		return fs;
+	}
+
+	@Override
+	public String getPath() {
+		return path;
+	}
+
+	@Override
+	public CrailNode syncDir() throws Exception {
+		return file().syncDir();
+	}
+
+	@Override
+	public long getModificationTime() {
+		return file().getModificationTime();
+	}
+
+	@Override
+	public long getCapacity() {
+		return file().getCapacity();
+	}
+
+	@Override
+	public CrailNodeType getType() {
+		return file().getType();
+	}
+
+	@Override
+	public CrailDirectory asDirectory() throws Exception {
+		throw new Exception("this is not a directory");
+	}
+
+	@Override
+	public CrailMultiFile asMultiFile() throws Exception {
+		throw new Exception("this is not a multifile");
+	}
+
+	@Override
+	public int locationAffinity() {
+		return this.locationAffnity;
+	}
+
+	@Override
+	public int storageAffinity() {
+		return this.storageAffnity;
+	}
+
+	@Override
+	public long getFd() {
+		return file().getFd();
 	}
 }
 

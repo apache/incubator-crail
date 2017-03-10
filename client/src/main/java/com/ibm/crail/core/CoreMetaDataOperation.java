@@ -40,7 +40,7 @@ public abstract class CoreMetaDataOperation<R,T> implements Upcoming<T> {
 	protected static int RPC_ERROR = 2;		
 	
 	private AtomicInteger status;
-	private Future<R> rpcResult;
+	protected Future<R> rpcResult;
 	private T finalResult;
 	private Exception exception;
 	
@@ -166,7 +166,15 @@ class CreateNodeFuture extends CoreMetaDataOperation<RpcResponseMessage.CreateFi
 
 	@Override
 	public CrailNode early() throws Exception {
-		return null;
+		switch(type){
+		case DATAFILE:
+			return new CoreEarlyFile(fs, path, type, storageAffinity, locationAffinity, this);
+		case DIRECTORY:
+		case MULTIFILE:
+			return null;
+		default:
+			return super.early();
+		}
 	}
 
 }
