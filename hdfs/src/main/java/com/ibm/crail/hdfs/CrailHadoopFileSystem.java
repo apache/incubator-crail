@@ -182,7 +182,8 @@ public class CrailHadoopFileSystem extends FileSystem {
 	@Override
 	public FileStatus[] listStatus(Path path) throws FileNotFoundException, IOException {
 		try {
-			Iterator<String> iter = dfs.lookup(path.toUri().getRawPath()).get().asDirectory().listEntries();
+			CrailNode node = dfs.lookup(path.toUri().getRawPath()).get();
+			Iterator<String> iter = node.getType() == CrailNodeType.DIRECTORY ? node.asDirectory().listEntries() : node.asMultiFile().listEntries(); 
 			ArrayList<FileStatus> statusList = new ArrayList<FileStatus>();
 			while(iter.hasNext()){
 				String filepath = iter.next();
