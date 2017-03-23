@@ -726,6 +726,26 @@ public class CrailBenchmark {
 		fs.close();
 	}
 	
+	void browseDir(String filename) throws Exception {
+		System.out.println("reading enumarate dir, path " + filename);
+		CrailConfiguration conf = new CrailConfiguration();
+		CrailFS fs = CrailFS.newInstance(conf);
+		
+		//benchmark
+		System.out.println("starting benchmark...");
+		fs.getStatistics().reset();
+		CrailNode node = fs.lookup(filename).get();
+		System.out.println("not type is " + node.getType());
+		
+		Iterator<String> iter = node.getType() == CrailNodeType.DIRECTORY ? node.asDirectory().listEntries() : node.asMultiFile().listEntries();
+		while (iter.hasNext()) {
+			String name = iter.next();
+			System.out.println(name);
+		}
+		fs.getStatistics().print("close");
+		fs.close();
+	}	
+	
 	void createMultiFile(String filename) throws Exception, InterruptedException {
 		System.out.println("createMultiFile, filename " + filename);
 		CrailConfiguration conf = new CrailConfiguration();
@@ -941,6 +961,8 @@ public class CrailBenchmark {
 			}
 		} else if (type.equalsIgnoreCase("createMultiFile")) {
 			benchmark.createMultiFile(filename);
+		} else if (type.equalsIgnoreCase("browseDir")) {
+			benchmark.browseDir(filename);
 		} else if (type.equalsIgnoreCase("early")) {
 			benchmark.early(filename);
 		} else {
