@@ -735,7 +735,7 @@ public class CrailBenchmark {
 		System.out.println("starting benchmark...");
 		fs.getStatistics().reset();
 		CrailNode node = fs.lookup(filename).get();
-		System.out.println("not type is " + node.getType());
+		System.out.println("node type is " + node.getType());
 		
 		Iterator<String> iter = node.getType() == CrailNodeType.DIRECTORY ? node.asDirectory().listEntries() : node.asMultiFile().listEntries();
 		while (iter.hasNext()) {
