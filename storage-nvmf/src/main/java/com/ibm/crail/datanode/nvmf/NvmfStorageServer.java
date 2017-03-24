@@ -31,14 +31,14 @@ import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class NvmfDataNodeServer implements Runnable {
+public class NvmfStorageServer implements Runnable {
 	private static final Logger LOG = CrailUtils.getLogger();
 
 	private final NvmeServerEndpoint serverEndpoint;
 	private final InetSocketAddress datanodeAddr;
 	private final Set<NvmeEndpoint> allEndpoints;
 
-	public NvmfDataNodeServer(NvmeServerEndpoint serverEndpoint, InetSocketAddress datanodeAddr) {
+	public NvmfStorageServer(NvmeServerEndpoint serverEndpoint, InetSocketAddress datanodeAddr) {
 		this.serverEndpoint = serverEndpoint;
 		this.datanodeAddr = datanodeAddr;
 		this.allEndpoints = ConcurrentHashMap.newKeySet();

@@ -25,7 +25,7 @@ package com.ibm.crail.datanode.nvmf;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.storage.StorageEndpoint;
-import com.ibm.crail.datanode.nvmf.client.NvmfDataNodeEndpoint;
+import com.ibm.crail.datanode.nvmf.client.NvmfStorageEndpoint;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.crail.storage.StorageTier;
 import com.ibm.crail.namenode.protocol.DataNodeStatistics;
@@ -41,7 +41,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Arrays;
 
-public class NvmfDataNode extends StorageTier {
+public class NvmfStorageTier extends StorageTier {
 
 	private static final Logger LOG = CrailUtils.getLogger();
 	private InetSocketAddress datanodeAddr;
@@ -49,17 +49,17 @@ public class NvmfDataNode extends StorageTier {
 
 	public InetSocketAddress getAddress() {
 		if (datanodeAddr == null) {
-			datanodeAddr = new InetSocketAddress(NvmfDataNodeConstants.IP_ADDR, NvmfDataNodeConstants.PORT);
+			datanodeAddr = new InetSocketAddress(NvmfStorageConstants.IP_ADDR, NvmfStorageConstants.PORT);
 		}
 		return datanodeAddr;
 	}
 
 	public void printConf(Logger logger) {
-		NvmfDataNodeConstants.printConf(logger);
+		NvmfStorageConstants.printConf(logger);
 	}
 
 	public void init(CrailConfiguration crailConfiguration, String[] args) throws IOException {
-		NvmfDataNodeConstants.updateConstants(crailConfiguration);
+		NvmfStorageConstants.updateConstants(crailConfiguration);
 
 		if (args != null) {
 			Options options = new Options();
@@ -75,7 +75,7 @@ public class NvmfDataNode extends StorageTier {
 			try {
 				line = parser.parse(options, Arrays.copyOfRange(args, 2, args.length));
 				if (line.hasOption(port.getOpt())) {
-					NvmfDataNodeConstants.PORT = ((Number) line.getParsedOptionValue(port.getOpt())).intValue();
+					NvmfStorageConstants.PORT = ((Number) line.getParsedOptionValue(port.getOpt())).intValue();
 				}
 			} catch (ParseException e) {
 				System.err.println(e.getMessage());
@@ -83,14 +83,14 @@ public class NvmfDataNode extends StorageTier {
 				System.exit(-1);
 			}
 			if (line.hasOption(bindIp.getOpt())) {
-				NvmfDataNodeConstants.IP_ADDR = InetAddress.getByName(line.getOptionValue(bindIp.getOpt()));
+				NvmfStorageConstants.IP_ADDR = InetAddress.getByName(line.getOptionValue(bindIp.getOpt()));
 			}
 			if (line.hasOption(pcieAddress.getOpt())) {
-				NvmfDataNodeConstants.PCIE_ADDR = line.getOptionValue(pcieAddress.getOpt());
+				NvmfStorageConstants.PCIE_ADDR = line.getOptionValue(pcieAddress.getOpt());
 			}
 		}
 
-		NvmfDataNodeConstants.verify();
+		NvmfStorageConstants.verify();
 	}
 
 	public StorageEndpoint createEndpoint(InetSocketAddress inetSocketAddress) throws IOException {
@@ -98,31 +98,31 @@ public class NvmfDataNode extends StorageTier {
 			synchronized (this) {
 				if (clientGroup == null) {
 					clientGroup = new NvmeEndpointGroup(new NvmeTransportType[]{NvmeTransportType.RDMA},
-							NvmfDataNodeConstants.HUGEDIR,
-							NvmfDataNodeConstants.SOCKETMEM);
+							NvmfStorageConstants.HUGEDIR,
+							NvmfStorageConstants.SOCKETMEM);
 				}
 			}
 		}
-		return new NvmfDataNodeEndpoint(clientGroup, inetSocketAddress);
+		return new NvmfStorageEndpoint(clientGroup, inetSocketAddress);
 	}
 
 	public void run() throws Exception {
 		LOG.info("initalizing NVMf datanode");
 
 		NvmeEndpointGroup group = new NvmeEndpointGroup(
-				new NvmeTransportType[]{NvmeTransportType.PCIE, NvmeTransportType.RDMA}, NvmfDataNodeConstants.HUGEDIR,
-				NvmfDataNodeConstants.SOCKETMEM);
+				new NvmeTransportType[]{NvmeTransportType.PCIE, NvmeTransportType.RDMA}, NvmfStorageConstants.HUGEDIR,
+				NvmfStorageConstants.SOCKETMEM);
 		NvmeServerEndpoint serverEndpoint = group.createServerEndpoint();
-		URI url = new URI("nvmef://" + NvmfDataNodeConstants.IP_ADDR.getHostAddress() + ":" + NvmfDataNodeConstants.PORT +
-				"/0/1?subsystem=nqn.2016-06.io.spdk:cnode1&pci=" + NvmfDataNodeConstants.PCIE_ADDR);
+		URI url = new URI("nvmef://" + NvmfStorageConstants.IP_ADDR.getHostAddress() + ":" + NvmfStorageConstants.PORT +
+				"/0/1?subsystem=nqn.2016-06.io.spdk:cnode1&pci=" + NvmfStorageConstants.PCIE_ADDR);
 		serverEndpoint.bind(url);
 
 		NvmeController controller = serverEndpoint.getNvmecontroller();
-		NvmeNamespace namespace = controller.getNamespace(NvmfDataNodeConstants.NAMESPACE);
+		NvmeNamespace namespace = controller.getNamespace(NvmfStorageConstants.NAMESPACE);
 		long namespaceSize = namespace.getSize();
-		long alignedSize = namespaceSize - (namespaceSize % NvmfDataNodeConstants.ALLOCATION_SIZE);
+		long alignedSize = namespaceSize - (namespaceSize % NvmfStorageConstants.ALLOCATION_SIZE);
 
-		Thread server = new Thread(new NvmfDataNodeServer(serverEndpoint, getAddress()));
+		Thread server = new Thread(new NvmfStorageServer(serverEndpoint, getAddress()));
 		server.start();
 
 		long addr = 0;
@@ -130,11 +130,11 @@ public class NvmfDataNode extends StorageTier {
 			DataNodeStatistics statistics = this.getDataNode();
 			LOG.info("datanode statistics, freeBlocks " + statistics.getFreeBlockCount());
 
-			LOG.info("new block, length " + NvmfDataNodeConstants.ALLOCATION_SIZE);
-			LOG.debug("block stag 0, addr " + addr + ", length " + NvmfDataNodeConstants.ALLOCATION_SIZE);
-			alignedSize -= NvmfDataNodeConstants.ALLOCATION_SIZE;
-			this.setBlock(addr, (int)NvmfDataNodeConstants.ALLOCATION_SIZE, 0);
-			addr += NvmfDataNodeConstants.ALLOCATION_SIZE;
+			LOG.info("new block, length " + NvmfStorageConstants.ALLOCATION_SIZE);
+			LOG.debug("block stag 0, addr " + addr + ", length " + NvmfStorageConstants.ALLOCATION_SIZE);
+			alignedSize -= NvmfStorageConstants.ALLOCATION_SIZE;
+			this.setBlock(addr, (int)NvmfStorageConstants.ALLOCATION_SIZE, 0);
+			addr += NvmfStorageConstants.ALLOCATION_SIZE;
 		}
 
 		while (server.isAlive()) {

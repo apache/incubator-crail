@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 /**
  * Created by jpf on 14.02.17.
  */
-public class NvmfDataNodeUtils {
+public class NvmfStorageUtils {
 
 	public static long linearBlockAddress(BlockInfo remoteMr, long remoteOffset, int sectorSize) {
 		return (remoteMr.getAddr() + remoteOffset) / (long)sectorSize;

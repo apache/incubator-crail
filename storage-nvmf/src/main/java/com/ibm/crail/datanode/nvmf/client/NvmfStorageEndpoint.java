@@ -25,8 +25,8 @@ package com.ibm.crail.datanode.nvmf.client;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.storage.DataResult;
-import com.ibm.crail.datanode.nvmf.NvmfDataNode;
-import com.ibm.crail.datanode.nvmf.NvmfDataNodeConstants;
+import com.ibm.crail.datanode.nvmf.NvmfStorageTier;
+import com.ibm.crail.datanode.nvmf.NvmfStorageConstants;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.crail.utils.DirectBufferCache;
@@ -47,7 +47,7 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.*;
 
-public class NvmfDataNodeEndpoint implements StorageEndpoint { 
+public class NvmfStorageEndpoint implements StorageEndpoint { 
 	private static final Logger LOG = CrailUtils.getLogger();
 
 	private final InetSocketAddress inetSocketAddress;
@@ -56,16 +56,16 @@ public class NvmfDataNodeEndpoint implements StorageEndpoint {
 	private final DirectBufferCache cache;
 	private final BlockingQueue<NvmeCommand> freeCommands;
 	private final NvmeCommand[] commands;
-	private final NvmfDataFuture[] futures;
+	private final NvmfStorageFuture[] futures;
 	private final ThreadLocal<long[]> completed;
 	private final int ioQeueueSize;
 
-	public NvmfDataNodeEndpoint(NvmeEndpointGroup group, InetSocketAddress inetSocketAddress) throws IOException {
+	public NvmfStorageEndpoint(NvmeEndpointGroup group, InetSocketAddress inetSocketAddress) throws IOException {
 		this.inetSocketAddress = inetSocketAddress;
 		endpoint = group.createEndpoint();
 		try {
 			URI url = new URI("nvmef://" + inetSocketAddress.getHostString() + ":" + inetSocketAddress.getPort() +
-					"/0/" + NvmfDataNodeConstants.NAMESPACE + "?subsystem=nqn.2016-06.io.spdk:cnode1");
+					"/0/" + NvmfStorageConstants.NAMESPACE + "?subsystem=nqn.2016-06.io.spdk:cnode1");
 			LOG.info("Connecting to " + url.toString());
 			endpoint.connect(url);
 		} catch (URISyntaxException e) {
@@ -83,7 +83,7 @@ public class NvmfDataNodeEndpoint implements StorageEndpoint {
 			commands[i] = command;
 			freeCommands.add(command);
 		}
-		futures = new NvmfDataFuture[ioQeueueSize];
+		futures = new NvmfStorageFuture[ioQeueueSize];
 		completed = new ThreadLocal<long[]>() {
 			public long[] initialValue() {
 				return new long[ioQeueueSize];
@@ -135,9 +135,9 @@ public class NvmfDataNodeEndpoint implements StorageEndpoint {
 			command = freeCommands.poll();
 		}
 
-		boolean aligned = NvmfDataNodeUtils.namespaceSectorOffset(sectorSize, remoteOffset) == 0
-				&& NvmfDataNodeUtils.namespaceSectorOffset(sectorSize, length) == 0;
-		long lba = NvmfDataNodeUtils.linearBlockAddress(remoteMr, remoteOffset, sectorSize);
+		boolean aligned = NvmfStorageUtils.namespaceSectorOffset(sectorSize, remoteOffset) == 0
+				&& NvmfStorageUtils.namespaceSectorOffset(sectorSize, length) == 0;
+		long lba = NvmfStorageUtils.linearBlockAddress(remoteMr, remoteOffset, sectorSize);
 		Future<DataResult> future = null;
 		if (aligned) {
 //			LOG.debug("aligned");
@@ -150,11 +150,11 @@ public class NvmfDataNodeEndpoint implements StorageEndpoint {
 					command.write();
 					break;
 			}
-			future = futures[(int)command.getId()] = new NvmfDataFuture(this, length);
+			future = futures[(int)command.getId()] = new NvmfStorageFuture(this, length);
 			command.execute();
 		} else {
 //			LOG.info("unaligned");
-			long alignedLength = NvmfDataNodeUtils.alignLength(sectorSize, remoteOffset, length);
+			long alignedLength = NvmfStorageUtils.alignLength(sectorSize, remoteOffset, length);
 
 			ByteBuffer stagingBuffer = cache.getBuffer();
 			stagingBuffer.clear();
@@ -162,26 +162,26 @@ public class NvmfDataNodeEndpoint implements StorageEndpoint {
 			try {
 				switch(op) {
 					case READ: {
-						NvmfDataFuture f = futures[(int)command.getId()] = new NvmfDataFuture(this, (int)alignedLength);
+						NvmfStorageFuture f = futures[(int)command.getId()] = new NvmfStorageFuture(this, (int)alignedLength);
 						command.setBuffer(stagingBuffer).setLinearBlockAddress(lba).read().execute();
-						future = new NvmfDataUnalignedReadFuture(f, this, buffer, remoteMr, remoteOffset, stagingBuffer);
+						future = new NvmfStorageUnalignedReadFuture(f, this, buffer, remoteMr, remoteOffset, stagingBuffer);
 						break;
 					}
 					case WRITE: {
-						if (NvmfDataNodeUtils.namespaceSectorOffset(sectorSize, remoteOffset) == 0) {
+						if (NvmfStorageUtils.namespaceSectorOffset(sectorSize, remoteOffset) == 0) {
 							// Do not read if the offset is aligned to sector size
 							int sizeToWrite = length;
 							stagingBuffer.put(buffer);
 							stagingBuffer.position(0);
 							command.setBuffer(stagingBuffer).setLinearBlockAddress(lba).write().execute();
-							future = futures[(int)command.getId()] = new NvmfDataFuture(this, sizeToWrite);
+							future = futures[(int)command.getId()] = new NvmfStorageFuture(this, sizeToWrite);
 						} else {
 							// RMW but append only file system allows only reading last sector
 							// and dir entries are sector aligned
 							stagingBuffer.limit(sectorSize);
-							NvmfDataFuture f = futures[(int)command.getId()] = new NvmfDataFuture(this, sectorSize);
+							NvmfStorageFuture f = futures[(int)command.getId()] = new NvmfStorageFuture(this, sectorSize);
 							command.setBuffer(stagingBuffer).setLinearBlockAddress(lba).read().execute();
-							future = new NvmfDataUnalignedRMWFuture(f, this, buffer, remoteMr, remoteOffset, stagingBuffer);
+							future = new NvmfStorageUnalignedRMWFuture(f, this, buffer, remoteMr, remoteOffset, stagingBuffer);
 						}
 						break;
 					}

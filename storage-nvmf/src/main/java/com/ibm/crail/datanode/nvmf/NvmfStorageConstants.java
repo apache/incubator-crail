@@ -33,7 +33,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
-public class NvmfDataNodeConstants {
+public class NvmfStorageConstants {
 
 	private final static String PREFIX = "crail.datanode.nvmf";
 

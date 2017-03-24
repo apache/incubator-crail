@@ -23,20 +23,24 @@
 package com.ibm.crail.datanode.nvmf.client;
 
 import com.ibm.crail.namenode.protocol.BlockInfo;
-import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.storage.DataResult;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class NvmfDataUnalignedReadFuture extends NvmfDataUnalignedFuture {
+public class NvmfStorageUnalignedRMWFuture extends NvmfStorageUnalignedFuture {
 
-	public NvmfDataUnalignedReadFuture(NvmfDataFuture future, NvmfDataNodeEndpoint endpoint, ByteBuffer buffer, BlockInfo remoteMr,
-									   long remoteOffset, ByteBuffer stagingBuffer)
+	private boolean initDone;
+	private Future<DataResult> writeFuture;
+
+	public NvmfStorageUnalignedRMWFuture(NvmfStorageFuture future, NvmfStorageEndpoint endpoint, ByteBuffer buffer,
+									  BlockInfo remoteMr, long remoteOffset, ByteBuffer stagingBuffer)
 			throws NoSuchFieldException, IllegalAccessException {
 		super(future, endpoint, buffer, remoteMr, remoteOffset, stagingBuffer);
+		initDone = false;
 	}
 
 	public DataResult get(long l, TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
@@ -44,17 +48,31 @@ public class NvmfDataUnalignedReadFuture extends NvmfDataUnalignedFuture {
 			throw new ExecutionException(exception);
 		}
 		if (!done) {
-			initFuture.get(l, timeUnit);
-			long srcAddr = NvmfDataNodeUtils.getAddress(stagingBuffer) +
-					NvmfDataNodeUtils.namespaceSectorOffset(endpoint.getSectorSize(), remoteOffset);
-			long dstAddr = NvmfDataNodeUtils.getAddress(buffer) + localOffset;
-			unsafe.copyMemory(srcAddr, dstAddr, len);
-			done = true;
+			if (!initDone) {
+				initFuture.get(l, timeUnit);
+				long srcAddr = NvmfStorageUtils.getAddress(buffer) + localOffset;
+				long dstAddr = NvmfStorageUtils.getAddress(stagingBuffer) + NvmfStorageUtils.namespaceSectorOffset(
+						endpoint.getSectorSize(), remoteOffset);
+				unsafe.copyMemory(srcAddr, dstAddr, len);
+
+				stagingBuffer.clear();
+				int alignedLen = (int) NvmfStorageUtils.alignLength(endpoint.getSectorSize(), remoteOffset, len);
+				stagingBuffer.limit(alignedLen);
+				try {
+					writeFuture = endpoint.write(stagingBuffer, null, remoteMr,
+							NvmfStorageUtils.alignOffset(endpoint.getSectorSize(), remoteOffset));
+				} catch (IOException e) {
+					throw new ExecutionException(e);
+				}
+				initDone =true;
+			}
+			writeFuture.get(l, timeUnit);
 			try {
 				endpoint.putBuffer(stagingBuffer);
 			} catch (IOException e) {
 				throw new ExecutionException(e);
 			}
+			done = true;
 		}
 		return this;
 	}

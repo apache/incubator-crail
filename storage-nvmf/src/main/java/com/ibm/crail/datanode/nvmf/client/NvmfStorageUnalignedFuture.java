@@ -22,7 +22,7 @@
 
 package com.ibm.crail.datanode.nvmf.client;
 
-import com.ibm.crail.datanode.nvmf.NvmfDataNodeConstants;
+import com.ibm.crail.datanode.nvmf.NvmfStorageConstants;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 import sun.misc.Unsafe;
 import com.ibm.crail.storage.DataResult;
@@ -33,9 +33,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public abstract class NvmfDataUnalignedFuture implements Future<DataResult>, DataResult  {
-	protected final NvmfDataFuture initFuture;
-	protected final NvmfDataNodeEndpoint endpoint;
+public abstract class NvmfStorageUnalignedFuture implements Future<DataResult>, DataResult  {
+	protected final NvmfStorageFuture initFuture;
+	protected final NvmfStorageEndpoint endpoint;
 	protected final ByteBuffer buffer;
 	protected final long localOffset;
 	protected final BlockInfo remoteMr;
@@ -46,7 +46,7 @@ public abstract class NvmfDataUnalignedFuture implements Future<DataResult>, Dat
 	protected Exception exception;
 	protected static Unsafe unsafe;
 
-	public NvmfDataUnalignedFuture(NvmfDataFuture future, NvmfDataNodeEndpoint endpoint, ByteBuffer buffer,
+	public NvmfStorageUnalignedFuture(NvmfStorageFuture future, NvmfStorageEndpoint endpoint, ByteBuffer buffer,
 								   BlockInfo remoteMr, long remoteOffset, ByteBuffer stagingBuffer)
 			throws NoSuchFieldException, IllegalAccessException {
 		this.initFuture = future;
@@ -90,7 +90,7 @@ public abstract class NvmfDataUnalignedFuture implements Future<DataResult>, Dat
 
 	public DataResult get() throws InterruptedException, ExecutionException {
 		try {
-			return get(NvmfDataNodeConstants.TIME_OUT, NvmfDataNodeConstants.TIME_UNIT);
+			return get(NvmfStorageConstants.TIME_OUT, NvmfStorageConstants.TIME_UNIT);
 		} catch (TimeoutException e) {
 			throw new ExecutionException(e);
 		}
