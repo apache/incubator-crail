@@ -23,19 +23,18 @@
 package com.ibm.crail.datanode.nvmf.client;
 
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.datanode.DataNodeEndpoint;
-import com.ibm.crail.datanode.DataResult;
+import com.ibm.crail.storage.StorageEndpoint;
+import com.ibm.crail.storage.DataResult;
 import com.ibm.crail.datanode.nvmf.NvmfDataNode;
 import com.ibm.crail.datanode.nvmf.NvmfDataNodeConstants;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.crail.utils.DirectBufferCache;
-import com.ibm.disni.nvmef.NvmeCommand;
 import com.ibm.disni.nvmef.NvmeEndpoint;
 import com.ibm.disni.nvmef.NvmeEndpointGroup;
-import com.ibm.disni.nvmef.spdk.IOCompletion;
 import org.slf4j.Logger;
-
+import com.ibm.crail.storage.StorageEndpoint;
+import com.ibm.crail.storage.DataResult;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -43,7 +42,7 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.*;
 
-public class NvmfDataNodeEndpoint implements DataNodeEndpoint {
+public class NvmfDataNodeEndpoint implements StorageEndpoint {
 	private static final Logger LOG = CrailUtils.getLogger();
 
 	private final InetSocketAddress inetSocketAddress;

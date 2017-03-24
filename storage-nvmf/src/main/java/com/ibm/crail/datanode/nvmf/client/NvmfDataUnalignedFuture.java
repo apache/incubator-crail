@@ -22,11 +22,10 @@
 
 package com.ibm.crail.datanode.nvmf.client;
 
-import com.ibm.crail.datanode.DataResult;
 import com.ibm.crail.datanode.nvmf.NvmfDataNodeConstants;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 import sun.misc.Unsafe;
-
+import com.ibm.crail.storage.DataResult;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutionException;

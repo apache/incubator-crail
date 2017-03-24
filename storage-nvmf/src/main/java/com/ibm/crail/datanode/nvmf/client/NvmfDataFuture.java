@@ -22,12 +22,10 @@
 
 package com.ibm.crail.datanode.nvmf.client;
 
-import com.ibm.crail.datanode.DataResult;
 import com.ibm.crail.datanode.nvmf.NvmfDataNodeConstants;
-import com.ibm.disni.nvmef.spdk.IOCompletion;
 import com.ibm.disni.nvmef.spdk.NvmeGenericCommandStatusCode;
 import com.ibm.disni.nvmef.spdk.NvmeStatusCodeType;
-
+import com.ibm.crail.storage.DataResult;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;

@@ -24,7 +24,7 @@ public class ClientTest {
 	public void init() throws Exception {
 		CrailConfiguration conf = new CrailConfiguration();
 		fs = CrailFS.newInstance(conf);
-		fs.makeDirectory(testBasePath.toString()).get();
+		fs.create(testBasePath.toString(), CrailNodeType.DIRECTORY, 0, 0).get();
 	}
 
 	@After
@@ -35,38 +35,38 @@ public class ClientTest {
 	@Test
 	public void testCreateFile() throws Exception {
 		Path p = new Path(testBasePath, "fooCreate");
-		fs.createFile(p.toString(), 0, 0).get();
-		fs.lookupNode(p.toString()).get().asFile();
+		fs.create(p.toString(),  CrailNodeType.DATAFILE, 0, 0).get();
+		fs.lookup(p.toString()).get().asFile();
 	}
 
 	@Test
 	public void testDeleteFile() throws Exception {
 		Path p = new Path(testBasePath, "fooDelete");
-		fs.createFile(p.toString(), 0, 0).get();
+		fs.create(p.toString(), CrailNodeType.DATAFILE, 0, 0).get();
 		fs.delete(p.toString(), false).get();
-		Assert.assertNull(fs.lookupNode(p.toString()).get());
+		Assert.assertNull(fs.lookup(p.toString()).get());
 	}
 
 	@Test
 	public void testRenameFile() throws Exception {
 		Path p = new Path(testBasePath, "fooRename");
-		fs.createFile(p.toString(), 0, 0).get();
+		fs.create(p.toString(), CrailNodeType.DATAFILE, 0, 0).get();
 		Path np = new Path(testBasePath, "barRename");
 		fs.rename(p.toString(), np.toString()).get();
-		Assert.assertNull(fs.lookupNode(p.toString()).get());
-		fs.lookupNode(np.toString()).get().asFile();
+		Assert.assertNull(fs.lookup(p.toString()).get());
+		fs.lookup(np.toString()).get().asFile();
 	}
 
 	@Test
 	public void testlookupDirectory() throws Exception {
-		fs.lookupNode(testBasePath.toString()).get().asDirectory();
+		fs.lookup(testBasePath.toString()).get().asDirectory();
 	}
 
 	@Test
 	public void testCreateDirectory() throws Exception {
 		Path p = new Path(testBasePath, "fooDir");
-		fs.makeDirectory(p.toString()).get();
-		fs.lookupNode(p.toString()).get().asDirectory();
+		fs.create(p.toString(), CrailNodeType.DIRECTORY, 0, 0).get();
+		fs.lookup(p.toString()).get().asDirectory();
 	}
 
 	void fillRandom(ByteBuffer buffer) {
@@ -99,7 +99,7 @@ public class ClientTest {
 				position + ", length = " + length + ", remoteOffset = " + remoteOffset);
 
 		Path p = new Path(testBasePath, "fooOutputStream" + length);
-		CrailFile file = fs.createFile(p.toString(), 0, 0).get().asFile();
+		CrailFile file = fs.create(p.toString(),CrailNodeType.DATAFILE,  0, 0).get().asFile();
 		CrailOutputStream outputStream = file.getDirectOutputStream(0);
 		CrailInputStream inputStream = file.getDirectInputStream(0);
 

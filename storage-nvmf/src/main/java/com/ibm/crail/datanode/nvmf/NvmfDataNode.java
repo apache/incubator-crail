@@ -24,10 +24,10 @@ package com.ibm.crail.datanode.nvmf;
 
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.datanode.DataNodeEndpoint;
+import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.datanode.nvmf.client.NvmfDataNodeEndpoint;
 import com.ibm.crail.utils.CrailUtils;
-import com.ibm.crail.datanode.DataNode;
+import com.ibm.crail.storage.StorageTier;
 import com.ibm.crail.namenode.protocol.DataNodeStatistics;
 import com.ibm.disni.nvmef.NvmeEndpointGroup;
 import com.ibm.disni.nvmef.NvmeServerEndpoint;
@@ -41,7 +41,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Arrays;
 
-public class NvmfDataNode extends DataNode {
+public class NvmfDataNode extends StorageTier {
 
 	private static final Logger LOG = CrailUtils.getLogger();
 	private InetSocketAddress datanodeAddr;
@@ -93,7 +93,7 @@ public class NvmfDataNode extends DataNode {
 		NvmfDataNodeConstants.verify();
 	}
 
-	public DataNodeEndpoint createEndpoint(InetSocketAddress inetSocketAddress) throws IOException {
+	public StorageEndpoint createEndpoint(InetSocketAddress inetSocketAddress) throws IOException {
 		if (clientGroup == null) {
 			synchronized (this) {
 				if (clientGroup == null) {
