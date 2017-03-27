@@ -68,8 +68,8 @@ public class CrailConstants {
 	public static final String NAMENODE_DARPC_CLUSTERSIZE_KEY = "crail.namenode.darpc.clustersize";
 	public static int NAMENODE_DARPC_CLUSTERSIZE = 128;		
 	
-	public static final String DATANODE_TYPES_KEY = "crail.datanode.types";
-	public static String DATANODE_TYPES = "com.ibm.crail.storage.rdma.RdmaDataNode";		
+	public static final String STORAGE_TYPES_KEY = "crail.storage.types";
+	public static String STORAGE_TYPES = "com.ibm.crail.storage.rdma.RdmaDataNode";		
 
 	public static final String DIRECTORY_DEPTH_KEY = "crail.directory.depth";
 	public static int DIRECTORY_DEPTH = 16;
@@ -159,8 +159,8 @@ public class CrailConstants {
 		if (conf.get(NAMENODE_DARPC_CLUSTERSIZE_KEY) != null) {
 			NAMENODE_DARPC_CLUSTERSIZE = Integer.parseInt(conf.get(NAMENODE_DARPC_CLUSTERSIZE_KEY));
 		}			
-		if (conf.get(DATANODE_TYPES_KEY) != null) {
-			DATANODE_TYPES = conf.get(DATANODE_TYPES_KEY);
+		if (conf.get(STORAGE_TYPES_KEY) != null) {
+			STORAGE_TYPES = conf.get(STORAGE_TYPES_KEY);
 		}			
 		if (conf.get(DIRECTORY_DEPTH_KEY) != null) {
 			DIRECTORY_DEPTH = Integer.parseInt(conf.get(DIRECTORY_DEPTH_KEY));
@@ -229,7 +229,7 @@ public class CrailConstants {
 		LOG.info(NAMENODE_DARPC_SENDQUEUE_KEY + " " + NAMENODE_DARPC_SENDQUEUE);
 		LOG.info(NAMENODE_DARPC_POLLSIZE_KEY + " " + NAMENODE_DARPC_POLLSIZE);
 		LOG.info(NAMENODE_DARPC_CLUSTERSIZE_KEY + " " + NAMENODE_DARPC_CLUSTERSIZE);
-		LOG.info(DATANODE_TYPES_KEY + " " + DATANODE_TYPES);
+		LOG.info(STORAGE_TYPES_KEY + " " + STORAGE_TYPES);
 		LOG.info(DIRECTORY_DEPTH_KEY + " " + DIRECTORY_DEPTH);
 		LOG.info(TOKEN_EXPIRATION_KEY + " " + TOKEN_EXPIRATION);
 		LOG.info(BLOCK_SIZE_KEY + " " + BLOCK_SIZE);

@@ -76,11 +76,11 @@ public class RdmaStorageTier extends StorageTier {
 				if ((char) ch == 'i') {
 					String ifname = go.optArgGet();
 					LOG.info("using custom interface " + ifname);
-					conf.set(RdmaConstants.DATANODE_RDMA_INTERFACE_KEY, ifname);
+					conf.set(RdmaConstants.STORAGE_RDMA_INTERFACE_KEY, ifname);
 				} else if ((char) ch == 'p') {
 					String port = go.optArgGet();
 					LOG.info("using custom port " + port);
-					conf.set(RdmaConstants.DATANODE_RDMA_PORT_KEY, port);
+					conf.set(RdmaConstants.STORAGE_RDMA_PORT_KEY, port);
 				} 
 			}		
 		}
@@ -106,14 +106,14 @@ public class RdmaStorageTier extends StorageTier {
 		if (clientGroup == null){
 			synchronized(this){
 				if (clientGroup == null){
-					if (RdmaConstants.DATANODE_RDMA_TYPE.equalsIgnoreCase("passive")){
+					if (RdmaConstants.STORAGE_RDMA_TYPE.equalsIgnoreCase("passive")){
 						LOG.info("passive data client ");
-						RdmaStoragePassiveGroup _endpointGroup = new RdmaStoragePassiveGroup(100, RdmaConstants.DATANODE_RDMA_QUEUESIZE, 4, RdmaConstants.DATANODE_RDMA_QUEUESIZE*2, clientMrCache);
+						RdmaStoragePassiveGroup _endpointGroup = new RdmaStoragePassiveGroup(100, RdmaConstants.STORAGE_RDMA_QUEUESIZE, 4, RdmaConstants.STORAGE_RDMA_QUEUESIZE*2, clientMrCache);
 						_endpointGroup.init(new RdmaStoragePassiveEndpointFactory(_endpointGroup));
 						this.clientGroup = _endpointGroup;
 					} else {
 						LOG.info("active data client ");
-						RdmaStorageActiveGroup _endpointGroup = new RdmaStorageActiveGroup(100, false, RdmaConstants.DATANODE_RDMA_QUEUESIZE, 4, RdmaConstants.DATANODE_RDMA_QUEUESIZE*2, clientMrCache);
+						RdmaStorageActiveGroup _endpointGroup = new RdmaStorageActiveGroup(100, false, RdmaConstants.STORAGE_RDMA_QUEUESIZE, 4, RdmaConstants.STORAGE_RDMA_QUEUESIZE*2, clientMrCache);
 						_endpointGroup.init(new RdmaStorageActiveEndpointFactory(_endpointGroup));
 						this.clientGroup = _endpointGroup;
 					}		
@@ -140,11 +140,11 @@ public class RdmaStorageTier extends StorageTier {
 	public void run () throws Exception {
 		this.serverAddr = getDataNodeAddress();
 		if (serverAddr == null){
-			LOG.info("Configured network interface " + RdmaConstants.DATANODE_RDMA_INTERFACE + " cannot be found..exiting!!!");
+			LOG.info("Configured network interface " + RdmaConstants.STORAGE_RDMA_INTERFACE + " cannot be found..exiting!!!");
 			return;
 		}
 		URI uri = URI.create("rdma://" + serverAddr.getAddress().getHostAddress() + ":" + serverAddr.getPort());
-		RdmaPassiveEndpointGroup<RdmaStorageServerEndpoint> datanodeGroup = new RdmaPassiveEndpointGroup<RdmaStorageServerEndpoint>(-1, RdmaConstants.DATANODE_RDMA_QUEUESIZE, 4, RdmaConstants.DATANODE_RDMA_QUEUESIZE*100);
+		RdmaPassiveEndpointGroup<RdmaStorageServerEndpoint> datanodeGroup = new RdmaPassiveEndpointGroup<RdmaStorageServerEndpoint>(-1, RdmaConstants.STORAGE_RDMA_QUEUESIZE, 4, RdmaConstants.STORAGE_RDMA_QUEUESIZE*100);
 		RdmaServerEndpoint<RdmaStorageServerEndpoint> datanodeServerEndpoint = datanodeGroup.createServerEndpoint();
 		RdmaStorageServer datanodeServer = new RdmaStorageServer(datanodeServerEndpoint, serverAddr);
 		
@@ -189,14 +189,14 @@ public class RdmaStorageTier extends StorageTier {
 					DataNodeStatistics statistics = this.getDataNode();
 					LOG.info("datanode statistics, freeBlocks " + statistics.getFreeBlockCount());
 					
-					if (allocatedSize < RdmaConstants.DATANODE_RDMA_STORAGE_LIMIT){
+					if (allocatedSize < RdmaConstants.STORAGE_RDMA_STORAGE_LIMIT){
 						//mmap buffer
 						int fileId = fileCount++;
 						String dataFilePath = dataDirPath + "/" + fileId;
 						RandomAccessFile dataFile = new RandomAccessFile(dataFilePath, "rw");
-						dataFile.setLength(RdmaConstants.DATANODE_RDMA_ALLOCATION_SIZE);
+						dataFile.setLength(RdmaConstants.STORAGE_RDMA_ALLOCATION_SIZE);
 						FileChannel dataChannel = dataFile.getChannel();
-						ByteBuffer dataBuffer = dataChannel.map(MapMode.READ_WRITE, 0, RdmaConstants.DATANODE_RDMA_ALLOCATION_SIZE);
+						ByteBuffer dataBuffer = dataChannel.map(MapMode.READ_WRITE, 0, RdmaConstants.STORAGE_RDMA_ALLOCATION_SIZE);
 						dataFile.close();
 						dataChannel.close();
 
@@ -242,24 +242,24 @@ public class RdmaStorageTier extends StorageTier {
 	public static String getDatanodeDirectory(InetSocketAddress inetAddress){
 		String address = inetAddress.getAddress().toString();
 		if (address.startsWith("/")){
-			return RdmaConstants.DATANODE_RDMA_DATA_PATH + address + "-"  + inetAddress.getPort();
+			return RdmaConstants.STORAGE_RDMA_DATA_PATH + address + "-"  + inetAddress.getPort();
 		} else {
-			return RdmaConstants.DATANODE_RDMA_DATA_PATH + address + "-"  + inetAddress.getPort();
+			return RdmaConstants.STORAGE_RDMA_DATA_PATH + address + "-"  + inetAddress.getPort();
 		}
 	}
 	
 	public static String getIndexDirectory(InetSocketAddress inetAddress){
 		String address = inetAddress.getAddress().toString();
 		if (address.startsWith("/")){
-			return RdmaConstants.DATANODE_RDMA_INDEX_PATH + address + "-"  + inetAddress.getPort();
+			return RdmaConstants.STORAGE_RDMA_INDEX_PATH + address + "-"  + inetAddress.getPort();
 		} else {
-			return RdmaConstants.DATANODE_RDMA_INDEX_PATH + address + "-"  + inetAddress.getPort();
+			return RdmaConstants.STORAGE_RDMA_INDEX_PATH + address + "-"  + inetAddress.getPort();
 		}
 	}
 	
 	public static InetSocketAddress getDataNodeAddress() throws Exception {
-		String ifname = RdmaConstants.DATANODE_RDMA_INTERFACE;
-		int port = RdmaConstants.DATANODE_RDMA_PORT;
+		String ifname = RdmaConstants.STORAGE_RDMA_INTERFACE;
+		int port = RdmaConstants.STORAGE_RDMA_PORT;
 		
 		NetworkInterface netif = NetworkInterface.getByName(ifname);
 		if (netif == null){

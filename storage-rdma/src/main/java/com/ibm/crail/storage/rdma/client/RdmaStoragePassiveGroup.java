@@ -54,7 +54,7 @@ public class RdmaStoragePassiveGroup extends RdmaPassiveEndpointGroup<RdmaStorag
 	}
 
 	public StorageEndpoint createEndpoint(InetSocketAddress inetAddress) throws IOException {
-		if (RdmaConstants.DATANODE_RDMA_LOCAL_MAP && CrailUtils.isLocalAddress(inetAddress.getAddress())){
+		if (RdmaConstants.STORAGE_RDMA_LOCAL_MAP && CrailUtils.isLocalAddress(inetAddress.getAddress())){
 			return this.localEndpoint;
 		} 
 		RdmaStoragePassiveEndpoint endpoint = super.createEndpoint();

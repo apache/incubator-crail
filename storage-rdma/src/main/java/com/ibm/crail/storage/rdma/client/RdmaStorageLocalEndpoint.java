@@ -110,7 +110,7 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 		}
 		
 		long blockOffset = remoteMr.getAddr() - blockIndex.getAddr();
-		if (blockOffset + remoteOffset + buffer.remaining() > RdmaConstants.DATANODE_RDMA_ALLOCATION_SIZE){
+		if (blockOffset + remoteOffset + buffer.remaining() > RdmaConstants.STORAGE_RDMA_ALLOCATION_SIZE){
 			long tmpAddr = blockOffset + remoteOffset + buffer.remaining();
 			throw new IOException("remote fileOffset + remoteOffset + len too large " + tmpAddr);
 		}		
@@ -147,7 +147,7 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 		}		
 
 		long blockOffset = remoteMr.getAddr() - blockIndex.getAddr();
-		if (blockOffset + remoteOffset + buffer.remaining() > RdmaConstants.DATANODE_RDMA_ALLOCATION_SIZE){
+		if (blockOffset + remoteOffset + buffer.remaining() > RdmaConstants.STORAGE_RDMA_ALLOCATION_SIZE){
 			long tmpAddr = blockOffset + remoteOffset + buffer.remaining();
 			throw new IOException("remote fileOffset + remoteOffset + len too large " + tmpAddr);
 		}			
@@ -193,7 +193,7 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 	private MappedByteBuffer mmap(File file) throws IOException{
 		RandomAccessFile randomFile = new RandomAccessFile(file.getAbsolutePath(), "rw");
 		FileChannel channel = randomFile.getChannel();
-		MappedByteBuffer mappedBuffer = channel.map(MapMode.READ_WRITE, 0, RdmaConstants.DATANODE_RDMA_ALLOCATION_SIZE);
+		MappedByteBuffer mappedBuffer = channel.map(MapMode.READ_WRITE, 0, RdmaConstants.STORAGE_RDMA_ALLOCATION_SIZE);
 		randomFile.close();
 		return mappedBuffer;
 	}	

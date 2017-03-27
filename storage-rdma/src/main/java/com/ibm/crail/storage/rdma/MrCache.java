@@ -97,7 +97,7 @@ public class MrCache {
 		public void close() throws IOException {
 			for (Iterator<IbvMr> iter2 = device.values().iterator(); iter2.hasNext(); ){
 				IbvMr mr = iter2.next();
-				mr.deregMr();
+				mr.deregMr().free();
 			}
 			device.clear();
 		}

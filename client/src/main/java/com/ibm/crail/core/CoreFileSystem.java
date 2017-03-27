@@ -100,7 +100,7 @@ public class CoreFileSystem extends CrailFS {
 		CrailConstants.verify();	
 		
 		//Datanodes
-		StringTokenizer tokenizer = new StringTokenizer(CrailConstants.DATANODE_TYPES, ",");
+		StringTokenizer tokenizer = new StringTokenizer(CrailConstants.STORAGE_TYPES, ",");
 		LinkedList<StorageTier> dataNodeClients = new LinkedList<StorageTier>(); 
 		while (tokenizer.hasMoreTokens()){
 			String name = tokenizer.nextToken();

@@ -68,7 +68,7 @@ public abstract class StorageTier {
 		}
 		
 		dataNodeTypes = new ConcurrentHashMap<String, Integer>();
-		StringTokenizer tokenizer = new StringTokenizer(CrailConstants.DATANODE_TYPES, ",");
+		StringTokenizer tokenizer = new StringTokenizer(CrailConstants.STORAGE_TYPES, ",");
 		int storageTier = 0;
 		while (tokenizer.hasMoreTokens()){
 			String name = tokenizer.nextToken();

@@ -54,7 +54,7 @@ public class RdmaStorageActiveGroup extends RdmaActiveEndpointGroup<RdmaStorageA
 
 //	@Override
 	public StorageEndpoint createEndpoint(InetSocketAddress inetAddress) throws IOException {
-		if (localEndpoint != null && RdmaConstants.DATANODE_RDMA_LOCAL_MAP && CrailUtils.isLocalAddress(inetAddress.getAddress())){
+		if (localEndpoint != null && RdmaConstants.STORAGE_RDMA_LOCAL_MAP && CrailUtils.isLocalAddress(inetAddress.getAddress())){
 			return this.localEndpoint;
 		} 
 		RdmaStorageActiveEndpoint endpoint = super.createEndpoint();

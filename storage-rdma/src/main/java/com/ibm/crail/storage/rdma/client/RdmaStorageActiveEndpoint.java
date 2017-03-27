@@ -58,7 +58,7 @@ public class RdmaStorageActiveEndpoint extends RdmaActiveEndpoint implements Sto
 		readOps = new LinkedBlockingQueue<SVCPostSend>();
 		this.opcount = new AtomicIntegerModulo();
 		this.futureMap = new ConcurrentHashMap<Long, RdmaActiveFuture>();
-		this.sendQueueAvailable = new Semaphore(RdmaConstants.DATANODE_RDMA_QUEUESIZE);
+		this.sendQueueAvailable = new Semaphore(RdmaConstants.STORAGE_RDMA_QUEUESIZE);
 		this.mrCache = group.getMrCache();
 		this.deviceCache = null;
 	}
@@ -67,7 +67,7 @@ public class RdmaStorageActiveEndpoint extends RdmaActiveEndpoint implements Sto
 	protected synchronized void init() throws IOException {
 		super.init();
 		
-		for (int i = 0; i < RdmaConstants.DATANODE_RDMA_QUEUESIZE; i++){
+		for (int i = 0; i < RdmaConstants.STORAGE_RDMA_QUEUESIZE; i++){
 			SVCPostSend write = initWriteOp();
 			writeOps.add(write);
 			SVCPostSend read = initReadOp();

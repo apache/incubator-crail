@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 
 public class NvmfStorageConstants {
 
-	private final static String PREFIX = "crail.datanode.nvmf";
+	private final static String PREFIX = "crail.storage.nvmf";
 
 	public static final String IP_ADDR_KEY = "bindip";
 	public static InetAddress IP_ADDR;
