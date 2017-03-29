@@ -23,6 +23,7 @@ package com.ibm.crail.namenode.rpc;
 
 import java.io.IOException;
 
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.namenode.protocol.DataNodeInfo;
 import com.ibm.crail.namenode.protocol.FileInfo;
@@ -30,7 +31,7 @@ import com.ibm.crail.namenode.protocol.FileName;
 
 public interface RpcNameNodeClient {
 	public abstract RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> createFile(
-			FileName filename, boolean isDir, int storageAffinity, int locationAffinity) throws IOException;
+			FileName filename, CrailNodeType type, int storageAffinity, int locationAffinity) throws IOException;
 
 	public abstract RpcNameNodeFuture<RpcResponseMessage.GetFileRes> getFile(FileName filename,
 			boolean writeable) throws IOException;

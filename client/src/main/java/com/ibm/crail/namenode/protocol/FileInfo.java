@@ -26,6 +26,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.conf.CrailConstants;
 
 public class FileInfo {
@@ -33,19 +34,18 @@ public class FileInfo {
 	
 	private long fd;
 	protected AtomicLong capacity;
-	private boolean isDir;
+	private CrailNodeType type;
 	private long dirOffset;
 	private long token;
 	private long modificationTime;
 	
 	public FileInfo(){
-		this(-1, false);
+		this(-1, CrailNodeType.DATAFILE);
 	}
 	
-	protected FileInfo(long fd, boolean isDir){
+	protected FileInfo(long fd, CrailNodeType type){
 		this.fd = fd;
-		this.isDir = isDir;
-		
+		this.type = type;
 		this.dirOffset = 0;
 		this.capacity = new AtomicLong(0);
 		this.token = 0;
@@ -54,7 +54,7 @@ public class FileInfo {
 	
 	public void setFileInfo(FileInfo fileInfo){
 		this.fd = fileInfo.getFd();
-		this.isDir = fileInfo.isDir();
+		this.type = fileInfo.getType();
 		this.dirOffset = fileInfo.getDirOffset();
 		
 		this.capacity.set(fileInfo.getCapacity());
@@ -65,7 +65,7 @@ public class FileInfo {
 	public int write(ByteBuffer buffer, boolean shipToken){
 		buffer.putLong(fd);
 		buffer.putLong(capacity.get());
-		buffer.putInt(isDir ? 1 : 0);
+		buffer.putInt(type.getLabel());
 		buffer.putLong(dirOffset);
 		if (shipToken){
 			buffer.putLong(token);
@@ -80,8 +80,7 @@ public class FileInfo {
 	public void update(ByteBuffer buffer) throws UnknownHostException{
 		fd = buffer.getLong();
 		capacity.set(buffer.getLong());
-		int _isDir = buffer.getInt();
-		isDir = _isDir == 1 ? true : false;
+		type = CrailNodeType.parse(buffer.getInt());
 		dirOffset = buffer.getLong();
 		token = buffer.getLong();
 		modificationTime = buffer.getLong();
@@ -119,7 +118,7 @@ public class FileInfo {
 	}
 
 	public void updateToken(){
-		if (!isDir){
+		if (!type.isDirectory()){
 			this.token = System.nanoTime() + TimeUnit.SECONDS.toNanos(CrailConstants.TOKEN_EXPIRATION);
 		}
 	}
@@ -145,11 +144,11 @@ public class FileInfo {
 	}
 
 	public String toString() {
-		return "fd " + fd + ", capacity " + capacity + ", isdir " + isDir + ", dirOffset " + dirOffset + ", token " + token;
+		return "fd " + fd + ", capacity " + capacity + ", type " + type.getLabel() + ", dirOffset " + dirOffset + ", token " + token;
 	}
 
-	public boolean isDir() {
-		return isDir;
+	public CrailNodeType getType(){
+		return type;
 	}
 
 	public boolean tokenFree(){

@@ -27,20 +27,22 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 
+import com.ibm.crail.CrailStatistics.StatisticsProvider;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.datanode.DataNode;
-import com.ibm.crail.datanode.DataNodeEndpoint;
 import com.ibm.crail.namenode.protocol.DataNodeInfo;
+import com.ibm.crail.storage.StorageTier;
+import com.ibm.crail.storage.StorageEndpoint;
+import com.ibm.crail.*;
 
-public class EndpointCache {
+public class EndpointCache implements CrailStatistics.StatisticsProvider {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	private boolean isOpen;
 	private ConcurrentHashMap<Integer, StorageEndpointCache> storageCaches = new ConcurrentHashMap<Integer, StorageEndpointCache>();
 	
-	public EndpointCache(int fsId, LinkedList<DataNode> storageGroups){
+	public EndpointCache(int fsId, LinkedList<StorageTier> storageGroups){
 		int storageTier = 0;
-		for (DataNode group : storageGroups){
+		for (StorageTier group : storageGroups){
 			StorageEndpointCache cache = new StorageEndpointCache(fsId, group);
 			LOG.info("adding tier to cache " + storageTier);
 			storageCaches.put(storageTier++, cache);
@@ -48,7 +50,25 @@ public class EndpointCache {
 		this.isOpen = true;
 	}
 	
-	public DataNodeEndpoint getDataEndpoint(DataNodeInfo dataNodeInfo) throws IOException, InterruptedException {
+	@Override
+	public String providerName() {
+		return "EndpointCache";
+	}
+
+	@Override
+	public String printStatistics() {
+		return "size " + size();
+	}
+	
+	public void mergeStatistics(StatisticsProvider provider){
+		
+	}
+
+	@Override
+	public void resetStatistics() {
+	}	
+	
+	public StorageEndpoint getDataEndpoint(DataNodeInfo dataNodeInfo) throws IOException, InterruptedException {
 		return storageCaches.get(dataNodeInfo.getStorageTier()).getDataEndpoint(dataNodeInfo);
 	}
 	
@@ -73,16 +93,16 @@ public class EndpointCache {
 	//-------------------------------
 	
 	public static class StorageEndpointCache {
-		private DataNode datanodeGroup;
+		private StorageTier datanodeGroup;
 		private ConcurrentHashMap<Long, Object> locktable;
-		private ConcurrentHashMap<Long, DataNodeEndpoint> cache;
+		private ConcurrentHashMap<Long, StorageEndpoint> cache;
 		private int fsId;
 		private boolean isOpen;
 		
-		public StorageEndpointCache(int fsId, DataNode datanodeGroup){
+		public StorageEndpointCache(int fsId, StorageTier datanodeGroup){
 			this.fsId = fsId;
 			this.datanodeGroup = datanodeGroup;
-			this.cache = new ConcurrentHashMap<Long, DataNodeEndpoint>();
+			this.cache = new ConcurrentHashMap<Long, StorageEndpoint>();
 			this.locktable = new ConcurrentHashMap<Long, Object>();
 			this.isOpen = true;
 		}	
@@ -99,8 +119,8 @@ public class EndpointCache {
 			}
 		}
 
-		public DataNodeEndpoint getDataEndpoint(DataNodeInfo dataNodeInfo) throws IOException, InterruptedException {
-			DataNodeEndpoint endpoint = cache.get(dataNodeInfo.key());
+		public StorageEndpoint getDataEndpoint(DataNodeInfo dataNodeInfo) throws IOException, InterruptedException {
+			StorageEndpoint endpoint = cache.get(dataNodeInfo.key());
 			if (endpoint == null) {
 				Object lock = getLock(dataNodeInfo.key());
 				synchronized (lock) {

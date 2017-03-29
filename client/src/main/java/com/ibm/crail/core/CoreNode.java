@@ -21,11 +21,11 @@
 
 package com.ibm.crail.core;
 
-import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 
-import com.ibm.crail.CrailInputStream;
+import com.ibm.crail.CrailMultiFile;
 import com.ibm.crail.CrailNode;
-import com.ibm.crail.CrailOutputStream;
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.namenode.protocol.FileInfo;
 
 public class CoreNode implements CrailNode {
@@ -34,13 +34,23 @@ public class CoreNode implements CrailNode {
 	protected String path;
 	protected int storageAffinity;
 	protected int locationAffinity;	
+	private LinkedBlockingQueue<CoreSyncOperation> syncOperations;
+	
+	public static CoreNode create(CoreFileSystem fs, FileInfo fileInfo, String path, int storageAffinity, int locationAffinity) {
+		if (fileInfo.getType().isContainer()){
+			return new CoreDirectory(fs, fileInfo, path, storageAffinity, locationAffinity);		
+		} else {
+			return new CoreFile(fs, fileInfo, path, storageAffinity, locationAffinity);
+		}
+	}	
 	
 	protected CoreNode(CoreFileSystem fs, FileInfo fileInfo, String path, int storageAffinity, int locationAffinity){
 		this.fs = fs;
 		this.fileInfo = fileInfo;
 		this.path = path;
 		this.storageAffinity = storageAffinity;
-		this.locationAffinity = locationAffinity;		
+		this.locationAffinity = locationAffinity;
+		this.syncOperations = new LinkedBlockingQueue<CoreSyncOperation>();
 	}	
 
 	@Override
@@ -61,8 +71,8 @@ public class CoreNode implements CrailNode {
 		return fileInfo.getCapacity();
 	}
 	
-	public boolean isDir() {
-		return fileInfo.isDir();
+	public CrailNodeType getType() {
+		return fileInfo.getType();
 	}
 	
 	public int storageAffinity(){
@@ -79,6 +89,10 @@ public class CoreNode implements CrailNode {
 
 	@Override
 	public CoreNode syncDir() throws Exception {
+		while(!syncOperations.isEmpty()){
+			CoreSyncOperation syncOp = syncOperations.poll();
+			syncOp.close();
+		}			
 		return this;
 	}
 	
@@ -89,6 +103,10 @@ public class CoreNode implements CrailNode {
 	public CoreDirectory asDirectory() throws Exception {
 		throw new Exception("Type of file unclear");
 	}	
+	
+	public CrailMultiFile asMultiFile() throws Exception {
+		throw new Exception("Type of file unclear");
+	}		
 	
 	protected CoreInputStream getInputStream(long readHint) throws Exception{
 		return fs.getInputStream(this, readHint);
@@ -103,84 +121,107 @@ public class CoreNode implements CrailNode {
 	}
 	
 	void closeOutputStream(CoreOutputStream coreStream) throws Exception {
+		syncDir();
 		fs.unregisterOutputStream(coreStream);
 	}	
 	
 	FileInfo getFileInfo(){
 		return fileInfo;
 	}	
-}
-
-class CoreRenamedNode extends CoreNode {
-	private Future<?> srcDirFuture;
-	private Future<?> dstDirFuture;
-	private DirectoryOutputStream srcStream;
-	private DirectoryOutputStream dstStream;
 	
-
-	protected CoreRenamedNode(CoreFileSystem fs, FileInfo fileInfo, String path, Future<?> srcDirFuture, Future<?> dstDirFuture, DirectoryOutputStream srcStream, DirectoryOutputStream dstStream){
-		super(fs, fileInfo, path, 0, 0);
-		this.srcDirFuture = srcDirFuture;
-		this.dstDirFuture = dstDirFuture;
-		this.srcStream = srcStream;
-		this.dstStream = dstStream;
-	}
-
-	@Override
-	public synchronized CoreNode syncDir() throws Exception {
-		if (srcDirFuture != null) {
-			srcDirFuture.get();
-			srcDirFuture = null;
-		}
-		if (dstDirFuture != null) {
-			dstDirFuture.get();
-			dstDirFuture = null;
-		}		
-		if (srcStream != null){
-			srcStream.close();
-			srcStream = null;
-		}
-		if (dstStream != null){
-			dstStream.close();
-			dstStream = null;
-		}
-		return this;
-	}
-
-	@Override
-	void closeOutputStream(CoreOutputStream coreStream) throws Exception {
-		syncDir();
-		super.closeOutputStream(coreStream);
+	void addSyncOperation(CoreSyncOperation operation){
+		this.syncOperations.add(operation);
 	}
 }
 
-class CoreDeleteNode extends CoreNode {
-	private Future<?> dirFuture;
-	private DirectoryOutputStream dirStream;	
-	
-	public CoreDeleteNode(CoreFileSystem fs, FileInfo fileInfo, String path, Future<?> dirFuture, DirectoryOutputStream dirStream){
-		super(fs, fileInfo, path, 0, 0);
-		this.dirFuture = dirFuture;
-		this.dirStream = dirStream;
-	}
-	
-	@Override
-	public synchronized CoreNode syncDir() throws Exception {
-		if (dirFuture != null) {
-			dirFuture.get();
-			dirFuture = null;
-		}
-		if (dirStream != null){
-			dirStream.close();
-			dirStream = null;
-		}
-		return this;
-	}
-
-	@Override
-	void closeOutputStream(CoreOutputStream coreStream) throws Exception {
-		syncDir();
-		super.closeOutputStream(coreStream);
-	}
-	
-}
+//class CoreEarlyNode implements CrailNode {
+//	private static final Logger LOG = CrailUtils.getLogger();
+//	
+//	private CreateNodeFuture createFileFuture;
+//	private CrailNode file;
+//	private String path;
+//	private CoreFileSystem fs;
+//	private int storageAffinity;
+//	private int locationAffinity;
+//
+//	public CoreEarlyNode(CreateNodeFuture createFileFuture, String path, CoreFileSystem fs, int storageAffinity, int locationAffinity) {
+//		this.createFileFuture = createFileFuture;
+//		this.file = null;
+//		this.path = path;
+//		this.fs = fs;
+//		this.storageAffinity = storageAffinity;
+//		this.locationAffinity = locationAffinity;
+//	}
+//
+//	@Override
+//	public CrailFS getFileSystem() {
+//		return fs;
+//	}
+//
+//	@Override
+//	public String getPath() {
+//		return path;
+//	}
+//
+//	@Override
+//	public CrailNode syncDir() throws Exception {
+//		return file().syncDir();
+//	}
+//
+//	@Override
+//	public long getModificationTime() {
+//		try {
+//			return file().getModificationTime();
+//		} catch(Exception e){
+//			LOG.info("Error: " + e.getMessage());
+//			return -1;
+//		}
+//	}
+//
+//	@Override
+//	public long getCapacity() {
+//		try {
+//			return file().getCapacity();
+//		} catch(Exception e){
+//			LOG.info("Error: " + e.getMessage());
+//			return -1;
+//		}
+//	}
+//	
+//	@Override
+//	public CrailNodeType getType() {
+//		try {
+//			return file().getType();
+//		} catch(Exception e){
+//			LOG.info("Error: " + e.getMessage());
+//			return CrailNodeType.DATAFILE;
+//		}
+//	}	
+//
+//	@Override
+//	public CrailFile asFile() throws Exception {
+//		try {
+//			return file().asFile();
+//		} catch(Exception e){
+//			LOG.info("Error: " + e.getMessage());
+//			return null;
+//		}
+//	}
+//
+//	@Override
+//	public CrailDirectory asDirectory() throws Exception {
+//		return file().asDirectory();
+//	}
+//	
+//	@Override
+//	public CrailMultiFile asMultiFile() throws Exception {
+//		return file().asMultiFile();
+//	}	
+//
+//	private synchronized CrailNode file() throws Exception {
+//		if (file == null){
+//			file = this.createFileFuture.get();
+//		}
+//		return file;
+//	}
+//}

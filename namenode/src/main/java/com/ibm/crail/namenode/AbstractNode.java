@@ -29,6 +29,7 @@ import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.namenode.protocol.FileInfo;
@@ -43,19 +44,21 @@ public abstract class AbstractNode extends FileInfo implements Delayed {
 	private long delay;
 	
 	public static AbstractNode createRoot() throws IOException {
-		return new DirectoryBlocks(new FileName("/").getFileComponent());
+		return new DirectoryBlocks(new FileName("/").getFileComponent(), CrailNodeType.DIRECTORY);
 	}
 	
-	public static AbstractNode createNode(int fileComponent, boolean isDir) throws IOException {
-		if (isDir){
-			return new DirectoryBlocks(fileComponent);
+	public static AbstractNode createNode(int fileComponent, CrailNodeType type) throws IOException {
+		if (type == CrailNodeType.DIRECTORY){
+			return new DirectoryBlocks(fileComponent, CrailNodeType.DIRECTORY);
+		} else if (type == CrailNodeType.MULTIFILE){
+			return new DirectoryBlocks(fileComponent, CrailNodeType.MULTIFILE);
 		} else {
-			return new FileBlocks(fileComponent);
+			return new FileBlocks(fileComponent, CrailNodeType.DATAFILE);
 		}
 	}
 	
-	public AbstractNode(int fileComponent, boolean isDir){
-		super(fdcount.incrementAndGet(), isDir);
+	public AbstractNode(int fileComponent, CrailNodeType type){
+		super(fdcount.incrementAndGet(), type);
 		
 		this.fileComponent = fileComponent;
 		this.children = new ConcurrentHashMap<Integer, AbstractNode>();
@@ -65,7 +68,7 @@ public abstract class AbstractNode extends FileInfo implements Delayed {
 	}
 	
 	boolean addChild(AbstractNode child) throws Exception {
-		if (!this.isDir()){
+		if (!this.getType().isContainer()){
 			return false;
 		} 
 		
@@ -118,7 +121,7 @@ public abstract class AbstractNode extends FileInfo implements Delayed {
 	
 	@Override
 	public String toString() {
-		return String.format("%08d\t%08d\t\t%08d\t\t%08d\t\t%08d", getFd(), fileComponent, getCapacity(), isDir() ? 1 : 0, getDirOffset());
+		return String.format("%08d\t%08d\t\t%08d\t\t%08d\t\t%08d", getFd(), fileComponent, getCapacity(), getType().getLabel(), getDirOffset());
 	}	
 
 	@Override

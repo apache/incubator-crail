@@ -25,13 +25,14 @@ import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 
 public class DirectoryBlocks extends AbstractNode {
 	private ConcurrentHashMap<Integer, BlockInfo> blocks;
 	
-	DirectoryBlocks(int fileComponent) {
-		super(fileComponent, true);
+	DirectoryBlocks(int fileComponent, CrailNodeType type) {
+		super(fileComponent, type);
 		this.blocks = new ConcurrentHashMap<Integer, BlockInfo>();
 	}
 

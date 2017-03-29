@@ -33,9 +33,9 @@ import sun.nio.ch.DirectBuffer;
 import com.ibm.crail.CrailInputStream;
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.datanode.DataNodeEndpoint;
-import com.ibm.crail.datanode.DataResult;
 import com.ibm.crail.namenode.protocol.BlockInfo;
+import com.ibm.crail.storage.StorageEndpoint;
+import com.ibm.crail.storage.DataResult;
 import com.ibm.crail.utils.CrailImmediateOperation;
 import com.ibm.crail.utils.CrailUtils;
 
@@ -53,7 +53,7 @@ public class CoreInputStream extends CoreStream implements CrailInputStream {
 		this.noOp = new CrailImmediateOperation(0);
 		this.open = true;
 		if (CrailConstants.DEBUG){
-			LOG.info("CoreInputStream: open, path  " + file.getPath() + ", fd " + file.getFd() + ", streamId " + streamId + ", isDir " + file.isDir() + ", readHint " + this.readHint);
+			LOG.info("CoreInputStream: open, path  " + file.getPath() + ", fd " + file.getFd() + ", streamId " + streamId + ", isDir " + file.getType().isDirectory() + ", readHint " + this.readHint);
 		}
 	}
 	
@@ -125,7 +125,7 @@ public class CoreInputStream extends CoreStream implements CrailInputStream {
 	
 	// --------------------------
 	
-	Future<DataResult> trigger(DataNodeEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception {
+	Future<DataResult> trigger(StorageEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception {
 		Future<DataResult> future = endpoint.read(buffer, region, block, opDesc.getBlockOffset());
 		return future;
 	}	

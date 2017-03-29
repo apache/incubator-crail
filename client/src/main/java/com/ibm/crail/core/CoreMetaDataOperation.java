@@ -27,9 +27,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.ibm.crail.CrailDirectory;
-import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailNode;
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.Upcoming;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.rpc.NameNodeProtocol;
@@ -41,7 +40,7 @@ public abstract class CoreMetaDataOperation<R,T> implements Upcoming<T> {
 	protected static int RPC_ERROR = 2;		
 	
 	private AtomicInteger status;
-	private Future<R> rpcResult;
+	protected Future<R> rpcResult;
 	private T finalResult;
 	private Exception exception;
 	
@@ -144,45 +143,38 @@ public abstract class CoreMetaDataOperation<R,T> implements Upcoming<T> {
 	}	
 }
 
-class CreateFileFuture extends CoreMetaDataOperation<RpcResponseMessage.CreateFileRes, CrailFile> {
-	private String path;
+class CreateNodeFuture extends CoreMetaDataOperation<RpcResponseMessage.CreateFileRes, CrailNode> {
 	private CoreFileSystem fs;
+	private String path;
+	private CrailNodeType type;
 	private int storageAffinity;
 	private int locationAffinity;
 
-	public CreateFileFuture(CoreFileSystem fs, String path, Future<RpcResponseMessage.CreateFileRes> fileRes, int storageAffinity, int locationAffinity) {
+	public CreateNodeFuture(CoreFileSystem fs, String path, CrailNodeType type, int storageAffinity, int locationAffinity, Future<RpcResponseMessage.CreateFileRes> fileRes) {
 		super(fileRes);
 		this.fs = fs;
 		this.path = path;
+		this.type = type;
 		this.storageAffinity = storageAffinity;
 		this.locationAffinity = locationAffinity;
 	}
 
 	@Override
-	CrailFile process(RpcResponseMessage.CreateFileRes tmp) throws Exception {
-		return fs._createFile(tmp, path, storageAffinity, locationAffinity);
+	CrailNode process(RpcResponseMessage.CreateFileRes response) throws Exception {
+		return fs._createNode(path, type, storageAffinity, locationAffinity, response);
 	}
 
 	@Override
-	public CrailFile early() throws Exception {
-		return new CoreEarlyFile(this, this.path , this.fs, this.storageAffinity, this.locationAffinity);
-	}
-
-}
-
-class MakeDirFuture extends CoreMetaDataOperation<RpcResponseMessage.CreateFileRes, CrailDirectory> {
-	private String path;
-	private CoreFileSystem fs;
-
-	public MakeDirFuture(CoreFileSystem fs, String path, Future<RpcResponseMessage.CreateFileRes> fileRes) {
-		super(fileRes);
-		this.fs = fs;
-		this.path = path;
-	}
-
-	@Override
-	CrailDirectory process(RpcResponseMessage.CreateFileRes tmp) throws Exception {
-		return fs._makeDirectory(tmp, path);
+	public CrailNode early() throws Exception {
+		switch(type){
+		case DATAFILE:
+			return new CoreEarlyFile(fs, path, type, storageAffinity, locationAffinity, this);
+		case DIRECTORY:
+		case MULTIFILE:
+			return null;
+		default:
+			return super.early();
+		}
 	}
 
 }

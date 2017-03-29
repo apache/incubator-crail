@@ -43,7 +43,7 @@ public class CrailBufferedInputStream extends InputStream {
 	private long position;
 	private boolean open;
 	
-	public CrailBufferedInputStream(CrailFile file, long readHint) throws Exception {
+	CrailBufferedInputStream(CrailFile file, long readHint) throws Exception {
 		this.crailFS = file.getFileSystem();
 		this.inputStream = file.getDirectInputStream(readHint);
 		this.position = 0;

@@ -21,13 +21,15 @@
 
 package com.ibm.crail;
 
+
 public interface CrailNode {
 	public CrailFS getFileSystem();
 	public String getPath(); 
 	public abstract CrailNode syncDir() throws Exception;
 	public abstract long getModificationTime();
 	public abstract long getCapacity();
-	public abstract boolean isDir();
+	public abstract CrailNodeType getType();
 	public abstract CrailFile asFile() throws Exception;
 	public abstract CrailDirectory asDirectory() throws Exception;
+	public abstract CrailMultiFile asMultiFile() throws Exception;
 }

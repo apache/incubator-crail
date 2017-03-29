@@ -24,7 +24,9 @@ package com.ibm.crail;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicLong;
+
 import org.slf4j.Logger;
+
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.core.CoreFileSystem;
@@ -35,18 +37,14 @@ public abstract class CrailFS {
 	private static AtomicLong referenceCounter = new AtomicLong(0);
 	private static CrailFS instance = null;
 	
-	public abstract Upcoming<CrailFile> createFile(String path, int locationAffinity, int storageAffinity) throws Exception;
-	public abstract Upcoming<CrailDirectory> makeDirectory(String path) throws Exception;
-	public abstract Upcoming<CrailNode> lookupNode(String path) throws Exception;
-	public abstract Upcoming<CrailNode> rename(String src, String dst) throws Exception;
+	public abstract Upcoming<CrailNode> create(String path, CrailNodeType type, int locationAffinity, int storageAffinity) throws Exception;
+	public abstract Upcoming<CrailNode> lookup(String path) throws Exception;
+	public abstract Upcoming<CrailNode> rename(String srcPath, String dstPath) throws Exception;
 	public abstract Upcoming<CrailNode> delete(String path, boolean recursive) throws Exception;
-	
-	public abstract void dumpNameNode() throws Exception;
 	public abstract ByteBuffer allocateBuffer() throws Exception;
 	public abstract void freeBuffer(ByteBuffer buffer) throws Exception;
+	public abstract CrailStatistics getStatistics();
 	public abstract int getHostHash();
-	public abstract void printStatistics(String message);
-	public abstract void resetStatistics();
 	protected abstract void closeFileSystem() throws Exception;
 	
 	public void close() throws Exception {

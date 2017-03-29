@@ -23,8 +23,10 @@ package com.ibm.crail.hdfs.tools;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
+
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
@@ -33,6 +35,11 @@ import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.conf.Configuration;
+
+import com.ibm.crail.CrailFS;
+import com.ibm.crail.CrailNode;
+import com.ibm.crail.CrailNodeType;
+import com.ibm.crail.conf.CrailConfiguration;
 
 public class HdfsIOBenchmark {
 	private String mode;
@@ -66,6 +73,8 @@ public class HdfsIOBenchmark {
 			enumerateDir();
 		} else if (mode.equals("keyGet")){
 			keyGet();
+		} else if (mode.equals("browseDir")){
+			browseDir();
 		} else {
 			usage();
 			System.exit(0);
@@ -457,6 +466,21 @@ public class HdfsIOBenchmark {
 		}
 		return off > 0 || ret > 0 ? ret : -1;
 	}
+	
+	void browseDir() throws Exception {
+		System.out.println("reading enumarate dir, path " + path);
+		Configuration conf = new Configuration();
+		FileSystem fs = FileSystem.get(conf); 
+		
+		//benchmark
+		System.out.println("starting benchmark...");
+		RemoteIterator<LocatedFileStatus> iter = fs.listFiles(path, false);
+		while (iter.hasNext()) {
+			LocatedFileStatus status = iter.next();
+			System.out.println(status.getPath());
+		}		
+		fs.close();
+	}	
 	
 	/**
 	 * @param args

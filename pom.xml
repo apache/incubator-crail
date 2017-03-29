@@ -16,6 +16,7 @@
     <module>client</module>
     <module>hdfs</module>
     <module>storage-rdma</module>
+    <module>storage-nvmf</module>
     <module>namenode</module>
     <module>rpc-darpc</module>
     <module>assembly</module>

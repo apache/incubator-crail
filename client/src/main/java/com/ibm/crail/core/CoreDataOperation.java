@@ -28,9 +28,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.datanode.DataResult;
+import com.ibm.crail.storage.DataResult;
 import com.ibm.crail.utils.BufferCheckpoint;
 
 class CoreDataOperation implements Future<CrailResult>, CrailResult {

@@ -23,7 +23,10 @@ package com.ibm.crail.core;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public class CoreStreamStatistics {
+import com.ibm.crail.*;
+import com.ibm.crail.CrailStatistics.StatisticsProvider;
+
+public class CoreStreamStatistics implements CrailStatistics.StatisticsProvider {
 	private AtomicLong open;
 	private AtomicLong openInput;
 	private AtomicLong openOutput;
@@ -40,10 +43,6 @@ public class CoreStreamStatistics {
 	private AtomicLong maxOutput;
 	
 	public CoreStreamStatistics(){
-		reset();
-	}
-	
-	public void reset(){
 		this.open = new AtomicLong(0);
 		this.openInput = new AtomicLong(0);
 		this.openOutput = new AtomicLong(0);
@@ -59,7 +58,39 @@ public class CoreStreamStatistics {
 		this.maxInput = new AtomicLong(0);
 		this.maxOutput = new AtomicLong(0);
 	}
+	
+	@Override
+	public String providerName() {
+		return "Streams";
+	}
 
+	@Override
+	public String printStatistics() {
+		return "open " + getOpen() + ", openInput " + getOpenInput() + ", openOutput " + getOpenOutput() + ", openInputDir " + getOpenInputDir() + ", openOutputDir " + getOpenOutputDir() + 
+		", close " + getClose() + ", closeInput " + getCloseInput() + ", closeOutput " + getCloseOutput() + ", closeInputDir " + getCloseInputDir() + ", closeOutputDir " + getCloseOutputDir() + 
+		", maxInput " + getMaxInput() + ", maxOutput " + getMaxOutput();
+	}	
+	
+	public void resetStatistics(){
+		this.open.set(0);
+		this.openInput.set(0);
+		this.openOutput.set(0);
+		this.openInputDir.set(0);
+		this.openOutputDir.set(0);
+		this.close.set(0);
+		this.closeInput.set(0);
+		this.closeOutput.set(0);
+		this.closeInputDir.set(0);
+		this.closeOutputDir.set(0); 
+		this.currentInput.set(0);
+		this.currentOutput.set(0); 
+		this.maxInput.set(0);
+		this.maxOutput.set(0);
+	}
+	
+	public void mergeStatistics(StatisticsProvider provider) {
+	}
+	
 	public void incOpen() {
 		this.open.incrementAndGet();
 	}
@@ -178,7 +209,5 @@ public class CoreStreamStatistics {
 	
 	public long getMaxOutput() {
 		return maxOutput.get();
-	}	
-	
-	
+	}
 }

@@ -35,19 +35,16 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
 import org.slf4j.Logger;
-
 import com.ibm.crail.CrailBlockLocation;
-import com.ibm.crail.CrailDirectory;
-import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailFS;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailResult;
+import com.ibm.crail.CrailStatistics;
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.Upcoming;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.datanode.DataNode;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.namenode.protocol.DataNodeInfo;
 import com.ibm.crail.namenode.protocol.FileInfo;
@@ -57,6 +54,7 @@ import com.ibm.crail.namenode.rpc.RpcNameNode;
 import com.ibm.crail.namenode.rpc.RpcNameNodeClient;
 import com.ibm.crail.namenode.rpc.RpcNameNodeFuture;
 import com.ibm.crail.namenode.rpc.RpcResponseMessage;
+import com.ibm.crail.storage.StorageTier;
 import com.ibm.crail.utils.BlockCache;
 import com.ibm.crail.utils.BufferCheckpoint;
 import com.ibm.crail.utils.DirectBufferCache;
@@ -94,6 +92,7 @@ public class CoreFileSystem extends CrailFS {
 	private CoreIOStatistics ioStatsIn;
 	private CoreIOStatistics ioStatsOut;
 	private CoreStreamStatistics streamStats;
+	private CrailStatistics statistics;
 	
 	public CoreFileSystem(CrailConfiguration conf) throws Exception {
 		CrailConstants.updateConstants(conf);
@@ -101,11 +100,11 @@ public class CoreFileSystem extends CrailFS {
 		CrailConstants.verify();	
 		
 		//Datanodes
-		StringTokenizer tokenizer = new StringTokenizer(CrailConstants.DATANODE_TYPES, ",");
-		LinkedList<DataNode> dataNodeClients = new LinkedList<DataNode>(); 
+		StringTokenizer tokenizer = new StringTokenizer(CrailConstants.STORAGE_TYPES, ",");
+		LinkedList<StorageTier> dataNodeClients = new LinkedList<StorageTier>(); 
 		while (tokenizer.hasMoreTokens()){
 			String name = tokenizer.nextToken();
-			DataNode dataNode = DataNode.createInstance(name);
+			StorageTier dataNode = StorageTier.createInstance(name);
 			dataNode.init(conf, null);
 			dataNode.printConf(LOG);
 			dataNodeClients.add(dataNode);
@@ -129,36 +128,46 @@ public class CoreFileSystem extends CrailFS {
 		this.streamCounter = new AtomicLong(0);
 		this.isOpen = true;
 		this.bufferCheckpoint = new BufferCheckpoint();
-		this.ioStatsIn = new CoreIOStatistics();
-		this.ioStatsOut = new CoreIOStatistics();
+		
+		this.statistics = new CrailStatistics();
+		this.ioStatsIn = new CoreIOStatistics("input");
+		statistics.addProvider(ioStatsIn);
+		this.ioStatsOut = new CoreIOStatistics("output");
+		statistics.addProvider(ioStatsOut);
 		this.streamStats = new CoreStreamStatistics();
+		statistics.addProvider(streamStats);
+		statistics.addProvider(bufferCache);
+		statistics.addProvider(datanodeEndpointCache);
 	}
 	
-	public Upcoming<CrailFile> createFile(String path, int storageAffinity, int locationAffinity) throws Exception {
+	public Upcoming<CrailNode> create(String path, CrailNodeType type, int storageAffinity, int locationAffinity) throws Exception {
 		FileName name = new FileName(path);
 		
 		if (CrailConstants.DEBUG){
-			LOG.info("createFile: name " + path + ", storageAffinity " + storageAffinity + ", locationAffinity " + locationAffinity);
+			LOG.info("createNode: name " + path + ", type " + type + ", storageAffinity " + storageAffinity + ", locationAffinity " + locationAffinity);
 		}
 
-		RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> fileRes = namenodeClientRpc.createFile(name, false, storageAffinity, locationAffinity);
-		return new CreateFileFuture(this, path, fileRes, storageAffinity, locationAffinity);
+		RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> fileRes = namenodeClientRpc.createFile(name, type, storageAffinity, locationAffinity);
+		return new CreateNodeFuture(this, path, type, storageAffinity, locationAffinity, fileRes);
 	}	
 	
-	CoreFile _createFile(RpcResponseMessage.CreateFileRes fileRes, String path, int storageAffinity, int locationAffinity) throws Exception {
+	CoreNode _createNode(String path, CrailNodeType type, int storageAffinity, int locationAffinity, RpcResponseMessage.CreateFileRes fileRes) throws Exception {
 		if (fileRes.getError() == NameNodeProtocol.ERR_PARENT_MISSING){
-			throw new IOException("create: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
+			throw new IOException("createNode: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
 		} else if  (fileRes.getError() == NameNodeProtocol.ERR_FILE_EXISTS){
-			throw new IOException("create: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
+			throw new IOException("createNode: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
 		} else if (fileRes.getError() != NameNodeProtocol.ERR_OK){
-			LOG.info("create: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
-			throw new IOException("createFile: " + NameNodeProtocol.messages[fileRes.getError()] + ", error " + fileRes.getError());
+			LOG.info("createNode: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
+			throw new IOException("createNode: " + NameNodeProtocol.messages[fileRes.getError()] + ", error " + fileRes.getError());
 		}		
 		
 		FileInfo fileInfo = fileRes.getFile();
 		FileInfo dirInfo = fileRes.getParent();
 		if (fileInfo == null || dirInfo == null){
 			throw new IOException("createFile: " + NameNodeProtocol.messages[NameNodeProtocol.ERR_UNKNOWN]);
+		}
+		if (fileInfo.getType() != type){
+			throw new IOException("createFile: " + "file type mismatch");
 		}
 
 		blockCache.remove(fileInfo.getFd());
@@ -171,67 +180,22 @@ public class CoreFileSystem extends CrailFS {
 		
 		long adjustedCapacity = fileInfo.getDirOffset()*CrailConstants.DIRECTORY_RECORD + CrailConstants.DIRECTORY_RECORD;
 		dirInfo.setCapacity(Math.max(dirInfo.getCapacity(), adjustedCapacity));
-		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path));
+		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path), 0, 0);
 		DirectoryOutputStream stream = dirFile.getDirectoryOutputStream();
 		DirectoryRecord record = new DirectoryRecord(true, path);
 		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());
+		CoreSyncOperation syncOperation = new CoreSyncOperation(stream, future);
 		
 		if (CrailConstants.DEBUG){
 			LOG.info("createFile: name " + path + ", success, fd " + fileInfo.getFd() + ", token " + fileInfo.getToken());
 		}
 		
-		return new CoreCreateFile(this, fileInfo, path, storageAffinity, locationAffinity, future, stream);		
-	}
-	
-	public Upcoming<CrailDirectory> makeDirectory(String path) throws Exception {
-		FileName name = new FileName(path);
-		
-		if (CrailConstants.DEBUG){
-			LOG.info("makeDirectory: name " + path);
-		}
-
-		RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> fileRes = namenodeClientRpc.createFile(name, true, 0, 0);
-		return new MakeDirFuture(this, path, fileRes);
+		CoreNode node = CoreNode.create(this, fileInfo, path, storageAffinity, locationAffinity);
+		node.addSyncOperation(syncOperation);
+		return node;
 	}	
 	
-	CoreDirectory _makeDirectory(RpcResponseMessage.CreateFileRes fileRes, String path) throws Exception {
-		if (fileRes.getError() == NameNodeProtocol.ERR_PARENT_MISSING){
-			throw new IOException("makeDirectory: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
-		} else if  (fileRes.getError() == NameNodeProtocol.ERR_FILE_EXISTS){
-			throw new IOException("makeDirectory: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
-		} else if (fileRes.getError() != NameNodeProtocol.ERR_OK){
-			LOG.info("makeDirectory: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
-			throw new IOException("makeDirectory: " + NameNodeProtocol.messages[fileRes.getError()] + ", error " + fileRes.getError());
-		}		
-		
-		FileInfo fileInfo = fileRes.getFile();
-		FileInfo dirInfo = fileRes.getParent();
-		if (fileInfo == null || dirInfo == null){
-			throw new IOException("makeDirectory: " + NameNodeProtocol.messages[NameNodeProtocol.ERR_UNKNOWN]);
-		}
-
-		blockCache.remove(fileInfo.getFd());
-		nextBlockCache.remove(fileInfo.getFd());
-		
-		BlockInfo fileBlock = fileRes.getFileBlock();
-		getBlockCache(fileInfo.getFd()).put(CoreSubOperation.createKey(fileInfo.getFd(), 0), fileBlock);
-		BlockInfo dirBlock = fileRes.getDirBlock();
-		getBlockCache(dirInfo.getFd()).put(CoreSubOperation.createKey(dirInfo.getFd(), fileInfo.getDirOffset()), dirBlock);
-		
-		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path));
-		DirectoryOutputStream stream = dirFile.getDirectoryOutputStream();
-		DirectoryRecord record = new DirectoryRecord(true, path);
-		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());		
-		
-		if (CrailConstants.DEBUG){
-			LOG.info("makeDirectory: name " + path + ", success, fd " + fileInfo.getFd() + ", token " + fileInfo.getToken());
-		}
-		
-		return new CoreMakeDirectory(this, fileInfo, path, future, stream);		
-	}
-	
-	
-	public Upcoming<CrailNode> lookupNode(String path) throws Exception {
+	public Upcoming<CrailNode> lookup(String path) throws Exception {
 		FileName name = new FileName(path);
 		
 		if (CrailConstants.DEBUG){
@@ -253,6 +217,7 @@ public class CoreFileSystem extends CrailFS {
 		
 		FileInfo fileInfo = fileRes.getFile();
 		
+		CoreNode node = null;
 		if (fileInfo != null){
 			if (CrailConstants.DEBUG){
 				LOG.info("lookup: name " + path + ", success, fd " + fileInfo.getFd());
@@ -260,14 +225,9 @@ public class CoreFileSystem extends CrailFS {
 			BlockInfo fileBlock = fileRes.getFileBlock();
 			getBlockCache(fileInfo.getFd()).put(CoreSubOperation.createKey(fileInfo.getFd(), 0), fileBlock);
 			
-			if (fileInfo.isDir()){
-				return new CoreDirectory(this, fileInfo, path);
-			} else {
-				return new CoreLookupFile(this, fileInfo, path);
-			}
-		} else {
-			return null;
-		}
+			node = CoreNode.create(this, fileInfo, path, 0, 0);
+		} 
+		return node;
 	}	
 	
 
@@ -314,25 +274,30 @@ public class CoreFileSystem extends CrailFS {
 		BlockInfo dirBlock = renameRes.getDstBlock();
 		getBlockCache(dstDir.getFd()).put(CoreSubOperation.createKey(dstDir.getFd(), dstFile.getDirOffset()), dirBlock);		
 		
-		CoreDirectory dirSrc = new CoreDirectory(this, srcParent, CrailUtils.getParent(src));
+		CoreDirectory dirSrc = new CoreDirectory(this, srcParent, CrailUtils.getParent(src), 0, 0);
 		DirectoryOutputStream streamSrc = dirSrc.getDirectoryOutputStream();
 		DirectoryRecord recordSrc = new DirectoryRecord(false, src);
-		Future<CrailResult> futureSrc = streamSrc.writeRecord(recordSrc, srcFile.getDirOffset());			
+		Future<CrailResult> futureSrc = streamSrc.writeRecord(recordSrc, srcFile.getDirOffset());	
+		CoreSyncOperation syncOperationSrc = new CoreSyncOperation(streamSrc, futureSrc);
 		
 		long adjustedCapacity = dstFile.getDirOffset()*CrailConstants.DIRECTORY_RECORD + CrailConstants.DIRECTORY_RECORD;
 		dstDir.setCapacity(Math.max(dstDir.getCapacity(), adjustedCapacity));
-		CoreDirectory dirDst = new CoreDirectory(this, dstDir, CrailUtils.getParent(dst));
+		CoreDirectory dirDst = new CoreDirectory(this, dstDir, CrailUtils.getParent(dst), 0, 0);
 		DirectoryOutputStream streamDst = dirDst.getDirectoryOutputStream();
 		DirectoryRecord recordDst = new DirectoryRecord(true, dst);
 		Future<CrailResult> futureDst = streamDst.writeRecord(recordDst, dstFile.getDirOffset());			
-
+		CoreSyncOperation syncOperationDst = new CoreSyncOperation(streamDst, futureDst);
+		
 		blockCache.remove(srcFile.getFd());
 		
 		if (CrailConstants.DEBUG){
 			LOG.info("rename: srcname " + src + ", dstname " + dst + ", success");
 		}
 		
-		return new CoreRenamedNode(this, dstFile, dst, futureSrc, futureDst, streamSrc, streamDst);		
+		CoreNode node = CoreNode.create(this, dstFile, dst, 0, 0);
+		node.addSyncOperation(syncOperationSrc);
+		node.addSyncOperation(syncOperationDst);
+		return node;
 	}
 	
 	public Upcoming<CrailNode> delete(String path, boolean recursive) throws Exception {
@@ -359,18 +324,21 @@ public class CoreFileSystem extends CrailFS {
 		FileInfo fileInfo = fileRes.getFile();
 		FileInfo dirInfo = fileRes.getParent();
 		
-		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path));
+		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path), 0, 0);
 		DirectoryOutputStream stream = dirFile.getDirectoryOutputStream();
 		DirectoryRecord record = new DirectoryRecord(false, path);
-		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());			
+		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());	
+		CoreSyncOperation syncOperation = new CoreSyncOperation(stream, future);
 		
 		blockCache.remove(fileInfo.getFd());
 		
 		if (CrailConstants.DEBUG){
 			LOG.info("delete: name " + path + ", recursive " + recursive + ", success");
-		}		
+		}
 		
-		return new CoreDeleteNode(this, fileInfo, path, future, stream);
+		CoreNode node = CoreNode.create(this, fileInfo, path, 0, 0);
+		node.addSyncOperation(syncOperation);
+		return node;
 	}	
 	
 	public DirectoryInputStream listEntries(String name) throws Exception {
@@ -391,12 +359,12 @@ public class CoreFileSystem extends CrailFS {
 		}
 		
 		FileInfo dirInfo = fileRes.getFile();
-		if (!dirInfo.isDir()){
+		if (!dirInfo.getType().isContainer()){
 			LOG.info("getDirectoryList: " + NameNodeProtocol.messages[NameNodeProtocol.ERR_FILE_IS_NOT_DIR]);
 			throw new FileNotFoundException(NameNodeProtocol.messages[NameNodeProtocol.ERR_FILE_IS_NOT_DIR]);
 		}
 		
-		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, name);
+		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, name, 0, 0);
 		DirectoryInputStream inputStream = dirFile.getDirectoryInputStream(randomize);
 		return inputStream;
 	}	
@@ -522,36 +490,9 @@ public class CoreFileSystem extends CrailFS {
 		return bufferCheckpoint;
 	}
 	
-	public void resetStatistics(){
-		this.ioStatsIn.reset();
-		this.ioStatsOut.reset();
-		this.streamStats.reset();
-		this.bufferCache.reset();
+	public CrailStatistics getStatistics(){
+		return statistics;
 	}
-	
-	public void printStatistics(String message) {
-		if (CrailConstants.STATISTICS){
-			LOG.info("CoreFileSystem statistics, message " + message + 
-					", total " + ioStatsIn.getTotalOps() + ", localOps " + ioStatsIn.getLocalOps() + ", remoteOps " + ioStatsIn.getRemoteOps() + ", localDirOps " + ioStatsIn.getLocalDirOps() + ", remoteDirOps " + ioStatsIn.getRemoteDirOps() + 
-					", cached " + ioStatsIn.getCachedOps() + ", nonBlocking " + ioStatsIn.getNonblockingOps() + ", blocking " + ioStatsIn.getBlockingOps() +
-					", prefetched " + ioStatsIn.getPrefetchedOps() + ", prefetchedNonBlocking " + ioStatsIn.getPrefetchedNonblockingOps() + ", prefetchedBlocking " + ioStatsIn.getPrefetchedBlockingOps() +
-					", capacity " + ioStatsIn.getCapacity() + ", totalStreams " + ioStatsIn.getTotalStreams() + ", avgCapacity " + ioStatsIn.getAvgCapacity() +
-					", avgOpLen " + ioStatsIn.getAvgOpLen() + 
-					
-					", total " + ioStatsOut.getTotalOps() + ", localOps " + ioStatsOut.getLocalOps() + ", remoteOps " + ioStatsOut.getRemoteOps() + ", localDirOps " + ioStatsOut.getLocalDirOps() + ", remoteDirOps " + ioStatsOut.getRemoteDirOps() + 
-					", cached " + ioStatsOut.getCachedOps() + ", nonBlocking " + ioStatsOut.getNonblockingOps() + ", blocking " + ioStatsOut.getBlockingOps() +
-					", prefetched " + ioStatsOut.getPrefetchedOps() + ", prefetchedNonBlocking " + ioStatsOut.getPrefetchedNonblockingOps() + ", prefetchedBlocking " + ioStatsOut.getPrefetchedBlockingOps() +
-					", capacity " + ioStatsOut.getCapacity() + ", totalStreams " + ioStatsOut.getTotalStreams() + ", avgCapacity " + ioStatsOut.getAvgCapacity() +
-					", avgOpLen " + ioStatsOut.getAvgOpLen() + 
-					
-					", cacheGet " + bufferCache.get() + ", cachePut " + bufferCache.put() + ", cacheMiss " + bufferCache.missed() + ", cacheMissMap " + bufferCache.missedMap() + ", cacheMissHeap " + bufferCache.missedHeap() + ", cacheSize " + bufferCache.size() +  ", cacheMax " + bufferCache.max() +
-//					", mrOps " + mrCache.ops() + ", mrMisses " + mrCache.missed() +
-					", endpointCache " + datanodeEndpointCache.size() + 
-					", open " + streamStats.getOpen() + ", openInput " + streamStats.getOpenInput() + ", openOutput " + streamStats.getOpenOutput() + ", openInputDir " + streamStats.getOpenInputDir() + ", openOutputDir " + streamStats.getOpenOutputDir() + 
-					", close " + streamStats.getClose() + ", closeInput " + streamStats.getCloseInput() + ", closeOutput " + streamStats.getCloseOutput() + ", closeInputDir " + streamStats.getCloseInputDir() + ", closeOutputDir " + streamStats.getCloseOutputDir() + 
-					", maxInput " + streamStats.getMaxInput() + ", maxOutput " + streamStats.getMaxOutput());
-		}
-	}	
 	
 	public void closeFileSystem() throws Exception {
 		if (!isOpen) {
@@ -597,7 +538,7 @@ public class CoreFileSystem extends CrailFS {
 			streamStats.incOpenOutput();
 			streamStats.incCurrentOutput();
 			streamStats.incMaxOutput();
-			if (file.isDir()){
+			if (file.getType().isDirectory()){
 				streamStats.incOpenOutputDir();
 			}
 		}
@@ -613,7 +554,7 @@ public class CoreFileSystem extends CrailFS {
 			streamStats.incOpenInput();
 			streamStats.incCurrentInput();
 			streamStats.incMaxInput();
-			if (file.isDir()){
+			if (file.getType().isDirectory()){
 				streamStats.incOpenInputDir();
 			}
 		}
@@ -625,9 +566,9 @@ public class CoreFileSystem extends CrailFS {
 		if (stream != null && CrailConstants.STATISTICS){
 			streamStats.incClose();
 			streamStats.incCloseInput();
-			this.ioStatsIn.add(stream.getCoreStatistics());
+			this.ioStatsIn.mergeStatistics(stream.getCoreStatistics());
 			streamStats.decCurrentInput();
-			if (stream.getFile().isDir()){
+			if (stream.getFile().getType().isDirectory()){
 				streamStats.incCloseInputDir();
 			}
 		}
@@ -640,9 +581,9 @@ public class CoreFileSystem extends CrailFS {
 		if (stream != null && CrailConstants.STATISTICS){
 			streamStats.incClose();
 			streamStats.incCloseOutput();
-			this.ioStatsOut.add(stream.getCoreStatistics());
+			this.ioStatsOut.mergeStatistics(stream.getCoreStatistics());
 			streamStats.decCurrentOutput();
-			if (stream.getFile().isDir()){
+			if (stream.getFile().getType().isDirectory()){
 				streamStats.incCloseOutputDir();
 			}
 		}

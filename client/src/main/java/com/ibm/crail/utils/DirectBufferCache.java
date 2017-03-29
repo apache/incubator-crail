@@ -24,12 +24,15 @@ package com.ibm.crail.utils;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import com.ibm.crail.CrailStatistics.StatisticsProvider;
 import com.ibm.crail.conf.CrailConstants;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class DirectBufferCache {
+import com.ibm.crail.*;
+
+public class DirectBufferCache implements CrailStatistics.StatisticsProvider {
 	private LinkedBlockingQueue<ByteBuffer> cache;
 	
 	private AtomicLong cacheGet;
@@ -46,6 +49,28 @@ public class DirectBufferCache {
 		this.cacheMisses = new AtomicLong(0);
 		this.cacheOut = new AtomicLong(0);
 		this.cacheMax = new AtomicLong(0);
+	}
+	
+	@Override
+	public String providerName() {
+		return "DirectBufferCache";
+	}
+
+	@Override
+	public String printStatistics() {
+		return "cacheGet " + get() + ", cachePut " + put() + ", cacheMiss " + missed() + ", cacheSize " + size() +  ", cacheMax " + max();
+	}
+	
+	public void resetStatistics(){
+		this.cacheGet.set(0);
+		this.cachePut.set(0);
+		this.cacheMisses.set(0);
+		this.cacheOut.set(0);
+		this.cacheMax.set(0);
+	}	
+	
+	public void mergeStatistics(StatisticsProvider provider){
+		
 	}
 	
 	public ByteBuffer getBuffer() throws IOException {
@@ -104,28 +129,12 @@ public class DirectBufferCache {
 		cache.clear();
 	}
 
-	public void reset(){
-		this.cacheGet.set(0);
-		this.cachePut.set(0);
-		this.cacheMisses.set(0);
-		this.cacheOut.set(0);
-		this.cacheMax.set(0);
-	}
-	
 	protected ByteBuffer allocateBuffer() throws IOException{
 		return ByteBuffer.allocateDirect(CrailConstants.BUFFER_SIZE);
 	}
 
 	public ByteBuffer getAllocationBuffer(ByteBuffer buffer) {
 		return null;
-	}
-
-	public long missedHeap() {
-		return 0;
-	}
-
-	public long missedMap() {
-		return 0;
 	}
 }
 

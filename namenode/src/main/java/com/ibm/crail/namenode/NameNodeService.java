@@ -24,10 +24,10 @@ package com.ibm.crail.namenode;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.DelayQueue;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.namenode.protocol.DataNodeInfo;
@@ -69,13 +69,13 @@ public class NameNodeService implements RpcNameNodeService {
 
 		//get params
 		FileName fileHash = request.getFileName();
-		boolean isDir = request.isDir();
-		boolean writeable = isDir ? false : true; 
+		CrailNodeType type = request.getFileType();
+		boolean writeable = type.isDirectory() ? false : true; 
 		int storageAffinity = request.getStorageAffinity();
 		int locationAffinity = request.getLocationAffinity();
 		
 		//check params
-		if (isDir && locationAffinity > 0){
+		if (type.isContainer() && locationAffinity > 0){
 			return NameNodeProtocol.ERR_DIR_LOCATION_AFFINITY_MISMATCH;
 		}
 		
@@ -87,11 +87,11 @@ public class NameNodeService implements RpcNameNodeService {
 		if (parentInfo == null) {
 			return NameNodeProtocol.ERR_PARENT_MISSING;
 		} 	
-		if (!parentInfo.isDir()){
+		if (!parentInfo.getType().isContainer()){
 			return NameNodeProtocol.ERR_PARENT_NOT_DIR;
 		}
 		
-		AbstractNode fileInfo = FileBlocks.createNode(fileHash.getFileComponent(), isDir);
+		AbstractNode fileInfo = FileBlocks.createNode(fileHash.getFileComponent(), type);
 		if (!parentInfo.addChild(fileInfo)){
 			return NameNodeProtocol.ERR_FILE_EXISTS;
 		}
@@ -178,7 +178,7 @@ public class NameNodeService implements RpcNameNodeService {
 		}
 		
 		if (CrailConstants.DEBUG){
-			LOG.info("getFile: fd " + fileInfo.getFd() + ", isDir " + fileInfo.isDir() + ", token " + fileInfo.getToken() + ", capacity " + fileInfo.getCapacity());
+			LOG.info("getFile: fd " + fileInfo.getFd() + ", isDir " + fileInfo.getType().isDirectory() + ", token " + fileInfo.getToken() + ", capacity " + fileInfo.getCapacity());
 		}			
 		
 		return NameNodeProtocol.ERR_OK;
@@ -201,7 +201,7 @@ public class NameNodeService implements RpcNameNodeService {
 			return NameNodeProtocol.ERR_FILE_NOT_OPEN;			
 		}
 		
-		if (!storedFile.isDir() && storedFile.getToken() > 0 && storedFile.getToken() == fileInfo.getToken()){
+		if (!storedFile.getType().isDirectory() && storedFile.getToken() > 0 && storedFile.getToken() == fileInfo.getToken()){
 			storedFile.setCapacity(fileInfo.getCapacity());	
 		}
 		
@@ -310,10 +310,10 @@ public class NameNodeService implements RpcNameNodeService {
 		} 
 		
 		AbstractNode dstFile = fileTree.retrieveFile(dstFileHash, errorState);
-		if (dstFile != null && !dstFile.isDir()){
+		if (dstFile != null && !dstFile.getType().isDirectory()){
 			return NameNodeProtocol.ERR_FILE_EXISTS;
 		}		
-		if (dstFile != null && dstFile.isDir()){
+		if (dstFile != null && dstFile.getType().isDirectory()){
 			dstParent = dstFile;
 		} 
 		

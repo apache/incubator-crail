@@ -38,6 +38,7 @@ import com.ibm.crail.CrailMultiStream;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailOutputStream;
 import com.ibm.crail.CrailResult;
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.utils.GetOpt;
@@ -83,13 +84,13 @@ public class CrailBenchmark {
 		
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
+		fs.getStatistics().reset();
 		long _loop = (long) loop;
 		long _bufsize = (long) CrailConstants.BUFFER_SIZE;
 		long _capacity = _loop*_bufsize;
 		double sumbytes = 0;
 		double ops = 0;
-		CrailFile file = fs.createFile(filename, 0, hosthash).get();
+		CrailFile file = fs.create(filename, CrailNodeType.DATAFILE, 0, hosthash).get().asFile();
 		CrailBufferedOutputStream bufferedStream = file.getBufferedOutputStream(_capacity);	
 		CrailOutputStream directStream = file.getDirectOutputStream(_capacity);	
 		long start = System.currentTimeMillis();
@@ -127,7 +128,8 @@ public class CrailBenchmark {
 		System.out.println("throughput " + throughput);
 		System.out.println("latency " + latency);
 		
-		fs.printStatistics("close");
+//		fs.printStatistics("close");
+		fs.getStatistics().print("close");
 		fs.close();		
 	}
 	
@@ -154,13 +156,13 @@ public class CrailBenchmark {
 		System.out.println("starting benchmark...");
 		LinkedBlockingQueue<Future<CrailResult>> futureQueue = new LinkedBlockingQueue<Future<CrailResult>>();
 		HashMap<Integer, ByteBuffer> futureMap = new HashMap<Integer, ByteBuffer>();
-		fs.resetStatistics();
+		fs.getStatistics().reset();
 		long _loop = (long) loop;
 		long _bufsize = (long) CrailConstants.BUFFER_SIZE;
 		long _capacity = _loop*_bufsize;
 		double sumbytes = 0;
 		double ops = 0;
-		CrailFile file = fs.createFile(filename, hosthash, 0).get();
+		CrailFile file = fs.create(filename, CrailNodeType.DATAFILE, hosthash, 0).get().asFile();
 		CrailOutputStream directStream = file.getDirectOutputStream(_capacity);	
 		long start = System.currentTimeMillis();
 		for (int i = 0; i < batch - 1 && ops < loop; i++){
@@ -210,7 +212,8 @@ public class CrailBenchmark {
 		System.out.println("throughput " + throughput);
 		System.out.println("latency " + latency);
 		
-		fs.printStatistics("close");
+//		fs.printStatistics("close");
+		fs.getStatistics().print("close");
 		fs.close();		
 	}
 
@@ -232,13 +235,14 @@ public class CrailBenchmark {
 		bufferQueue.add(buf);
 		warmUp(fs, filename, warmup, bufferQueue);
 		
-		CrailFile file = fs.lookupNode(filename).get().asFile();
+		CrailFile file = fs.lookup(filename).get().asFile();
 		CrailBufferedInputStream bufferedStream = file.getBufferedInputStream(file.getCapacity());
 		CrailInputStream directStream = file.getDirectInputStream(file.getCapacity());
 		
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
+		fs.getStatistics().reset();
+//		fs.resetStatistics();
 		double sumbytes = 0;
 		double ops = 0;
 		long start = System.currentTimeMillis();
@@ -292,7 +296,7 @@ public class CrailBenchmark {
 		System.out.println("throughput " + throughput);
 		System.out.println("latency " + latency);
 		
-		fs.printStatistics("close");
+		fs.getStatistics().print("close");
 		fs.close();
 	}
 	
@@ -315,8 +319,8 @@ public class CrailBenchmark {
 		
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
-		CrailFile file = fs.lookupNode(filename).get().asFile();
+		fs.getStatistics().reset();
+		CrailFile file = fs.lookup(filename).get().asFile();
 		CrailBufferedInputStream bufferedStream = file.getBufferedInputStream(file.getCapacity());
 		CrailInputStream directStream = file.getDirectInputStream(file.getCapacity());		
 		
@@ -373,7 +377,7 @@ public class CrailBenchmark {
 		System.out.println("throughput " + throughput);
 		System.out.println("latency " + latency);
 		
-		fs.printStatistics("close");
+		fs.getStatistics().print("close");
 		fs.close();
 	}	
 	
@@ -395,8 +399,8 @@ public class CrailBenchmark {
 		System.out.println("starting benchmark...");
 		double sumbytes = 0;
 		double ops = 0;
-		fs.resetStatistics();
-		CrailFile file = fs.lookupNode(filename).get().asFile();
+		fs.getStatistics().reset();
+		CrailFile file = fs.lookup(filename).get().asFile();
 		CrailInputStream directStream = file.getDirectInputStream(file.getCapacity());			
 		HashMap<Integer, ByteBuffer> futureMap = new HashMap<Integer, ByteBuffer>();
 		LinkedBlockingQueue<Future<CrailResult>> futureQueue = new LinkedBlockingQueue<Future<CrailResult>>();
@@ -448,7 +452,7 @@ public class CrailBenchmark {
 		System.out.println("throughput " + throughput);
 		System.out.println("latency " + latency);
 		
-		fs.printStatistics("close");		
+		fs.getStatistics().print("close");
 		fs.close();		
 	}
 
@@ -471,10 +475,10 @@ public class CrailBenchmark {
 		
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
+		fs.getStatistics().reset();
 		ByteBuffer buf = ByteBuffer.allocate(size);
 		for (int i = 0; i < loop; i++){
-			CrailMultiStream multiStream = fs.lookupNode(filename).get().asDirectory().getMultiStream(batch);
+			CrailMultiStream multiStream = fs.lookup(filename).get().asMultiFile().getMultiStream(batch);
 			double sumbytes = 0;
 			long _sumbytes = 0;
 			double ops = 0;
@@ -509,7 +513,7 @@ public class CrailBenchmark {
 			System.out.println("latency " + latency);
 		}
 	
-		fs.printStatistics("close");
+		fs.getStatistics().print("close");
 		fs.close();
 	}
 	
@@ -528,12 +532,12 @@ public class CrailBenchmark {
 		
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
+		fs.getStatistics().reset();
 		double ops = 0;
 		long start = System.currentTimeMillis();
 		while (ops < loop) {
 			ops = ops + 1.0;
-			fs.lookupNode(filename).get().asFile();
+			fs.lookup(filename).get().asFile();
 		}
 		long end = System.currentTimeMillis();
 		double executionTime = ((double) (end - start)) / 1000.0;
@@ -545,7 +549,7 @@ public class CrailBenchmark {
 		System.out.println("ops " + ops);
 		System.out.println("latency " + latency);
 		
-		fs.printStatistics("close");
+		fs.getStatistics().print("close");
 		fs.close();
 	}
 	
@@ -563,13 +567,13 @@ public class CrailBenchmark {
 		
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
+		fs.getStatistics().reset();
 		LinkedBlockingQueue<Future<CrailNode>> fileQueue = new LinkedBlockingQueue<Future<CrailNode>>();
 		long start = System.currentTimeMillis();
 		for (int i = 0; i < loop; i++){
 			//single operation == loop
 			for (int j = 0; j < batch; j++){
-				Future<CrailNode> future = fs.lookupNode(filename);
+				Future<CrailNode> future = fs.lookup(filename);
 				fileQueue.add(future);
 			}
 			for (int j = 0; j < batch; j++){
@@ -583,7 +587,7 @@ public class CrailBenchmark {
 		System.out.println("execution time [ms] " + executionTime);
 		System.out.println("latency [us] " + latency);
 		
-		fs.printStatistics("close");
+		fs.getStatistics().print("close");
 		fs.close();
 	}
 	
@@ -601,9 +605,9 @@ public class CrailBenchmark {
 		
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
+		fs.getStatistics().reset();
 		LinkedBlockingQueue<String> pathQueue = new LinkedBlockingQueue<String>();
-		fs.makeDirectory(filename).get().syncDir();
+		fs.create(filename, CrailNodeType.DIRECTORY, 0, 0).get().syncDir();
 		int filecounter = 0;
 		for (int i = 0; i < loop; i++){
 			String name = "" + filecounter++;
@@ -615,7 +619,7 @@ public class CrailBenchmark {
 		long start = System.currentTimeMillis();
 		while(!pathQueue.isEmpty()){
 			String path = pathQueue.poll();
-			fs.createFile(path, 0, 0).get().syncDir();
+			fs.create(path, CrailNodeType.DATAFILE, 0, 0).get().syncDir();
 		}
 		long end = System.currentTimeMillis();
 		double executionTime = ((double) (end - start)) / 1000.0;
@@ -628,7 +632,7 @@ public class CrailBenchmark {
 		System.out.println("ops " + ops);
 		System.out.println("latency " + latency);
 		
-		fs.printStatistics("close");
+		fs.getStatistics().print("close");
 		fs.close();
 	}	
 	
@@ -646,11 +650,11 @@ public class CrailBenchmark {
 		
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
-		LinkedBlockingQueue<Future<CrailFile>> futureQueue = new LinkedBlockingQueue<Future<CrailFile>>();
+		fs.getStatistics().reset();
+		LinkedBlockingQueue<Future<CrailNode>> futureQueue = new LinkedBlockingQueue<Future<CrailNode>>();
 		LinkedBlockingQueue<CrailFile> fileQueue = new LinkedBlockingQueue<CrailFile>();
 		LinkedBlockingQueue<String> pathQueue = new LinkedBlockingQueue<String>();
-		fs.makeDirectory(filename).get().syncDir();	
+		fs.create(filename, CrailNodeType.DIRECTORY, 0, 0).get().syncDir();	
 		
 		for (int i = 0; i < loop; i++){
 			String name = "/" + i;
@@ -663,12 +667,12 @@ public class CrailBenchmark {
 			//single operation == loop
 			for (int j = 0; j < batch; j++) {
 				String path = pathQueue.poll();
-				Future<CrailFile> future = fs.createFile(path, 0, 0);
+				Future<CrailNode> future = fs.create(path, CrailNodeType.DATAFILE, 0, 0);
 				futureQueue.add(future);
 			}
 			for (int j = 0; j < batch; j++){
-				Future<CrailFile> future = futureQueue.poll();
-				CrailFile file = future.get();
+				Future<CrailNode> future = futureQueue.poll();
+				CrailFile file = future.get().asFile();
 				fileQueue.add(file);					
 			}
 			for (int j = 0; j < batch; j++){
@@ -684,8 +688,7 @@ public class CrailBenchmark {
 
 		fs.delete(filename, true).get().syncDir();
 		
-		
-		fs.printStatistics("close");
+		fs.getStatistics().print("close");
 		fs.close();
 		
 	}	
@@ -704,11 +707,11 @@ public class CrailBenchmark {
 
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
+		fs.getStatistics().reset();
 		long start = System.currentTimeMillis();
 		for (int i = 0; i < loop; i++) {
 			// single operation == loop
-			Iterator<String> iter = fs.lookupNode(filename).get().asDirectory().listEntries();
+			Iterator<String> iter = fs.lookup(filename).get().asDirectory().listEntries();
 			while (iter.hasNext()) {
 				iter.next();
 			}
@@ -719,7 +722,35 @@ public class CrailBenchmark {
 		System.out.println("execution time [ms] " + executionTime);
 		System.out.println("latency [us] " + latency);
 
-		fs.printStatistics("close");
+		fs.getStatistics().print("close");
+		fs.close();
+	}
+	
+	void browseDir(String filename) throws Exception {
+		System.out.println("reading enumarate dir, path " + filename);
+		CrailConfiguration conf = new CrailConfiguration();
+		CrailFS fs = CrailFS.newInstance(conf);
+		
+		//benchmark
+		System.out.println("starting benchmark...");
+		fs.getStatistics().reset();
+		CrailNode node = fs.lookup(filename).get();
+		System.out.println("node type is " + node.getType());
+		
+		Iterator<String> iter = node.getType() == CrailNodeType.DIRECTORY ? node.asDirectory().listEntries() : node.asMultiFile().listEntries();
+		while (iter.hasNext()) {
+			String name = iter.next();
+			System.out.println(name);
+		}
+		fs.getStatistics().print("close");
+		fs.close();
+	}	
+	
+	void createMultiFile(String filename) throws Exception, InterruptedException {
+		System.out.println("createMultiFile, filename " + filename);
+		CrailConfiguration conf = new CrailConfiguration();
+		CrailFS fs = CrailFS.newInstance(conf);	
+		fs.create(filename, CrailNodeType.MULTIFILE, 0, 0).get().syncDir();
 		fs.close();
 	}
 	
@@ -729,7 +760,7 @@ public class CrailBenchmark {
 		CrailFS fs = CrailFS.newInstance(conf);
 		
 		ByteBuffer buf = ByteBuffer.allocateDirect(size);
-		CrailFile file = fs.createFile(filename, 0, 0).get();
+		CrailFile file = fs.create(filename, CrailNodeType.DATAFILE, 0, 0).get().asFile();
 		file.syncDir();
 		CrailOutputStream directOutputStream = file.getDirectOutputStream(0);
 		directOutputStream.write(buf).get();
@@ -737,10 +768,10 @@ public class CrailBenchmark {
 		
 		//benchmark
 		System.out.println("starting benchmark...");
-		fs.resetStatistics();
+		fs.getStatistics().reset();
 		long start = System.currentTimeMillis();
 		for (int i = 0; i < loop; i++){
-			CrailInputStream directInputStream = fs.lookupNode(filename).get().asFile().getDirectInputStream(0);
+			CrailInputStream directInputStream = fs.lookup(filename).get().asFile().getDirectInputStream(0);
 			buf.clear();
 			directInputStream.read(buf).get();
 			directInputStream.close();
@@ -751,15 +782,41 @@ public class CrailBenchmark {
 		System.out.println("execution time [ms] " + executionTime);
 		System.out.println("latency [us] " + latency);		
 		
-		fs.printStatistics("close");
+		fs.getStatistics().print("close");
 		fs.close();
 	}	
+	
+	void early(String filename) throws Exception {
+		CrailConfiguration conf = new CrailConfiguration();
+		CrailFS fs = CrailFS.newInstance(conf);
+		
+		ByteBuffer buf = ByteBuffer.allocateDirect(32);
+		CrailFile file = fs.create(filename, CrailNodeType.DATAFILE, 0, 0).early().asFile();
+		CrailBufferedOutputStream stream = file.getBufferedOutputStream(0);
+		System.out.println("buffered stream initialized");
+		
+		Thread.sleep(1000);
+		stream.write(buf);
+		System.out.println("buffered stream written");
+
+		Thread.sleep(1000);
+		stream.write(buf);
+		System.out.println("buffered stream written");		
+		
+		stream.purge();
+		stream.close();
+		
+		System.out.println("buffered stream closed");
+		
+		fs.getStatistics().print("close");
+		fs.close();		
+	}
 	
 	private void warmUp(CrailFS fs, String filename, int operations, ConcurrentLinkedQueue<ByteBuffer> bufferList) throws Exception {
 		String warmupFilename = filename + ".warmup";
 		System.out.println("warmUp, warmupFile " + warmupFilename + ", operations " + operations);
 		if (operations > 0){
-			CrailFile warmupFile = fs.createFile(warmupFilename, 0, 0).get();
+			CrailFile warmupFile = fs.create(warmupFilename, CrailNodeType.DATAFILE, 0, 0).get().asFile();
 			CrailBufferedOutputStream warmupStream = warmupFile.getBufferedOutputStream(0);
 			for (int i = 0; i < operations; i++){
 				ByteBuffer buf = bufferList.poll();
@@ -902,6 +959,12 @@ public class CrailBenchmark {
 				System.out.println("experiment " + i);
 				benchmark.keyGet(filename, size, loop);
 			}
+		} else if (type.equalsIgnoreCase("createMultiFile")) {
+			benchmark.createMultiFile(filename);
+		} else if (type.equalsIgnoreCase("browseDir")) {
+			benchmark.browseDir(filename);
+		} else if (type.equalsIgnoreCase("early")) {
+			benchmark.early(filename);
 		} else {
 			usage();
 			System.exit(0);

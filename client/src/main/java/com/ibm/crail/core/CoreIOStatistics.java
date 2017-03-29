@@ -23,7 +23,11 @@ package com.ibm.crail.core;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public class CoreIOStatistics {
+import com.ibm.crail.CrailStatistics;
+import com.ibm.crail.CrailStatistics.StatisticsProvider;
+
+public class CoreIOStatistics implements CrailStatistics.StatisticsProvider {
+	private String mode;
 	private AtomicLong totalOps;
 	private AtomicLong localOps;
 	private AtomicLong remoteOps;
@@ -40,7 +44,8 @@ public class CoreIOStatistics {
 	private AtomicLong totalStreams;
 	private AtomicLong totalSeeks;
 	
-	public CoreIOStatistics(){
+	public CoreIOStatistics(String mode){
+		this.mode = mode;
 		this.totalOps = new AtomicLong(0);
 		this.localOps = new AtomicLong(0);
 		this.remoteOps = new AtomicLong(0);
@@ -56,10 +61,24 @@ public class CoreIOStatistics {
 		this.capacity = new AtomicLong(0);
 		this.totalStreams = new AtomicLong(0);
 		this.totalSeeks = new AtomicLong(0);
-		reset();
+		resetStatistics();
 	}
 	
-	public void reset(){
+	@Override
+	public String providerName() {
+		return "IO/" + mode;
+	}
+
+	@Override
+	public String printStatistics() {
+		return "total " + getTotalOps() + ", localOps " + getLocalOps() + ", remoteOps " + getRemoteOps() + ", localDirOps " + getLocalDirOps() + ", remoteDirOps " + getRemoteDirOps() + 
+		", cached " + getCachedOps() + ", nonBlocking " + getNonblockingOps() + ", blocking " + getBlockingOps() +
+		", prefetched " + getPrefetchedOps() + ", prefetchedNonBlocking " + getPrefetchedNonblockingOps() + ", prefetchedBlocking " + getPrefetchedBlockingOps() +
+		", capacity " + getCapacity() + ", totalStreams " + getTotalStreams() + ", avgCapacity " + getAvgCapacity() +
+		", avgOpLen " + getAvgOpLen();
+	}	
+	
+	public void resetStatistics(){
 		this.totalOps.set(0);
 		this.localOps.set(0);
 		this.remoteOps.set(0);
@@ -75,6 +94,27 @@ public class CoreIOStatistics {
 		this.capacity.set(0);
 		this.totalStreams.set(0);
 		this.totalSeeks.set(0);
+	}
+	
+	public void mergeStatistics(StatisticsProvider provider){
+		if (provider instanceof CoreIOStatistics){
+			CoreIOStatistics newProvider = (CoreIOStatistics) provider;
+			totalOps.addAndGet(newProvider.getTotalOps());
+			localOps.addAndGet(newProvider.getLocalOps());
+			remoteOps.addAndGet(newProvider.getRemoteOps());
+			localDirOps.addAndGet(newProvider.getLocalDirOps());
+			remoteDirOps.addAndGet(newProvider.getRemoteDirOps());
+			cachedOps.addAndGet(newProvider.getCachedOps());
+			nonblockingOps.addAndGet(newProvider.getNonblockingOps());
+			blockingOps.addAndGet(newProvider.getBlockingOps());
+			prefetchedOps.addAndGet(newProvider.getPrefetchedOps());
+			prefetchedNonblockingOps.addAndGet(newProvider.getPrefetchedNonblockingOps());
+			prefetchedBlockingOps.addAndGet(newProvider.getPrefetchedBlockingOps());
+			opLen.addAndGet(newProvider.getOpLen());
+			capacity.addAndGet(newProvider.getCapacity());
+			totalSeeks.addAndGet(newProvider.getTotalSeeks());
+			totalStreams.incrementAndGet();
+		}
 	}
 	
 	public long getTotalOps() {
@@ -209,22 +249,4 @@ public class CoreIOStatistics {
 	void incTotalSeekds() {
 		this.totalSeeks.incrementAndGet();
 	}	
-
-	void add(CoreIOStatistics coreStatistics) {
-		totalOps.addAndGet(coreStatistics.getTotalOps());
-		localOps.addAndGet(coreStatistics.getLocalOps());
-		remoteOps.addAndGet(coreStatistics.getRemoteOps());
-		localDirOps.addAndGet(coreStatistics.getLocalDirOps());
-		remoteDirOps.addAndGet(coreStatistics.getRemoteDirOps());
-		cachedOps.addAndGet(coreStatistics.getCachedOps());
-		nonblockingOps.addAndGet(coreStatistics.getNonblockingOps());
-		blockingOps.addAndGet(coreStatistics.getBlockingOps());
-		prefetchedOps.addAndGet(coreStatistics.getPrefetchedOps());
-		prefetchedNonblockingOps.addAndGet(coreStatistics.getPrefetchedNonblockingOps());
-		prefetchedBlockingOps.addAndGet(coreStatistics.getPrefetchedBlockingOps());
-		opLen.addAndGet(coreStatistics.getOpLen());
-		capacity.addAndGet(coreStatistics.getCapacity());
-		totalSeeks.addAndGet(coreStatistics.getTotalSeeks());
-		totalStreams.incrementAndGet();
-	}
 }

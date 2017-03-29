@@ -21,31 +21,28 @@
 
 package com.ibm.crail.core;
 
-import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
-
-import org.slf4j.Logger;
-
 import com.ibm.crail.CrailBlockLocation;
 import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFS;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailInputStream;
+import com.ibm.crail.CrailMultiFile;
 import com.ibm.crail.CrailNode;
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.CrailOutputStream;
 import com.ibm.crail.namenode.protocol.FileInfo;
-import com.ibm.crail.utils.CrailUtils;
 
-abstract class CoreFile extends CoreNode implements CrailFile {
+public class CoreFile extends CoreNode implements CrailFile {
 	private Semaphore outputStreams;
 	
-	protected CoreFile(CoreFileSystem fs, FileInfo fileInfo, String path, int storageAffinity, int locationAffinity){
+	public CoreFile(CoreFileSystem fs, FileInfo fileInfo, String path, int storageAffinity, int locationAffinity){
 		super(fs, fileInfo, path, storageAffinity, locationAffinity);
 		this.outputStreams = new Semaphore(1);
 	}
 	
 	public CrailInputStream getDirectInputStream(long readHint) throws Exception{
-		if (fileInfo.isDir()){
+		if (fileInfo.getType().isDirectory()){
 			throw new Exception("Cannot open stream for directory");
 		}		
 		
@@ -53,7 +50,7 @@ abstract class CoreFile extends CoreNode implements CrailFile {
 	}	
 	
 	public synchronized CrailOutputStream getDirectOutputStream(long writeHint) throws Exception {
-		if (fileInfo.isDir()){
+		if (fileInfo.getType().isDirectory()){
 			throw new Exception("Cannot open stream for directory");
 		}		
 		if (fileInfo.getToken() == 0){
@@ -88,22 +85,40 @@ abstract class CoreFile extends CoreNode implements CrailFile {
 }
 
 class CoreEarlyFile implements CrailFile {
-	private static final Logger LOG = CrailUtils.getLogger();
-	
-	private CreateFileFuture createFileFuture;
-	private CrailFile file;
-	private String path;
 	private CoreFileSystem fs;
-	private int storageAffinity;
-	private int locationAffinity;
-
-	public CoreEarlyFile(CreateFileFuture createFileFuture, String path, CoreFileSystem fs, int storageAffinity, int locationAffinity) {
-		this.createFileFuture = createFileFuture;
-		this.file = null;
-		this.path = path;
+	private String path;
+	private CrailNodeType type;
+	private int storageAffnity;
+	private int locationAffnity;
+	private CreateNodeFuture future;
+	private CrailFile file;
+	
+	public CoreEarlyFile(CoreFileSystem fs, String path, CrailNodeType type, int storageAffinity, int locationAffinity, CreateNodeFuture future) {
 		this.fs = fs;
-		this.storageAffinity = storageAffinity;
-		this.locationAffinity = locationAffinity;
+		this.path = path;
+		this.type = type;
+		this.future = future;
+		this.file = null;
+	}
+
+	public CrailInputStream getDirectInputStream(long readHint) throws Exception{
+		return file().getDirectInputStream(readHint);
+	}	
+	
+	public synchronized CrailOutputStream getDirectOutputStream(long writeHint) throws Exception {
+		return file().getDirectOutputStream(writeHint);
+	}
+	
+	public CrailBlockLocation[] getBlockLocations(long start, long len) throws Exception{
+		return fs.getBlockLocations(path, start, len);
+	}	
+	
+	public long getToken() {
+		return file().getToken();
+	}
+
+	public CrailFile asFile() throws Exception {
+		return this;
 	}
 
 	@Override
@@ -123,138 +138,53 @@ class CoreEarlyFile implements CrailFile {
 
 	@Override
 	public long getModificationTime() {
-		try {
-			return file().getModificationTime();
-		} catch(Exception e){
-			LOG.info("Error: " + e.getMessage());
-			return -1;
-		}
+		return file().getModificationTime();
 	}
 
 	@Override
 	public long getCapacity() {
-		try {
-			return file().getCapacity();
-		} catch(Exception e){
-			LOG.info("Error: " + e.getMessage());
-			return -1;
-		}
+		return file().getCapacity();
 	}
 
 	@Override
-	public boolean isDir() {
-		try {
-			return file().isDir();
-		} catch(Exception e){
-			LOG.info("Error: " + e.getMessage());
-			return false;
-		}
-	}
-
-	@Override
-	public CrailFile asFile() throws Exception {
-		try {
-			return file().asFile();
-		} catch(Exception e){
-			LOG.info("Error: " + e.getMessage());
-			return null;
-		}
+	public CrailNodeType getType() {
+		return type;
 	}
 
 	@Override
 	public CrailDirectory asDirectory() throws Exception {
-		return file().asDirectory();
+		throw new Exception("this is not a directory");
 	}
 
 	@Override
-	public CrailInputStream getDirectInputStream(long readHint)
-			throws Exception {
-		return file().getDirectInputStream(readHint);
-	}
-
-	@Override
-	public CrailOutputStream getDirectOutputStream(long writeHint)
-			throws Exception {
-		return file().getDirectOutputStream(writeHint);
-	}
-
-	@Override
-	public CrailBlockLocation[] getBlockLocations(long start, long len)
-			throws Exception {
-		return file().getBlockLocations(start, len);
+	public CrailMultiFile asMultiFile() throws Exception {
+		throw new Exception("this is not a multifile");
 	}
 
 	@Override
 	public int locationAffinity() {
-		return locationAffinity;
+		return this.locationAffnity;
 	}
 
 	@Override
 	public int storageAffinity() {
-		return storageAffinity;
-	}
-
-	@Override
-	public long getToken() {
-		try {
-			return file().getToken();
-		} catch(Exception e){
-			LOG.info("Error: " + e.getMessage());
-			return -1;
-		}
+		return this.storageAffnity;
 	}
 
 	@Override
 	public long getFd() {
+		return file().getFd();
+	}
+
+	private synchronized CrailFile file() {
 		try {
-			return file().getFd();
+			if (file == null){
+				file = this.future.get().asFile();
+			}
+			return file;
 		} catch(Exception e){
-			LOG.info("Error: " + e.getMessage());
-			return -1;
+			throw new RuntimeException(e);
 		}
-	}
-
-	private synchronized CrailFile file() throws Exception {
-		if (file == null){
-			file = this.createFileFuture.get();
-		}
-		return file;
-	}
-}
-
-class CoreCreateFile extends CoreFile {
-	private Future<?> dirFuture;
-	private DirectoryOutputStream dirStream;	
-	
-	public CoreCreateFile(CoreFileSystem fs, FileInfo fileInfo, String path, int storageAffinity, int locationAffinity, Future<?> dirFuture, DirectoryOutputStream dirStream){
-		super(fs, fileInfo, path, storageAffinity, locationAffinity);
-		this.dirFuture = dirFuture;
-		this.dirStream = dirStream;
-	}
-	
-	public synchronized  CoreNode syncDir() throws Exception {
-		if (dirFuture != null) {
-			dirFuture.get();
-			dirFuture = null;
-		}
-		if (dirStream != null){
-			dirStream.close();
-			dirStream = null;
-		}
-		return this;
-	}
-
-	@Override
-	void closeOutputStream(CoreOutputStream stream) throws Exception {
-		syncDir();
-		super.closeOutputStream(stream);
-	}
-	
-}
-
-class CoreLookupFile extends CoreFile {
-	protected CoreLookupFile(CoreFileSystem fs, FileInfo fileInfo, String path) {
-		super(fs, fileInfo, path, 0, 0);
 	}
 }
 

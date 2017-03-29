@@ -39,7 +39,7 @@ public class BlockStore {
 	private StorageTier[] storageTiers;
 	
 	public BlockStore(){
-		StringTokenizer tokenizer = new StringTokenizer(CrailConstants.DATANODE_TYPES, ",");
+		StringTokenizer tokenizer = new StringTokenizer(CrailConstants.STORAGE_TYPES, ",");
 		storageTiers = new StorageTier[tokenizer.countTokens()];
 		for (int i = 0; i < tokenizer.countTokens(); i++){
 			this.storageTiers[i] = new StorageTier(i);
