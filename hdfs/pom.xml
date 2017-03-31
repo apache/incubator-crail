@@ -16,56 +16,30 @@
   <name>Crail HDFS Project</name>
   <url>http://maven.apache.org</url>
 
-  <properties>
-    <hadoop.version>2.6.0</hadoop.version>
-  </properties>
-
-  <profiles>
-    <profile>
-      <id>hadoop-2.6</id>
-      <properties>
-        <hadoop.version>2.6.0</hadoop.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>hadoop-2.7</id>
-      <properties>
-        <hadoop.version>2.7.0</hadoop.version>
-      </properties>
-    </profile>
-  </profiles>
-
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.ibm.disni</groupId>
       <artifactId>disni</artifactId>
-      <version>1.0</version>
     </dependency>
     <dependency>
       <groupId>com.ibm.darpc</groupId>
       <artifactId>darpc</artifactId>
-      <version>1.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
-      <version>${hadoop.version}</version>
     </dependency>
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common-test</artifactId>
-      <version>0.22.0</version>
     </dependency>
     <dependency>
       <groupId>com.ibm.crail</groupId>
