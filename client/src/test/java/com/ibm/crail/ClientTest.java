@@ -1,72 +1,67 @@
-package com.ibm.crail.datanode.nvmf.test;
+package com.ibm.crail;
 
-import com.ibm.crail.*;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
-import org.apache.hadoop.fs.Path;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.junit.Assert;
-
 import java.nio.ByteBuffer;
 import java.util.Random;
 
 public class ClientTest {
 
 	CrailFS fs;
-	final Path testBasePath = new Path("/test");
-
+	final String basePath = "/test";
 	Random rand = new Random();
 
 	@Before
 	public void init() throws Exception {
 		CrailConfiguration conf = new CrailConfiguration();
 		fs = CrailFS.newInstance(conf);
-		fs.create(testBasePath.toString(), CrailNodeType.DIRECTORY, 0, 0).get();
+		fs.create(basePath, CrailNodeType.DIRECTORY, 0, 0).get();
 	}
 
 	@After
 	public void fini() throws Exception {
-		fs.delete(testBasePath.toString(), true);
+		fs.delete(basePath, true);
 	}
 
 	@Test
 	public void testCreateFile() throws Exception {
-		Path p = new Path(testBasePath, "fooCreate");
-		fs.create(p.toString(),  CrailNodeType.DATAFILE, 0, 0).get();
-		fs.lookup(p.toString()).get().asFile();
+		String filename = basePath + "/fooCreate"; 
+		fs.create(filename,  CrailNodeType.DATAFILE, 0, 0).get();
+		fs.lookup(filename).get().asFile();
 	}
 
 	@Test
 	public void testDeleteFile() throws Exception {
-		Path p = new Path(testBasePath, "fooDelete");
-		fs.create(p.toString(), CrailNodeType.DATAFILE, 0, 0).get();
-		fs.delete(p.toString(), false).get();
-		Assert.assertNull(fs.lookup(p.toString()).get());
+		String filename = basePath + "/fooDelete"; 
+		fs.create(filename, CrailNodeType.DATAFILE, 0, 0).get();
+		fs.delete(filename, false).get();
+		Assert.assertNull(fs.lookup(filename).get());
 	}
 
 	@Test
 	public void testRenameFile() throws Exception {
-		Path p = new Path(testBasePath, "fooRename");
-		fs.create(p.toString(), CrailNodeType.DATAFILE, 0, 0).get();
-		Path np = new Path(testBasePath, "barRename");
-		fs.rename(p.toString(), np.toString()).get();
-		Assert.assertNull(fs.lookup(p.toString()).get());
-		fs.lookup(np.toString()).get().asFile();
+		String srcname = basePath + "/fooRename";
+		fs.create(srcname, CrailNodeType.DATAFILE, 0, 0).get();
+		String dstname = basePath + "/barRename";
+		fs.rename(srcname, dstname).get();
+		Assert.assertNull(fs.lookup(srcname).get());
+		fs.lookup(dstname).get().asFile();
 	}
 
 	@Test
 	public void testlookupDirectory() throws Exception {
-		fs.lookup(testBasePath.toString()).get().asDirectory();
+		fs.lookup(basePath).get().asDirectory();
 	}
 
 	@Test
 	public void testCreateDirectory() throws Exception {
-		Path p = new Path(testBasePath, "fooDir");
-		fs.create(p.toString(), CrailNodeType.DIRECTORY, 0, 0).get();
-		fs.lookup(p.toString()).get().asDirectory();
+		String filename = basePath + "/fooDir";
+		fs.create(filename, CrailNodeType.DIRECTORY, 0, 0).get();
+		fs.lookup(filename).get().asDirectory();
 	}
 
 	void fillRandom(ByteBuffer buffer) {
@@ -98,8 +93,8 @@ public class ClientTest {
 		System.err.println("DirectStream write/read with from buffer position = " +
 				position + ", length = " + length + ", remoteOffset = " + remoteOffset);
 
-		Path p = new Path(testBasePath, "fooOutputStream" + length);
-		CrailFile file = fs.create(p.toString(),CrailNodeType.DATAFILE,  0, 0).get().asFile();
+		String filename = basePath + "/fooOutputStream" + length;
+		CrailFile file = fs.create(filename,CrailNodeType.DATAFILE,  0, 0).get().asFile();
 		CrailOutputStream outputStream = file.getDirectOutputStream(0);
 		CrailInputStream inputStream = file.getDirectInputStream(0);
 
@@ -147,7 +142,7 @@ public class ClientTest {
 			throw e;
 		}
 
-		fs.delete(p.toString(), false);
+		fs.delete(filename, false);
 	}
 
 	@Test
