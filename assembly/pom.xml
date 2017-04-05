@@ -43,7 +43,12 @@
     </dependency>
     <dependency>
       <groupId>com.ibm.crail</groupId>
-      <artifactId>crail-hdfs</artifactId>
+      <artifactId>crail-namenode</artifactId>
+      <version>1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.ibm.crail</groupId>
+      <artifactId>crail-storage</artifactId>
       <version>1.0</version>
     </dependency>
     <dependency>
@@ -53,7 +58,12 @@
     </dependency>
     <dependency>
       <groupId>com.ibm.crail</groupId>
-      <artifactId>crail-namenode</artifactId>
+      <artifactId>crail-storage-nvmf</artifactId>
+      <version>1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.ibm.crail</groupId>
+      <artifactId>crail-hdfs</artifactId>
       <version>1.0</version>
     </dependency>
     <dependency>
