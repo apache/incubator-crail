@@ -1,13 +1,13 @@
 # Crail
 
-Crail is a fast multi-tiered distributed file system designed from ground up for high-performance network and storage hardware. The unique features of Crail include:
+Crail is a fast multi-tiered distributed storage system designed from ground up for high-performance network and storage hardware. The unique features of Crail include:
 
 * Zero-copy network access from userspace using RDMA 
 * Integration of multiple storage tiers such DRAM, flash and disaggregated shared storage
 * Ultra-low latencies for both meta data and data operations. For instance: opening, reading and closing a small file residing in the distributed DRAM tier takes 10-15 microseconds, which is in the same ballpark as some of the fastest RDMA-based key/value stores
 * High-performance sequential read/write operations: For instance: read operations on large files residing in the distributed DRAM tier are typically limited only by the performance of the network
 * Very low CPU consumption: a single core sharing both application and file system client can drive sequential read/write operations at the speed of up to 100Gbps and more
-* Asynchronous file system API leveraging the asynchronous nature of RDMA-based networking hardware
+* Asynchronous API leveraging the asynchronous nature of RDMA-based networking hardware
 * Extensible plugin architecture: new storage tiers tailored to specific hardware can be added easily
  
 Crail is implemented in Java offering a Java API which integrates directly with the Java off-heap memory. Crail is designed for performance critical temporary data within a scope of a rack or two. It currently does not provide fault tolerance 
@@ -40,31 +40,43 @@ To configure Crail use crail-site.conf.template as a basis and modify it to matc
 There are a general file system properties and specific properties for the different storage tiers. A typical configuration for the general file system section may look as follows:
 
     crail.namenode.address                crail://namenode:9060
-    crail.datanode.types                  com.ibm.crail.datanode.rdma.RdmaDataNode
+    crail.datanode.types                  com.ibm.crail.storage.rdma.RdmaStorageTier
     crail.cachepath                       /memory/cache
     crail.cachelimit                      12884901888
     crail.blocksize                       1048576
     crail.buffersize                      1048576
 
-In this configuration the namenode is configured to run using port 9060 on host 'namenode', which must be a valid host in the cluster. We further configure a single storage tier, in this case the RDMA-based DRAM tier. Cachepath points to a directory that is used by the file system to allocate memory for the client cache. Up to cachelimit size, all the memory that is used by Crail will be allocated via mmap from this location. Ideally, the directory specified in cachepath points to a hugetlbfs mountpoint. 
+In this configuration the namenode is configured to run using port 9060 on host 'namenode', which must be a valid host in the cluster. The cachepath property needs to point to a directory that is used by the file system to allocate memory for the client cache. Up to cachelimit size, all the memory that is used by Crail will be allocated via mmap from this location. Ideally, the directory specified in cachepath points to a hugetlbfs mountpoint. Aside from the general properties, each storage tier needs to be configured separately.
 
-Each storage tier will have its own separate set of parameters. For the RDMA/DRAM tier we need to specify the interface that should be used by the storage nodes.
+### RDMA/DRAM Storage
 
-    crail.datanode.rdma.interface         eth0
+For the RDMA/DRAM tier we need to specify the interface that should be used by the storage nodes.
+
+    crail.storage.rdma.interface         eth0
   
 The datapath property specifies a path from which the storage nodes will allocate blocks of memory via mmap. Again, that path best points to a hugetlbfs mountpoint.
 
-    crail.datanode.rdma.datapath          /memory/data
+    crail.storage.rdma.datapath          /memory/data
 
 You want to specify how much DRAM each datanode should donate into the file system pool using the `storagelimit` property. DRAM is allocated in chunks of `allocationsize`, which needs to be a multiple of `crail.blocksize`.
 
-    crail.datanode.rdma.allocationsize    1073741824
-    crail.datanode.rdma.storagelimit      75161927680
+    crail.storage.rdma.allocationsize    1073741824
+    crail.storage.rdma.storagelimit      75161927680
 
 Crail supports optimized local operations via memcpy (instead of RDMA) in case a given file operation is backed by a local storage node. The indexpath specifies where Crail will store the necessary metadata that make these optimizations possible. Important: the indexpath must NOT point to a hugetlbfs mountpoint because index files will be updated which not possible in hugetlbfs.
 
-    crail.datanode.rdma.localmap          true
-    crail.datanode.rdma.indexpath         /index
+    crail.storage.rdma.localmap          true
+    crail.storage.rdma.indexpath         /index
+    
+### NVMf/Flash Storage    
+
+For the NVMf storage tier we need to configure the server IP that is used when listening for new connections. We also need to configure the PCI address of the flash device we want to use, as well as the huge page mount point to be used for allocating memory. 
+
+    crail.storage.nvmf.bindip		10.40.0.XX
+    crail.storage.nvmf.pcieaddr		0000:11:00.0
+    crail.storage.nvmf.hugedir		/dev/hugepages
+    crail.storage.nvmf.socketmem		512,512
+
 
 ## Deploying
 
@@ -83,11 +95,11 @@ To start a datanode run the following command on a host in the cluster (ideally 
 
 Now you should have a small deployment up with just one datanode. In this case the datanode is of type RDMA/DRAM, which is the default datnode. If you want to start a different storage tier you can do so by passing a specific datanode class as follows:
 
-    ./bin/crail datanode -t com.ibm.crail.datanode.blkdev.BlkDevDataNode
+    ./bin/crail datanode -t com.ibm.crail.datanode.storage.NvmfStorageTier
 
 This would start the shared storage datanode. Note that configuration in crail-site.conf needs to have the specific properties set of this type of datanode, in order for this to work. Also, in order for the storage tier to become visible to clients, it has to be enlisted in the list of datanode types as follows:
 
-    crail.datanode.types                  com.ibm.crail.datanode.rdma.RdmaDataNode,com.ibm.crail.datanode.blkdev.BlkDevDataNode
+    crail.datanode.types                  com.ibm.crail.storage.rdma.RdmaStorageTier,com.ibm.crail.datanode.storage.NvmfStorageTier
 
 ### Larger deployments
 
@@ -102,7 +114,7 @@ Similarly, Crail can be stopped by using
 For this to work include the list of machines to start datanodes in conf/slaves. You can start multiple datanode of different types on the same host as follows:
 
     host02-ib
-    host02-ib -t com.ibm.crail.datanode.blkdev.BlkDevDataNode
+    host02-ib -t com.ibm.crail.datanode.storage.NvmfStorageTier
     host03-ib
 
 In this example, we are configuring a Crail cluster with 2 physical hosts but 3 datanodes and two different storage tiers.
