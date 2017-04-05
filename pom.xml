@@ -71,10 +71,11 @@
 
   <modules>
     <module>client</module>
-    <module>hdfs</module>
+    <module>namenode</module>
+    <module>storage</module>
     <module>storage-rdma</module>
     <module>storage-nvmf</module>
-    <module>namenode</module>
+    <module>hdfs</module>
     <module>rpc-darpc</module>
     <module>assembly</module>
   </modules>

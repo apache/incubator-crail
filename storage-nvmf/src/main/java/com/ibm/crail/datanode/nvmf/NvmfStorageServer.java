@@ -22,26 +22,39 @@
 
 package com.ibm.crail.datanode.nvmf;
 
+import com.ibm.crail.namenode.protocol.DataNodeStatistics;
+import com.ibm.crail.storage.StorageRpcClient;
+import com.ibm.crail.storage.StorageServer;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.disni.nvmef.NvmeEndpoint;
+import com.ibm.disni.nvmef.NvmeEndpointGroup;
 import com.ibm.disni.nvmef.NvmeServerEndpoint;
+import com.ibm.disni.nvmef.spdk.NvmeController;
+import com.ibm.disni.nvmef.spdk.NvmeNamespace;
+import com.ibm.disni.nvmef.spdk.NvmeTransportType;
+
 import org.slf4j.Logger;
 
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class NvmfStorageServer implements Runnable {
+public class NvmfStorageServer implements Runnable, StorageServer {
 	private static final Logger LOG = CrailUtils.getLogger();
 
+	private final NvmeEndpointGroup group;
 	private final NvmeServerEndpoint serverEndpoint;
-	private final InetSocketAddress datanodeAddr;
 	private final Set<NvmeEndpoint> allEndpoints;
+	private boolean isAlive;
 
-	public NvmfStorageServer(NvmeServerEndpoint serverEndpoint, InetSocketAddress datanodeAddr) {
-		this.serverEndpoint = serverEndpoint;
-		this.datanodeAddr = datanodeAddr;
+	public NvmfStorageServer() throws Exception {
 		this.allEndpoints = ConcurrentHashMap.newKeySet();
+		this.group = new NvmeEndpointGroup(new NvmeTransportType[]{NvmeTransportType.PCIE, NvmeTransportType.RDMA}, NvmfStorageConstants.HUGEDIR, NvmfStorageConstants.SOCKETMEM);
+		this.serverEndpoint = group.createServerEndpoint();
+		URI url = new URI("nvmef://" + NvmfStorageConstants.IP_ADDR.getHostAddress() + ":" + NvmfStorageConstants.PORT + "/0/1?subsystem=nqn.2016-06.io.spdk:cnode1&pci=" + NvmfStorageConstants.PCIE_ADDR);
+		serverEndpoint.bind(url);
+		this.isAlive = false;
 	}
 
 	public void close(NvmeEndpoint ep) {
@@ -55,7 +68,8 @@ public class NvmfStorageServer implements Runnable {
 
 	public void run() {
 		try {
-			LOG.info("RdmaDataNodeServer started at " + datanodeAddr);
+			this.isAlive = true;
+			LOG.info("RdmaDataNodeServer started at " + this.getAddress());
 			while(true){
 				NvmeEndpoint clientEndpoint = serverEndpoint.accept();
 				allEndpoints.add(clientEndpoint);
@@ -64,5 +78,42 @@ public class NvmfStorageServer implements Runnable {
 		} catch(Exception e){
 			e.printStackTrace();
 		}
+		this.isAlive = false;
+	}
+
+	@Override
+	public void registerResources(StorageRpcClient client) throws Exception {
+		NvmeController controller = serverEndpoint.getNvmecontroller();
+		NvmeNamespace namespace = controller.getNamespace(NvmfStorageConstants.NAMESPACE);
+		long namespaceSize = namespace.getSize();
+		long alignedSize = namespaceSize - (namespaceSize % NvmfStorageConstants.ALLOCATION_SIZE);
+
+
+		long addr = 0;
+		while (alignedSize > 0) {
+			DataNodeStatistics statistics = client.getDataNode();
+			LOG.info("datanode statistics, freeBlocks " + statistics.getFreeBlockCount());
+
+			LOG.info("new block, length " + NvmfStorageConstants.ALLOCATION_SIZE);
+			LOG.debug("block stag 0, addr " + addr + ", length " + NvmfStorageConstants.ALLOCATION_SIZE);
+			alignedSize -= NvmfStorageConstants.ALLOCATION_SIZE;
+			client.setBlock(addr, (int)NvmfStorageConstants.ALLOCATION_SIZE, 0);
+			addr += NvmfStorageConstants.ALLOCATION_SIZE;
+		}
+	}
+
+	@Override
+	public void join() throws Exception {
+		this.join();
+	}
+
+	@Override
+	public InetSocketAddress getAddress() {
+		return new InetSocketAddress(NvmfStorageConstants.IP_ADDR, NvmfStorageConstants.PORT);
+	}
+
+	@Override
+	public boolean isAlive() {
+		return this.isAlive;
 	}
 }

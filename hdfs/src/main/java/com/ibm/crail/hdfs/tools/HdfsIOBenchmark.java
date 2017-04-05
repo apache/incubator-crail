@@ -23,7 +23,6 @@ package com.ibm.crail.hdfs.tools;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Iterator;
 import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -35,11 +34,6 @@ import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.conf.Configuration;
-
-import com.ibm.crail.CrailFS;
-import com.ibm.crail.CrailNode;
-import com.ibm.crail.CrailNodeType;
-import com.ibm.crail.conf.CrailConfiguration;
 
 public class HdfsIOBenchmark {
 	private String mode;

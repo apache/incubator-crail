@@ -30,7 +30,7 @@ import org.slf4j.Logger;
 import com.ibm.crail.CrailStatistics.StatisticsProvider;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.namenode.protocol.DataNodeInfo;
-import com.ibm.crail.storage.StorageTier;
+import com.ibm.crail.storage.StorageClient;
 import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.*;
 
@@ -40,9 +40,9 @@ public class EndpointCache implements CrailStatistics.StatisticsProvider {
 	private boolean isOpen;
 	private ConcurrentHashMap<Integer, StorageEndpointCache> storageCaches = new ConcurrentHashMap<Integer, StorageEndpointCache>();
 	
-	public EndpointCache(int fsId, LinkedList<StorageTier> storageGroups){
+	public EndpointCache(int fsId, LinkedList<StorageClient> storageGroups){
 		int storageTier = 0;
-		for (StorageTier group : storageGroups){
+		for (StorageClient group : storageGroups){
 			StorageEndpointCache cache = new StorageEndpointCache(fsId, group);
 			LOG.info("adding tier to cache " + storageTier);
 			storageCaches.put(storageTier++, cache);
@@ -93,13 +93,13 @@ public class EndpointCache implements CrailStatistics.StatisticsProvider {
 	//-------------------------------
 	
 	public static class StorageEndpointCache {
-		private StorageTier datanodeGroup;
+		private StorageClient datanodeGroup;
 		private ConcurrentHashMap<Long, Object> locktable;
 		private ConcurrentHashMap<Long, StorageEndpoint> cache;
 		private int fsId;
 		private boolean isOpen;
 		
-		public StorageEndpointCache(int fsId, StorageTier datanodeGroup){
+		public StorageEndpointCache(int fsId, StorageClient datanodeGroup){
 			this.fsId = fsId;
 			this.datanodeGroup = datanodeGroup;
 			this.cache = new ConcurrentHashMap<Long, StorageEndpoint>();

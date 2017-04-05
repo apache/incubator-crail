@@ -25,7 +25,6 @@ package com.ibm.crail.datanode.nvmf.client;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.storage.DataResult;
-import com.ibm.crail.datanode.nvmf.NvmfStorageTier;
 import com.ibm.crail.datanode.nvmf.NvmfStorageConstants;
 import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.utils.CrailUtils;
@@ -36,9 +35,6 @@ import com.ibm.disni.nvmef.NvmeEndpointGroup;
 import com.ibm.disni.nvmef.spdk.IOCompletion;
 
 import org.slf4j.Logger;
-
-import com.ibm.crail.storage.StorageEndpoint;
-import com.ibm.crail.storage.DataResult;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

@@ -35,7 +35,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
 import org.slf4j.Logger;
+
 import com.ibm.crail.CrailBlockLocation;
 import com.ibm.crail.CrailFS;
 import com.ibm.crail.CrailNode;
@@ -54,7 +56,7 @@ import com.ibm.crail.namenode.rpc.RpcNameNode;
 import com.ibm.crail.namenode.rpc.RpcNameNodeClient;
 import com.ibm.crail.namenode.rpc.RpcNameNodeFuture;
 import com.ibm.crail.namenode.rpc.RpcResponseMessage;
-import com.ibm.crail.storage.StorageTier;
+import com.ibm.crail.storage.StorageClient;
 import com.ibm.crail.utils.BlockCache;
 import com.ibm.crail.utils.BufferCheckpoint;
 import com.ibm.crail.utils.DirectBufferCache;
@@ -101,10 +103,10 @@ public class CoreFileSystem extends CrailFS {
 		
 		//Datanodes
 		StringTokenizer tokenizer = new StringTokenizer(CrailConstants.STORAGE_TYPES, ",");
-		LinkedList<StorageTier> dataNodeClients = new LinkedList<StorageTier>(); 
+		LinkedList<StorageClient> dataNodeClients = new LinkedList<StorageClient>(); 
 		while (tokenizer.hasMoreTokens()){
 			String name = tokenizer.nextToken();
-			StorageTier dataNode = StorageTier.createInstance(name);
+			StorageClient dataNode = StorageClient.createInstance(name);
 			dataNode.init(conf, null);
 			dataNode.printConf(LOG);
 			dataNodeClients.add(dataNode);

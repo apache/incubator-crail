@@ -51,7 +51,7 @@ esac
 if [ "$COMMAND" = "namenode" ] ; then
   CLASS='com.ibm.crail.namenode.NameNode'
 elif [ "$COMMAND" = "datanode" ] ; then
-  CLASS='com.ibm.crail.storage.StorageTier'
+  CLASS='com.ibm.crail.storage.StorageServer'
 elif [ "$COMMAND" = "fsck" ] ; then
   CLASS='com.ibm.crail.tools.CrailFsck'
 elif [ "$COMMAND" = "fs" ] ; then

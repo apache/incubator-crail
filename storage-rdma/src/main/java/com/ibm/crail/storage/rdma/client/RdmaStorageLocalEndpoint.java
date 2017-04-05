@@ -40,7 +40,7 @@ import com.ibm.crail.namenode.protocol.BlockInfo;
 import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.storage.DataResult;
 import com.ibm.crail.storage.rdma.RdmaConstants;
-import com.ibm.crail.storage.rdma.RdmaStorageTier;
+import com.ibm.crail.storage.rdma.RdmaStorageServer;
 import com.ibm.disni.rdma.verbs.*;
 import com.ibm.disni.util.*;
 
@@ -61,7 +61,7 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 			this.bufferMap = new ConcurrentHashMap<Integer, MappedByteBuffer>();
 			this.indexMap = new ConcurrentHashMap<Integer, RdmaBlockIndex>();
 			this.unsafe = getUnsafe();
-			this.indexDirPath = RdmaStorageTier.getIndexDirectory(datanodeAddr);
+			this.indexDirPath = RdmaStorageServer.getIndexDirectory(datanodeAddr);
 			File indexDir = new File(indexDirPath);
 			ByteBuffer fileBuffer = ByteBuffer.allocate(CrailConstants.BUFFER_SIZE);
 			if (indexDir.exists()){
