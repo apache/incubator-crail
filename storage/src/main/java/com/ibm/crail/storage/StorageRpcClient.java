@@ -27,10 +27,8 @@ public class StorageRpcClient {
 	public StorageRpcClient(int storageTierIndex, InetSocketAddress serverAddress) throws Exception {
 		this.storageTierIndex = storageTierIndex;
 		this.serverAddress = serverAddress;
-		InetAddress localhost = InetAddress.getLocalHost();
-		String hostname = localhost.getHostName();
-		this.hostHash = hostname.hashCode();
-		LOG.info("hostname " + hostname + ", hash " + hostHash);		
+		this.hostHash = CrailUtils.getHostHash();
+		LOG.info("hosthash" + hostHash);		
 		
 		InetSocketAddress nnAddr = CrailUtils.getNameNodeAddress();
 		this.rpcNameNode = RpcNameNode.createInstance(CrailConstants.NAMENODE_RPC_TYPE);

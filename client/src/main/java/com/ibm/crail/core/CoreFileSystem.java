@@ -121,7 +121,7 @@ public class CoreFileSystem extends CrailFS {
 		
 		//Client
 		this.fsId = fsCount.getAndIncrement();
-		this.hostHash = InetAddress.getLocalHost().getHostName().hashCode();
+		this.hostHash = CrailUtils.getHostHash();
 		this.bufferCache = new MappedBufferCache();
 		this.blockCache = new BlockCache();
 		this.nextBlockCache = new NextBlockCache();

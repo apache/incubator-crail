@@ -157,6 +157,10 @@ public class CrailUtils {
 	
 	public static InetSocketAddress datanodeInfo2SocketAddr(DataNodeInfo dnInfo) throws UnknownHostException{
 		return new InetSocketAddress(InetAddress.getByAddress(dnInfo.getIpAddress()), dnInfo.getPort());
-	}	
+	}
+	
+	public static int getHostHash() throws UnknownHostException{
+		return InetAddress.getLocalHost().getCanonicalHostName().hashCode();
+	}
 
 }
