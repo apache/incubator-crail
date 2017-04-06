@@ -50,7 +50,7 @@ public class NvmfStorageServer implements Runnable, StorageServer {
 
 	public NvmfStorageServer() throws Exception {
 		this.allEndpoints = ConcurrentHashMap.newKeySet();
-		this.group = new NvmeEndpointGroup(new NvmeTransportType[]{NvmeTransportType.PCIE, NvmeTransportType.RDMA}, NvmfStorageConstants.HUGEDIR, NvmfStorageConstants.SOCKETMEM);
+		this.group = new NvmeEndpointGroup(new NvmeTransportType[]{NvmeTransportType.PCIE, NvmeTransportType.RDMA}, NvmfStorageConstants.HUGEDIR, NvmfStorageConstants.MEMPOOL);
 		this.serverEndpoint = group.createServerEndpoint();
 		URI url = new URI("nvmef://" + NvmfStorageConstants.IP_ADDR.getHostAddress() + ":" + NvmfStorageConstants.PORT + "/0/1?subsystem=nqn.2016-06.io.spdk:cnode1&pci=" + NvmfStorageConstants.PCIE_ADDR);
 		serverEndpoint.bind(url);
