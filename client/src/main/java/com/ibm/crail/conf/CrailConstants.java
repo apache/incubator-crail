@@ -32,42 +32,6 @@ public class CrailConstants {
 	public static final String VERSION_KEY = "crail.version";
 	public static int VERSION = 2804;
 	
-	public static final String NAMENODE_ADDRESS_KEY = "crail.namenode.address";
-	public static String NAMENODE_ADDRESS = "";
-	
-	public static final String NAMENODE_FILEBLOCKS_KEY = "crail.namenode.fileblocks";
-	public static int NAMENODE_FILEBLOCKS = 16;	
-	
-	public static final String NAMENODE_BLOCKSELECTION_KEY = "crail.namenode.blockselection";
-	public static String NAMENODE_BLOCKSELECTION = "roundrobin";	
-	
-	public static final String NAMENODE_RPC_TYPE_KEY = "crail.namenode.rpc.type";
-	public static String NAMENODE_RPC_TYPE = "com.ibm.crail.namenode.rpc.darpc.DaRPCNameNode";	
-	
-	public static final String NAMENODE_DARPC_POLLING_KEY = "crail.namenode.darpc.polling";
-	public static boolean NAMENODE_DARPC_POLLING = false;
-	
-	public static final String NAMENODE_DARPC_TYPE_KEY = "crail.namenode.darpc.type";
-	public static String NAMENODE_DARPC_TYPE = "passive";	
-	
-	public static final String NAMENODE_DARPC_AFFINITY_KEY = "crail.namenode.darpc.affinity";
-	public static String NAMENODE_DARPC_AFFINITY = "1";	
-	
-	public static final String NAMENODE_DARPC_MAXINLINE_KEY = "crail.namenode.darpc.maxinline";
-	public static int NAMENODE_DARPC_MAXINLINE = 0;
-
-	public static final String NAMENODE_DARPC_RECVQUEUE_KEY = "crail.namenode.darpc.recvQueue";
-	public static int NAMENODE_DARPC_RECVQUEUE = 32;
-	
-	public static final String NAMENODE_DARPC_SENDQUEUE_KEY = "crail.namenode.darpc.sendQueue";
-	public static int NAMENODE_DARPC_SENDQUEUE = 32;		
-	
-	public static final String NAMENODE_DARPC_POLLSIZE_KEY = "crail.namenode.darpc.pollsize";
-	public static int NAMENODE_DARPC_POLLSIZE = NAMENODE_DARPC_RECVQUEUE;		
-	
-	public static final String NAMENODE_DARPC_CLUSTERSIZE_KEY = "crail.namenode.darpc.clustersize";
-	public static int NAMENODE_DARPC_CLUSTERSIZE = 128;		
-	
 	public static final String STORAGE_TYPES_KEY = "crail.storage.types";
 	public static String STORAGE_TYPES = "com.ibm.crail.storage.rdma.RdmaDataNode";		
 
@@ -122,43 +86,44 @@ public class CrailConstants {
 	public static final String DIRECTORY_RANDOMIZE_KEY = "crail.directoryrandomize";
 	public static boolean DIRECTORY_RANDOMIZE = true;	
 	
+	public static final String NAMENODE_ADDRESS_KEY = "crail.namenode.address";
+	public static String NAMENODE_ADDRESS = "";
+	
+	public static final String NAMENODE_FILEBLOCKS_KEY = "crail.namenode.fileblocks";
+	public static int NAMENODE_FILEBLOCKS = 16;	
+	
+	public static final String NAMENODE_BLOCKSELECTION_KEY = "crail.namenode.blockselection";
+	public static String NAMENODE_BLOCKSELECTION = "roundrobin";	
+	
+	public static final String NAMENODE_RPC_TYPE_KEY = "crail.namenode.rpc.type";
+	public static String NAMENODE_RPC_TYPE = "com.ibm.crail.namenode.rpc.darpc.DaRPCNameNode";	
+	
+	public static final String NAMENODE_DARPC_POLLING_KEY = "crail.namenode.darpc.polling";
+	public static boolean NAMENODE_DARPC_POLLING = false;
+	
+	public static final String NAMENODE_DARPC_TYPE_KEY = "crail.namenode.darpc.type";
+	public static String NAMENODE_DARPC_TYPE = "passive";	
+	
+	public static final String NAMENODE_DARPC_AFFINITY_KEY = "crail.namenode.darpc.affinity";
+	public static String NAMENODE_DARPC_AFFINITY = "1";	
+	
+	public static final String NAMENODE_DARPC_MAXINLINE_KEY = "crail.namenode.darpc.maxinline";
+	public static int NAMENODE_DARPC_MAXINLINE = 0;
+
+	public static final String NAMENODE_DARPC_RECVQUEUE_KEY = "crail.namenode.darpc.recvQueue";
+	public static int NAMENODE_DARPC_RECVQUEUE = 32;
+	
+	public static final String NAMENODE_DARPC_SENDQUEUE_KEY = "crail.namenode.darpc.sendQueue";
+	public static int NAMENODE_DARPC_SENDQUEUE = 32;		
+	
+	public static final String NAMENODE_DARPC_POLLSIZE_KEY = "crail.namenode.darpc.pollsize";
+	public static int NAMENODE_DARPC_POLLSIZE = NAMENODE_DARPC_RECVQUEUE;		
+	
+	public static final String NAMENODE_DARPC_CLUSTERSIZE_KEY = "crail.namenode.darpc.clustersize";
+	public static int NAMENODE_DARPC_CLUSTERSIZE = 128;		
+	
+	
 	public static void updateConstants(CrailConfiguration conf){
-		if (conf.get(NAMENODE_ADDRESS_KEY) != null) {
-			NAMENODE_ADDRESS = conf.get(NAMENODE_ADDRESS_KEY);
-		} 
-		if (conf.get(NAMENODE_BLOCKSELECTION_KEY) != null) {
-			NAMENODE_BLOCKSELECTION = conf.get(NAMENODE_BLOCKSELECTION_KEY);
-		}		
-		if (conf.get(NAMENODE_FILEBLOCKS_KEY) != null) {
-			NAMENODE_FILEBLOCKS = Integer.parseInt(conf.get(NAMENODE_FILEBLOCKS_KEY));
-		}		
-		if (conf.get(NAMENODE_RPC_TYPE_KEY) != null) {
-			NAMENODE_RPC_TYPE = conf.get(NAMENODE_RPC_TYPE_KEY);
-		}		
-		if (conf.get(NAMENODE_DARPC_POLLING_KEY) != null) {
-			NAMENODE_DARPC_POLLING = conf.getBoolean(NAMENODE_DARPC_POLLING_KEY, false);
-		}			
-		if (conf.get(NAMENODE_DARPC_TYPE_KEY) != null) {
-			NAMENODE_DARPC_TYPE = conf.get(NAMENODE_DARPC_TYPE_KEY);
-		}	
-		if (conf.get(NAMENODE_DARPC_AFFINITY_KEY) != null) {
-			NAMENODE_DARPC_AFFINITY = conf.get(NAMENODE_DARPC_AFFINITY_KEY);
-		}	
-		if (conf.get(NAMENODE_DARPC_MAXINLINE_KEY) != null) {
-			NAMENODE_DARPC_MAXINLINE = Integer.parseInt(conf.get(NAMENODE_DARPC_MAXINLINE_KEY));
-		}	
-		if (conf.get(NAMENODE_DARPC_RECVQUEUE_KEY) != null) {
-			NAMENODE_DARPC_RECVQUEUE = Integer.parseInt(conf.get(NAMENODE_DARPC_RECVQUEUE_KEY));
-		}
-		if (conf.get(NAMENODE_DARPC_SENDQUEUE_KEY) != null) {
-			NAMENODE_DARPC_SENDQUEUE = Integer.parseInt(conf.get(NAMENODE_DARPC_SENDQUEUE_KEY));
-		}		
-		if (conf.get(NAMENODE_DARPC_POLLSIZE_KEY) != null) {
-			NAMENODE_DARPC_POLLSIZE = Integer.parseInt(conf.get(NAMENODE_DARPC_POLLSIZE_KEY));
-		}	
-		if (conf.get(NAMENODE_DARPC_CLUSTERSIZE_KEY) != null) {
-			NAMENODE_DARPC_CLUSTERSIZE = Integer.parseInt(conf.get(NAMENODE_DARPC_CLUSTERSIZE_KEY));
-		}			
 		if (conf.get(STORAGE_TYPES_KEY) != null) {
 			STORAGE_TYPES = conf.get(STORAGE_TYPES_KEY);
 		}			
@@ -212,23 +177,47 @@ public class CrailConstants {
 		}	
 		if (conf.get(CrailConstants.DIRECTORY_RANDOMIZE_KEY) != null) {
 			DIRECTORY_RANDOMIZE = conf.getBoolean(CrailConstants.DIRECTORY_RANDOMIZE_KEY, false);
+		}					
+		if (conf.get(NAMENODE_ADDRESS_KEY) != null) {
+			NAMENODE_ADDRESS = conf.get(NAMENODE_ADDRESS_KEY);
+		} 
+		if (conf.get(NAMENODE_BLOCKSELECTION_KEY) != null) {
+			NAMENODE_BLOCKSELECTION = conf.get(NAMENODE_BLOCKSELECTION_KEY);
+		}		
+		if (conf.get(NAMENODE_FILEBLOCKS_KEY) != null) {
+			NAMENODE_FILEBLOCKS = Integer.parseInt(conf.get(NAMENODE_FILEBLOCKS_KEY));
+		}		
+		if (conf.get(NAMENODE_RPC_TYPE_KEY) != null) {
+			NAMENODE_RPC_TYPE = conf.get(NAMENODE_RPC_TYPE_KEY);
+		}		
+		if (conf.get(NAMENODE_DARPC_POLLING_KEY) != null) {
+			NAMENODE_DARPC_POLLING = conf.getBoolean(NAMENODE_DARPC_POLLING_KEY, false);
+		}			
+		if (conf.get(NAMENODE_DARPC_TYPE_KEY) != null) {
+			NAMENODE_DARPC_TYPE = conf.get(NAMENODE_DARPC_TYPE_KEY);
+		}	
+		if (conf.get(NAMENODE_DARPC_AFFINITY_KEY) != null) {
+			NAMENODE_DARPC_AFFINITY = conf.get(NAMENODE_DARPC_AFFINITY_KEY);
+		}	
+		if (conf.get(NAMENODE_DARPC_MAXINLINE_KEY) != null) {
+			NAMENODE_DARPC_MAXINLINE = Integer.parseInt(conf.get(NAMENODE_DARPC_MAXINLINE_KEY));
+		}	
+		if (conf.get(NAMENODE_DARPC_RECVQUEUE_KEY) != null) {
+			NAMENODE_DARPC_RECVQUEUE = Integer.parseInt(conf.get(NAMENODE_DARPC_RECVQUEUE_KEY));
+		}
+		if (conf.get(NAMENODE_DARPC_SENDQUEUE_KEY) != null) {
+			NAMENODE_DARPC_SENDQUEUE = Integer.parseInt(conf.get(NAMENODE_DARPC_SENDQUEUE_KEY));
+		}		
+		if (conf.get(NAMENODE_DARPC_POLLSIZE_KEY) != null) {
+			NAMENODE_DARPC_POLLSIZE = Integer.parseInt(conf.get(NAMENODE_DARPC_POLLSIZE_KEY));
+		}	
+		if (conf.get(NAMENODE_DARPC_CLUSTERSIZE_KEY) != null) {
+			NAMENODE_DARPC_CLUSTERSIZE = Integer.parseInt(conf.get(NAMENODE_DARPC_CLUSTERSIZE_KEY));
 		}			
 	}
 	
 	public static void printConf(){
 		LOG.info(VERSION_KEY + " " + VERSION);
-		LOG.info(NAMENODE_ADDRESS_KEY + " " + NAMENODE_ADDRESS);
-		LOG.info(NAMENODE_BLOCKSELECTION_KEY + " " + NAMENODE_BLOCKSELECTION);
-		LOG.info(NAMENODE_FILEBLOCKS_KEY + " " + NAMENODE_FILEBLOCKS);
-		LOG.info(NAMENODE_RPC_TYPE_KEY + " " + NAMENODE_RPC_TYPE);
-		LOG.info(NAMENODE_DARPC_POLLING_KEY + " " + NAMENODE_DARPC_POLLING);
-		LOG.info(NAMENODE_DARPC_TYPE_KEY + " " + NAMENODE_DARPC_TYPE);
-		LOG.info(NAMENODE_DARPC_AFFINITY_KEY + " " + NAMENODE_DARPC_AFFINITY);
-		LOG.info(NAMENODE_DARPC_MAXINLINE_KEY + " " + NAMENODE_DARPC_MAXINLINE);
-		LOG.info(NAMENODE_DARPC_RECVQUEUE_KEY + " " + NAMENODE_DARPC_RECVQUEUE);
-		LOG.info(NAMENODE_DARPC_SENDQUEUE_KEY + " " + NAMENODE_DARPC_SENDQUEUE);
-		LOG.info(NAMENODE_DARPC_POLLSIZE_KEY + " " + NAMENODE_DARPC_POLLSIZE);
-		LOG.info(NAMENODE_DARPC_CLUSTERSIZE_KEY + " " + NAMENODE_DARPC_CLUSTERSIZE);
 		LOG.info(STORAGE_TYPES_KEY + " " + STORAGE_TYPES);
 		LOG.info(DIRECTORY_DEPTH_KEY + " " + DIRECTORY_DEPTH);
 		LOG.info(TOKEN_EXPIRATION_KEY + " " + TOKEN_EXPIRATION);
@@ -246,7 +235,19 @@ public class CrailConstants {
 		LOG.info(SINGLETON_KEY + " " + SINGLETON);
 		LOG.info(REGION_SIZE_KEY + " " + REGION_SIZE);
 		LOG.info(DIRECTORY_RECORD_KEY + " " + DIRECTORY_RECORD);
-		LOG.info(DIRECTORY_RANDOMIZE_KEY + " " + DIRECTORY_RANDOMIZE);
+		LOG.info(DIRECTORY_RANDOMIZE_KEY + " " + DIRECTORY_RANDOMIZE);		
+		LOG.info(NAMENODE_ADDRESS_KEY + " " + NAMENODE_ADDRESS);
+		LOG.info(NAMENODE_BLOCKSELECTION_KEY + " " + NAMENODE_BLOCKSELECTION);
+		LOG.info(NAMENODE_FILEBLOCKS_KEY + " " + NAMENODE_FILEBLOCKS);
+		LOG.info(NAMENODE_RPC_TYPE_KEY + " " + NAMENODE_RPC_TYPE);
+		LOG.info(NAMENODE_DARPC_POLLING_KEY + " " + NAMENODE_DARPC_POLLING);
+		LOG.info(NAMENODE_DARPC_TYPE_KEY + " " + NAMENODE_DARPC_TYPE);
+		LOG.info(NAMENODE_DARPC_AFFINITY_KEY + " " + NAMENODE_DARPC_AFFINITY);
+		LOG.info(NAMENODE_DARPC_MAXINLINE_KEY + " " + NAMENODE_DARPC_MAXINLINE);
+		LOG.info(NAMENODE_DARPC_RECVQUEUE_KEY + " " + NAMENODE_DARPC_RECVQUEUE);
+		LOG.info(NAMENODE_DARPC_SENDQUEUE_KEY + " " + NAMENODE_DARPC_SENDQUEUE);
+		LOG.info(NAMENODE_DARPC_POLLSIZE_KEY + " " + NAMENODE_DARPC_POLLSIZE);
+		LOG.info(NAMENODE_DARPC_CLUSTERSIZE_KEY + " " + NAMENODE_DARPC_CLUSTERSIZE);
 	}
 	
 	public static void verify() throws IOException {
