@@ -54,8 +54,8 @@ public class NvmfStorageConstants {
 	public static final String HUGEDIR_KEY = "hugedir";
 	public static String HUGEDIR  = null;
 
-	public static final String SOCKETMEM_KEY = "socketmem";
-	public static long[] SOCKETMEM = {256, 256};
+	public static final String MEMPOOL_KEY = "memorypool";
+	public static long MEMPOOL = 256;
 
 	public static final TimeUnit TIME_UNIT = TimeUnit.MINUTES;
 	public static final long TIME_OUT = 15;
@@ -99,13 +99,9 @@ public class NvmfStorageConstants {
 			HUGEDIR = arg.length() == 0 ? null : arg;
 		}
 
-		arg = get(conf, SOCKETMEM_KEY);
+		arg = get(conf, MEMPOOL_KEY);
 		if (arg != null) {
-			String[] split = arg.split(",");
-			SOCKETMEM = new long[split.length];
-			for (int i = 0; i < split.length; i++) {
-				SOCKETMEM[i] = Long.parseLong(split[i]);
-			}
+			MEMPOOL = Long.parseLong(arg);
 		}
 	}
 
@@ -127,6 +123,6 @@ public class NvmfStorageConstants {
 		logger.info(fullKey(NAMESPACE_KEY) + " " + NAMESPACE);
 		logger.info(fullKey(ALLOCATION_SIZE_KEY) + " " + ALLOCATION_SIZE);
 		logger.info(fullKey(HUGEDIR_KEY) + " " + HUGEDIR);
-		logger.info(fullKey(SOCKETMEM_KEY) + " " + Arrays.toString(SOCKETMEM));
+		logger.info(fullKey(MEMPOOL_KEY) + " " + MEMPOOL);
 	}
 }
