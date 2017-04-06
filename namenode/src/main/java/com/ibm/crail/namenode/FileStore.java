@@ -24,9 +24,9 @@ package com.ibm.crail.namenode;
 import java.io.IOException;
 
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.namenode.protocol.FileName;
-import com.ibm.crail.namenode.rpc.NameNodeProtocol;
-import com.ibm.crail.namenode.rpc.RpcNameNodeState;
+import com.ibm.crail.metadata.FileName;
+import com.ibm.crail.rpc.RpcErrors;
+import com.ibm.crail.rpc.RpcNameNodeState;
 
 public class FileStore {
 	private AbstractNode root;
@@ -53,7 +53,7 @@ public class FileStore {
 	
 	private AbstractNode retrieveFileInternal(FileName filename, int length, RpcNameNodeState error) throws Exception {
 		if (length >= CrailConstants.DIRECTORY_DEPTH){
-			error.setError(NameNodeProtocol.ERR_FILE_COMPONENTS_EXCEEDED);
+			error.setError(RpcErrors.ERR_FILE_COMPONENTS_EXCEEDED);
 			return null;
 		}
 		

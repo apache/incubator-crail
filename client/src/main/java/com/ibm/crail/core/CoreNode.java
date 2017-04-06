@@ -26,7 +26,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import com.ibm.crail.CrailMultiFile;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailNodeType;
-import com.ibm.crail.namenode.protocol.FileInfo;
+import com.ibm.crail.metadata.FileInfo;
 
 public class CoreNode implements CrailNode {
 	protected CoreFileSystem fs;

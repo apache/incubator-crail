@@ -32,12 +32,12 @@ import org.slf4j.Logger;
 
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.namenode.protocol.BlockInfo;
-import com.ibm.crail.namenode.protocol.FileInfo;
-import com.ibm.crail.namenode.rpc.NameNodeProtocol;
-import com.ibm.crail.namenode.rpc.RpcNameNodeClient;
-import com.ibm.crail.namenode.rpc.RpcNameNodeFuture;
-import com.ibm.crail.namenode.rpc.RpcResponseMessage;
+import com.ibm.crail.metadata.BlockInfo;
+import com.ibm.crail.metadata.FileInfo;
+import com.ibm.crail.rpc.RpcErrors;
+import com.ibm.crail.rpc.RpcConnection;
+import com.ibm.crail.rpc.RpcGetBlock;
+import com.ibm.crail.rpc.RpcFuture;
 import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.storage.DataResult;
 import com.ibm.crail.utils.BufferCheckpoint;
@@ -53,7 +53,7 @@ public abstract class CoreStream {
 	protected CoreNode node;
 	
 	private EndpointCache endpointCache;
-	private RpcNameNodeClient namenodeClientRpc;
+	private RpcConnection namenodeClientRpc;
 	private FileBlockCache blockCache;
 	private FileNextBlockCache nextBlockCache;
 	private BufferCheckpoint bufferCheckpoint;
@@ -63,7 +63,7 @@ public abstract class CoreStream {
 	private long streamId;
 	private CoreIOStatistics ioStats;
 	private HashMap<Integer, CoreSubOperation> blockMap;
-	private LinkedBlockingQueue<RpcNameNodeFuture<RpcResponseMessage.GetBlockRes>> pendingBlocks;
+	private LinkedBlockingQueue<RpcFuture<RpcGetBlock>> pendingBlocks;
 	
 	abstract Future<DataResult> trigger(StorageEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception;
 	abstract void update(long newCapacity);	
@@ -84,7 +84,7 @@ public abstract class CoreStream {
 		this.ioStats = new CoreIOStatistics("core");
 		
 		this.blockMap = new HashMap<Integer, CoreSubOperation>();
-		this.pendingBlocks = new LinkedBlockingQueue<RpcNameNodeFuture<RpcResponseMessage.GetBlockRes>>();
+		this.pendingBlocks = new LinkedBlockingQueue<RpcFuture<RpcGetBlock>>();
 	}	
 	
 	final Future<CrailResult> dataOperation(ByteBuffer dataBuf) throws Exception {
@@ -106,12 +106,12 @@ public abstract class CoreStream {
 				multiOperation.add(subFuture);
 				this.ioStats.incCachedOps();
 			} else if (nextBlockCache.containsKey(subOperation.key())){
-				RpcNameNodeFuture<RpcResponseMessage.GetBlockRes> rpcFuture = nextBlockCache.get(subOperation.key());
+				RpcFuture<RpcGetBlock> rpcFuture = nextBlockCache.get(subOperation.key());
 				blockMap.put(rpcFuture.getTicket(), subOperation);
 				pendingBlocks.add(rpcFuture);
 			} else {
 				this.syncedCapacity = fileInfo.getCapacity();
-				RpcNameNodeFuture<RpcResponseMessage.GetBlockRes> rpcFuture = namenodeClientRpc.getBlock(fileInfo.getFd(), fileInfo.getToken(), position, node.storageAffinity(), node.locationAffinity(), syncedCapacity);
+				RpcFuture<RpcGetBlock> rpcFuture = namenodeClientRpc.getBlock(fileInfo.getFd(), fileInfo.getToken(), position, node.storageAffinity(), node.locationAffinity(), syncedCapacity);
 				blockMap.put(rpcFuture.getTicket(), subOperation);
 				pendingBlocks.add(rpcFuture);
 			}
@@ -121,7 +121,7 @@ public abstract class CoreStream {
 		}
 		
 		//wait for RPC results and start reads for those blocks as well
-		for (RpcNameNodeFuture<RpcResponseMessage.GetBlockRes> rpcFuture = pendingBlocks.poll(); rpcFuture != null; rpcFuture = pendingBlocks.poll()){
+		for (RpcFuture<RpcGetBlock> rpcFuture = pendingBlocks.poll(); rpcFuture != null; rpcFuture = pendingBlocks.poll()){
 			if (!rpcFuture.isDone()){
 				this.ioStats.incBlockingOps();
 				if (rpcFuture.isPrefetched()){
@@ -134,13 +134,13 @@ public abstract class CoreStream {
 				} 				
 			}
 			
-			RpcResponseMessage.GetBlockRes getBlockRes = rpcFuture.get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
+			RpcGetBlock getBlockRes = rpcFuture.get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
 			if (!rpcFuture.isDone()){
 				throw new IOException("rpc timeout ");
 			}
-			if (getBlockRes.getError() != NameNodeProtocol.ERR_OK) {
-				LOG.info("inputStream: " + NameNodeProtocol.messages[getBlockRes.getError()]);
-				throw new IOException(NameNodeProtocol.messages[getBlockRes.getError()]);
+			if (getBlockRes.getError() != RpcErrors.ERR_OK) {
+				LOG.info("inputStream: " + RpcErrors.messages[getBlockRes.getError()]);
+				throw new IOException(RpcErrors.messages[getBlockRes.getError()]);
 			}				
 			BlockInfo block = getBlockRes.getBlockInfo();
 			CoreSubOperation subOperation = blockMap.get(rpcFuture.getTicket());
@@ -167,7 +167,7 @@ public abstract class CoreStream {
 			return;
 		}
 		this.syncedCapacity = fileInfo.getCapacity();
-		RpcNameNodeFuture<RpcResponseMessage.GetBlockRes> nextBlock = namenodeClientRpc.getBlock(fileInfo.getFd(), fileInfo.getToken(), nextOffset, node.storageAffinity(), node.locationAffinity(), syncedCapacity);
+		RpcFuture<RpcGetBlock> nextBlock = namenodeClientRpc.getBlock(fileInfo.getFd(), fileInfo.getToken(), nextOffset, node.storageAffinity(), node.locationAffinity(), syncedCapacity);
 		nextBlock.setPrefetched(true);
 		nextBlockCache.put(key, nextBlock);
 		this.ioStats.incPrefetchedOps();

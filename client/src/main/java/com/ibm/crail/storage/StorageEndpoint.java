@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Future;
 
-import com.ibm.crail.namenode.protocol.BlockInfo;
+import com.ibm.crail.metadata.BlockInfo;
 
 public interface StorageEndpoint{
 

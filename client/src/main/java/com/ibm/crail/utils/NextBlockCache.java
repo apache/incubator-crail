@@ -23,8 +23,8 @@ package com.ibm.crail.utils;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.ibm.crail.namenode.rpc.RpcNameNodeFuture;
-import com.ibm.crail.namenode.rpc.RpcResponseMessage;
+import com.ibm.crail.rpc.RpcGetBlock;
+import com.ibm.crail.rpc.RpcFuture;
 
 public class NextBlockCache {
 	private ConcurrentHashMap<Long, FileNextBlockCache> nextBlockCache;
@@ -55,18 +55,18 @@ public class NextBlockCache {
 
 	public static class FileNextBlockCache {
 		private long fd;
-		private ConcurrentHashMap<Long, RpcNameNodeFuture<RpcResponseMessage.GetBlockRes>> fileBlockCache;
+		private ConcurrentHashMap<Long, RpcFuture<RpcGetBlock>> fileBlockCache;
 		
 		public FileNextBlockCache(long fd){
 			this.fd = fd;
-			this.fileBlockCache = new ConcurrentHashMap<Long, RpcNameNodeFuture<RpcResponseMessage.GetBlockRes>>();
+			this.fileBlockCache = new ConcurrentHashMap<Long, RpcFuture<RpcGetBlock>>();
 		}
 
-		public void put(long blockstart, RpcNameNodeFuture<RpcResponseMessage.GetBlockRes> block){
+		public void put(long blockstart, RpcFuture<RpcGetBlock> block){
 			this.fileBlockCache.putIfAbsent(blockstart, block);
 		}
 		
-		public RpcNameNodeFuture<RpcResponseMessage.GetBlockRes> get(long blockstart){
+		public RpcFuture<RpcGetBlock> get(long blockstart){
 			return this.fileBlockCache.get(blockstart);
 		}
 

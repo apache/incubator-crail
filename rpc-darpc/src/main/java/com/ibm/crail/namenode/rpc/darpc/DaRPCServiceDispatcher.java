@@ -25,17 +25,18 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 
-import com.ibm.crail.namenode.rpc.NameNodeProtocol;
-import com.ibm.crail.namenode.rpc.RpcNameNodeService;
-import com.ibm.crail.namenode.rpc.RpcNameNodeState;
-import com.ibm.crail.namenode.rpc.RpcRequestMessage;
-import com.ibm.crail.namenode.rpc.RpcResponseMessage;
+import com.ibm.crail.rpc.RpcErrors;
+import com.ibm.crail.rpc.RpcNameNodeService;
+import com.ibm.crail.rpc.RpcNameNodeState;
+import com.ibm.crail.rpc.RpcProtocol;
+import com.ibm.crail.rpc.RpcRequestMessage;
+import com.ibm.crail.rpc.RpcResponseMessage;
 import com.ibm.crail.utils.CrailUtils;
-import com.ibm.darpc.RpcServerEndpoint;
-import com.ibm.darpc.RpcServerEvent;
-import com.ibm.darpc.RpcService;
+import com.ibm.darpc.DaRPCServerEndpoint;
+import com.ibm.darpc.DaRPCServerEvent;
+import com.ibm.darpc.DaRPCService;
 
-public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol implements RpcService<DaRPCNameNodeRequest, DaRPCNameNodeResponse> {
+public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol implements DaRPCService<DaRPCNameNodeRequest, DaRPCNameNodeResponse> {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	private RpcNameNodeService service;
@@ -64,70 +65,70 @@ public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol implements Rpc
 		this.errorOps = new AtomicLong(0);
 	}
 	
-	public void processServerEvent(RpcServerEvent<DaRPCNameNodeRequest, DaRPCNameNodeResponse> event) {
+	public void processServerEvent(DaRPCServerEvent<DaRPCNameNodeRequest, DaRPCNameNodeResponse> event) {
 		DaRPCNameNodeRequest request = event.getReceiveMessage();
 		DaRPCNameNodeResponse response = event.getSendMessage();
-		short error = NameNodeProtocol.ERR_OK;
+		short error = RpcErrors.ERR_OK;
 		try {
-			response.setType(NameNodeProtocol.responseTypes[request.getCmd()]);
+			response.setType(RpcProtocol.responseTypes[request.getCmd()]);
 			response.setError((short) 0);
 			switch(request.getCmd()) {
-			case NameNodeProtocol.CMD_CREATE_FILE:
+			case RpcProtocol.CMD_CREATE_FILE:
 				this.totalOps.incrementAndGet();
 				this.createOps.incrementAndGet();
 				error = service.createFile(request.createFile(), response.createFile(), response);
 				break;			
-			case NameNodeProtocol.CMD_GET_FILE:
+			case RpcProtocol.CMD_GET_FILE:
 				this.totalOps.incrementAndGet();
 				this.lookupOps.incrementAndGet();
 				error = service.getFile(request.getFile(), response.getFile(), response);
 				break;
-			case NameNodeProtocol.CMD_SET_FILE:
+			case RpcProtocol.CMD_SET_FILE:
 				this.totalOps.incrementAndGet();
 				this.setOps.incrementAndGet();
 				error = service.setFile(request.setFile(), response.getVoid(), response);
 				break;
-			case NameNodeProtocol.CMD_REMOVE_FILE:
+			case RpcProtocol.CMD_REMOVE_FILE:
 				this.totalOps.incrementAndGet();
 				this.removeOps.incrementAndGet();
 				error = service.removeFile(request.removeFile(), response.delFile(), response);
 				break;				
-			case NameNodeProtocol.CMD_RENAME_FILE:
+			case RpcProtocol.CMD_RENAME_FILE:
 				this.totalOps.incrementAndGet();
 				this.renameOps.incrementAndGet();
 				error = service.renameFile(request.renameFile(), response.getRename(), response);
 				break;		
-			case NameNodeProtocol.CMD_GET_BLOCK:
+			case RpcProtocol.CMD_GET_BLOCK:
 				this.totalOps.incrementAndGet();
 				this.getOps.incrementAndGet();
 				error = service.getBlock(request.getBlock(), response.getBlock(), response);
 				break;
-			case NameNodeProtocol.CMD_GET_LOCATION:
+			case RpcProtocol.CMD_GET_LOCATION:
 				this.totalOps.incrementAndGet();
 				this.locationOps.incrementAndGet();
 				error = service.getLocation(request.getLocation(), response.getLocation(), response);
 				break;				
-			case NameNodeProtocol.CMD_SET_BLOCK:
+			case RpcProtocol.CMD_SET_BLOCK:
 				error = service.setBlock(request.setBlock(), response.getVoid(), response);
 				break;
-			case NameNodeProtocol.CMD_GET_DATANODE:
+			case RpcProtocol.CMD_GET_DATANODE:
 				error = service.getDataNode(request.getDataNode(), response.getDataNode(), response);
 				break;					
-			case NameNodeProtocol.CMD_DUMP_NAMENODE:
+			case RpcProtocol.CMD_DUMP_NAMENODE:
 				error = service.dump(request.dumpNameNode(), response.getVoid(), response);
 				break;			
-			case NameNodeProtocol.CMD_PING_NAMENODE:
+			case RpcProtocol.CMD_PING_NAMENODE:
 				error = this.stats(request.pingNameNode(), response.pingNameNode(), response);
 				error = service.ping(request.pingNameNode(), response.pingNameNode(), response);
 				break;
 			default:
-				error = NameNodeProtocol.ERR_INVALID_RPC_CMD;
+				error = RpcErrors.ERR_INVALID_RPC_CMD;
 				LOG.info("Rpc command not valid, opcode " + request.getCmd());
 			}
 		} catch(Exception e){
-			error = NameNodeProtocol.ERR_UNKNOWN;
+			error = RpcErrors.ERR_UNKNOWN;
 			this.errorOps.incrementAndGet();
-			LOG.info(NameNodeProtocol.messages[NameNodeProtocol.ERR_UNKNOWN] + e.getMessage());
+			LOG.info(RpcErrors.messages[RpcErrors.ERR_UNKNOWN] + e.getMessage());
 			e.printStackTrace();
 		}
 		
@@ -141,8 +142,8 @@ public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol implements Rpc
 	}
 	
 	public short stats(RpcRequestMessage.PingNameNodeReq request, RpcResponseMessage.PingNameNodeRes response, RpcNameNodeState errorState) throws Exception {
-		if (!NameNodeProtocol.verifyProtocol(NameNodeProtocol.CMD_PING_NAMENODE, request, response)){
-			return NameNodeProtocol.ERR_PROTOCOL_MISMATCH;
+		if (!RpcProtocol.verifyProtocol(RpcProtocol.CMD_PING_NAMENODE, request, response)){
+			return RpcErrors.ERR_PROTOCOL_MISMATCH;
 		}			
 		
 		LOG.info("totalOps " + totalOps.get());
@@ -155,16 +156,16 @@ public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol implements Rpc
 		LOG.info("getOps " + getOps.get());
 		LOG.info("locationOps " + locationOps.get());
 		
-		return NameNodeProtocol.ERR_OK;
+		return RpcErrors.ERR_OK;
 	}	
 	
 	@Override
-	public void open(RpcServerEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> endpoint) {
+	public void open(DaRPCServerEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> endpoint) {
 		LOG.info("RPC connection, qpnum " + endpoint.getQp().getQp_num());
 	}	
 
 	@Override
-	public void close(RpcServerEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> endpoint) {
+	public void close(DaRPCServerEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> endpoint) {
 		try {
 			LOG.info("disconnecting RPC connection, qpnum " + endpoint.getQp().getQp_num());
 			endpoint.close();

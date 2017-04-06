@@ -39,7 +39,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.namenode.protocol.DataNodeStatistics;
 import com.ibm.crail.storage.StorageRpcClient;
 import com.ibm.crail.storage.StorageServer;
 import com.ibm.crail.storage.rdma.client.RdmaBlockIndex;

@@ -25,15 +25,15 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.ibm.crail.namenode.rpc.RpcNameNodeFuture;
-import com.ibm.darpc.RpcFuture;
+import com.ibm.crail.rpc.RpcFuture;
+import com.ibm.darpc.DaRPCFuture;
 
-public class DaRPCNameNodeFuture<T> implements RpcNameNodeFuture<T> {
-	private RpcFuture<DaRPCNameNodeRequest, DaRPCNameNodeResponse> future;
+public class DaRPCNameNodeFuture<T> implements RpcFuture<T> {
+	private DaRPCFuture<DaRPCNameNodeRequest, DaRPCNameNodeResponse> future;
 	private boolean prefetched;
 	private T response;
 	
-	public DaRPCNameNodeFuture(RpcFuture<DaRPCNameNodeRequest, DaRPCNameNodeResponse> future, T response) {
+	public DaRPCNameNodeFuture(DaRPCFuture<DaRPCNameNodeRequest, DaRPCNameNodeResponse> future, T response) {
 		this.future = future;
 		this.response = response;
 		this.prefetched = false;

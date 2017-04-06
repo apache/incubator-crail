@@ -19,9 +19,23 @@
  *
  */
 
-package com.ibm.crail.namenode.rpc;
+package com.ibm.crail.rpc;
 
-public interface RpcNameNodeState {
-	public short getError();
-	public void setError(short error);
+import java.net.InetSocketAddress;
+
+public interface RpcClient {
+	public RpcConnection connect(InetSocketAddress address)  throws Exception ;
+	public void close();
+	
+	@SuppressWarnings("unchecked")
+	public static RpcClient createInstance(String name) throws Exception {
+		Class<?> nodeClass = Class.forName(name);
+		if (RpcClient.class.isAssignableFrom(nodeClass)){
+			Class<? extends RpcClient> clientClass = (Class<? extends RpcClient>) nodeClass;
+			RpcClient clientInstance = clientClass.newInstance();
+			return clientInstance;
+		} else {
+			throw new Exception("Cannot instantiate rpc client of type " + name);
+		}
+	}	
 }

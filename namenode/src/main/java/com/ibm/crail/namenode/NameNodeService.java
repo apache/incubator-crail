@@ -29,15 +29,16 @@ import org.slf4j.Logger;
 
 import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.namenode.protocol.BlockInfo;
-import com.ibm.crail.namenode.protocol.DataNodeInfo;
-import com.ibm.crail.namenode.protocol.FileInfo;
-import com.ibm.crail.namenode.protocol.FileName;
-import com.ibm.crail.namenode.rpc.NameNodeProtocol;
-import com.ibm.crail.namenode.rpc.RpcNameNodeService;
-import com.ibm.crail.namenode.rpc.RpcNameNodeState;
-import com.ibm.crail.namenode.rpc.RpcRequestMessage;
-import com.ibm.crail.namenode.rpc.RpcResponseMessage;
+import com.ibm.crail.metadata.BlockInfo;
+import com.ibm.crail.metadata.DataNodeInfo;
+import com.ibm.crail.metadata.FileInfo;
+import com.ibm.crail.metadata.FileName;
+import com.ibm.crail.rpc.RpcErrors;
+import com.ibm.crail.rpc.RpcNameNodeService;
+import com.ibm.crail.rpc.RpcNameNodeState;
+import com.ibm.crail.rpc.RpcProtocol;
+import com.ibm.crail.rpc.RpcRequestMessage;
+import com.ibm.crail.rpc.RpcResponseMessage;
 import com.ibm.crail.utils.CrailUtils;
 
 public class NameNodeService implements RpcNameNodeService {
@@ -63,8 +64,8 @@ public class NameNodeService implements RpcNameNodeService {
 	@Override
 	public short createFile(RpcRequestMessage.CreateFileReq request, RpcResponseMessage.CreateFileRes response, RpcNameNodeState errorState) throws Exception {
 		//check protocol
-		if (!NameNodeProtocol.verifyProtocol(NameNodeProtocol.CMD_CREATE_FILE, request, response)) {
-			return NameNodeProtocol.ERR_PROTOCOL_MISMATCH;
+		if (!RpcProtocol.verifyProtocol(RpcProtocol.CMD_CREATE_FILE, request, response)) {
+			return RpcErrors.ERR_PROTOCOL_MISMATCH;
 		}
 
 		//get params
@@ -76,32 +77,32 @@ public class NameNodeService implements RpcNameNodeService {
 		
 		//check params
 		if (type.isContainer() && locationAffinity > 0){
-			return NameNodeProtocol.ERR_DIR_LOCATION_AFFINITY_MISMATCH;
+			return RpcErrors.ERR_DIR_LOCATION_AFFINITY_MISMATCH;
 		}
 		
 		//rpc
 		AbstractNode parentInfo = fileTree.retrieveParent(fileHash, errorState);
-		if (errorState.getError() != NameNodeProtocol.ERR_OK){
+		if (errorState.getError() != RpcErrors.ERR_OK){
 			return errorState.getError();
 		}		
 		if (parentInfo == null) {
-			return NameNodeProtocol.ERR_PARENT_MISSING;
+			return RpcErrors.ERR_PARENT_MISSING;
 		} 	
 		if (!parentInfo.getType().isContainer()){
-			return NameNodeProtocol.ERR_PARENT_NOT_DIR;
+			return RpcErrors.ERR_PARENT_NOT_DIR;
 		}
 		
 		AbstractNode fileInfo = FileBlocks.createNode(fileHash.getFileComponent(), type);
 		if (!parentInfo.addChild(fileInfo)){
-			return NameNodeProtocol.ERR_FILE_EXISTS;
+			return RpcErrors.ERR_FILE_EXISTS;
 		}
 		
 		BlockInfo fileBlock = blockStore.getBlock(storageAffinity, locationAffinity);
 		if (fileBlock == null){
-			return NameNodeProtocol.ERR_NO_FREE_BLOCKS;
+			return RpcErrors.ERR_NO_FREE_BLOCKS;
 		}			
 		if (!fileInfo.addBlock(0, fileBlock)){
-			return NameNodeProtocol.ERR_ADD_BLOCK_FAILED;
+			return RpcErrors.ERR_ADD_BLOCK_FAILED;
 		}
 		
 		int index = CrailUtils.computeIndex(fileInfo.getDirOffset());
@@ -109,14 +110,14 @@ public class NameNodeService implements RpcNameNodeService {
 		if (parentBlock == null){
 			parentBlock = blockStore.getBlock(0, 0);
 			if (parentBlock == null){
-				return NameNodeProtocol.ERR_NO_FREE_BLOCKS;
+				return RpcErrors.ERR_NO_FREE_BLOCKS;
 			}			
 			if (!parentInfo.addBlock(index, parentBlock)){
 				blockStore.addBlock(parentBlock);
 				parentBlock = parentInfo.getBlock(index);
 				if (parentBlock == null){
 					blockStore.addBlock(fileBlock);
-					return NameNodeProtocol.ERR_CREATE_FILE_FAILED;
+					return RpcErrors.ERR_CREATE_FILE_FAILED;
 				}
 			}
 		}
@@ -138,14 +139,14 @@ public class NameNodeService implements RpcNameNodeService {
 			LOG.info("createFile: fd " + fileInfo.getFd() + ", parent " + parentInfo.getFd() + ", writeable " + writeable + ", token " + fileInfo.getToken() + ", capacity " + fileInfo.getCapacity() + ", dirOffset " + fileInfo.getDirOffset());
 		}	
 		
-		return NameNodeProtocol.ERR_OK;
+		return RpcErrors.ERR_OK;
 	}	
 	
 	@Override
 	public short getFile(RpcRequestMessage.GetFileReq request, RpcResponseMessage.GetFileRes response, RpcNameNodeState errorState) throws Exception {
 		//check protocol
-		if (!NameNodeProtocol.verifyProtocol(NameNodeProtocol.CMD_GET_FILE, request, response)){
-			return NameNodeProtocol.ERR_PROTOCOL_MISMATCH;
+		if (!RpcProtocol.verifyProtocol(RpcProtocol.CMD_GET_FILE, request, response)){
+			return RpcErrors.ERR_PROTOCOL_MISMATCH;
 		}		
 		
 		//get params
@@ -154,14 +155,14 @@ public class NameNodeService implements RpcNameNodeService {
 
 		//rpc
 		AbstractNode fileInfo = fileTree.retrieveFile(fileHash, errorState);
-		if (errorState.getError() != NameNodeProtocol.ERR_OK){
+		if (errorState.getError() != RpcErrors.ERR_OK){
 			return errorState.getError();
 		}		
 		if (fileInfo == null){
-			return NameNodeProtocol.ERR_GET_FILE_FAILED;
+			return RpcErrors.ERR_GET_FILE_FAILED;
 		}
 		if (writeable && !fileInfo.tokenFree()){
-			return NameNodeProtocol.ERR_TOKEN_TAKEN;			
+			return RpcErrors.ERR_TOKEN_TAKEN;			
 		} 
 		
 		if (writeable){
@@ -181,14 +182,14 @@ public class NameNodeService implements RpcNameNodeService {
 			LOG.info("getFile: fd " + fileInfo.getFd() + ", isDir " + fileInfo.getType().isDirectory() + ", token " + fileInfo.getToken() + ", capacity " + fileInfo.getCapacity());
 		}			
 		
-		return NameNodeProtocol.ERR_OK;
+		return RpcErrors.ERR_OK;
 	}
 	
 	@Override
 	public short setFile(RpcRequestMessage.SetFileReq request, RpcResponseMessage.VoidRes response, RpcNameNodeState errorState) throws Exception {
 		//check protocol
-		if (!NameNodeProtocol.verifyProtocol(NameNodeProtocol.CMD_SET_FILE, request, response)){
-			return NameNodeProtocol.ERR_PROTOCOL_MISMATCH;
+		if (!RpcProtocol.verifyProtocol(RpcProtocol.CMD_SET_FILE, request, response)){
+			return RpcErrors.ERR_PROTOCOL_MISMATCH;
 		}		
 		
 		//get params
@@ -198,7 +199,7 @@ public class NameNodeService implements RpcNameNodeService {
 		//rpc
 		AbstractNode storedFile = fileTable.get(fileInfo.getFd());
 		if (storedFile == null){
-			return NameNodeProtocol.ERR_FILE_NOT_OPEN;			
+			return RpcErrors.ERR_FILE_NOT_OPEN;			
 		}
 		
 		if (!storedFile.getType().isDirectory() && storedFile.getToken() > 0 && storedFile.getToken() == fileInfo.getToken()){
@@ -213,14 +214,14 @@ public class NameNodeService implements RpcNameNodeService {
 			LOG.info("setFile: " + fileInfo.toString() + ", close " + close);
 		}
 		
-		return NameNodeProtocol.ERR_OK;
+		return RpcErrors.ERR_OK;
 	}
 
 	@Override
 	public short removeFile(RpcRequestMessage.RemoveFileReq request, RpcResponseMessage.DeleteFileRes response, RpcNameNodeState errorState) throws Exception {
 		//check protocol
-		if (!NameNodeProtocol.verifyProtocol(NameNodeProtocol.CMD_REMOVE_FILE, request, response)){
-			return NameNodeProtocol.ERR_PROTOCOL_MISMATCH;
+		if (!RpcProtocol.verifyProtocol(RpcProtocol.CMD_REMOVE_FILE, request, response)){
+			return RpcErrors.ERR_PROTOCOL_MISMATCH;
 		}		
 		
 		//get params
@@ -228,19 +229,19 @@ public class NameNodeService implements RpcNameNodeService {
 		
 		//rpc
 		AbstractNode parentInfo = fileTree.retrieveParent(fileHash, errorState);
-		if (errorState.getError() != NameNodeProtocol.ERR_OK){
+		if (errorState.getError() != RpcErrors.ERR_OK){
 			return errorState.getError();
 		}		
 		if (parentInfo == null) {
-			return NameNodeProtocol.ERR_CREATE_FILE_FAILED;
+			return RpcErrors.ERR_CREATE_FILE_FAILED;
 		} 		
 		
 		AbstractNode fileInfo = fileTree.retrieveFile(fileHash, errorState);
-		if (errorState.getError() != NameNodeProtocol.ERR_OK){
+		if (errorState.getError() != RpcErrors.ERR_OK){
 			return errorState.getError();
 		}		
 		if (fileInfo == null){
-			return NameNodeProtocol.ERR_GET_FILE_FAILED;
+			return RpcErrors.ERR_GET_FILE_FAILED;
 		}	
 		
 		response.setParentInfo(parentInfo);
@@ -248,7 +249,7 @@ public class NameNodeService implements RpcNameNodeService {
 		
 		fileInfo = parentInfo.removeChild(fileInfo);
 		if (fileInfo == null){
-			return NameNodeProtocol.ERR_GET_FILE_FAILED;
+			return RpcErrors.ERR_GET_FILE_FAILED;
 		}
 		
 		fileTable.remove(fileInfo.getFd());
@@ -258,14 +259,14 @@ public class NameNodeService implements RpcNameNodeService {
 			LOG.info("removeFile: filename, fd " + fileInfo.getFd());
 		}	
 		
-		return NameNodeProtocol.ERR_OK;
+		return RpcErrors.ERR_OK;
 	}	
 	
 	@Override
 	public short renameFile(RpcRequestMessage.RenameFileReq request, RpcResponseMessage.RenameRes response, RpcNameNodeState errorState) throws Exception {
 		//check protocol
-		if (!NameNodeProtocol.verifyProtocol(NameNodeProtocol.CMD_RENAME_FILE, request, response)){
-			return NameNodeProtocol.ERR_PROTOCOL_MISMATCH;
+		if (!RpcProtocol.verifyProtocol(RpcProtocol.CMD_RENAME_FILE, request, response)){
+			return RpcErrors.ERR_PROTOCOL_MISMATCH;
 		}	
 		
 		//get params
@@ -274,26 +275,26 @@ public class NameNodeService implements RpcNameNodeService {
 		
 		//rpc
 		AbstractNode srcParent = fileTree.retrieveParent(srcFileHash, errorState);
-		if (errorState.getError() != NameNodeProtocol.ERR_OK){
+		if (errorState.getError() != RpcErrors.ERR_OK){
 			return errorState.getError();
 		}		
 		if (srcParent == null) {
-			return NameNodeProtocol.ERR_GET_FILE_FAILED;
+			return RpcErrors.ERR_GET_FILE_FAILED;
 		} 		
 		
 		AbstractNode srcFile = fileTree.retrieveFile(srcFileHash, errorState);
-		if (errorState.getError() != NameNodeProtocol.ERR_OK){
+		if (errorState.getError() != RpcErrors.ERR_OK){
 			return errorState.getError();
 		}		
 		if (srcFile == null){
-			return NameNodeProtocol.ERR_SRC_FILE_NOT_FOUND;
+			return RpcErrors.ERR_SRC_FILE_NOT_FOUND;
 		}
 		
 		//directory block
 		int index = CrailUtils.computeIndex(srcFile.getDirOffset());
 		BlockInfo srcBlock = srcParent.getBlock(index);
 		if (srcBlock == null){
-			return NameNodeProtocol.ERR_GET_FILE_FAILED;
+			return RpcErrors.ERR_GET_FILE_FAILED;
 		}
 		//end
 		
@@ -302,16 +303,16 @@ public class NameNodeService implements RpcNameNodeService {
 		response.setSrcBlock(srcBlock);
 		
 		AbstractNode dstParent = fileTree.retrieveParent(dstFileHash, errorState);
-		if (errorState.getError() != NameNodeProtocol.ERR_OK){
+		if (errorState.getError() != RpcErrors.ERR_OK){
 			return errorState.getError();
 		}		
 		if (dstParent == null) {
-			return NameNodeProtocol.ERR_GET_FILE_FAILED;
+			return RpcErrors.ERR_GET_FILE_FAILED;
 		} 
 		
 		AbstractNode dstFile = fileTree.retrieveFile(dstFileHash, errorState);
 		if (dstFile != null && !dstFile.getType().isDirectory()){
-			return NameNodeProtocol.ERR_FILE_EXISTS;
+			return RpcErrors.ERR_FILE_EXISTS;
 		}		
 		if (dstFile != null && dstFile.getType().isDirectory()){
 			dstParent = dstFile;
@@ -319,11 +320,11 @@ public class NameNodeService implements RpcNameNodeService {
 		
 		srcFile = srcParent.removeChild(srcFile);
 		if (srcFile == null){
-			return NameNodeProtocol.ERR_SRC_FILE_NOT_FOUND;
+			return RpcErrors.ERR_SRC_FILE_NOT_FOUND;
 		}
 		srcFile.rename(dstFileHash.getFileComponent());
 		if (!dstParent.addChild(srcFile)){
-			return NameNodeProtocol.ERR_FILE_EXISTS;
+			return RpcErrors.ERR_FILE_EXISTS;
 		} else {
 			dstFile = srcFile;
 		}
@@ -334,14 +335,14 @@ public class NameNodeService implements RpcNameNodeService {
 		if (dstBlock == null){
 			dstBlock = blockStore.getBlock(0, 0);
 			if (dstBlock == null){
-				return NameNodeProtocol.ERR_NO_FREE_BLOCKS;
+				return RpcErrors.ERR_NO_FREE_BLOCKS;
 			}			
 			if (!dstParent.addBlock(index, dstBlock)){
 				blockStore.addBlock(dstBlock);
 				dstBlock = dstParent.getBlock(index);
 				if (dstBlock == null){
 					blockStore.addBlock(srcBlock);
-					return NameNodeProtocol.ERR_CREATE_FILE_FAILED;
+					return RpcErrors.ERR_CREATE_FILE_FAILED;
 				}
 			} 
 		}
@@ -360,14 +361,14 @@ public class NameNodeService implements RpcNameNodeService {
 			LOG.info("renameFile: src-parent " + srcParent.getFd() + ", src-file " + srcFile.getFd() + ", dst-parent " + dstParent.getFd() + ", dst-fd " + dstFile.getFd());
 		}	
 		
-		return NameNodeProtocol.ERR_OK;
+		return RpcErrors.ERR_OK;
 	}	
 	
 	@Override
 	public short getDataNode(RpcRequestMessage.GetDataNodeReq request, RpcResponseMessage.GetDataNodeRes response, RpcNameNodeState errorState) throws Exception {
 		//check protocol
-		if (!NameNodeProtocol.verifyProtocol(NameNodeProtocol.CMD_GET_DATANODE, request, response)){
-			return NameNodeProtocol.ERR_PROTOCOL_MISMATCH;
+		if (!RpcProtocol.verifyProtocol(RpcProtocol.CMD_GET_DATANODE, request, response)){
+			return RpcErrors.ERR_PROTOCOL_MISMATCH;
 		}			
 		
 		//get params
@@ -376,19 +377,19 @@ public class NameNodeService implements RpcNameNodeService {
 		//rpc
 		DataNodeBlocks dnInfoNn = blockStore.getDataNode(dnInfo);
 		if (dnInfoNn == null){
-			return NameNodeProtocol.ERR_DATANODE_NOT_REGISTERED;
+			return RpcErrors.ERR_DATANODE_NOT_REGISTERED;
 		}
 		
 		response.setFreeBlockCount(dnInfoNn.getBlockCount());
 		
-		return NameNodeProtocol.ERR_OK;
+		return RpcErrors.ERR_OK;
 	}	
 
 	@Override
 	public short setBlock(RpcRequestMessage.SetBlockReq request, RpcResponseMessage.VoidRes response, RpcNameNodeState errorState) throws Exception {
 		//check protocol
-		if (!NameNodeProtocol.verifyProtocol(NameNodeProtocol.CMD_SET_BLOCK, request, response)){
-			return NameNodeProtocol.ERR_PROTOCOL_MISMATCH;
+		if (!RpcProtocol.verifyProtocol(RpcProtocol.CMD_SET_BLOCK, request, response)){
+			return RpcErrors.ERR_PROTOCOL_MISMATCH;
 		}		
 		
 		//get params
@@ -398,14 +399,14 @@ public class NameNodeService implements RpcNameNodeService {
 		//rpc
 		int realBlocks = (int) (((long) blockInfo.getLength()) / CrailConstants.BLOCK_SIZE) ;
 		long offset = 0;
-		short error = NameNodeProtocol.ERR_OK;
+		short error = RpcErrors.ERR_OK;
 		for (int i = 0; i < realBlocks; i++){
 			long newAddr = blockInfo.getAddr() + offset;
 			BlockInfo nnBlock = new BlockInfo(dnInfoExt, newAddr, (int) CrailConstants.BLOCK_SIZE, blockInfo.getLkey());
 			error = blockStore.addBlock(nnBlock);
 			offset += CrailConstants.BLOCK_SIZE;
 			
-			if (error != NameNodeProtocol.ERR_OK){
+			if (error != RpcErrors.ERR_OK){
 				break;
 			}
 		}
@@ -416,8 +417,8 @@ public class NameNodeService implements RpcNameNodeService {
 	@Override
 	public short getBlock(RpcRequestMessage.GetBlockReq request, RpcResponseMessage.GetBlockRes response, RpcNameNodeState errorState) throws Exception {
 		//check protocol
-		if (!NameNodeProtocol.verifyProtocol(NameNodeProtocol.CMD_GET_BLOCK, request, response)){
-			return NameNodeProtocol.ERR_PROTOCOL_MISMATCH;
+		if (!RpcProtocol.verifyProtocol(RpcProtocol.CMD_GET_BLOCK, request, response)){
+			return RpcErrors.ERR_PROTOCOL_MISMATCH;
 		}			
 		
 		//get params
@@ -430,49 +431,49 @@ public class NameNodeService implements RpcNameNodeService {
 		
 		//check params
 		if (position < 0){
-			return NameNodeProtocol.ERR_POSITION_NEGATIV;
+			return RpcErrors.ERR_POSITION_NEGATIV;
 		}
 	
 		//rpc
 		AbstractNode fileInfo = fileTable.get(fd);
 		if (fileInfo == null){
-			return NameNodeProtocol.ERR_FILE_NOT_OPEN;			
+			return RpcErrors.ERR_FILE_NOT_OPEN;			
 		}
 		
 		int index = CrailUtils.computeIndex(position);
 		if (index < 0){
-			return NameNodeProtocol.ERR_POSITION_NEGATIV;			
+			return RpcErrors.ERR_POSITION_NEGATIV;			
 		}
 		
 		BlockInfo block = fileInfo.getBlock(index);
 		if (block == null && fileInfo.getToken() == token){
 			block = blockStore.getBlock(storageAffinity, locationAffinitiy);
 			if (block == null){
-				return NameNodeProtocol.ERR_NO_FREE_BLOCKS;
+				return RpcErrors.ERR_NO_FREE_BLOCKS;
 			}
 			if (!fileInfo.addBlock(index, block)){
-				return NameNodeProtocol.ERR_ADD_BLOCK_FAILED;
+				return RpcErrors.ERR_ADD_BLOCK_FAILED;
 			}
 			block = fileInfo.getBlock(index);
 			if (block == null){
-				return NameNodeProtocol.ERR_ADD_BLOCK_FAILED;
+				return RpcErrors.ERR_ADD_BLOCK_FAILED;
 			}
 			fileInfo.setCapacity(capacity);
 		} else if (block == null && token > 0){ 
-			return NameNodeProtocol.ERR_TOKEN_MISMATCH;
+			return RpcErrors.ERR_TOKEN_MISMATCH;
 		} else if (block == null && token == 0){ 
-			return NameNodeProtocol.ERR_CAPACITY_EXCEEDED;
+			return RpcErrors.ERR_CAPACITY_EXCEEDED;
 		} 
 		
 		response.setBlockInfo(block);
-		return NameNodeProtocol.ERR_OK;
+		return RpcErrors.ERR_OK;
 	}
 	
 	@Override
 	public short getLocation(RpcRequestMessage.GetLocationReq request, RpcResponseMessage.GetLocationRes response, RpcNameNodeState errorState) throws Exception {
 		//check protocol
-		if (!NameNodeProtocol.verifyProtocol(NameNodeProtocol.CMD_GET_LOCATION, request, response)){
-			return NameNodeProtocol.ERR_PROTOCOL_MISMATCH;
+		if (!RpcProtocol.verifyProtocol(RpcProtocol.CMD_GET_LOCATION, request, response)){
+			return RpcErrors.ERR_PROTOCOL_MISMATCH;
 		}			
 		
 		//get params
@@ -481,38 +482,38 @@ public class NameNodeService implements RpcNameNodeService {
 		
 		//check params
 		if (position < 0){
-			return NameNodeProtocol.ERR_POSITION_NEGATIV;
+			return RpcErrors.ERR_POSITION_NEGATIV;
 		}	
 		
 		//rpc
 		AbstractNode fileInfo = fileTree.retrieveFile(fileName, errorState);
-		if (errorState.getError() != NameNodeProtocol.ERR_OK){
+		if (errorState.getError() != RpcErrors.ERR_OK){
 			return errorState.getError();
 		}		
 		if (fileInfo == null){
-			return NameNodeProtocol.ERR_GET_FILE_FAILED;
+			return RpcErrors.ERR_GET_FILE_FAILED;
 		}	
 		
 		int index = CrailUtils.computeIndex(position);
 		if (index < 0){
-			return NameNodeProtocol.ERR_POSITION_NEGATIV;			
+			return RpcErrors.ERR_POSITION_NEGATIV;			
 		}		
 		BlockInfo block = fileInfo.getBlock(index);
 		if (block == null){
-			return NameNodeProtocol.ERR_OFFSET_TOO_LARGE;
+			return RpcErrors.ERR_OFFSET_TOO_LARGE;
 		}
 		
 		response.setBlockInfo(block);
 		
-		return NameNodeProtocol.ERR_OK;
+		return RpcErrors.ERR_OK;
 	}
 
 	//------------------------
 	
 	@Override
 	public short dump(RpcRequestMessage.DumpNameNodeReq request, RpcResponseMessage.VoidRes response, RpcNameNodeState errorState) throws Exception {
-		if (!NameNodeProtocol.verifyProtocol(NameNodeProtocol.CMD_DUMP_NAMENODE, request, response)){
-			return NameNodeProtocol.ERR_PROTOCOL_MISMATCH;
+		if (!RpcProtocol.verifyProtocol(RpcProtocol.CMD_DUMP_NAMENODE, request, response)){
+			return RpcErrors.ERR_PROTOCOL_MISMATCH;
 		}			
 		
 		System.out.println("#fd\t\tfilecomp\t\tcapacity\t\tisdir\t\t\tdiroffset");
@@ -520,18 +521,18 @@ public class NameNodeService implements RpcNameNodeService {
 		System.out.println("#fd\t\tfilecomp\t\tcapacity\t\tisdir\t\t\tdiroffset");
 		dumpFastMap();
 		
-		return NameNodeProtocol.ERR_OK;
+		return RpcErrors.ERR_OK;
 	}	
 	
 	@Override
 	public short ping(RpcRequestMessage.PingNameNodeReq request, RpcResponseMessage.PingNameNodeRes response, RpcNameNodeState errorState) throws Exception {
-		if (!NameNodeProtocol.verifyProtocol(NameNodeProtocol.CMD_PING_NAMENODE, request, response)){
-			return NameNodeProtocol.ERR_PROTOCOL_MISMATCH;
+		if (!RpcProtocol.verifyProtocol(RpcProtocol.CMD_PING_NAMENODE, request, response)){
+			return RpcErrors.ERR_PROTOCOL_MISMATCH;
 		}	
 		
 		response.setData(request.getOp()+1);
 		
-		return NameNodeProtocol.ERR_OK;
+		return RpcErrors.ERR_OK;
 	}
 	
 	

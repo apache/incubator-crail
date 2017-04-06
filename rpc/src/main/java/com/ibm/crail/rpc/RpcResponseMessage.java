@@ -19,18 +19,18 @@
  *
  */
 
-package com.ibm.crail.namenode.rpc;
+package com.ibm.crail.rpc;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 
-import com.ibm.crail.namenode.protocol.BlockInfo;
-import com.ibm.crail.namenode.protocol.DataNodeStatistics;
-import com.ibm.crail.namenode.protocol.FileInfo;
+import com.ibm.crail.metadata.BlockInfo;
+import com.ibm.crail.metadata.DataNodeStatistics;
+import com.ibm.crail.metadata.FileInfo;
 
 public class RpcResponseMessage {
-	public static class VoidRes implements NameNodeProtocol.NameNodeRpcMessage {
+	public static class VoidRes implements RpcProtocol.NameNodeRpcMessage, RpcVoid {
 		private short error;
 		
 		public VoidRes() {
@@ -42,7 +42,7 @@ public class RpcResponseMessage {
 		}
 		
 		public short getType(){
-			return NameNodeProtocol.RES_VOID;
+			return RpcProtocol.RES_VOID;
 		}
 		
 		public void update(ByteBuffer arg0) {
@@ -61,7 +61,7 @@ public class RpcResponseMessage {
 		}		
 	}
 	
-	public static class CreateFileRes implements NameNodeProtocol.NameNodeRpcMessage {
+	public static class CreateFileRes implements RpcProtocol.NameNodeRpcMessage, RpcCreateFile {
 		public static int CSIZE = FileInfo.CSIZE*2 + BlockInfo.CSIZE*2;
 		
 		private FileInfo fileInfo;
@@ -88,7 +88,7 @@ public class RpcResponseMessage {
 		}
 		
 		public short getType(){
-			return NameNodeProtocol.RES_CREATE_FILE;
+			return RpcProtocol.RES_CREATE_FILE;
 		}
 		
 		public int write(ByteBuffer buffer) {
@@ -164,7 +164,7 @@ public class RpcResponseMessage {
 		}
 	}	
 	
-	public static class GetFileRes implements NameNodeProtocol.NameNodeRpcMessage {
+	public static class GetFileRes implements RpcProtocol.NameNodeRpcMessage, RpcGetFile {
 		public static int CSIZE = FileInfo.CSIZE + BlockInfo.CSIZE;
 		
 		private FileInfo fileInfo;
@@ -185,7 +185,7 @@ public class RpcResponseMessage {
 		}
 		
 		public short getType(){
-			return NameNodeProtocol.RES_GET_FILE;
+			return RpcProtocol.RES_GET_FILE;
 		}
 		
 		public int write(ByteBuffer buffer) {
@@ -237,7 +237,7 @@ public class RpcResponseMessage {
 		}
 	}
 	
-	public static class DeleteFileRes implements NameNodeProtocol.NameNodeRpcMessage {
+	public static class DeleteFileRes implements RpcProtocol.NameNodeRpcMessage, RpcDeleteFile {
 		public static int CSIZE = FileInfo.CSIZE*2;
 		
 		private FileInfo fileInfo;
@@ -260,7 +260,7 @@ public class RpcResponseMessage {
 		}
 		
 		public short getType(){
-			return NameNodeProtocol.RES_DELETE_FILE;
+			return RpcProtocol.RES_DELETE_FILE;
 		}
 		
 		public int write(ByteBuffer buffer) {
@@ -312,7 +312,7 @@ public class RpcResponseMessage {
 		}
 	}	
 	
-	public static class RenameRes implements NameNodeProtocol.NameNodeRpcMessage {
+	public static class RenameRes implements RpcProtocol.NameNodeRpcMessage, RpcRenameFile {
 		public static int CSIZE = FileInfo.CSIZE*4 + BlockInfo.CSIZE*2;
 		
 		private FileInfo srcParent;
@@ -338,7 +338,7 @@ public class RpcResponseMessage {
 		}
 		
 		public short getType(){
-			return NameNodeProtocol.RES_RENAME_FILE;
+			return RpcProtocol.RES_RENAME_FILE;
 		}
 		
 		public int write(ByteBuffer buffer) {
@@ -435,7 +435,7 @@ public class RpcResponseMessage {
 	
 
 
-	public static class GetBlockRes implements NameNodeProtocol.NameNodeRpcMessage {
+	public static class GetBlockRes implements RpcProtocol.NameNodeRpcMessage, RpcGetBlock {
 		public static int CSIZE = BlockInfo.CSIZE;
 		
 		private BlockInfo blockInfo;
@@ -451,7 +451,7 @@ public class RpcResponseMessage {
 		}
 		
 		public short getType(){
-			return NameNodeProtocol.RES_GET_BLOCK;
+			return RpcProtocol.RES_GET_BLOCK;
 		}
 		
 		public int write(ByteBuffer buffer) {
@@ -487,7 +487,7 @@ public class RpcResponseMessage {
 
 	}	
 	
-	public static class GetLocationRes implements NameNodeProtocol.NameNodeRpcMessage {
+	public static class GetLocationRes implements RpcProtocol.NameNodeRpcMessage, RpcGetLocation {
 		public static int CSIZE = BlockInfo.CSIZE + 8;
 		
 		private BlockInfo blockInfo;
@@ -505,7 +505,7 @@ public class RpcResponseMessage {
 		}
 		
 		public short getType(){
-			return NameNodeProtocol.RES_GET_LOCATION;
+			return RpcProtocol.RES_GET_LOCATION;
 		}
 		
 		public int write(ByteBuffer buffer) {
@@ -548,7 +548,7 @@ public class RpcResponseMessage {
 		}		
 	}	
 	
-	public static class GetDataNodeRes implements NameNodeProtocol.NameNodeRpcMessage {
+	public static class GetDataNodeRes implements RpcProtocol.NameNodeRpcMessage, RpcGetDataNode {
 		public static int CSIZE = DataNodeStatistics.CSIZE;
 		
 		private DataNodeStatistics statistics;
@@ -566,7 +566,7 @@ public class RpcResponseMessage {
 		}
 		
 		public short getType(){
-			return NameNodeProtocol.RES_GET_DATANODE;
+			return RpcProtocol.RES_GET_DATANODE;
 		}	
 		
 		public int write(ByteBuffer buffer) {
@@ -589,9 +589,13 @@ public class RpcResponseMessage {
 		public void setFreeBlockCount(int blockCount) {
 			this.statistics.setFreeBlockCount(blockCount);
 		}
+		
+		public short getError(){
+			return 0;
+		}		
 	}	
 	
-	public static class PingNameNodeRes implements NameNodeProtocol.NameNodeRpcMessage {
+	public static class PingNameNodeRes implements RpcProtocol.NameNodeRpcMessage, RpcPing {
 		public static int CSIZE = 4;
 		
 		private int data;
@@ -607,7 +611,7 @@ public class RpcResponseMessage {
 		}
 		
 		public short getType(){
-			return NameNodeProtocol.RES_PING_NAMENODE;
+			return RpcProtocol.RES_PING_NAMENODE;
 		}
 		
 		public int write(ByteBuffer buffer) {

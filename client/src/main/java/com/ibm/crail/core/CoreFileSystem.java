@@ -23,7 +23,6 @@ package com.ibm.crail.core;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -47,15 +46,20 @@ import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.Upcoming;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.namenode.protocol.BlockInfo;
-import com.ibm.crail.namenode.protocol.DataNodeInfo;
-import com.ibm.crail.namenode.protocol.FileInfo;
-import com.ibm.crail.namenode.protocol.FileName;
-import com.ibm.crail.namenode.rpc.NameNodeProtocol;
-import com.ibm.crail.namenode.rpc.RpcNameNode;
-import com.ibm.crail.namenode.rpc.RpcNameNodeClient;
-import com.ibm.crail.namenode.rpc.RpcNameNodeFuture;
-import com.ibm.crail.namenode.rpc.RpcResponseMessage;
+import com.ibm.crail.metadata.BlockInfo;
+import com.ibm.crail.metadata.DataNodeInfo;
+import com.ibm.crail.metadata.FileInfo;
+import com.ibm.crail.metadata.FileName;
+import com.ibm.crail.rpc.RpcErrors;
+import com.ibm.crail.rpc.RpcClient;
+import com.ibm.crail.rpc.RpcConnection;
+import com.ibm.crail.rpc.RpcCreateFile;
+import com.ibm.crail.rpc.RpcDeleteFile;
+import com.ibm.crail.rpc.RpcGetFile;
+import com.ibm.crail.rpc.RpcGetLocation;
+import com.ibm.crail.rpc.RpcFuture;
+import com.ibm.crail.rpc.RpcPing;
+import com.ibm.crail.rpc.RpcRenameFile;
 import com.ibm.crail.storage.StorageClient;
 import com.ibm.crail.utils.BlockCache;
 import com.ibm.crail.utils.BufferCheckpoint;
@@ -72,8 +76,8 @@ public class CoreFileSystem extends CrailFS {
 	private static AtomicInteger fsCount = new AtomicInteger(0);
 	
 	//namenode operations
-	private RpcNameNode rpcNameNode;
-	private RpcNameNodeClient namenodeClientRpc;
+	private RpcClient rpcNameNode;
+	private RpcConnection namenodeClientRpc;
 	
 	//datanode operations
 	private EndpointCache datanodeEndpointCache;
@@ -115,8 +119,8 @@ public class CoreFileSystem extends CrailFS {
 		
 		//Namenode
 		InetSocketAddress nnAddr = CrailUtils.getNameNodeAddress();
-		this.rpcNameNode = RpcNameNode.createInstance(CrailConstants.NAMENODE_RPC_TYPE);
-		this.namenodeClientRpc = rpcNameNode.getRpcClient(nnAddr);
+		this.rpcNameNode = RpcClient.createInstance(CrailConstants.NAMENODE_RPC_TYPE);
+		this.namenodeClientRpc = rpcNameNode.connect(nnAddr);
 		LOG.info("connected to namenode at " + nnAddr);		
 		
 		//Client
@@ -149,24 +153,24 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("createNode: name " + path + ", type " + type + ", storageAffinity " + storageAffinity + ", locationAffinity " + locationAffinity);
 		}
 
-		RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> fileRes = namenodeClientRpc.createFile(name, type, storageAffinity, locationAffinity);
+		RpcFuture<RpcCreateFile> fileRes = namenodeClientRpc.createFile(name, type, storageAffinity, locationAffinity);
 		return new CreateNodeFuture(this, path, type, storageAffinity, locationAffinity, fileRes);
 	}	
 	
-	CoreNode _createNode(String path, CrailNodeType type, int storageAffinity, int locationAffinity, RpcResponseMessage.CreateFileRes fileRes) throws Exception {
-		if (fileRes.getError() == NameNodeProtocol.ERR_PARENT_MISSING){
-			throw new IOException("createNode: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
-		} else if  (fileRes.getError() == NameNodeProtocol.ERR_FILE_EXISTS){
-			throw new IOException("createNode: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
-		} else if (fileRes.getError() != NameNodeProtocol.ERR_OK){
-			LOG.info("createNode: " + NameNodeProtocol.messages[fileRes.getError()] + ", name " + path);
-			throw new IOException("createNode: " + NameNodeProtocol.messages[fileRes.getError()] + ", error " + fileRes.getError());
+	CoreNode _createNode(String path, CrailNodeType type, int storageAffinity, int locationAffinity, RpcCreateFile fileRes) throws Exception {
+		if (fileRes.getError() == RpcErrors.ERR_PARENT_MISSING){
+			throw new IOException("createNode: " + RpcErrors.messages[fileRes.getError()] + ", name " + path);
+		} else if  (fileRes.getError() == RpcErrors.ERR_FILE_EXISTS){
+			throw new IOException("createNode: " + RpcErrors.messages[fileRes.getError()] + ", name " + path);
+		} else if (fileRes.getError() != RpcErrors.ERR_OK){
+			LOG.info("createNode: " + RpcErrors.messages[fileRes.getError()] + ", name " + path);
+			throw new IOException("createNode: " + RpcErrors.messages[fileRes.getError()] + ", error " + fileRes.getError());
 		}		
 		
 		FileInfo fileInfo = fileRes.getFile();
 		FileInfo dirInfo = fileRes.getParent();
 		if (fileInfo == null || dirInfo == null){
-			throw new IOException("createFile: " + NameNodeProtocol.messages[NameNodeProtocol.ERR_UNKNOWN]);
+			throw new IOException("createFile: " + RpcErrors.messages[RpcErrors.ERR_UNKNOWN]);
 		}
 		if (fileInfo.getType() != type){
 			throw new IOException("createFile: " + "file type mismatch");
@@ -204,16 +208,16 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("lookupDirectory: path " + path);
 		}
 		
-		RpcNameNodeFuture<RpcResponseMessage.GetFileRes> fileRes = namenodeClientRpc.getFile(name, false);
+		RpcFuture<RpcGetFile> fileRes = namenodeClientRpc.getFile(name, false);
 		return new LookupNodeFuture(this, path, fileRes);
 	}	
 	
-	CoreNode _lookupNode(RpcResponseMessage.GetFileRes fileRes, String path) throws Exception {
-		if (fileRes.getError() == NameNodeProtocol.ERR_GET_FILE_FAILED){
+	CoreNode _lookupNode(RpcGetFile fileRes, String path) throws Exception {
+		if (fileRes.getError() == RpcErrors.ERR_GET_FILE_FAILED){
 			return null;
 		}
-		else if (fileRes.getError() != NameNodeProtocol.ERR_OK){
-			LOG.info("lookupDirectory: " + NameNodeProtocol.messages[fileRes.getError()]);
+		else if (fileRes.getError() != RpcErrors.ERR_OK){
+			LOG.info("lookupDirectory: " + RpcErrors.messages[fileRes.getError()]);
 			return null;
 		}		
 		
@@ -241,26 +245,26 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("rename: srcname " + src + ", dstname " + dst);
 		}
 		
-		RpcNameNodeFuture<RpcResponseMessage.RenameRes> renameRes = namenodeClientRpc.renameFile(srcPath, dstPath);
+		RpcFuture<RpcRenameFile> renameRes = namenodeClientRpc.renameFile(srcPath, dstPath);
 		return new RenameNodeFuture(this, src, dst, renameRes);
 	}
 	
-	CrailNode _rename(RpcResponseMessage.RenameRes renameRes, String src, String dst) throws Exception {
-		if (renameRes.getError() == NameNodeProtocol.ERR_SRC_FILE_NOT_FOUND){
-			LOG.info("rename: " + NameNodeProtocol.messages[renameRes.getError()]);
+	CrailNode _rename(RpcRenameFile renameRes, String src, String dst) throws Exception {
+		if (renameRes.getError() == RpcErrors.ERR_SRC_FILE_NOT_FOUND){
+			LOG.info("rename: " + RpcErrors.messages[renameRes.getError()]);
 			return null;
 		}
-		if (renameRes.getError() == NameNodeProtocol.ERR_DST_PARENT_NOT_FOUND){
-			LOG.info("rename: " + NameNodeProtocol.messages[renameRes.getError()]);
+		if (renameRes.getError() == RpcErrors.ERR_DST_PARENT_NOT_FOUND){
+			LOG.info("rename: " + RpcErrors.messages[renameRes.getError()]);
 			return null;
 		}
-		if (renameRes.getError() == NameNodeProtocol.ERR_FILE_EXISTS){
-			LOG.info("rename: " + NameNodeProtocol.messages[renameRes.getError()]);
+		if (renameRes.getError() == RpcErrors.ERR_FILE_EXISTS){
+			LOG.info("rename: " + RpcErrors.messages[renameRes.getError()]);
 			return null;
 		}
-		if (renameRes.getError() != NameNodeProtocol.ERR_OK){
-			LOG.info("rename: " + NameNodeProtocol.messages[renameRes.getError()]);
-			throw new IOException(NameNodeProtocol.messages[renameRes.getError()]);			
+		if (renameRes.getError() != RpcErrors.ERR_OK){
+			LOG.info("rename: " + RpcErrors.messages[renameRes.getError()]);
+			throw new IOException(RpcErrors.messages[renameRes.getError()]);			
 		} 
 		if (renameRes.getDstParent().getCapacity() < renameRes.getDstFile().getDirOffset() + CrailConstants.DIRECTORY_RECORD){
 			LOG.info("rename: parent capacity does not match dst file offset, capacity " + renameRes.getDstParent().getCapacity() + ", offset " + renameRes.getDstFile().getDirOffset());
@@ -309,17 +313,17 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("delete: name " + path + ", recursive " + recursive);
 		}
 
-		RpcNameNodeFuture<RpcResponseMessage.DeleteFileRes> fileRes = namenodeClientRpc.removeFile(name, recursive);
+		RpcFuture<RpcDeleteFile> fileRes = namenodeClientRpc.removeFile(name, recursive);
 		return new DeleteNodeFuture(this, path, recursive, fileRes);
 	}	
 	
-	CrailNode _delete(RpcResponseMessage.DeleteFileRes fileRes, String path, boolean recursive) throws Exception {
-		if (fileRes.getError() == NameNodeProtocol.ERR_HAS_CHILDREN) {
-			LOG.info("delete: " + NameNodeProtocol.messages[fileRes.getError()]);
-			throw new IOException(NameNodeProtocol.messages[fileRes.getError()]);
+	CrailNode _delete(RpcDeleteFile fileRes, String path, boolean recursive) throws Exception {
+		if (fileRes.getError() == RpcErrors.ERR_HAS_CHILDREN) {
+			LOG.info("delete: " + RpcErrors.messages[fileRes.getError()]);
+			throw new IOException(RpcErrors.messages[fileRes.getError()]);
 		}
-		if (fileRes.getError() != NameNodeProtocol.ERR_OK) {
-			LOG.info("delete: " + NameNodeProtocol.messages[fileRes.getError()]);
+		if (fileRes.getError() != RpcErrors.ERR_OK) {
+			LOG.info("delete: " + RpcErrors.messages[fileRes.getError()]);
 			return null;
 		} 
 		
@@ -354,16 +358,16 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("getDirectoryList: " + name);
 		}
 
-		RpcResponseMessage.GetFileRes fileRes = namenodeClientRpc.getFile(directory, false).get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
-		if (fileRes.getError() != NameNodeProtocol.ERR_OK) {
-			LOG.info("getDirectoryList: " + NameNodeProtocol.messages[fileRes.getError()]);
-			throw new FileNotFoundException(NameNodeProtocol.messages[fileRes.getError()]);
+		RpcGetFile fileRes = namenodeClientRpc.getFile(directory, false).get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
+		if (fileRes.getError() != RpcErrors.ERR_OK) {
+			LOG.info("getDirectoryList: " + RpcErrors.messages[fileRes.getError()]);
+			throw new FileNotFoundException(RpcErrors.messages[fileRes.getError()]);
 		}
 		
 		FileInfo dirInfo = fileRes.getFile();
 		if (!dirInfo.getType().isContainer()){
-			LOG.info("getDirectoryList: " + NameNodeProtocol.messages[NameNodeProtocol.ERR_FILE_IS_NOT_DIR]);
-			throw new FileNotFoundException(NameNodeProtocol.messages[NameNodeProtocol.ERR_FILE_IS_NOT_DIR]);
+			LOG.info("getDirectoryList: " + RpcErrors.messages[RpcErrors.ERR_FILE_IS_NOT_DIR]);
+			throw new FileNotFoundException(RpcErrors.messages[RpcErrors.ERR_FILE_IS_NOT_DIR]);
 		}
 		
 		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, name, 0, 0);
@@ -398,10 +402,10 @@ public class CoreFileSystem extends CrailFS {
 		HashMap<Long, DataNodeInfo> offset2DataNode = new HashMap<Long, DataNodeInfo>();
 	
 		for (long current = CrailUtils.blockStartAddress(start); current < start + len; current += CrailConstants.BLOCK_SIZE){
-			RpcResponseMessage.GetLocationRes getLocationRes = namenodeClientRpc.getLocation(name, current).get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
-			if (getLocationRes.getError() != NameNodeProtocol.ERR_OK) {
-				LOG.info("location: " + NameNodeProtocol.messages[getLocationRes.getError()]);
-				throw new IOException(NameNodeProtocol.messages[getLocationRes.getError()]);
+			RpcGetLocation getLocationRes = namenodeClientRpc.getLocation(name, current).get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
+			if (getLocationRes.getError() != RpcErrors.ERR_OK) {
+				LOG.info("location: " + RpcErrors.messages[getLocationRes.getError()]);
+				throw new IOException(RpcErrors.messages[getLocationRes.getError()]);
 			}
 			
 			DataNodeInfo dataNodeInfo = getLocationRes.getBlockInfo().getDnInfo();
@@ -465,10 +469,10 @@ public class CoreFileSystem extends CrailFS {
 	}	
 	
 	public void ping() throws Exception {
-		RpcResponseMessage.PingNameNodeRes pingRes = namenodeClientRpc.pingNameNode().get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
-		if (pingRes.getError() != NameNodeProtocol.ERR_OK) {
-			LOG.info("Ping: " + NameNodeProtocol.messages[pingRes.getError()]);
-			throw new IOException(NameNodeProtocol.messages[pingRes.getError()]);
+		RpcPing pingRes = namenodeClientRpc.pingNameNode().get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
+		if (pingRes.getError() != RpcErrors.ERR_OK) {
+			LOG.info("Ping: " + RpcErrors.messages[pingRes.getError()]);
+			throw new IOException(RpcErrors.messages[pingRes.getError()]);
 		}		
 	}
 
@@ -601,7 +605,7 @@ public class CoreFileSystem extends CrailFS {
 		return nextBlockCache.getFileBlockCache(fd);
 	}	
 
-	RpcNameNodeClient getNamenodeClientRpc() {
+	RpcConnection getNamenodeClientRpc() {
 		return namenodeClientRpc;
 	}
 

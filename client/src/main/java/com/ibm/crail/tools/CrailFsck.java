@@ -34,7 +34,7 @@ import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.core.CoreFileSystem;
 import com.ibm.crail.core.DirectoryInputStream;
 import com.ibm.crail.core.DirectoryRecord;
-import com.ibm.crail.namenode.protocol.FileName;
+import com.ibm.crail.metadata.FileName;
 import com.ibm.crail.utils.GetOpt;
 import com.ibm.crail.utils.CrailUtils;
 

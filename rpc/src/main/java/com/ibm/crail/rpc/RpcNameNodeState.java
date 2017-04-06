@@ -19,16 +19,9 @@
  *
  */
 
-package com.ibm.crail.namenode.rpc;
+package com.ibm.crail.rpc;
 
-import java.util.concurrent.Future;
-
-public interface RpcNameNodeFuture<T> extends Future<T> {
-
-	public abstract int getTicket();
-
-	public abstract boolean isPrefetched();
-
-	public abstract void setPrefetched(boolean prefetched);
-
+public interface RpcNameNodeState {
+	public short getError();
+	public void setError(short error);
 }

@@ -22,7 +22,7 @@
 
 package com.ibm.crail.datanode.nvmf;
 
-import com.ibm.crail.namenode.protocol.DataNodeStatistics;
+import com.ibm.crail.metadata.DataNodeStatistics;
 import com.ibm.crail.storage.StorageRpcClient;
 import com.ibm.crail.storage.StorageServer;
 import com.ibm.crail.utils.CrailUtils;

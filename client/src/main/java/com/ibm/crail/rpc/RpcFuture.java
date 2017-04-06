@@ -19,25 +19,16 @@
  *
  */
 
-package com.ibm.crail.namenode.rpc;
+package com.ibm.crail.rpc;
 
-import java.net.InetSocketAddress;
+import java.util.concurrent.Future;
 
-public interface RpcNameNode {
-	public RpcNameNodeClient getRpcClient(InetSocketAddress address)  throws Exception ;
-	public void run(RpcNameNodeService service);
-	public void close();
-	
-	@SuppressWarnings("unchecked")
-	public static RpcNameNode createInstance(String name) throws Exception {
-		Class<?> nodeClass = Class.forName(name);
-		if (RpcNameNode.class.isAssignableFrom(nodeClass)){
-			Class<? extends RpcNameNode> dataNodeClass = (Class<? extends RpcNameNode>) nodeClass;
-			RpcNameNode dataNode = dataNodeClass.newInstance();
-			return dataNode;
-		} else {
-			throw new Exception("Cannot instantiate datanode of type " + name);
-		}
-		
-	}	
+public interface RpcFuture<T> extends Future<T> {
+
+	public abstract int getTicket();
+
+	public abstract boolean isPrefetched();
+
+	public abstract void setPrefetched(boolean prefetched);
+
 }

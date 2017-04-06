@@ -22,7 +22,8 @@
 package com.ibm.crail.utils;
 
 import java.util.concurrent.ConcurrentHashMap;
-import com.ibm.crail.namenode.protocol.BlockInfo;
+
+import com.ibm.crail.metadata.BlockInfo;
 
 public class BlockCache {
 	private ConcurrentHashMap<Long, FileBlockCache> blockCache;

@@ -61,7 +61,7 @@ import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.namenode.rpc.NameNodeProtocol;
+import com.ibm.crail.rpc.RpcErrors;
 import com.ibm.crail.utils.CrailUtils;
 
 public class CrailHDFS extends AbstractFileSystem {
@@ -106,7 +106,7 @@ public class CrailHDFS extends AbstractFileSystem {
 		try {
 			fileInfo = dfs.create(path.toUri().getRawPath(), CrailNodeType.DATAFILE, CrailHDFSConstants.STORAGE_AFFINITY, localAffinity).get().asFile();
 		} catch(Exception e){
-			if (e.getMessage().contains(NameNodeProtocol.messages[NameNodeProtocol.ERR_PARENT_MISSING])){
+			if (e.getMessage().contains(RpcErrors.messages[RpcErrors.ERR_PARENT_MISSING])){
 				fileInfo = null;
 			} else {
 				throw new IOException(e);
@@ -148,11 +148,11 @@ public class CrailHDFS extends AbstractFileSystem {
 			CrailDirectory file = dfs.create(path.toUri().getRawPath(), CrailNodeType.DIRECTORY, 0, 0).get().asDirectory();
 			file.syncDir();
 		} catch(Exception e){
-			if (e.getMessage().contains(NameNodeProtocol.messages[NameNodeProtocol.ERR_PARENT_MISSING])){
+			if (e.getMessage().contains(RpcErrors.messages[RpcErrors.ERR_PARENT_MISSING])){
 				Path parent = path.getParent();
 				mkdir(parent, permission, createParent);
 				mkdir(path, permission, createParent);
-			} else if (e.getMessage().contains(NameNodeProtocol.messages[NameNodeProtocol.ERR_FILE_EXISTS])){
+			} else if (e.getMessage().contains(RpcErrors.messages[RpcErrors.ERR_FILE_EXISTS])){
 			} else {
 				throw new IOException(e);
 			}			

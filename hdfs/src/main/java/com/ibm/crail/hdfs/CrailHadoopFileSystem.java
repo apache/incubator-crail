@@ -49,7 +49,7 @@ import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.namenode.rpc.NameNodeProtocol;
+import com.ibm.crail.rpc.RpcErrors;
 import com.ibm.crail.utils.CrailUtils;
 
 public class CrailHadoopFileSystem extends FileSystem {
@@ -114,7 +114,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 		try {
 			fileInfo = dfs.create(path.toUri().getRawPath(), CrailNodeType.DATAFILE, CrailHDFSConstants.STORAGE_AFFINITY, localAffinity).get().asFile();
 		} catch (Exception e) {
-			if (e.getMessage().contains(NameNodeProtocol.messages[NameNodeProtocol.ERR_PARENT_MISSING])) {
+			if (e.getMessage().contains(RpcErrors.messages[RpcErrors.ERR_PARENT_MISSING])) {
 				fileInfo = null;
 			} else {
 				throw new IOException(e);
@@ -222,11 +222,11 @@ public class CrailHadoopFileSystem extends FileSystem {
 			file.syncDir();
 			return true;
 		} catch(Exception e){
-			if (e.getMessage().contains(NameNodeProtocol.messages[NameNodeProtocol.ERR_PARENT_MISSING])){
+			if (e.getMessage().contains(RpcErrors.messages[RpcErrors.ERR_PARENT_MISSING])){
 				Path parent = path.getParent();
 				mkdirs(parent);
 				return mkdirs(path);
-			} else if (e.getMessage().contains(NameNodeProtocol.messages[NameNodeProtocol.ERR_FILE_EXISTS])){
+			} else if (e.getMessage().contains(RpcErrors.messages[RpcErrors.ERR_FILE_EXISTS])){
 				return true;
 			} else {
 				throw new IOException(e);

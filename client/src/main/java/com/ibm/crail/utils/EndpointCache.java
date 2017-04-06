@@ -29,7 +29,7 @@ import org.slf4j.Logger;
 
 import com.ibm.crail.CrailStatistics.StatisticsProvider;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.namenode.protocol.DataNodeInfo;
+import com.ibm.crail.metadata.DataNodeInfo;
 import com.ibm.crail.storage.StorageClient;
 import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.*;

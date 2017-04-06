@@ -13,7 +13,7 @@
   <artifactId>crail-rpc-darpc</artifactId>
   <packaging>jar</packaging>
   <version>1.0</version>
-  <name>Crail DaRPC/RPC Project</name>
+  <name>Crail DaRPC Project</name>
   <url>http://maven.apache.org</url>
 
   <dependencies>
@@ -36,6 +36,11 @@
     <dependency>
       <groupId>com.ibm.crail</groupId>
       <artifactId>crail-client</artifactId>
+      <version>1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.ibm.crail</groupId>
+      <artifactId>crail-rpc</artifactId>
       <version>1.0</version>
     </dependency>
   </dependencies>

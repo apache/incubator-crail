@@ -31,9 +31,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.namenode.protocol.BlockInfo;
-import com.ibm.crail.namenode.protocol.FileInfo;
-import com.ibm.crail.namenode.protocol.FileName;
+import com.ibm.crail.metadata.BlockInfo;
+import com.ibm.crail.metadata.FileInfo;
+import com.ibm.crail.metadata.FileName;
 
 public abstract class AbstractNode extends FileInfo implements Delayed {
 	private static AtomicLong fdcount = new AtomicLong(0);

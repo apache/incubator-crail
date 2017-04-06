@@ -19,7 +19,7 @@
  *
  */
 
-package com.ibm.crail.namenode.protocol;
+package com.ibm.crail.metadata;
 
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;

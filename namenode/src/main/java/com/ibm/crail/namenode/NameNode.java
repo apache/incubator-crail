@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.namenode.rpc.RpcNameNode;
+import com.ibm.crail.rpc.RpcBinding;
 import com.ibm.crail.utils.CrailUtils;
 
 public class NameNode {
@@ -44,13 +44,13 @@ public class NameNode {
 		DelayQueue<AbstractNode> deleteQueue = new DelayQueue<AbstractNode>();
 		NameNodeService service = new NameNodeService(deleteQueue);
 		
-		RpcNameNode rpcNameNode = RpcNameNode.createInstance(CrailConstants.NAMENODE_RPC_TYPE);
+		RpcBinding rpcBinding = RpcBinding.createInstance(CrailConstants.NAMENODE_RPC_TYPE);
 		GCServer gcServer = new GCServer(service, deleteQueue);
 		
 		Thread gc = new Thread(gcServer);
 		gc.start();
 		
-		rpcNameNode.run(service);
+		rpcBinding.run(service);
 		System.exit(0);;
 //		gc.join();
 	}

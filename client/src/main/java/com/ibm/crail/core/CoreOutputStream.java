@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import com.ibm.crail.CrailOutputStream;
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.namenode.protocol.BlockInfo;
+import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.storage.DataResult;
 import com.ibm.crail.utils.CrailImmediateOperation;

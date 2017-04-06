@@ -27,11 +27,13 @@ import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.slf4j.Logger;
+
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.namenode.protocol.BlockInfo;
-import com.ibm.crail.namenode.protocol.DataNodeInfo;
-import com.ibm.crail.namenode.rpc.NameNodeProtocol;
+import com.ibm.crail.metadata.BlockInfo;
+import com.ibm.crail.metadata.DataNodeInfo;
+import com.ibm.crail.rpc.RpcErrors;
 import com.ibm.crail.utils.AtomicIntegerModulo;
 import com.ibm.crail.utils.CrailUtils;
 
@@ -109,7 +111,7 @@ class StorageTier {
 		}
 
 		current.addFreeBlock(block);
-		return NameNodeProtocol.ERR_OK;
+		return RpcErrors.ERR_OK;
 	}
 
 	BlockInfo getBlock(int affinity) throws InterruptedException {
@@ -133,13 +135,13 @@ class StorageTier {
 	short addDataNode(DataNodeBlocks dataNode) {
 		DataNodeBlocks current = membership.putIfAbsent(dataNode.key(), dataNode);
 		if (current != null) {
-			return NameNodeProtocol.ERR_DATANODE_NOT_REGISTERED;
+			return RpcErrors.ERR_DATANODE_NOT_REGISTERED;
 		} 
 		
 		// current == null, datanode not in set, adding it now
 		_addDataNode(dataNode);
 		
-		return NameNodeProtocol.ERR_OK;
+		return RpcErrors.ERR_OK;
 
 	}
 	

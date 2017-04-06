@@ -23,12 +23,13 @@ package com.ibm.crail.namenode.rpc.darpc;
 
 import java.nio.ByteBuffer;
 
-import com.ibm.crail.namenode.rpc.NameNodeProtocol;
-import com.ibm.crail.namenode.rpc.RpcNameNodeState;
-import com.ibm.crail.namenode.rpc.RpcResponseMessage;
-import com.ibm.darpc.RpcMessage;
+import com.ibm.crail.rpc.RpcErrors;
+import com.ibm.crail.rpc.RpcNameNodeState;
+import com.ibm.crail.rpc.RpcProtocol;
+import com.ibm.crail.rpc.RpcResponseMessage;
+import com.ibm.darpc.DaRPCMessage;
 
-public class DaRPCNameNodeResponse implements RpcMessage, RpcNameNodeState {
+public class DaRPCNameNodeResponse implements DaRPCMessage, RpcNameNodeState {
 	public static final int CSIZE = 4 + Math.max(RpcResponseMessage.GetBlockRes.CSIZE, RpcResponseMessage.RenameRes.CSIZE);
 	
 	private short type;
@@ -106,47 +107,47 @@ public class DaRPCNameNodeResponse implements RpcMessage, RpcNameNodeState {
 	public void setType(short type) throws Exception {
 		this.type = type;
 		switch(type){
-		case NameNodeProtocol.RES_VOID:
+		case RpcProtocol.RES_VOID:
 			if (voidRes == null){
 				throw new Exception("Response type not set");
 			}
 			break;
-		case NameNodeProtocol.RES_CREATE_FILE:
+		case RpcProtocol.RES_CREATE_FILE:
 			if (createFileRes == null){
 				throw new Exception("Response type not set");
 			}
 			break;			
-		case NameNodeProtocol.RES_GET_FILE:
+		case RpcProtocol.RES_GET_FILE:
 			if (getFileRes == null){
 				throw new Exception("Response type not set");
 			}
 			break;
-		case NameNodeProtocol.RES_DELETE_FILE:
+		case RpcProtocol.RES_DELETE_FILE:
 			if (delFileRes == null){
 				throw new Exception("Response type not set");
 			}
 			break;			
-		case NameNodeProtocol.RES_RENAME_FILE:
+		case RpcProtocol.RES_RENAME_FILE:
 			if (renameRes == null){
 				throw new Exception("Response type not set");
 			}
 			break;			
-		case NameNodeProtocol.RES_GET_BLOCK:
+		case RpcProtocol.RES_GET_BLOCK:
 			if (getBlockRes == null){
 				throw new Exception("Response type not set");
 			}
 			break;
-		case NameNodeProtocol.RES_GET_LOCATION:
+		case RpcProtocol.RES_GET_LOCATION:
 			if (getLocationRes == null){
 				throw new Exception("Response type not set");
 			}
 			break;			
-		case NameNodeProtocol.RES_GET_DATANODE:
+		case RpcProtocol.RES_GET_DATANODE:
 			if (getDataNodeRes == null){
 				throw new Exception("Response type not set");
 			}
 			break;			
-		case NameNodeProtocol.RES_PING_NAMENODE:
+		case RpcProtocol.RES_PING_NAMENODE:
 			if (pingNameNodeRes == null){
 				throw new Exception("Response type not set");
 			}
@@ -164,31 +165,31 @@ public class DaRPCNameNodeResponse implements RpcMessage, RpcNameNodeState {
 		
 		int written = 4;
 		switch(type){
-		case NameNodeProtocol.RES_VOID:
+		case RpcProtocol.RES_VOID:
 			written += voidRes.write(buffer);
 			break;	
-		case NameNodeProtocol.RES_CREATE_FILE:
+		case RpcProtocol.RES_CREATE_FILE:
 			written += createFileRes.write(buffer);
 			break;				
-		case NameNodeProtocol.RES_GET_FILE:
+		case RpcProtocol.RES_GET_FILE:
 			written += getFileRes.write(buffer);
 			break;
-		case NameNodeProtocol.RES_DELETE_FILE:
+		case RpcProtocol.RES_DELETE_FILE:
 			written += delFileRes.write(buffer);
 			break;				
-		case NameNodeProtocol.RES_RENAME_FILE:
+		case RpcProtocol.RES_RENAME_FILE:
 			written += renameRes.write(buffer);
 			break;				
-		case NameNodeProtocol.RES_GET_BLOCK:
+		case RpcProtocol.RES_GET_BLOCK:
 			written += getBlockRes.write(buffer);
 			break;
-		case NameNodeProtocol.RES_GET_LOCATION:
+		case RpcProtocol.RES_GET_LOCATION:
 			written += getLocationRes.write(buffer);
 			break;			
-		case NameNodeProtocol.RES_GET_DATANODE:
+		case RpcProtocol.RES_GET_DATANODE:
 			written += getDataNodeRes.write(buffer);
 			break;			
-		case NameNodeProtocol.RES_PING_NAMENODE:
+		case RpcProtocol.RES_PING_NAMENODE:
 			written += pingNameNodeRes.write(buffer);
 			break;			
 		}
@@ -201,39 +202,39 @@ public class DaRPCNameNodeResponse implements RpcMessage, RpcNameNodeState {
 		this.error = buffer.getShort();
 		
 		switch(type){
-		case NameNodeProtocol.RES_VOID:
+		case RpcProtocol.RES_VOID:
 			voidRes.update(buffer);
 			voidRes.setError(error);
 			break;			
-		case NameNodeProtocol.RES_CREATE_FILE:
+		case RpcProtocol.RES_CREATE_FILE:
 			createFileRes.update(buffer);
 			createFileRes.setError(error);
 			break;				
-		case NameNodeProtocol.RES_GET_FILE:
+		case RpcProtocol.RES_GET_FILE:
 			getFileRes.update(buffer);
 			getFileRes.setError(error);
 			break;	
-		case NameNodeProtocol.RES_DELETE_FILE:
+		case RpcProtocol.RES_DELETE_FILE:
 			delFileRes.update(buffer);
 			delFileRes.setError(error);
 			break;				
-		case NameNodeProtocol.RES_RENAME_FILE:
+		case RpcProtocol.RES_RENAME_FILE:
 			renameRes.update(buffer);
 			renameRes.setError(error);
 			break;				
-		case NameNodeProtocol.RES_GET_BLOCK:
+		case RpcProtocol.RES_GET_BLOCK:
 			getBlockRes.update(buffer);
 			getBlockRes.setError(error);
 			break;
-		case NameNodeProtocol.RES_GET_LOCATION:
+		case RpcProtocol.RES_GET_LOCATION:
 			getLocationRes.update(buffer);
 			getLocationRes.setError(error);
 			break;			
-		case NameNodeProtocol.RES_GET_DATANODE:
+		case RpcProtocol.RES_GET_DATANODE:
 			getDataNodeRes.update(buffer);
 			getDataNodeRes.setError(error);
 			break;			
-		case NameNodeProtocol.RES_PING_NAMENODE:
+		case RpcProtocol.RES_PING_NAMENODE:
 			pingNameNodeRes.update(buffer);
 			pingNameNodeRes.setError(error);
 			break;		

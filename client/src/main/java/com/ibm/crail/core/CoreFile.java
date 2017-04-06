@@ -22,6 +22,7 @@
 package com.ibm.crail.core;
 
 import java.util.concurrent.Semaphore;
+
 import com.ibm.crail.CrailBlockLocation;
 import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFS;
@@ -31,7 +32,7 @@ import com.ibm.crail.CrailMultiFile;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.CrailOutputStream;
-import com.ibm.crail.namenode.protocol.FileInfo;
+import com.ibm.crail.metadata.FileInfo;
 
 public class CoreFile extends CoreNode implements CrailFile {
 	private Semaphore outputStreams;

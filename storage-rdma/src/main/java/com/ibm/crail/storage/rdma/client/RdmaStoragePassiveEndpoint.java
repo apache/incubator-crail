@@ -34,7 +34,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.namenode.protocol.BlockInfo;
+import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.storage.DataResult;
 import com.ibm.crail.storage.rdma.MrCache;

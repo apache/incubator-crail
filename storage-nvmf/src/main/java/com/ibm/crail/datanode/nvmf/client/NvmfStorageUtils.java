@@ -1,6 +1,7 @@
 package com.ibm.crail.datanode.nvmf.client;
 
-import com.ibm.crail.namenode.protocol.BlockInfo;
+import com.ibm.crail.metadata.BlockInfo;
+
 import sun.nio.ch.DirectBuffer;
 
 import java.nio.ByteBuffer;

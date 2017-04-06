@@ -21,9 +21,9 @@
 
 package com.ibm.crail.namenode.rpc.darpc;
 
-import com.ibm.darpc.RpcProtocol;
+import com.ibm.darpc.DaRPCProtocol;
 
-public class DaRPCNameNodeProtocol implements RpcProtocol<DaRPCNameNodeRequest, DaRPCNameNodeResponse>{
+public class DaRPCNameNodeProtocol implements DaRPCProtocol<DaRPCNameNodeRequest, DaRPCNameNodeResponse>{
 
 	@Override
 	public DaRPCNameNodeRequest createRequest() {

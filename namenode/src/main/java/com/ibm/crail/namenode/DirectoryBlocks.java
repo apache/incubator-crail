@@ -26,7 +26,7 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.ibm.crail.CrailNodeType;
-import com.ibm.crail.namenode.protocol.BlockInfo;
+import com.ibm.crail.metadata.BlockInfo;
 
 public class DirectoryBlocks extends AbstractNode {
 	private ConcurrentHashMap<Integer, BlockInfo> blocks;

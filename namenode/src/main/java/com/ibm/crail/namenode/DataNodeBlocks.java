@@ -23,8 +23,9 @@ package com.ibm.crail.namenode;
 
 import java.net.UnknownHostException;
 import java.util.concurrent.LinkedBlockingQueue;
-import com.ibm.crail.namenode.protocol.BlockInfo;
-import com.ibm.crail.namenode.protocol.DataNodeInfo;
+
+import com.ibm.crail.metadata.BlockInfo;
+import com.ibm.crail.metadata.DataNodeInfo;
 
 public class DataNodeBlocks extends DataNodeInfo {
 	private LinkedBlockingQueue<BlockInfo> freeBlocks;

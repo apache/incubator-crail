@@ -22,8 +22,9 @@
 
 package com.ibm.crail.datanode.nvmf.client;
 
-import com.ibm.crail.namenode.protocol.BlockInfo;
+import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.storage.DataResult;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutionException;

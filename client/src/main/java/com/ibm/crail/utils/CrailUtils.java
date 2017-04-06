@@ -27,10 +27,12 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.URI;
 import java.net.UnknownHostException;
+
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.namenode.protocol.DataNodeInfo;
+import com.ibm.crail.metadata.DataNodeInfo;
 
 
 public class CrailUtils {

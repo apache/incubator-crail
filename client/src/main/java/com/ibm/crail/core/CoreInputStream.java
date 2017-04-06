@@ -33,7 +33,7 @@ import sun.nio.ch.DirectBuffer;
 import com.ibm.crail.CrailInputStream;
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.namenode.protocol.BlockInfo;
+import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.storage.DataResult;
 import com.ibm.crail.utils.CrailImmediateOperation;

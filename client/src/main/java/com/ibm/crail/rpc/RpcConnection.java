@@ -19,48 +19,60 @@
  *
  */
 
-package com.ibm.crail.namenode.rpc;
+package com.ibm.crail.rpc;
 
 import java.io.IOException;
 
 import com.ibm.crail.CrailNodeType;
-import com.ibm.crail.namenode.protocol.BlockInfo;
-import com.ibm.crail.namenode.protocol.DataNodeInfo;
-import com.ibm.crail.namenode.protocol.FileInfo;
-import com.ibm.crail.namenode.protocol.FileName;
+import com.ibm.crail.metadata.BlockInfo;
+import com.ibm.crail.metadata.DataNodeInfo;
+import com.ibm.crail.metadata.FileInfo;
+import com.ibm.crail.metadata.FileName;
 
-public interface RpcNameNodeClient {
-	public abstract RpcNameNodeFuture<RpcResponseMessage.CreateFileRes> createFile(
+public interface RpcConnection {
+	public abstract RpcFuture<RpcCreateFile> createFile(
 			FileName filename, CrailNodeType type, int storageAffinity, int locationAffinity) throws IOException;
 
-	public abstract RpcNameNodeFuture<RpcResponseMessage.GetFileRes> getFile(FileName filename,
+	public abstract RpcFuture<RpcGetFile> getFile(FileName filename,
 			boolean writeable) throws IOException;
 
-	public abstract RpcNameNodeFuture<RpcResponseMessage.VoidRes> setFile(FileInfo fileInfo,
+	public abstract RpcFuture<RpcVoid> setFile(FileInfo fileInfo,
 			boolean close) throws IOException;
 
-	public abstract RpcNameNodeFuture<RpcResponseMessage.DeleteFileRes> removeFile(
+	public abstract RpcFuture<RpcDeleteFile> removeFile(
 			FileName filename, boolean recursive) throws IOException;
 
-	public abstract RpcNameNodeFuture<RpcResponseMessage.RenameRes> renameFile(
+	public abstract RpcFuture<RpcRenameFile> renameFile(
 			FileName srcHash, FileName dstHash) throws IOException;
 
-	public abstract RpcNameNodeFuture<RpcResponseMessage.GetBlockRes> getBlock(long fd,
+	public abstract RpcFuture<RpcGetBlock> getBlock(long fd,
 			long token, long position, int storageAffinity, int locationAffinity, long capacity) throws IOException;
 
-	public abstract RpcNameNodeFuture<RpcResponseMessage.GetLocationRes> getLocation(
+	public abstract RpcFuture<RpcGetLocation> getLocation(
 			FileName fileName, long position) throws IOException;
 
-	public abstract RpcNameNodeFuture<RpcResponseMessage.VoidRes> setBlock(BlockInfo blockInfo)
+	public abstract RpcFuture<RpcVoid> setBlock(BlockInfo blockInfo)
 			throws Exception;
 
-	public abstract RpcNameNodeFuture<RpcResponseMessage.GetDataNodeRes> getDataNode(
+	public abstract RpcFuture<RpcGetDataNode> getDataNode(
 			DataNodeInfo dnInfo) throws Exception;
 
-	public abstract RpcNameNodeFuture<RpcResponseMessage.VoidRes> dumpNameNode()
+	public abstract RpcFuture<RpcVoid> dumpNameNode()
 			throws Exception;
 
-	public abstract RpcNameNodeFuture<RpcResponseMessage.PingNameNodeRes> pingNameNode()
+	public abstract RpcFuture<RpcPing> pingNameNode()
 			throws Exception;
+	
+	@SuppressWarnings("unchecked")
+	public static RpcConnection createInstance(String name) throws Exception {
+		Class<?> nodeClass = Class.forName(name);
+		if (RpcConnection.class.isAssignableFrom(nodeClass)){
+			Class<? extends RpcConnection> rpcClass = (Class<? extends RpcConnection>) nodeClass;
+			RpcConnection rpcInstance = rpcClass.newInstance();
+			return rpcInstance;
+		} else {
+			throw new Exception("Cannot instantiate RPC client of type " + name);
+		}
+	}		
 }
 

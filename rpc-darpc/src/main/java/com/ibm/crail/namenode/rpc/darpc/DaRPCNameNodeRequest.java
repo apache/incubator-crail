@@ -23,12 +23,16 @@ package com.ibm.crail.namenode.rpc.darpc;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import org.slf4j.Logger;
-import com.ibm.crail.namenode.rpc.*;
-import com.ibm.crail.utils.CrailUtils;
-import com.ibm.darpc.RpcMessage;
 
-public class DaRPCNameNodeRequest implements RpcMessage {
+import org.slf4j.Logger;
+
+import com.ibm.crail.rpc.RpcErrors;
+import com.ibm.crail.rpc.RpcProtocol;
+import com.ibm.crail.rpc.RpcRequestMessage;
+import com.ibm.crail.utils.CrailUtils;
+import com.ibm.darpc.DaRPCMessage;
+
+public class DaRPCNameNodeRequest implements DaRPCMessage {
 	public static final Logger LOG = CrailUtils.getLogger();
 	public static final int CSIZE = 4 + Math.max(RpcRequestMessage.SetFileReq.CSIZE, RpcRequestMessage.RenameFileReq.CSIZE);
 	
@@ -130,37 +134,37 @@ public class DaRPCNameNodeRequest implements RpcMessage {
 		
 		int written = 4;
 		switch(type){
-		case NameNodeProtocol.REQ_CREATE_FILE:
+		case RpcProtocol.REQ_CREATE_FILE:
 			written += createFileReq.write(buffer);
 			break;		
-		case NameNodeProtocol.REQ_GET_FILE:
+		case RpcProtocol.REQ_GET_FILE:
 			written += fileReq.write(buffer);
 			break;
-		case NameNodeProtocol.REQ_SET_FILE:
+		case RpcProtocol.REQ_SET_FILE:
 			written += setFileReq.write(buffer);
 			break;
-		case NameNodeProtocol.REQ_REMOVE_FILE:
+		case RpcProtocol.REQ_REMOVE_FILE:
 			written += removeReq.write(buffer);
 			break;			
-		case NameNodeProtocol.REQ_RENAME_FILE:
+		case RpcProtocol.REQ_RENAME_FILE:
 			written += renameFileReq.write(buffer);
 			break;
-		case NameNodeProtocol.REQ_GET_BLOCK:
+		case RpcProtocol.REQ_GET_BLOCK:
 			written += getBlockReq.write(buffer);
 			break;
-		case NameNodeProtocol.REQ_GET_LOCATION:
+		case RpcProtocol.REQ_GET_LOCATION:
 			written += getLocationReq.write(buffer);
 			break;			
-		case NameNodeProtocol.REQ_SET_BLOCK:
+		case RpcProtocol.REQ_SET_BLOCK:
 			written += setBlockReq.write(buffer);
 			break;
-		case NameNodeProtocol.REQ_GET_DATANODE:
+		case RpcProtocol.REQ_GET_DATANODE:
 			written += getDataNodeReq.write(buffer);
 			break;				
-		case NameNodeProtocol.REQ_DUMP_NAMENODE:
+		case RpcProtocol.REQ_DUMP_NAMENODE:
 			written += dumpNameNodeReq.write(buffer);
 			break;
-		case NameNodeProtocol.REQ_PING_NAMENODE:
+		case RpcProtocol.REQ_PING_NAMENODE:
 			written += pingNameNodeReq.write(buffer);
 			break;
 		}
@@ -173,37 +177,37 @@ public class DaRPCNameNodeRequest implements RpcMessage {
 		this.type = buffer.getShort();
 		
 		switch(type){
-		case NameNodeProtocol.REQ_CREATE_FILE:
+		case RpcProtocol.REQ_CREATE_FILE:
 			createFileReq.update(buffer);
 			break;		
-		case NameNodeProtocol.REQ_GET_FILE:
+		case RpcProtocol.REQ_GET_FILE:
 			fileReq.update(buffer);
 			break;
-		case NameNodeProtocol.REQ_SET_FILE:
+		case RpcProtocol.REQ_SET_FILE:
 			setFileReq.update(buffer);
 			break;
-		case NameNodeProtocol.REQ_REMOVE_FILE:
+		case RpcProtocol.REQ_REMOVE_FILE:
 			removeReq.update(buffer);
 			break;			
-		case NameNodeProtocol.REQ_RENAME_FILE:
+		case RpcProtocol.REQ_RENAME_FILE:
 			renameFileReq.update(buffer);
 			break;
-		case NameNodeProtocol.REQ_GET_BLOCK:
+		case RpcProtocol.REQ_GET_BLOCK:
 			getBlockReq.update(buffer);
 			break;
-		case NameNodeProtocol.REQ_GET_LOCATION:
+		case RpcProtocol.REQ_GET_LOCATION:
 			getLocationReq.update(buffer);
 			break;			
-		case NameNodeProtocol.REQ_SET_BLOCK:
+		case RpcProtocol.REQ_SET_BLOCK:
 			setBlockReq.update(buffer);
 			break;
-		case NameNodeProtocol.REQ_GET_DATANODE:
+		case RpcProtocol.REQ_GET_DATANODE:
 			getDataNodeReq.update(buffer);
 			break;				
-		case NameNodeProtocol.REQ_DUMP_NAMENODE:
+		case RpcProtocol.REQ_DUMP_NAMENODE:
 			dumpNameNodeReq.update(buffer);
 			break;		
-		case NameNodeProtocol.REQ_PING_NAMENODE:
+		case RpcProtocol.REQ_PING_NAMENODE:
 			pingNameNodeReq.update(buffer);
 			break;
 		}

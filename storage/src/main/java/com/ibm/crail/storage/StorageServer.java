@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.namenode.protocol.DataNodeStatistics;
+import com.ibm.crail.metadata.DataNodeStatistics;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.disni.util.GetOpt;
 

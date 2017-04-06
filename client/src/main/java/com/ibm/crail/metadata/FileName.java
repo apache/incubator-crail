@@ -19,7 +19,7 @@
  *
  */
 
-package com.ibm.crail.namenode.protocol;
+package com.ibm.crail.metadata;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

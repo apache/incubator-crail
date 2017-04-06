@@ -75,8 +75,9 @@
     <module>storage</module>
     <module>storage-rdma</module>
     <module>storage-nvmf</module>
-    <module>hdfs</module>
+    <module>rpc</module>
     <module>rpc-darpc</module>
+    <module>hdfs</module>
     <module>assembly</module>
   </modules>
 

@@ -22,10 +22,11 @@
 package com.ibm.crail.core;
 
 import java.util.Iterator;
+
 import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailMultiFile;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.namenode.protocol.FileInfo;
+import com.ibm.crail.metadata.FileInfo;
 
 class CoreDirectory extends CoreNode implements CrailDirectory, CrailMultiFile {
 	
