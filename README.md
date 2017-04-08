@@ -10,7 +10,7 @@ Crail is a fast multi-tiered distributed storage system designed from ground up 
 * Asynchronous API leveraging the asynchronous nature of RDMA-based networking hardware
 * Extensible plugin architecture: new storage tiers tailored to specific hardware can be added easily
  
-Crail is implemented in Java offering a Java API which integrates directly with the Java off-heap memory. Crail is designed for performance critical temporary data within a scope of a rack or two. It currently does not provide fault tolerance 
+Crail is implemented in Java offering a Java API which integrates directly with the Java off-heap memory. Crail is designed for performance critical temporary data within a scope of a rack or two.  
 
 ## Requirements
 
