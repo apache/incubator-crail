@@ -1,6 +1,6 @@
 # Crail
 
-Crail is a fast multi-tiered distributed storage system designed from ground up for high-performance network and storage hardware. It marks the backbone of the Crail I/O architecture, which is described in more detail on [www.crail.io](www.crail.io). The unique features of Crail include:
+Crail is a fast multi-tiered distributed storage system designed from ground up for high-performance network and storage hardware. It marks the backbone of the Crail I/O architecture, which is described in more detail on [www.crail.io](https://www.crail.io). The unique features of Crail include:
 
 * Zero-copy network access from userspace using RDMA 
 * Integration of multiple storage tiers such DRAM, flash and disaggregated shared storage
