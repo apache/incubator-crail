@@ -4,7 +4,7 @@ Crail is a fast multi-tiered distributed storage system designed from ground up 
 
 * Zero-copy network access from userspace using RDMA 
 * Integration of multiple storage tiers such DRAM, flash and disaggregated shared storage
-* Ultra-low latencies for both meta data and data operations. For instance: opening, reading and closing a small file residing in the distributed DRAM tier takes 10-15 microseconds, which is in the same ballpark as some of the fastest RDMA-based key/value stores
+* Ultra-low latencies for both meta data and data operations. For instance: opening, reading and closing a small file residing in the distributed DRAM tier less than 10 microseconds, which is in the same ballpark as some of the fastest RDMA-based key/value stores
 * High-performance sequential read/write operations: For instance: read operations on large files residing in the distributed DRAM tier are typically limited only by the performance of the network
 * Very low CPU consumption: a single core sharing both application and file system client can drive sequential read/write operations at the speed of up to 100Gbps and more
 * Asynchronous API leveraging the asynchronous nature of RDMA-based networking hardware
