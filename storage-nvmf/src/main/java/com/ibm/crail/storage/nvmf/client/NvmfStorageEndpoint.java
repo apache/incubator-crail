@@ -20,12 +20,12 @@
  *
  */
 
-package com.ibm.crail.datanode.nvmf.client;
+package com.ibm.crail.storage.nvmf.client;
 
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.storage.DataResult;
-import com.ibm.crail.datanode.nvmf.NvmfStorageConstants;
+import com.ibm.crail.storage.nvmf.NvmfStorageConstants;
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.crail.utils.DirectBufferCache;

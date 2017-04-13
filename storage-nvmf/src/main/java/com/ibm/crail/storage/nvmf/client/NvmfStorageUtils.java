@@ -1,4 +1,4 @@
-package com.ibm.crail.datanode.nvmf.client;
+package com.ibm.crail.storage.nvmf.client;
 
 import com.ibm.crail.metadata.BlockInfo;
 

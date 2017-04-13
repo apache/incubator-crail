@@ -20,7 +20,7 @@
  *
  */
 
-package com.ibm.crail.datanode.nvmf;
+package com.ibm.crail.storage.nvmf;
 
 import com.ibm.crail.metadata.DataNodeStatistics;
 import com.ibm.crail.storage.StorageRpcClient;

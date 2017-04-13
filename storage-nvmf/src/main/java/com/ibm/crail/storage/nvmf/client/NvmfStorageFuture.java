@@ -20,12 +20,13 @@
  *
  */
 
-package com.ibm.crail.datanode.nvmf.client;
+package com.ibm.crail.storage.nvmf.client;
 
-import com.ibm.crail.datanode.nvmf.NvmfStorageConstants;
 import com.ibm.disni.nvmef.spdk.NvmeGenericCommandStatusCode;
 import com.ibm.disni.nvmef.spdk.NvmeStatusCodeType;
 import com.ibm.crail.storage.DataResult;
+import com.ibm.crail.storage.nvmf.NvmfStorageConstants;
+
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;

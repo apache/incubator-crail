@@ -20,15 +20,16 @@
  *
  */
 
-package com.ibm.crail.datanode.nvmf;
+package com.ibm.crail.storage.nvmf;
 
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.storage.StorageEndpoint;
-import com.ibm.crail.datanode.nvmf.client.NvmfStorageEndpoint;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.crail.storage.StorageTier;
+import com.ibm.crail.storage.nvmf.client.NvmfStorageEndpoint;
 import com.ibm.disni.nvmef.NvmeEndpointGroup;
 import com.ibm.disni.nvmef.spdk.*;
+
 import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 

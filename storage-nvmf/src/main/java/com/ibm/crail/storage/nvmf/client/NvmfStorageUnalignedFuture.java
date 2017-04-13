@@ -20,14 +20,14 @@
  *
  */
 
-package com.ibm.crail.datanode.nvmf.client;
+package com.ibm.crail.storage.nvmf.client;
 
-import com.ibm.crail.datanode.nvmf.NvmfStorageConstants;
 import com.ibm.crail.metadata.BlockInfo;
 
 import sun.misc.Unsafe;
 
 import com.ibm.crail.storage.DataResult;
+import com.ibm.crail.storage.nvmf.NvmfStorageConstants;
 
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
