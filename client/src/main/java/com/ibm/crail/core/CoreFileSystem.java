@@ -120,6 +120,8 @@ public class CoreFileSystem extends CrailFS {
 		//Namenode
 		InetSocketAddress nnAddr = CrailUtils.getNameNodeAddress();
 		this.rpcNameNode = RpcClient.createInstance(CrailConstants.NAMENODE_RPC_TYPE);
+		rpcNameNode.init(conf, null);
+		rpcNameNode.printConf(LOG);		
 		this.namenodeClientRpc = rpcNameNode.connect(nnAddr);
 		LOG.info("connected to namenode at " + nnAddr);		
 		

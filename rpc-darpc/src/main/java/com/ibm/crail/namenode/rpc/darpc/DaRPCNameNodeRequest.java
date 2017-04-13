@@ -26,7 +26,6 @@ import java.nio.ByteBuffer;
 
 import org.slf4j.Logger;
 
-import com.ibm.crail.rpc.RpcErrors;
 import com.ibm.crail.rpc.RpcProtocol;
 import com.ibm.crail.rpc.RpcRequestMessage;
 import com.ibm.crail.utils.CrailUtils;

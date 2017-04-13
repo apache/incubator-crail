@@ -30,7 +30,7 @@ public class CrailConstants {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	public static final String VERSION_KEY = "crail.version";
-	public static int VERSION = 2805;
+	public static int VERSION = 2806;
 	
 	public static final String STORAGE_TYPES_KEY = "crail.storage.types";
 	public static String STORAGE_TYPES = "com.ibm.crail.storage.rdma.RdmaDataNode";		
@@ -71,9 +71,6 @@ public class CrailConstants {
 	public static final String BUFFER_SIZE_KEY = "crail.buffersize";
 	public static int BUFFER_SIZE = 1048576;
 	
-	public static final String HDFS_WRITE_AHEAD_KEY = "crail.default.writeahead";
-	public static long HDFS_WRITE_AHEAD = Integer.MAX_VALUE;	
-	
 	public static final String SINGLETON_KEY = "crail.singleton";
 	public static boolean SINGLETON = false;	
 	
@@ -97,31 +94,6 @@ public class CrailConstants {
 	
 	public static final String NAMENODE_RPC_TYPE_KEY = "crail.namenode.rpc.type";
 	public static String NAMENODE_RPC_TYPE = "com.ibm.crail.namenode.rpc.darpc.DaRPCNameNode";	
-	
-	public static final String NAMENODE_DARPC_POLLING_KEY = "crail.namenode.darpc.polling";
-	public static boolean NAMENODE_DARPC_POLLING = false;
-	
-	public static final String NAMENODE_DARPC_TYPE_KEY = "crail.namenode.darpc.type";
-	public static String NAMENODE_DARPC_TYPE = "passive";	
-	
-	public static final String NAMENODE_DARPC_AFFINITY_KEY = "crail.namenode.darpc.affinity";
-	public static String NAMENODE_DARPC_AFFINITY = "1";	
-	
-	public static final String NAMENODE_DARPC_MAXINLINE_KEY = "crail.namenode.darpc.maxinline";
-	public static int NAMENODE_DARPC_MAXINLINE = 0;
-
-	public static final String NAMENODE_DARPC_RECVQUEUE_KEY = "crail.namenode.darpc.recvQueue";
-	public static int NAMENODE_DARPC_RECVQUEUE = 32;
-	
-	public static final String NAMENODE_DARPC_SENDQUEUE_KEY = "crail.namenode.darpc.sendQueue";
-	public static int NAMENODE_DARPC_SENDQUEUE = 32;		
-	
-	public static final String NAMENODE_DARPC_POLLSIZE_KEY = "crail.namenode.darpc.pollsize";
-	public static int NAMENODE_DARPC_POLLSIZE = NAMENODE_DARPC_RECVQUEUE;		
-	
-	public static final String NAMENODE_DARPC_CLUSTERSIZE_KEY = "crail.namenode.darpc.clustersize";
-	public static int NAMENODE_DARPC_CLUSTERSIZE = 128;		
-	
 	
 	public static void updateConstants(CrailConfiguration conf){
 		if (conf.get(STORAGE_TYPES_KEY) != null) {
@@ -163,9 +135,6 @@ public class CrailConstants {
 		if (conf.get(BUFFER_SIZE_KEY) != null) {
 			BUFFER_SIZE = Integer.parseInt(conf.get(BUFFER_SIZE_KEY));
 		}	
-		if (conf.get(HDFS_WRITE_AHEAD_KEY) != null) {
-			HDFS_WRITE_AHEAD = Long.parseLong(conf.get(HDFS_WRITE_AHEAD_KEY));
-		}
 		if (conf.get(CrailConstants.SINGLETON_KEY) != null) {
 			SINGLETON = conf.getBoolean(CrailConstants.SINGLETON_KEY, false);
 		}	
@@ -190,30 +159,6 @@ public class CrailConstants {
 		if (conf.get(NAMENODE_RPC_TYPE_KEY) != null) {
 			NAMENODE_RPC_TYPE = conf.get(NAMENODE_RPC_TYPE_KEY);
 		}		
-		if (conf.get(NAMENODE_DARPC_POLLING_KEY) != null) {
-			NAMENODE_DARPC_POLLING = conf.getBoolean(NAMENODE_DARPC_POLLING_KEY, false);
-		}			
-		if (conf.get(NAMENODE_DARPC_TYPE_KEY) != null) {
-			NAMENODE_DARPC_TYPE = conf.get(NAMENODE_DARPC_TYPE_KEY);
-		}	
-		if (conf.get(NAMENODE_DARPC_AFFINITY_KEY) != null) {
-			NAMENODE_DARPC_AFFINITY = conf.get(NAMENODE_DARPC_AFFINITY_KEY);
-		}	
-		if (conf.get(NAMENODE_DARPC_MAXINLINE_KEY) != null) {
-			NAMENODE_DARPC_MAXINLINE = Integer.parseInt(conf.get(NAMENODE_DARPC_MAXINLINE_KEY));
-		}	
-		if (conf.get(NAMENODE_DARPC_RECVQUEUE_KEY) != null) {
-			NAMENODE_DARPC_RECVQUEUE = Integer.parseInt(conf.get(NAMENODE_DARPC_RECVQUEUE_KEY));
-		}
-		if (conf.get(NAMENODE_DARPC_SENDQUEUE_KEY) != null) {
-			NAMENODE_DARPC_SENDQUEUE = Integer.parseInt(conf.get(NAMENODE_DARPC_SENDQUEUE_KEY));
-		}		
-		if (conf.get(NAMENODE_DARPC_POLLSIZE_KEY) != null) {
-			NAMENODE_DARPC_POLLSIZE = Integer.parseInt(conf.get(NAMENODE_DARPC_POLLSIZE_KEY));
-		}	
-		if (conf.get(NAMENODE_DARPC_CLUSTERSIZE_KEY) != null) {
-			NAMENODE_DARPC_CLUSTERSIZE = Integer.parseInt(conf.get(NAMENODE_DARPC_CLUSTERSIZE_KEY));
-		}			
 	}
 	
 	public static void printConf(){
@@ -231,7 +176,6 @@ public class CrailConstants {
 		LOG.info(RPC_TIMEOUT_KEY + " " + RPC_TIMEOUT);
 		LOG.info(DATA_TIMEOUT_KEY + " " + DATA_TIMEOUT);
 		LOG.info(BUFFER_SIZE_KEY + " " + BUFFER_SIZE);
-		LOG.info(HDFS_WRITE_AHEAD_KEY + " " + HDFS_WRITE_AHEAD);
 		LOG.info(SINGLETON_KEY + " " + SINGLETON);
 		LOG.info(REGION_SIZE_KEY + " " + REGION_SIZE);
 		LOG.info(DIRECTORY_RECORD_KEY + " " + DIRECTORY_RECORD);
@@ -240,22 +184,11 @@ public class CrailConstants {
 		LOG.info(NAMENODE_BLOCKSELECTION_KEY + " " + NAMENODE_BLOCKSELECTION);
 		LOG.info(NAMENODE_FILEBLOCKS_KEY + " " + NAMENODE_FILEBLOCKS);
 		LOG.info(NAMENODE_RPC_TYPE_KEY + " " + NAMENODE_RPC_TYPE);
-		LOG.info(NAMENODE_DARPC_POLLING_KEY + " " + NAMENODE_DARPC_POLLING);
-		LOG.info(NAMENODE_DARPC_TYPE_KEY + " " + NAMENODE_DARPC_TYPE);
-		LOG.info(NAMENODE_DARPC_AFFINITY_KEY + " " + NAMENODE_DARPC_AFFINITY);
-		LOG.info(NAMENODE_DARPC_MAXINLINE_KEY + " " + NAMENODE_DARPC_MAXINLINE);
-		LOG.info(NAMENODE_DARPC_RECVQUEUE_KEY + " " + NAMENODE_DARPC_RECVQUEUE);
-		LOG.info(NAMENODE_DARPC_SENDQUEUE_KEY + " " + NAMENODE_DARPC_SENDQUEUE);
-		LOG.info(NAMENODE_DARPC_POLLSIZE_KEY + " " + NAMENODE_DARPC_POLLSIZE);
-		LOG.info(NAMENODE_DARPC_CLUSTERSIZE_KEY + " " + NAMENODE_DARPC_CLUSTERSIZE);
 	}
 	
 	public static void verify() throws IOException {
 		if (CrailConstants.BUFFER_SIZE % CrailConstants.DIRECTORY_RECORD != 0){
 			throw new IOException("crail.buffersize must be multiple of " + CrailConstants.DIRECTORY_RECORD);
 		}	
-		if (!CrailConstants.NAMENODE_DARPC_TYPE.equalsIgnoreCase("passive") && !CrailConstants.NAMENODE_DARPC_TYPE.equalsIgnoreCase("active")){
-			throw new IOException("crail.namenode.darpc.type must be either <active> or <passive>, found " + CrailConstants.NAMENODE_DARPC_TYPE);
-		}
 	}
 }

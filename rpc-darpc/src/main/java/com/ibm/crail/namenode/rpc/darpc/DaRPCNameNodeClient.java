@@ -31,7 +31,6 @@ import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.metadata.DataNodeInfo;
 import com.ibm.crail.metadata.FileInfo;
 import com.ibm.crail.metadata.FileName;
-import com.ibm.crail.rpc.RpcErrors;
 import com.ibm.crail.rpc.RpcConnection;
 import com.ibm.crail.rpc.RpcCreateFile;
 import com.ibm.crail.rpc.RpcDeleteFile;

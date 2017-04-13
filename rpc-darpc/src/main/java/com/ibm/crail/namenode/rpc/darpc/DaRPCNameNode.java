@@ -21,12 +21,11 @@
 
 package com.ibm.crail.namenode.rpc.darpc;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
-
 import org.slf4j.Logger;
-
-import com.ibm.crail.conf.CrailConstants;
+import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.rpc.RpcBinding;
 import com.ibm.crail.rpc.RpcConnection;
 import com.ibm.crail.rpc.RpcNameNodeService;
@@ -52,11 +51,20 @@ public class DaRPCNameNode implements RpcBinding {
 		this.namenodeServerEp = null;
 		this.namenodeServerGroup = null;
 	}
+	
+	public void init(CrailConfiguration conf, String[] args) throws IOException{
+		DaRPCConstants.updateConstants(conf);
+		DaRPCConstants.verify();		
+	}
+	
+	public void printConf(Logger logger){
+		DaRPCConstants.printConf(logger);
+	}
 
 	@Override
 	public RpcConnection connect(InetSocketAddress address) throws Exception {
 		DaRPCNameNodeProtocol namenodeProtocol = new DaRPCNameNodeProtocol();
-		this.namenodeClientGroup = DaRPCClientGroup.createClientGroup(namenodeProtocol, 100, CrailConstants.NAMENODE_DARPC_MAXINLINE, CrailConstants.NAMENODE_DARPC_RECVQUEUE, CrailConstants.NAMENODE_DARPC_SENDQUEUE);
+		this.namenodeClientGroup = DaRPCClientGroup.createClientGroup(namenodeProtocol, 100, DaRPCConstants.NAMENODE_DARPC_MAXINLINE, DaRPCConstants.NAMENODE_DARPC_RECVQUEUE, DaRPCConstants.NAMENODE_DARPC_SENDQUEUE);
 		LOG.info("rpc group started, recvQueue " + namenodeClientGroup.recvQueueSize());
 		this.namenodeClientEp = namenodeClientGroup.createEndpoint();
 		InetSocketAddress nnAddr = CrailUtils.getNameNodeAddress();
@@ -71,14 +79,14 @@ public class DaRPCNameNode implements RpcBinding {
 	@Override
 	public void run(RpcNameNodeService service) {
 		try {
-			String _clusterAffinities[] = CrailConstants.NAMENODE_DARPC_AFFINITY.split(",");
+			String _clusterAffinities[] = DaRPCConstants.NAMENODE_DARPC_AFFINITY.split(",");
 			long clusterAffinities[] = new long[_clusterAffinities.length];
 			for (int i = 0; i < clusterAffinities.length; i++){
 				int affinity = Integer.decode(_clusterAffinities[i]).intValue();
 				clusterAffinities[i] = 1L << affinity;
 			}
 			DaRPCServiceDispatcher darpcService = new DaRPCServiceDispatcher(service);
-			this.namenodeServerGroup = DaRPCServerGroup.createServerGroup(darpcService, clusterAffinities, -1, CrailConstants.NAMENODE_DARPC_MAXINLINE, CrailConstants.NAMENODE_DARPC_POLLING, CrailConstants.NAMENODE_DARPC_RECVQUEUE, CrailConstants.NAMENODE_DARPC_SENDQUEUE, CrailConstants.NAMENODE_DARPC_POLLSIZE, CrailConstants.NAMENODE_DARPC_CLUSTERSIZE);
+			this.namenodeServerGroup = DaRPCServerGroup.createServerGroup(darpcService, clusterAffinities, -1, DaRPCConstants.NAMENODE_DARPC_MAXINLINE, DaRPCConstants.NAMENODE_DARPC_POLLING, DaRPCConstants.NAMENODE_DARPC_RECVQUEUE, DaRPCConstants.NAMENODE_DARPC_SENDQUEUE, DaRPCConstants.NAMENODE_DARPC_POLLSIZE, DaRPCConstants.NAMENODE_DARPC_CLUSTERSIZE);
 			LOG.info("rpc group started, recvQueue " + namenodeServerGroup.recvQueueSize());
 			this.namenodeServerEp = namenodeServerGroup.createServerEndpoint();
 			

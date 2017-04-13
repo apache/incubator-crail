@@ -103,11 +103,6 @@ public class NvmfStorageServer implements Runnable, StorageServer {
 	}
 
 	@Override
-	public void join() throws Exception {
-		this.join();
-	}
-
-	@Override
 	public InetSocketAddress getAddress() {
 		return new InetSocketAddress(NvmfStorageConstants.IP_ADDR, NvmfStorageConstants.PORT);
 	}

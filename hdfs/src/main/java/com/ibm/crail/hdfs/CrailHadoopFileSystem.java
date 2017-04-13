@@ -135,7 +135,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 		if (fileInfo != null){
 			try {
 				fileInfo.syncDir();
-				outputStream = fileInfo.getBufferedOutputStream(CrailConstants.HDFS_WRITE_AHEAD);
+				outputStream = fileInfo.getBufferedOutputStream(Integer.MAX_VALUE);
 			} catch (Exception e) {
 				throw new IOException(e);
 			}

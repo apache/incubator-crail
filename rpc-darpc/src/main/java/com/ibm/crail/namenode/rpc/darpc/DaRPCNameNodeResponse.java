@@ -23,7 +23,6 @@ package com.ibm.crail.namenode.rpc.darpc;
 
 import java.nio.ByteBuffer;
 
-import com.ibm.crail.rpc.RpcErrors;
 import com.ibm.crail.rpc.RpcNameNodeState;
 import com.ibm.crail.rpc.RpcProtocol;
 import com.ibm.crail.rpc.RpcResponseMessage;

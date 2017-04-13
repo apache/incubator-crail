@@ -52,6 +52,5 @@ public class NameNode {
 		
 		rpcBinding.run(service);
 		System.exit(0);;
-//		gc.join();
 	}
 }

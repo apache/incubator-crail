@@ -29,13 +29,14 @@ import org.slf4j.Logger;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.DataNodeStatistics;
+import com.ibm.crail.rpc.RpcClient;
+import com.ibm.crail.rpc.RpcConnection;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.disni.util.GetOpt;
 
 public interface StorageServer {
 	public abstract void registerResources(StorageRpcClient client) throws Exception;	
 	public abstract boolean isAlive();
-	public abstract void join() throws Exception;
 	public abstract InetSocketAddress getAddress();
 	
 	public static void main(String[] args){
@@ -74,21 +75,24 @@ public interface StorageServer {
 			}	
 			
 			storageTier.init(conf, args);
-			storageTier.printConf(LOG);			
+			storageTier.printConf(LOG);		
+			
+			InetSocketAddress nnAddr = CrailUtils.getNameNodeAddress();
+			RpcClient rpcClient = RpcClient.createInstance(CrailConstants.NAMENODE_RPC_TYPE);
+			storageTier.init(conf, args);
+			storageTier.printConf(LOG);					
+			RpcConnection rpcConnection = rpcClient.connect(nnAddr);
+			LOG.info("connected to namenode at " + nnAddr);				
 			
 			StorageServer server = storageTier.launchServer();
-			StorageRpcClient rpcClient = new StorageRpcClient(storageTierIndex, server.getAddress());
-			server.registerResources(rpcClient);
+			StorageRpcClient storageRpc = new StorageRpcClient(storageTierIndex, server.getAddress(), rpcConnection);
+			server.registerResources(storageRpc);
 			
 			while (server.isAlive()) {
-				DataNodeStatistics statistics = rpcClient.getDataNode();
+				DataNodeStatistics statistics = storageRpc.getDataNode();
 				LOG.info("datanode statistics, freeBlocks " + statistics.getFreeBlockCount());
 				Thread.sleep(2000);
 			}			
-			
-			server.join();
-			
-			System.exit(0);
 		} catch(Exception e){
 			e.printStackTrace();
 		}		
