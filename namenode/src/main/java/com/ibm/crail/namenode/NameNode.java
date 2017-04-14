@@ -45,6 +45,9 @@ public class NameNode {
 		NameNodeService service = new NameNodeService(deleteQueue);
 		
 		RpcBinding rpcBinding = RpcBinding.createInstance(CrailConstants.NAMENODE_RPC_TYPE);
+		rpcBinding.init(conf, null);
+		rpcBinding.printConf(LOG);
+		
 		GCServer gcServer = new GCServer(service, deleteQueue);
 		
 		Thread gc = new Thread(gcServer);
