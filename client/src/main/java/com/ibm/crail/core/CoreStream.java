@@ -64,6 +64,7 @@ public abstract class CoreStream {
 	private CoreIOStatistics ioStats;
 	private HashMap<Integer, CoreSubOperation> blockMap;
 	private LinkedBlockingQueue<RpcFuture<RpcGetBlock>> pendingBlocks;
+	private boolean isLocal;
 	
 	abstract Future<DataResult> trigger(StorageEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception;
 	abstract void update(long newCapacity);	
@@ -82,6 +83,7 @@ public abstract class CoreStream {
 		this.syncedCapacity = fileInfo.getCapacity();
 		this.streamId = streamId;
 		this.ioStats = new CoreIOStatistics("core");
+		this.isLocal = true;
 		
 		this.blockMap = new HashMap<Integer, CoreSubOperation>();
 		this.pendingBlocks = new LinkedBlockingQueue<RpcFuture<RpcGetBlock>>();
@@ -224,6 +226,10 @@ public abstract class CoreStream {
 		fileInfo.setCapacity(currentCapacity);
 	}	
 	
+	boolean isLocal() {
+		return isLocal;
+	}
+	
 	private long blockRemaining(){
 		long blockOffset = position % CrailConstants.BLOCK_SIZE;
 		long blockRemaining = CrailConstants.BLOCK_SIZE - blockOffset;
@@ -239,6 +245,9 @@ public abstract class CoreStream {
 			dataBuf.limit(dataBuf.position() + opDesc.getLen());
 			Future<DataResult> subFuture = trigger(endpoint, opDesc, dataBuf, region, block);
 			incStats(endpoint.isLocal());
+			if (isLocal){
+				isLocal = endpoint.isLocal();
+			}
 			return subFuture;
 		} catch(IOException e){
 			LOG.info("ERROR: failed data operation");
