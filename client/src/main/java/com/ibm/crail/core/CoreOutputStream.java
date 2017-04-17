@@ -70,13 +70,10 @@ public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 		
 		inFlight.incrementAndGet();
 		long nextOffset = CrailUtils.nextBlockAddress(position() + dataBuf.remaining());
-		if (nextOffset < writeHint && isLocal()){
+		Future<CrailResult> future = dataOperation(dataBuf);
+		if (nextOffset < writeHint){
 			prefetchMetadata(nextOffset);
 		} 		
-		Future<CrailResult> future = dataOperation(dataBuf);
-		if (nextOffset < writeHint && !isLocal()){
-			prefetchMetadata(nextOffset);
-		} 
 		return future;
 	}	
 	
