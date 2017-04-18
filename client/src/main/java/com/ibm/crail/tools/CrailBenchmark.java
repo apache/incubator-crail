@@ -72,7 +72,11 @@ public class CrailBenchmark {
 		
 		ByteBuffer buf = null;
 		if (direct){
-			buf = ByteBuffer.allocateDirect(size);
+			if (size == CrailConstants.BUFFER_SIZE){
+				buf = fs.allocateBuffer();
+			} else {
+				buf = ByteBuffer.allocateDirect(size);
+			}
 		} else {
 			buf = ByteBuffer.allocate(size);
 		}
@@ -91,21 +95,18 @@ public class CrailBenchmark {
 		double sumbytes = 0;
 		double ops = 0;
 		CrailFile file = fs.create(filename, CrailNodeType.DATAFILE, 0, hosthash).get().asFile();
-		CrailBufferedOutputStream bufferedStream = file.getBufferedOutputStream(_capacity);	
-		CrailOutputStream directStream = file.getDirectOutputStream(_capacity);	
+		CrailBufferedOutputStream bufferedStream = !direct ? file.getBufferedOutputStream(_capacity) : null;	
+		CrailOutputStream directStream = direct? file.getDirectOutputStream(_capacity) : null;	
 		long start = System.currentTimeMillis();
 		while (ops < loop) {
+			buf.clear();
 			if (direct){
-				buf.clear();
 				directStream.write(buf).get();
-				sumbytes = sumbytes + buf.capacity();
-				ops = ops + 1.0;
 			} else {
-				buf.clear();
 				bufferedStream.write(buf);
-				sumbytes = sumbytes + buf.capacity();
-				ops = ops + 1.0;				
 			}
+			sumbytes = sumbytes + buf.capacity();
+			ops = ops + 1.0;				
 		}
 		if (!direct){
 			bufferedStream.flush();
@@ -119,8 +120,6 @@ public class CrailBenchmark {
 			throughput = sumbits / executionTime / 1000.0 / 1000.0;
 			latency = 1000000.0 * executionTime / ops;
 		}
-		directStream.close();
-		bufferedStream.close();	
 		
 		System.out.println("execution time " + executionTime);
 		System.out.println("ops " + ops);
@@ -128,7 +127,6 @@ public class CrailBenchmark {
 		System.out.println("throughput " + throughput);
 		System.out.println("latency " + latency);
 		
-//		fs.printStatistics("close");
 		fs.getStatistics().print("close");
 		fs.close();		
 	}
@@ -145,7 +143,12 @@ public class CrailBenchmark {
 		
 		ConcurrentLinkedQueue<ByteBuffer> bufferQueue = new ConcurrentLinkedQueue<ByteBuffer>();
 		for (int i = 0; i < batch; i++){
-			ByteBuffer buf = ByteBuffer.allocateDirect(size);
+			ByteBuffer buf = null;
+			if (size == CrailConstants.BUFFER_SIZE){
+				buf = fs.allocateBuffer();
+			} else {
+				buf = ByteBuffer.allocateDirect(size);
+			}
 			bufferQueue.add(buf);
 		}
 		
@@ -212,7 +215,6 @@ public class CrailBenchmark {
 		System.out.println("throughput " + throughput);
 		System.out.println("latency " + latency);
 		
-//		fs.printStatistics("close");
 		fs.getStatistics().print("close");
 		fs.close();		
 	}
@@ -224,7 +226,11 @@ public class CrailBenchmark {
 
 		ByteBuffer buf = null;
 		if (direct){
-			buf = ByteBuffer.allocateDirect(size);
+			if (size == CrailConstants.BUFFER_SIZE){
+				buf = fs.allocateBuffer();
+			} else {
+				buf = ByteBuffer.allocateDirect(size);
+			}
 		} else {
 			buf = ByteBuffer.allocate(size);
 		}
@@ -242,7 +248,6 @@ public class CrailBenchmark {
 		//benchmark
 		System.out.println("starting benchmark...");
 		fs.getStatistics().reset();
-//		fs.resetStatistics();
 		double sumbytes = 0;
 		double ops = 0;
 		long start = System.currentTimeMillis();
@@ -307,7 +312,11 @@ public class CrailBenchmark {
 
 		ByteBuffer buf = null;
 		if (direct){
-			buf = ByteBuffer.allocateDirect(size);
+			if (size == CrailConstants.BUFFER_SIZE){
+				buf = fs.allocateBuffer();
+			} else {
+				buf = ByteBuffer.allocateDirect(size);
+			}
 		} else {
 			buf = ByteBuffer.allocate(size);
 		}		
@@ -388,7 +397,16 @@ public class CrailBenchmark {
 		
 		ConcurrentLinkedQueue<ByteBuffer> bufferQueue = new ConcurrentLinkedQueue<ByteBuffer>();
 		for (int i = 0; i < batch; i++){
-			ByteBuffer buf = ByteBuffer.allocateDirect(size);
+			ByteBuffer buf = null;
+			if (direct){
+				if (size == CrailConstants.BUFFER_SIZE){
+					buf = fs.allocateBuffer();
+				} else {
+					buf = ByteBuffer.allocateDirect(size);
+				}
+			} else {
+				buf = ByteBuffer.allocate(size);
+			}			
 			bufferQueue.add(buf);
 		}
 
@@ -464,7 +482,12 @@ public class CrailBenchmark {
 		//warmup
 		ConcurrentLinkedQueue<ByteBuffer> bufferQueue = new ConcurrentLinkedQueue<ByteBuffer>();
 		for (int i = 0; i < warmup; i++){
-			ByteBuffer buf = fs.allocateBuffer();
+			ByteBuffer buf = null;
+			if (size == CrailConstants.BUFFER_SIZE){
+				buf = fs.allocateBuffer();
+			} else {
+				buf = ByteBuffer.allocateDirect(size);
+			}
 			bufferQueue.add(buf);
 		}
 		warmUp(fs, filename, warmup, bufferQueue);
