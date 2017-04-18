@@ -26,6 +26,7 @@ import java.nio.ByteBuffer;
 
 import com.ibm.crail.CrailStatistics.StatisticsProvider;
 import com.ibm.crail.conf.CrailConstants;
+import com.ibm.crail.storage.StorageClient;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
@@ -136,5 +137,18 @@ public class DirectBufferCache implements CrailStatistics.StatisticsProvider {
 	public ByteBuffer getAllocationBuffer(ByteBuffer buffer) {
 		return null;
 	}
+	
+	@SuppressWarnings("unchecked")
+	public static DirectBufferCache createInstance(String name) throws Exception {
+		Class<?> nodeClass = Class.forName(name);
+		if (DirectBufferCache.class.isAssignableFrom(nodeClass)){
+			Class<? extends DirectBufferCache> bufferCacheClass = (Class<? extends DirectBufferCache>) nodeClass;
+			DirectBufferCache bufferCache = bufferCacheClass.newInstance();
+			return bufferCache;
+		} else {
+			throw new Exception("Cannot instantiate storage client of type " + name);
+		}
+		
+	}		
 }
 
