@@ -63,7 +63,7 @@ public class MappedBufferCache extends DirectBufferCache implements CrailStatist
 		}
 		for (File child : dir.listFiles()) {
 			child.delete();
-		}	
+		}
 		
 		this.allocationCount = CrailConstants.CACHE_LIMIT / CrailConstants.REGION_SIZE;
 		long _bufferSize = (long) CrailConstants.BUFFER_SIZE;
