@@ -29,10 +29,10 @@ import com.ibm.crail.metadata.BlockInfo;
 
 public interface StorageEndpoint{
 
-	public abstract Future<DataResult> write(ByteBuffer buffer, ByteBuffer region, BlockInfo remoteMr, long remoteOffset) throws IOException,
+	public abstract StorageFuture write(ByteBuffer buffer, ByteBuffer region, BlockInfo remoteMr, long remoteOffset) throws IOException,
 			InterruptedException;
 
-	public abstract Future<DataResult> read(ByteBuffer buffer, ByteBuffer region, BlockInfo remoteMr, long remoteOffset) throws IOException,
+	public abstract StorageFuture read(ByteBuffer buffer, ByteBuffer region, BlockInfo remoteMr, long remoteOffset) throws IOException,
 			InterruptedException;
 
 	public abstract void close() throws IOException, InterruptedException;

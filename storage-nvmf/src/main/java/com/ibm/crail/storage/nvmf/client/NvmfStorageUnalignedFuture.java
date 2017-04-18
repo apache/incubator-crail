@@ -26,7 +26,8 @@ import com.ibm.crail.metadata.BlockInfo;
 
 import sun.misc.Unsafe;
 
-import com.ibm.crail.storage.DataResult;
+import com.ibm.crail.storage.StorageFuture;
+import com.ibm.crail.storage.StorageResult;
 import com.ibm.crail.storage.nvmf.NvmfStorageConstants;
 
 import java.lang.reflect.Field;
@@ -36,7 +37,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public abstract class NvmfStorageUnalignedFuture implements Future<DataResult>, DataResult  {
+public abstract class NvmfStorageUnalignedFuture implements StorageFuture, StorageResult  {
 	protected final NvmfStorageFuture initFuture;
 	protected final NvmfStorageEndpoint endpoint;
 	protected final ByteBuffer buffer;
@@ -91,7 +92,7 @@ public abstract class NvmfStorageUnalignedFuture implements Future<DataResult>, 
 		return false;
 	}
 
-	public DataResult get() throws InterruptedException, ExecutionException {
+	public StorageResult get() throws InterruptedException, ExecutionException {
 		try {
 			return get(NvmfStorageConstants.TIME_OUT, NvmfStorageConstants.TIME_UNIT);
 		} catch (TimeoutException e) {

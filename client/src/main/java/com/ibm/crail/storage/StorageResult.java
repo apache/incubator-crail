@@ -21,8 +21,6 @@
 
 package com.ibm.crail.storage;
 
-public interface DataResult {
-
+public interface StorageResult {
 	public int getLen();
-	
 }

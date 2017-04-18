@@ -24,7 +24,8 @@ package com.ibm.crail.storage.nvmf.client;
 
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.storage.StorageEndpoint;
-import com.ibm.crail.storage.DataResult;
+import com.ibm.crail.storage.StorageFuture;
+import com.ibm.crail.storage.StorageResult;
 import com.ibm.crail.storage.nvmf.NvmfStorageConstants;
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.utils.CrailUtils;
@@ -96,7 +97,7 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 		READ;
 	}
 
-	public Future<DataResult> Op(Operation op, ByteBuffer buffer, BlockInfo remoteMr, long remoteOffset)
+	public StorageFuture Op(Operation op, ByteBuffer buffer, BlockInfo remoteMr, long remoteOffset)
 			throws IOException, InterruptedException {
 		int length = buffer.remaining();
 		if (length > CrailConstants.BLOCK_SIZE){
@@ -134,7 +135,7 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 		boolean aligned = NvmfStorageUtils.namespaceSectorOffset(sectorSize, remoteOffset) == 0
 				&& NvmfStorageUtils.namespaceSectorOffset(sectorSize, length) == 0;
 		long lba = NvmfStorageUtils.linearBlockAddress(remoteMr, remoteOffset, sectorSize);
-		Future<DataResult> future = null;
+		StorageFuture future = null;
 		if (aligned) {
 //			LOG.debug("aligned");
 			command.setBuffer(buffer).setLinearBlockAddress(lba);
@@ -192,12 +193,12 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 		return future;
 	}
 
-	public Future<DataResult> write(ByteBuffer buffer, ByteBuffer region, BlockInfo blockInfo, long remoteOffset)
+	public StorageFuture write(ByteBuffer buffer, ByteBuffer region, BlockInfo blockInfo, long remoteOffset)
 			throws IOException, InterruptedException {
 		return Op(Operation.WRITE, buffer, blockInfo, remoteOffset);
 	}
 
-	public Future<DataResult> read(ByteBuffer buffer, ByteBuffer region, BlockInfo blockInfo, long remoteOffset)
+	public StorageFuture read(ByteBuffer buffer, ByteBuffer region, BlockInfo blockInfo, long remoteOffset)
 			throws IOException, InterruptedException {
 		return Op(Operation.READ, buffer, blockInfo, remoteOffset);
 	}

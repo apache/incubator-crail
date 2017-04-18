@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.storage.DataResult;
+import com.ibm.crail.storage.StorageResult;
 import com.ibm.crail.utils.BufferCheckpoint;
 
 class CoreDataOperation implements Future<CrailResult>, CrailResult {
@@ -49,11 +49,12 @@ class CoreDataOperation implements Future<CrailResult>, CrailResult {
 	
 	//current state
 	private BufferCheckpoint bufferCheckpoint;
-	private LinkedBlockingQueue<Future<DataResult>> pendingDataOps;
+	private LinkedBlockingQueue<Future<StorageResult>> pendingDataOps;
 	private int inProcessLen;
 	private long completedLen;
 	private AtomicInteger status;
 	private Exception exception;
+	private boolean isLocal;
 	
 	public CoreDataOperation(CoreStream stream, ByteBuffer buffer) throws Exception{
 		this.stream = stream;
@@ -64,9 +65,10 @@ class CoreDataOperation implements Future<CrailResult>, CrailResult {
 		this.operationLength = buffer.remaining();
 		this.inProcessLen = 0;
 		this.completedLen = 0;
+		this.isLocal = false;
 		
 		if (operationLength > 0){
-			this.pendingDataOps = new LinkedBlockingQueue<Future<DataResult>>();
+			this.pendingDataOps = new LinkedBlockingQueue<Future<StorageResult>>();
 			this.exception = null;
 			this.status = new AtomicInteger(RPC_PENDING);
 			this.bufferCheckpoint = stream.getBufferCheckpoint();
@@ -82,10 +84,10 @@ class CoreDataOperation implements Future<CrailResult>, CrailResult {
 	public synchronized boolean isDone() {
 		if (status.get() == RPC_PENDING) {
 			try {
-				Future<DataResult> dataFuture = pendingDataOps.peek();
+				Future<StorageResult> dataFuture = pendingDataOps.peek();
 				while (dataFuture != null && dataFuture.isDone()) {
 					dataFuture = pendingDataOps.poll();
-					DataResult result = dataFuture.get();
+					StorageResult result = dataFuture.get();
 					completedLen += result.getLen();
 					dataFuture = pendingDataOps.peek();
 				}
@@ -108,8 +110,8 @@ class CoreDataOperation implements Future<CrailResult>, CrailResult {
 		
 		if (status.get() == RPC_PENDING){
 			try {
-				for (Future<DataResult> dataFuture = pendingDataOps.poll(); dataFuture != null; dataFuture = pendingDataOps.poll()){
-					DataResult result = dataFuture.get();
+				for (Future<StorageResult> dataFuture = pendingDataOps.poll(); dataFuture != null; dataFuture = pendingDataOps.poll()){
+					StorageResult result = dataFuture.get();
 					completedLen += result.getLen();
 				}
 				completeOperation();
@@ -138,8 +140,8 @@ class CoreDataOperation implements Future<CrailResult>, CrailResult {
 		
 		if (status.get() == RPC_PENDING){
 			try {
-				for (Future<DataResult> dataFuture = pendingDataOps.poll(); dataFuture != null; dataFuture = pendingDataOps.poll()){
-					DataResult result = dataFuture.get(CrailConstants.DATA_TIMEOUT, TimeUnit.MILLISECONDS);
+				for (Future<StorageResult> dataFuture = pendingDataOps.poll(); dataFuture != null; dataFuture = pendingDataOps.poll()){
+					StorageResult result = dataFuture.get(CrailConstants.DATA_TIMEOUT, TimeUnit.MILLISECONDS);
 					completedLen += result.getLen();
 				}
 				completeOperation();
@@ -200,7 +202,7 @@ class CoreDataOperation implements Future<CrailResult>, CrailResult {
 		return false;
 	}
 	
-	synchronized void add(Future<DataResult> dataFuture) {
+	synchronized void add(Future<StorageResult> dataFuture) {
 		this.pendingDataOps.add(dataFuture);
 	}	
 	
@@ -214,5 +216,9 @@ class CoreDataOperation implements Future<CrailResult>, CrailResult {
 				bufferCheckpoint.checkOut(buffer);
 			}
 		}
+	}
+
+	boolean isLocal() {
+		return isLocal;
 	}
 }

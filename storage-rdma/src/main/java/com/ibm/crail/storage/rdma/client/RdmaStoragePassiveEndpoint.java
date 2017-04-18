@@ -36,7 +36,8 @@ import org.slf4j.Logger;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.storage.StorageEndpoint;
-import com.ibm.crail.storage.DataResult;
+import com.ibm.crail.storage.StorageFuture;
+import com.ibm.crail.storage.StorageResult;
 import com.ibm.crail.storage.rdma.MrCache;
 import com.ibm.crail.storage.rdma.RdmaConstants;
 import com.ibm.crail.storage.rdma.MrCache.DeviceMrCache;
@@ -141,7 +142,7 @@ public class RdmaStoragePassiveEndpoint extends RdmaEndpoint implements StorageE
 		return rdmaOp;
 	}
 	
-	public Future<DataResult> write(ByteBuffer buffer, ByteBuffer region, BlockInfo remoteMr, long remoteOffset) throws IOException, InterruptedException {
+	public StorageFuture write(ByteBuffer buffer, ByteBuffer region, BlockInfo remoteMr, long remoteOffset) throws IOException, InterruptedException {
 		if (buffer.remaining() > CrailConstants.BLOCK_SIZE){
 			throw new IOException("write size too large " + buffer.remaining());
 		}
@@ -208,7 +209,7 @@ public class RdmaStoragePassiveEndpoint extends RdmaEndpoint implements StorageE
 		return future;
 	}
 
-	public Future<DataResult> read(ByteBuffer buffer, ByteBuffer region, BlockInfo remoteMr, long remoteOffset) throws IOException, InterruptedException {
+	public StorageFuture read(ByteBuffer buffer, ByteBuffer region, BlockInfo remoteMr, long remoteOffset) throws IOException, InterruptedException {
 		if (buffer.remaining() > CrailConstants.BLOCK_SIZE){
 			throw new IOException("read size too large");
 		}	
