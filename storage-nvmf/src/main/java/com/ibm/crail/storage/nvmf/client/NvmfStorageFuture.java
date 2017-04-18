@@ -24,7 +24,8 @@ package com.ibm.crail.storage.nvmf.client;
 
 import com.ibm.disni.nvmef.spdk.NvmeGenericCommandStatusCode;
 import com.ibm.disni.nvmef.spdk.NvmeStatusCodeType;
-import com.ibm.crail.storage.DataResult;
+import com.ibm.crail.storage.StorageFuture;
+import com.ibm.crail.storage.StorageResult;
 import com.ibm.crail.storage.nvmf.NvmfStorageConstants;
 
 import java.io.IOException;
@@ -33,7 +34,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class NvmfStorageFuture implements Future<DataResult>, DataResult {
+public class NvmfStorageFuture implements StorageFuture, StorageResult {
 
 	private final NvmfStorageEndpoint endpoint;
 	private final int len;
@@ -76,7 +77,7 @@ public class NvmfStorageFuture implements Future<DataResult>, DataResult {
 		return done;
 	}
 
-	public DataResult get() throws InterruptedException, ExecutionException {
+	public StorageResult get() throws InterruptedException, ExecutionException {
 		try {
 			return get(NvmfStorageConstants.TIME_OUT, NvmfStorageConstants.TIME_UNIT);
 		} catch (TimeoutException e) {
@@ -84,7 +85,7 @@ public class NvmfStorageFuture implements Future<DataResult>, DataResult {
 		}
 	}
 
-	public DataResult get(long timeout, TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
+	public StorageResult get(long timeout, TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
 		if (exception != null) {
 			throw new ExecutionException(exception);
 		}
@@ -109,5 +110,10 @@ public class NvmfStorageFuture implements Future<DataResult>, DataResult {
 			}
 		}
 		return this;
+	}
+
+	@Override
+	public boolean isSynchronous() {
+		return false;
 	}
 }

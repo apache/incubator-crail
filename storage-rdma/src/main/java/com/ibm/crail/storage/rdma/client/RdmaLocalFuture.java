@@ -22,19 +22,33 @@
 package com.ibm.crail.storage.rdma.client;
 
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.ibm.crail.storage.DataResult;
+import sun.misc.Unsafe;
 
-public class RdmaLocalFuture implements Future<DataResult>, DataResult {
-	private int len;
+import com.ibm.crail.storage.StorageFuture;
+import com.ibm.crail.storage.StorageResult;
 
-	public RdmaLocalFuture(int len) {
-		this.len = len;
-	}		
+public class RdmaLocalFuture implements StorageFuture, StorageResult {
+	private Unsafe unsafe;
+	private long srcAddr;
+	private long dstAddr;
+	private int remaining;
 	
+	private int len;
+	private boolean isDone;
+
+	public RdmaLocalFuture(Unsafe unsafe, long srcAddr, long dstAddr, int remaining) {
+		this.unsafe = unsafe;
+		this.srcAddr = srcAddr;
+		this.dstAddr = dstAddr;
+		this.remaining = remaining;
+		
+		this.len = 0;
+		this.isDone = false;
+	}
+
 
 	@Override
 	public int getLen() {
@@ -53,19 +67,37 @@ public class RdmaLocalFuture implements Future<DataResult>, DataResult {
 
 	@Override
 	public boolean isDone() {
-		return true;
+		if (!isDone){
+			getDone();
+		}		
+		return isDone;
 	}
 
 	@Override
-	public DataResult get() throws InterruptedException, ExecutionException {
+	public StorageResult get() throws InterruptedException, ExecutionException {
+		if (!isDone){
+			getDone();
+		}
 		return this;
 	}
 
 	@Override
-	public DataResult get(long timeout, TimeUnit unit)
+	public StorageResult get(long timeout, TimeUnit unit)
 			throws InterruptedException, ExecutionException, TimeoutException {
+		if (!isDone){
+			getDone();
+		}		
 		return this;
 	}
 	
-
+	@Override
+	public boolean isSynchronous() {
+		return true;
+	}
+	
+	void getDone(){
+		unsafe.copyMemory(srcAddr, dstAddr, remaining);
+		len = remaining;
+		isDone = true;		
+	}
 }

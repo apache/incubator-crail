@@ -39,7 +39,7 @@ import com.ibm.crail.rpc.RpcConnection;
 import com.ibm.crail.rpc.RpcGetBlock;
 import com.ibm.crail.rpc.RpcFuture;
 import com.ibm.crail.storage.StorageEndpoint;
-import com.ibm.crail.storage.DataResult;
+import com.ibm.crail.storage.StorageResult;
 import com.ibm.crail.utils.BufferCheckpoint;
 import com.ibm.crail.utils.EndpointCache;
 import com.ibm.crail.utils.CrailUtils;
@@ -64,9 +64,8 @@ public abstract class CoreStream {
 	private CoreIOStatistics ioStats;
 	private HashMap<Integer, CoreSubOperation> blockMap;
 	private LinkedBlockingQueue<RpcFuture<RpcGetBlock>> pendingBlocks;
-	private boolean isLocal;
 	
-	abstract Future<DataResult> trigger(StorageEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception;
+	abstract Future<StorageResult> trigger(StorageEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception;
 	abstract void update(long newCapacity);	
 	
 	CoreStream(CoreNode node, long streamId, long fileOffset) throws Exception {
@@ -83,13 +82,12 @@ public abstract class CoreStream {
 		this.syncedCapacity = fileInfo.getCapacity();
 		this.streamId = streamId;
 		this.ioStats = new CoreIOStatistics("core");
-		this.isLocal = true;
 		
 		this.blockMap = new HashMap<Integer, CoreSubOperation>();
 		this.pendingBlocks = new LinkedBlockingQueue<RpcFuture<RpcGetBlock>>();
 	}	
 	
-	final Future<CrailResult> dataOperation(ByteBuffer dataBuf) throws Exception {
+	final CoreDataOperation dataOperation(ByteBuffer dataBuf) throws Exception {
 		blockMap.clear();
 		pendingBlocks.clear();
 		CoreDataOperation multiOperation = new CoreDataOperation(this, dataBuf);
@@ -104,7 +102,7 @@ public abstract class CoreStream {
 			
 			if (blockCache.containsKey(subOperation.key())){
 				BlockInfo block = blockCache.get(subOperation.key());
-				Future<DataResult> subFuture = this.prepareAndTrigger(subOperation, dataBuf, block);
+				Future<StorageResult> subFuture = this.prepareAndTrigger(subOperation, dataBuf, block);
 				multiOperation.add(subFuture);
 				this.ioStats.incCachedOps();
 			} else if (nextBlockCache.containsKey(subOperation.key())){
@@ -146,7 +144,7 @@ public abstract class CoreStream {
 			}				
 			BlockInfo block = getBlockRes.getBlockInfo();
 			CoreSubOperation subOperation = blockMap.get(rpcFuture.getTicket());
-			Future<DataResult> subFuture = prepareAndTrigger(subOperation, dataBuf, block);
+			Future<StorageResult> subFuture = prepareAndTrigger(subOperation, dataBuf, block);
 			multiOperation.add(subFuture);
 			blockCache.put(subOperation.key(), block);
 		}
@@ -160,8 +158,8 @@ public abstract class CoreStream {
 		return multiOperation;
 	}
 	
-	final void prefetchMetadata(long nextOffset) throws Exception {
-		long key = CoreSubOperation.createKey(fileInfo.getFd(), nextOffset);
+	final void prefetchMetadata() throws Exception {
+		long key = CoreSubOperation.createKey(fileInfo.getFd(), position);
 		if (blockCache.containsKey(key)){
 			return;
 		}
@@ -169,7 +167,7 @@ public abstract class CoreStream {
 			return;
 		}
 		this.syncedCapacity = fileInfo.getCapacity();
-		RpcFuture<RpcGetBlock> nextBlock = namenodeClientRpc.getBlock(fileInfo.getFd(), fileInfo.getToken(), nextOffset, node.storageAffinity(), node.locationAffinity(), syncedCapacity);
+		RpcFuture<RpcGetBlock> nextBlock = namenodeClientRpc.getBlock(fileInfo.getFd(), fileInfo.getToken(), position, node.storageAffinity(), node.locationAffinity(), syncedCapacity);
 		nextBlock.setPrefetched(true);
 		nextBlockCache.put(key, nextBlock);
 		this.ioStats.incPrefetchedOps();
@@ -226,28 +224,21 @@ public abstract class CoreStream {
 		fileInfo.setCapacity(currentCapacity);
 	}	
 	
-	boolean isLocal() {
-		return isLocal;
-	}
-	
 	private long blockRemaining(){
 		long blockOffset = position % CrailConstants.BLOCK_SIZE;
 		long blockRemaining = CrailConstants.BLOCK_SIZE - blockOffset;
 		return blockRemaining;
 	}
 	
-	private Future<DataResult> prepareAndTrigger(CoreSubOperation opDesc, ByteBuffer dataBuf, BlockInfo block) throws Exception {
+	private Future<StorageResult> prepareAndTrigger(CoreSubOperation opDesc, ByteBuffer dataBuf, BlockInfo block) throws Exception {
 		try {
 			StorageEndpoint endpoint = endpointCache.getDataEndpoint(block.getDnInfo());
 			ByteBuffer region = fs.getBufferCache().getAllocationBuffer(dataBuf);
 			region = region != null ? region : dataBuf;
 			dataBuf.position(opDesc.getBufferPosition());
 			dataBuf.limit(dataBuf.position() + opDesc.getLen());
-			Future<DataResult> subFuture = trigger(endpoint, opDesc, dataBuf, region, block);
+			Future<StorageResult> subFuture = trigger(endpoint, opDesc, dataBuf, region, block);
 			incStats(endpoint.isLocal());
-			if (isLocal){
-				isLocal = endpoint.isLocal();
-			}
 			return subFuture;
 		} catch(IOException e){
 			LOG.info("ERROR: failed data operation");

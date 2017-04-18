@@ -23,7 +23,7 @@
 package com.ibm.crail.storage.nvmf.client;
 
 import com.ibm.crail.metadata.BlockInfo;
-import com.ibm.crail.storage.DataResult;
+import com.ibm.crail.storage.StorageResult;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -35,7 +35,7 @@ import java.util.concurrent.TimeoutException;
 public class NvmfStorageUnalignedRMWFuture extends NvmfStorageUnalignedFuture {
 
 	private boolean initDone;
-	private Future<DataResult> writeFuture;
+	private Future<StorageResult> writeFuture;
 
 	public NvmfStorageUnalignedRMWFuture(NvmfStorageFuture future, NvmfStorageEndpoint endpoint, ByteBuffer buffer,
 									  BlockInfo remoteMr, long remoteOffset, ByteBuffer stagingBuffer)
@@ -44,7 +44,7 @@ public class NvmfStorageUnalignedRMWFuture extends NvmfStorageUnalignedFuture {
 		initDone = false;
 	}
 
-	public DataResult get(long l, TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
+	public StorageResult get(long l, TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
 		if (exception != null) {
 			throw new ExecutionException(exception);
 		}
@@ -76,5 +76,10 @@ public class NvmfStorageUnalignedRMWFuture extends NvmfStorageUnalignedFuture {
 			done = true;
 		}
 		return this;
+	}
+
+	@Override
+	public boolean isSynchronous() {
+		return false;
 	}
 }

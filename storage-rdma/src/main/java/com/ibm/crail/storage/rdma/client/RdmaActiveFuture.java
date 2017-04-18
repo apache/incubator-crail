@@ -26,9 +26,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.ibm.crail.storage.DataResult;
+import com.ibm.crail.storage.StorageFuture;
+import com.ibm.crail.storage.StorageResult;
 
-public class RdmaActiveFuture implements Future<DataResult>, DataResult {
+public class RdmaActiveFuture implements StorageFuture, StorageResult {
 	protected static int RPC_PENDING = 0;
 	protected static int RPC_DONE = 1;
 	protected static int RPC_ERROR = 2;		
@@ -50,7 +51,7 @@ public class RdmaActiveFuture implements Future<DataResult>, DataResult {
 	}
 	
 	@Override
-	public synchronized DataResult get() throws InterruptedException, ExecutionException {
+	public synchronized StorageResult get() throws InterruptedException, ExecutionException {
 		if (status.get() == RPC_PENDING){
 			try {
 				wait();
@@ -70,7 +71,7 @@ public class RdmaActiveFuture implements Future<DataResult>, DataResult {
 	}
 
 	@Override
-	public synchronized DataResult get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException {
+	public synchronized StorageResult get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException {
 		if (status.get() == RPC_PENDING){
 			try {
 				wait(timeout);
@@ -121,6 +122,11 @@ public class RdmaActiveFuture implements Future<DataResult>, DataResult {
 	@Override
 	public boolean isCancelled() {
 		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean isSynchronous() {
 		return false;
 	}
 }

@@ -29,10 +29,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 
-import com.ibm.crail.storage.DataResult;
+import com.ibm.crail.storage.StorageFuture;
+import com.ibm.crail.storage.StorageResult;
 import com.ibm.crail.utils.CrailUtils;
 
-public class RdmaPassiveFuture implements Future<DataResult>, DataResult {
+public class RdmaPassiveFuture implements StorageFuture, StorageResult {
 	private static final Logger LOG = CrailUtils.getLogger();
 	protected static int RPC_PENDING = 0;
 	protected static int RPC_DONE = 1;
@@ -142,6 +143,11 @@ public class RdmaPassiveFuture implements Future<DataResult>, DataResult {
 	@Override
 	public boolean isCancelled() {
 		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean isSynchronous() {
 		return false;
 	}
 }
