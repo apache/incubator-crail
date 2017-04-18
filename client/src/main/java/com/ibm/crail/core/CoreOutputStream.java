@@ -33,7 +33,7 @@ import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.storage.StorageEndpoint;
-import com.ibm.crail.storage.StorageResult;
+import com.ibm.crail.storage.StorageFuture;
 import com.ibm.crail.utils.CrailImmediateOperation;
 import com.ibm.crail.utils.CrailUtils;
 
@@ -73,7 +73,7 @@ public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 		if (position() < writeHint){
 			prefetchMetadata();
 		} 	
-		if (future.isLocal()){
+		if (future.isSynchronous()){
 			future.get();
 		}		
 		return future;
@@ -111,8 +111,8 @@ public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 	
 	// ----------------------
 	
-	Future<StorageResult> trigger(StorageEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception {
-		Future<StorageResult> dataFuture = endpoint.write(buffer, region, block, opDesc.getBlockOffset());
+	StorageFuture trigger(StorageEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception {
+		StorageFuture dataFuture = endpoint.write(buffer, region, block, opDesc.getBlockOffset());
 		return dataFuture;		
 	}	
 	
