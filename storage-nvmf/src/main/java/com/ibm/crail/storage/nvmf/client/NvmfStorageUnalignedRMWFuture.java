@@ -77,9 +77,4 @@ public class NvmfStorageUnalignedRMWFuture extends NvmfStorageUnalignedFuture {
 		}
 		return this;
 	}
-
-	@Override
-	public boolean isSynchronous() {
-		return false;
-	}
 }

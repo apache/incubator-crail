@@ -107,4 +107,9 @@ public abstract class NvmfStorageUnalignedFuture implements StorageFuture, Stora
 			unsafe = (Unsafe) theUnsafe.get(null);
 		}
 	}
+
+	@Override
+	public boolean isSynchronous() {
+		return false;
+	}
 }
