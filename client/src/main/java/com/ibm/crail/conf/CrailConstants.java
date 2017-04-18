@@ -30,7 +30,7 @@ public class CrailConstants {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	public static final String VERSION_KEY = "crail.version";
-	public static int VERSION = 2811;
+	public static int VERSION = 2812;
 	
 	public static final String STORAGE_TYPES_KEY = "crail.storage.types";
 	public static String STORAGE_TYPES = "com.ibm.crail.storage.rdma.RdmaDataNode";		
@@ -81,7 +81,10 @@ public class CrailConstants {
 	public static int DIRECTORY_RECORD = 512;	
 	
 	public static final String DIRECTORY_RANDOMIZE_KEY = "crail.directoryrandomize";
-	public static boolean DIRECTORY_RANDOMIZE = true;	
+	public static boolean DIRECTORY_RANDOMIZE = true;
+	
+	public static final String CACHE_IMPL_KEY = "crail.cacheimpl";
+	public static String CACHE_IMPL = "com.ibm.crail.utils.MappedBufferCache";		
 	
 	public static final String NAMENODE_ADDRESS_KEY = "crail.namenode.address";
 	public static String NAMENODE_ADDRESS = "";
@@ -146,7 +149,10 @@ public class CrailConstants {
 		}	
 		if (conf.get(CrailConstants.DIRECTORY_RANDOMIZE_KEY) != null) {
 			DIRECTORY_RANDOMIZE = conf.getBoolean(CrailConstants.DIRECTORY_RANDOMIZE_KEY, false);
-		}					
+		}
+		if (conf.get(CACHE_IMPL_KEY) != null) {
+			CACHE_IMPL = conf.get(CACHE_IMPL_KEY);
+		}			
 		if (conf.get(NAMENODE_ADDRESS_KEY) != null) {
 			NAMENODE_ADDRESS = conf.get(NAMENODE_ADDRESS_KEY);
 		} 
@@ -158,7 +164,7 @@ public class CrailConstants {
 		}		
 		if (conf.get(NAMENODE_RPC_TYPE_KEY) != null) {
 			NAMENODE_RPC_TYPE = conf.get(NAMENODE_RPC_TYPE_KEY);
-		}		
+		}
 	}
 	
 	public static void printConf(){
@@ -180,6 +186,7 @@ public class CrailConstants {
 		LOG.info(REGION_SIZE_KEY + " " + REGION_SIZE);
 		LOG.info(DIRECTORY_RECORD_KEY + " " + DIRECTORY_RECORD);
 		LOG.info(DIRECTORY_RANDOMIZE_KEY + " " + DIRECTORY_RANDOMIZE);		
+		LOG.info(CACHE_IMPL_KEY + " " + CACHE_IMPL);
 		LOG.info(NAMENODE_ADDRESS_KEY + " " + NAMENODE_ADDRESS);
 		LOG.info(NAMENODE_BLOCKSELECTION_KEY + " " + NAMENODE_BLOCKSELECTION);
 		LOG.info(NAMENODE_FILEBLOCKS_KEY + " " + NAMENODE_FILEBLOCKS);
