@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConstants;
+import com.ibm.crail.storage.StorageFuture;
 import com.ibm.crail.storage.StorageResult;
 import com.ibm.crail.utils.BufferCheckpoint;
 
@@ -54,7 +55,7 @@ class CoreDataOperation implements Future<CrailResult>, CrailResult {
 	private long completedLen;
 	private AtomicInteger status;
 	private Exception exception;
-	private boolean isLocal;
+	private boolean isSynchronous;
 	
 	public CoreDataOperation(CoreStream stream, ByteBuffer buffer) throws Exception{
 		this.stream = stream;
@@ -65,7 +66,7 @@ class CoreDataOperation implements Future<CrailResult>, CrailResult {
 		this.operationLength = buffer.remaining();
 		this.inProcessLen = 0;
 		this.completedLen = 0;
-		this.isLocal = false;
+		this.isSynchronous = false;
 		
 		if (operationLength > 0){
 			this.pendingDataOps = new LinkedBlockingQueue<Future<StorageResult>>();
@@ -202,8 +203,11 @@ class CoreDataOperation implements Future<CrailResult>, CrailResult {
 		return false;
 	}
 	
-	synchronized void add(Future<StorageResult> dataFuture) {
+	synchronized void add(StorageFuture dataFuture) {
 		this.pendingDataOps.add(dataFuture);
+		if (dataFuture.isSynchronous()){
+			this.isSynchronous = true;
+		}
 	}	
 	
 	//-----------
@@ -218,7 +222,7 @@ class CoreDataOperation implements Future<CrailResult>, CrailResult {
 		}
 	}
 
-	boolean isLocal() {
-		return isLocal;
+	boolean isSynchronous() {
+		return isSynchronous;
 	}
 }
