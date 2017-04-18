@@ -30,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 
-import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.metadata.FileInfo;

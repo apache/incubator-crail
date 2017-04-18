@@ -27,8 +27,6 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.URI;
 import java.net.UnknownHostException;
-import java.util.StringTokenizer;
-
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
