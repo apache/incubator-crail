@@ -515,10 +515,18 @@ public class CoreFileSystem extends CrailFS {
 		}
 		
 		LinkedList<CoreOutputStream> tmpOut = new LinkedList<CoreOutputStream>();
+		LinkedList<CoreOutputStream> tmpOutDir = new LinkedList<CoreOutputStream>();
 		for (CoreOutputStream stream : openOutputStreams.values()) {
-			tmpOut.add(stream);
+			if (stream.getFile().getType().isContainer()){
+				tmpOutDir.add(stream);
+			} else {
+				tmpOut.add(stream);
+			}
 		}
 		for (CoreOutputStream stream : tmpOut) {
+			stream.close();
+		}		
+		for (CoreOutputStream stream : tmpOutDir) {
 			stream.close();
 		}		
 	
