@@ -79,8 +79,8 @@ public interface StorageServer {
 			
 			InetSocketAddress nnAddr = CrailUtils.getNameNodeAddress();
 			RpcClient rpcClient = RpcClient.createInstance(CrailConstants.NAMENODE_RPC_TYPE);
-			storageTier.init(conf, args);
-			storageTier.printConf(LOG);					
+			rpcClient.init(conf, args);
+			rpcClient.printConf(LOG);					
 			RpcConnection rpcConnection = rpcClient.connect(nnAddr);
 			LOG.info("connected to namenode at " + nnAddr);				
 			

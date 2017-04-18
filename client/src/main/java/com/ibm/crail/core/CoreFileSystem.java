@@ -65,7 +65,6 @@ import com.ibm.crail.utils.BlockCache;
 import com.ibm.crail.utils.BufferCheckpoint;
 import com.ibm.crail.utils.DirectBufferCache;
 import com.ibm.crail.utils.EndpointCache;
-import com.ibm.crail.utils.MappedBufferCache;
 import com.ibm.crail.utils.NextBlockCache;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.crail.utils.BlockCache.FileBlockCache;

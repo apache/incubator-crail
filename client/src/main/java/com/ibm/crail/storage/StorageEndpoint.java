@@ -23,8 +23,6 @@ package com.ibm.crail.storage;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.Future;
-
 import com.ibm.crail.metadata.BlockInfo;
 
 public interface StorageEndpoint{

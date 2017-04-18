@@ -33,13 +33,10 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
-
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.storage.StorageFuture;
-import com.ibm.crail.storage.StorageResult;
 import com.ibm.crail.storage.rdma.RdmaConstants;
 import com.ibm.crail.storage.rdma.RdmaStorageServer;
 import com.ibm.disni.rdma.verbs.*;

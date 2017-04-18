@@ -26,8 +26,6 @@ import java.nio.ByteBuffer;
 
 import com.ibm.crail.CrailStatistics.StatisticsProvider;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.storage.StorageClient;
-
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
