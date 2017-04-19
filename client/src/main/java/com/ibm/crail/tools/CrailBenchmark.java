@@ -127,8 +127,8 @@ public class CrailBenchmark {
 		System.out.println("throughput " + throughput);
 		System.out.println("latency " + latency);
 		
-		fs.getStatistics().print("close");
 		fs.close();		
+		fs.getStatistics().print("close");
 	}
 	
 	void writeSequentialAsync(String filename, int size, int loop, int batch, boolean affinity) throws Exception {
