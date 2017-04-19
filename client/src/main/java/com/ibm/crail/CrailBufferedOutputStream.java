@@ -169,6 +169,11 @@ public class CrailBufferedOutputStream extends OutputStream {
 		return position;
 	}
 
+	@Override
+	public void flush() throws IOException {
+		LOG.info("CrailOutputstream flush should not be called, use purge instead!");
+	}
+
 	//---------------------- ByteBuffer interface
 	
 	private int completePurge() throws IOException {

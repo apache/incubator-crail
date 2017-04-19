@@ -109,7 +109,7 @@ public class CrailBenchmark {
 			ops = ops + 1.0;				
 		}
 		if (!direct){
-			bufferedStream.flush();
+			bufferedStream.purge().get();
 		}
 		long end = System.currentTimeMillis();
 		double executionTime = ((double) (end - start)) / 1000.0;
@@ -847,7 +847,7 @@ public class CrailBenchmark {
 				warmupStream.write(buf);
 				bufferList.add(buf);
 			}
-			warmupStream.flush();
+			warmupStream.purge().get();
 			warmupStream.close();
 			fs.delete(warmupFilename, false).get().syncDir();			
 		}
