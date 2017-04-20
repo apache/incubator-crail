@@ -128,15 +128,17 @@ public class CrailBufferedOutputStream extends OutputStream {
 		} 		
 		
 		try {
-			if (future == null && internalBuf.position() > 0) {
+			if (future != null){
+				return future;
+			} else if (future == null && internalBuf.position() > 0) {
 				internalBuf.flip();
 				future = outputStream().write(internalBuf);
 				internalBuf.clear();
-				return future;
-			} else if (internalBuf.position() == 0){
-				future = noOp;
-			} 
-			return future;
+				return future;				
+			} else {
+				return noOp;
+			}
+
 		} catch(Exception e){
 			throw new IOException(e);
 		}
@@ -167,6 +169,11 @@ public class CrailBufferedOutputStream extends OutputStream {
 	
 	public long position() {
 		return position;
+	}
+
+	@Override
+	public void flush() throws IOException {
+		LOG.info("CrailOutputstream flush should not be called, use purge instead!");
 	}
 
 	//---------------------- ByteBuffer interface
