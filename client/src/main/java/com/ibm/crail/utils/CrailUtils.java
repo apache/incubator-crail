@@ -27,6 +27,8 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -43,6 +45,10 @@ public class CrailUtils {
 		}
 		return LOG;
 	}
+	
+	public static long getAddress(ByteBuffer buffer) {
+		return ((sun.nio.ch.DirectBuffer) buffer).address();
+	}	
 	
 	public static InetSocketAddress getNameNodeAddress() {
 		URI uri = URI.create(CrailConstants.NAMENODE_ADDRESS);

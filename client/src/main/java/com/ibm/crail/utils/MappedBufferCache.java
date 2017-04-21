@@ -34,7 +34,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.disni.util.MemoryUtils;
 import com.ibm.crail.CrailStatistics;
 
 public class MappedBufferCache extends DirectBufferCache implements CrailStatistics.StatisticsProvider {
@@ -94,7 +93,7 @@ public class MappedBufferCache extends DirectBufferCache implements CrailStatist
 
 	@Override
 	public ByteBuffer getAllocationBuffer(ByteBuffer buffer) {
-		long address = MemoryUtils.getAddress(buffer);
+		long address = CrailUtils.getAddress(buffer);
 		return allocationMap.get(address);
 	}	
 	
@@ -147,14 +146,14 @@ public class MappedBufferCache extends DirectBufferCache implements CrailStatist
 		randomFile.close();
 		channel.close();
 
-		long mappedAddress = MemoryUtils.getAddress(mappedBuffer);
+		long mappedAddress = CrailUtils.getAddress(mappedBuffer);
 		ByteBuffer firstBuffer = slice(mappedBuffer, 0);
 		allocationMap.put(mappedAddress, mappedBuffer);
 		
 		for (int j = 1; j < bufferCount; j++) {
 			int position = j * CrailConstants.BUFFER_SIZE;
 			ByteBuffer sliceBuffer = slice(mappedBuffer, position);
-			long address = MemoryUtils.getAddress(sliceBuffer);
+			long address = CrailUtils.getAddress(sliceBuffer);
 			this.putBufferInternal(sliceBuffer);
 			allocationMap.put(address, mappedBuffer);
 		}

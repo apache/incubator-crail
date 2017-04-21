@@ -22,10 +22,6 @@
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.ibm.disni</groupId>
-      <artifactId>disni</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.ibm.darpc</groupId>
       <artifactId>darpc</artifactId>
     </dependency>

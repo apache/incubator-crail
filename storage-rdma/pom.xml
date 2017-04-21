@@ -26,10 +26,6 @@
       <artifactId>disni</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.ibm.darpc</groupId>
-      <artifactId>darpc</artifactId>
-    </dependency>
-    <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
     </dependency>

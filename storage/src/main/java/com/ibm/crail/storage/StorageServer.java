@@ -32,7 +32,7 @@ import com.ibm.crail.metadata.DataNodeStatistics;
 import com.ibm.crail.rpc.RpcClient;
 import com.ibm.crail.rpc.RpcConnection;
 import com.ibm.crail.utils.CrailUtils;
-import com.ibm.disni.util.GetOpt;
+import com.ibm.crail.utils.GetOpt;
 
 public interface StorageServer {
 	public abstract void registerResources(StorageRpcClient client) throws Exception;	
