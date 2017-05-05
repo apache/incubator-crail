@@ -22,6 +22,7 @@
 
 package com.ibm.crail.storage.nvmf.client;
 
+import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.storage.StorageResult;
 
@@ -33,8 +34,8 @@ import java.util.concurrent.TimeoutException;
 
 public class NvmfStorageUnalignedReadFuture extends NvmfStorageUnalignedFuture {
 
-	public NvmfStorageUnalignedReadFuture(NvmfStorageFuture future, NvmfStorageEndpoint endpoint, ByteBuffer buffer, BlockInfo remoteMr,
-									   long remoteOffset, ByteBuffer stagingBuffer)
+	public NvmfStorageUnalignedReadFuture(NvmfStorageFuture future, NvmfStorageEndpoint endpoint, CrailBuffer buffer, BlockInfo remoteMr,
+									   long remoteOffset, CrailBuffer stagingBuffer)
 			throws NoSuchFieldException, IllegalAccessException {
 		super(future, endpoint, buffer, remoteMr, remoteOffset, stagingBuffer);
 	}
@@ -45,9 +46,9 @@ public class NvmfStorageUnalignedReadFuture extends NvmfStorageUnalignedFuture {
 		}
 		if (!done) {
 			initFuture.get(l, timeUnit);
-			long srcAddr = NvmfStorageUtils.getAddress(stagingBuffer) +
+			long srcAddr = stagingBuffer.address() + 
 					NvmfStorageUtils.namespaceSectorOffset(endpoint.getSectorSize(), remoteOffset);
-			long dstAddr = NvmfStorageUtils.getAddress(buffer) + localOffset;
+			long dstAddr = buffer.address() + localOffset;
 			unsafe.copyMemory(srcAddr, dstAddr, len);
 			done = true;
 			try {

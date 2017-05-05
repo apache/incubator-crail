@@ -22,6 +22,7 @@
 
 package com.ibm.crail.storage.nvmf.client;
 
+import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.metadata.BlockInfo;
 
 import sun.misc.Unsafe;
@@ -39,18 +40,18 @@ import java.util.concurrent.TimeoutException;
 public abstract class NvmfStorageUnalignedFuture implements StorageFuture, StorageResult  {
 	protected final NvmfStorageFuture initFuture;
 	protected final NvmfStorageEndpoint endpoint;
-	protected final ByteBuffer buffer;
+	protected final CrailBuffer buffer;
 	protected final long localOffset;
 	protected final BlockInfo remoteMr;
 	protected final long remoteOffset;
 	protected final int len;
-	protected final ByteBuffer stagingBuffer;
+	protected final CrailBuffer stagingBuffer;
 	protected boolean done;
 	protected Exception exception;
 	protected static Unsafe unsafe;
 
-	public NvmfStorageUnalignedFuture(NvmfStorageFuture future, NvmfStorageEndpoint endpoint, ByteBuffer buffer,
-								   BlockInfo remoteMr, long remoteOffset, ByteBuffer stagingBuffer)
+	public NvmfStorageUnalignedFuture(NvmfStorageFuture future, NvmfStorageEndpoint endpoint, CrailBuffer buffer,
+								   BlockInfo remoteMr, long remoteOffset, CrailBuffer stagingBuffer)
 			throws NoSuchFieldException, IllegalAccessException {
 		this.initFuture = future;
 		this.endpoint = endpoint;

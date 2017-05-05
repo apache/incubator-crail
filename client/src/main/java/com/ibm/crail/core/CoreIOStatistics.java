@@ -66,7 +66,7 @@ public class CoreIOStatistics implements CrailStatistics.StatisticsProvider {
 	
 	@Override
 	public String providerName() {
-		return "IO/" + mode;
+		return mode;
 	}
 
 	@Override

@@ -23,6 +23,7 @@ package com.ibm.crail.core;
 
 import java.nio.ByteBuffer;
 
+import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.utils.CrailUtils;
 
@@ -44,7 +45,7 @@ public class DirectoryRecord {
 		
 	}
 	
-	public void write(ByteBuffer buffer) throws Exception {
+	public void write(CrailBuffer buffer) throws Exception {
 		int oldposition = buffer.position();
 		buffer.putInt(valid);
 		byte barray[] = filename.getBytes();
@@ -53,7 +54,7 @@ public class DirectoryRecord {
 		buffer.position(oldposition + CrailConstants.DIRECTORY_RECORD);
 	}
 	
-	public void update(ByteBuffer buffer) {
+	public void update(CrailBuffer buffer) {
 		int oldlimit = buffer.limit();
 		int tmplimit = buffer.position() + CrailConstants.DIRECTORY_RECORD;
 		buffer.limit(tmplimit);

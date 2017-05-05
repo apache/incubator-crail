@@ -23,14 +23,16 @@ package com.ibm.crail.storage;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+
+import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.metadata.BlockInfo;
 
 public interface StorageEndpoint{
 
-	public abstract StorageFuture write(ByteBuffer buffer, ByteBuffer region, BlockInfo remoteMr, long remoteOffset) throws IOException,
+	public abstract StorageFuture write(CrailBuffer buffer, BlockInfo remoteMr, long remoteOffset) throws IOException,
 			InterruptedException;
 
-	public abstract StorageFuture read(ByteBuffer buffer, ByteBuffer region, BlockInfo remoteMr, long remoteOffset) throws IOException,
+	public abstract StorageFuture read(CrailBuffer buffer, BlockInfo remoteMr, long remoteOffset) throws IOException,
 			InterruptedException;
 
 	public abstract void close() throws IOException, InterruptedException;

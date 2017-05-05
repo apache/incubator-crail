@@ -64,7 +64,7 @@ public class ClientTest {
 		fs.lookup(filename).get().asDirectory();
 	}
 
-	void fillRandom(ByteBuffer buffer) {
+	void fillRandom(CrailBuffer buffer) {
 		int position = buffer.position();
 		byte[] byteBuffer = new byte[buffer.remaining()];
 		rand.nextBytes(byteBuffer);
@@ -76,7 +76,7 @@ public class ClientTest {
 		int toWrite = position - (int)outputStream.position();
 		Assert.assertTrue(toWrite >= 0);
 		if (toWrite != 0) {
-			ByteBuffer outputBuffer = ByteBuffer.allocateDirect(toWrite);
+			CrailBuffer outputBuffer = fs.allocateBuffer();
 			outputBuffer.limit(toWrite);
 			fillRandom(outputBuffer);
 			CrailResult result = outputStream.write(outputBuffer).get();
@@ -87,8 +87,8 @@ public class ClientTest {
 	}
 
 	void directStream(int length, int position, int remoteOffset) throws Exception {
-		ByteBuffer outputBuffer = ByteBuffer.allocateDirect(length + position);
-		ByteBuffer inputBuffer = ByteBuffer.allocateDirect(outputBuffer.capacity());
+		CrailBuffer outputBuffer = fs.allocateBuffer();
+		CrailBuffer inputBuffer = fs.allocateBuffer();
 
 		System.err.println("DirectStream write/read with from buffer position = " +
 				position + ", length = " + length + ", remoteOffset = " + remoteOffset);
@@ -123,15 +123,15 @@ public class ClientTest {
 		outputBuffer.position(position);
 		inputBuffer.position(position);
 		try {
-			Assert.assertTrue(inputBuffer.compareTo(outputBuffer) == 0);
+			Assert.assertTrue(inputBuffer.getByteBuffer().compareTo(outputBuffer.getByteBuffer()) == 0);
 		} catch (AssertionError e) {
 			System.err.println("outputBuffer = " + outputBuffer + ", inputBuffer = " + inputBuffer);
 			System.err.println("outputStream.position() = " + outputStream.position() +
 					", inputStream.position() = " + inputStream.position());
 			if (outputBuffer.remaining() == inputBuffer.remaining()) {
 				for(int i = 0; outputBuffer.remaining() > 0; i++) {
-					int a = outputBuffer.get();
-					int b = inputBuffer.get();
+					int a = outputBuffer.getByteBuffer().get();
+					int b = inputBuffer.getByteBuffer().get();
 					if (a != b) {
 						System.err.println("outputBuffer[" + i + "] = " + Integer.toHexString(a) + " != " +
 								"inputBuffer[" + i + "] = " + Integer.toHexString(b));

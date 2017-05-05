@@ -41,8 +41,8 @@ public abstract class CrailFS {
 	public abstract Upcoming<CrailNode> lookup(String path) throws Exception;
 	public abstract Upcoming<CrailNode> rename(String srcPath, String dstPath) throws Exception;
 	public abstract Upcoming<CrailNode> delete(String path, boolean recursive) throws Exception;
-	public abstract ByteBuffer allocateBuffer() throws Exception;
-	public abstract void freeBuffer(ByteBuffer buffer) throws Exception;
+	public abstract CrailBuffer allocateBuffer() throws Exception;
+	public abstract void freeBuffer(CrailBuffer buffer) throws Exception;
 	public abstract CrailStatistics getStatistics();
 	public abstract int getHostHash();
 	protected abstract void closeFileSystem() throws Exception;

@@ -22,27 +22,18 @@
 package com.ibm.crail.core;
 
 import java.nio.ByteBuffer;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
 
+import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.storage.StorageFuture;
 import com.ibm.crail.storage.StorageResult;
 import com.ibm.crail.utils.BufferCheckpoint;
+import com.ibm.crail.utils.MultiFuture;
 
-class CoreDataOperation implements Future<CrailResult>, CrailResult {
-	protected static int RPC_PENDING = 0;
-	protected static int RPC_DONE = 1;
-	protected static int RPC_ERROR = 2;		
-	
-	//init state
+class CoreDataOperation extends MultiFuture<StorageResult, CrailResult> implements CrailResult {
 	private CoreStream stream;
-	private ByteBuffer buffer;
+	private CrailBuffer buffer;
 	private long fileOffset;
 	private int bufferPosition;
 	private int bufferLimit;
@@ -50,14 +41,11 @@ class CoreDataOperation implements Future<CrailResult>, CrailResult {
 	
 	//current state
 	private BufferCheckpoint bufferCheckpoint;
-	private LinkedBlockingQueue<Future<StorageResult>> pendingDataOps;
 	private int inProcessLen;
 	private long completedLen;
-	private AtomicInteger status;
-	private Exception exception;
 	private boolean isSynchronous;
 	
-	public CoreDataOperation(CoreStream stream, ByteBuffer buffer) throws Exception{
+	public CoreDataOperation(CoreStream stream, CrailBuffer buffer) throws Exception{
 		this.stream = stream;
 		this.buffer = buffer;
 		this.fileOffset = stream.position();
@@ -69,98 +57,11 @@ class CoreDataOperation implements Future<CrailResult>, CrailResult {
 		this.isSynchronous = false;
 		
 		if (operationLength > 0){
-			this.pendingDataOps = new LinkedBlockingQueue<Future<StorageResult>>();
-			this.exception = null;
-			this.status = new AtomicInteger(RPC_PENDING);
 			this.bufferCheckpoint = stream.getBufferCheckpoint();
 			if (CrailConstants.DEBUG){
 				this.bufferCheckpoint.checkIn(buffer);
 			}		
-		} else {
-			this.status = new AtomicInteger(RPC_DONE);			
-		}
-		
-	}
-	
-	public synchronized boolean isDone() {
-		if (status.get() == RPC_PENDING) {
-			try {
-				Future<StorageResult> dataFuture = pendingDataOps.peek();
-				while (dataFuture != null && dataFuture.isDone()) {
-					dataFuture = pendingDataOps.poll();
-					StorageResult result = dataFuture.get();
-					completedLen += result.getLen();
-					dataFuture = pendingDataOps.peek();
-				}
-				if (pendingDataOps.isEmpty() && status.get() == RPC_PENDING) {
-					completeOperation();
-				}
-			} catch (Exception e) {
-				status.set(RPC_ERROR);
-				this.exception = e;
-			}
-		}
-		
-		return status.get() > 0;
-	}	
-	
-	public synchronized CrailResult get() throws InterruptedException, ExecutionException {
-		if (this.exception != null){
-			throw new ExecutionException(exception);
-		}		
-		
-		if (status.get() == RPC_PENDING){
-			try {
-				for (Future<StorageResult> dataFuture = pendingDataOps.poll(); dataFuture != null; dataFuture = pendingDataOps.poll()){
-					StorageResult result = dataFuture.get();
-					completedLen += result.getLen();
-				}
-				completeOperation();
-			} catch (Exception e) {
-				status.set(RPC_ERROR);
-				this.exception = e;
-			}
-		}
-		
-		if (status.get() == RPC_DONE){
-			return this;
-		} else if (status.get() == RPC_PENDING){
-			throw new InterruptedException("RPC timeout");
-		} else if (exception != null) {
-			throw new ExecutionException(exception);
-		} else {
-			throw new InterruptedException("RPC error");
-		}
-	}
-
-	@Override
-	public synchronized CrailResult get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-		if (this.exception != null){
-			throw new ExecutionException(exception);
-		}		
-		
-		if (status.get() == RPC_PENDING){
-			try {
-				for (Future<StorageResult> dataFuture = pendingDataOps.poll(); dataFuture != null; dataFuture = pendingDataOps.poll()){
-					StorageResult result = dataFuture.get(CrailConstants.DATA_TIMEOUT, TimeUnit.MILLISECONDS);
-					completedLen += result.getLen();
-				}
-				completeOperation();
-			} catch (Exception e) {
-				status.set(RPC_ERROR);
-				this.exception = e;
-			}
-		}
-		
-		if (status.get() == RPC_DONE){
-			return this;
-		} else if (status.get() == RPC_PENDING){
-			throw new InterruptedException("RPC timeout");
-		} else if (exception != null) {
-			throw new ExecutionException(exception);
-		} else {
-			throw new InterruptedException("RPC error");
-		}
+		} 
 	}
 	
 	public long getLen() {
@@ -203,8 +104,8 @@ class CoreDataOperation implements Future<CrailResult>, CrailResult {
 		return false;
 	}
 	
-	synchronized void add(StorageFuture dataFuture) {
-		this.pendingDataOps.add(dataFuture);
+	public synchronized void add(StorageFuture dataFuture) {
+		super.add(dataFuture);
 		if (dataFuture.isSynchronous()){
 			this.isSynchronous = true;
 		}
@@ -212,9 +113,9 @@ class CoreDataOperation implements Future<CrailResult>, CrailResult {
 	
 	//-----------
 	
-	private void completeOperation(){
-		if (status.get() != RPC_DONE){
-			status.set(RPC_DONE);
+	public void completeOperation(){
+		super.completeOperation();
+		if (this.isDone()){
 			stream.update(fileOffset + completedLen);
 			if (CrailConstants.DEBUG){
 				bufferCheckpoint.checkOut(buffer);
@@ -224,5 +125,15 @@ class CoreDataOperation implements Future<CrailResult>, CrailResult {
 
 	boolean isSynchronous() {
 		return isSynchronous;
+	}
+
+	@Override
+	public void aggregate(StorageResult result) {
+		completedLen += result.getLen();
+	}
+
+	@Override
+	public CrailResult getAggregate() {
+		return this;
 	}
 }

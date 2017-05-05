@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 
+import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.metadata.FileInfo;
@@ -64,7 +65,7 @@ public abstract class CoreStream {
 	private HashMap<Integer, CoreSubOperation> blockMap;
 	private LinkedBlockingQueue<RpcFuture<RpcGetBlock>> pendingBlocks;
 	
-	abstract StorageFuture trigger(StorageEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception;
+	abstract StorageFuture trigger(StorageEndpoint endpoint, CoreSubOperation opDesc, CrailBuffer buffer, BlockInfo block) throws Exception;
 	abstract void update(long newCapacity);	
 	
 	CoreStream(CoreNode node, long streamId, long fileOffset) throws Exception {
@@ -86,7 +87,7 @@ public abstract class CoreStream {
 		this.pendingBlocks = new LinkedBlockingQueue<RpcFuture<RpcGetBlock>>();
 	}	
 	
-	final CoreDataOperation dataOperation(ByteBuffer dataBuf) throws Exception {
+	final CoreDataOperation dataOperation(CrailBuffer dataBuf) throws Exception {
 		blockMap.clear();
 		pendingBlocks.clear();
 		CoreDataOperation multiOperation = new CoreDataOperation(this, dataBuf);
@@ -229,14 +230,12 @@ public abstract class CoreStream {
 		return blockRemaining;
 	}
 	
-	private StorageFuture prepareAndTrigger(CoreSubOperation opDesc, ByteBuffer dataBuf, BlockInfo block) throws Exception {
+	private StorageFuture prepareAndTrigger(CoreSubOperation opDesc, CrailBuffer dataBuf, BlockInfo block) throws Exception {
 		try {
 			StorageEndpoint endpoint = endpointCache.getDataEndpoint(block.getDnInfo());
-			ByteBuffer region = fs.getBufferCache().getAllocationBuffer(dataBuf);
-			region = region != null ? region : dataBuf;
 			dataBuf.position(opDesc.getBufferPosition());
 			dataBuf.limit(dataBuf.position() + opDesc.getLen());
-			StorageFuture subFuture = trigger(endpoint, opDesc, dataBuf, region, block);
+			StorageFuture subFuture = trigger(endpoint, opDesc, dataBuf, block);
 			incStats(endpoint.isLocal());
 			return subFuture;
 		} catch(IOException e){

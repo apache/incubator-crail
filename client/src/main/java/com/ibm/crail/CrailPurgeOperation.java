@@ -21,14 +21,28 @@
 
 package com.ibm.crail;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.concurrent.Future;
+import com.ibm.crail.utils.MultiFuture;
 
-public interface CrailInputStream {
-	public Future<CrailResult> read(CrailBuffer dataBuf) throws Exception;
-	public void seek(long pos) throws IOException;
-	public int available();
-	public long position();
-	void close() throws Exception;
+class CrailPurgeOperation extends MultiFuture<CrailResult, CrailResult> implements CrailResult {
+	private long completedLen;
+	
+	public CrailPurgeOperation() {
+		this.completedLen = 0;
+	}
+
+	@Override
+	public void aggregate(CrailResult obj) {
+		this.completedLen += obj.getLen();
+	}
+
+	@Override
+	public CrailResult getAggregate() {
+		return this;
+	}
+
+	@Override
+	public long getLen() {
+		return completedLen;
+	}
+
 }

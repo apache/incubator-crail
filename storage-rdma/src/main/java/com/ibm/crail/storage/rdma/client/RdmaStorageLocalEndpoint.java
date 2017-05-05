@@ -33,6 +33,8 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.concurrent.ConcurrentHashMap;
+
+import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.storage.StorageEndpoint;
@@ -86,7 +88,7 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 	}
 
 	@Override
-	public StorageFuture write(ByteBuffer buffer, ByteBuffer region, BlockInfo remoteMr, long remoteOffset) throws IOException,
+	public StorageFuture write(CrailBuffer buffer, BlockInfo remoteMr, long remoteOffset) throws IOException,
 			InterruptedException {
 		if (buffer.remaining() > CrailConstants.BLOCK_SIZE){
 			throw new IOException("write size too large " + buffer.remaining());
@@ -112,7 +114,7 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 			long tmpAddr = blockOffset + remoteOffset + buffer.remaining();
 			throw new IOException("remote fileOffset + remoteOffset + len too large " + tmpAddr);
 		}		
-		long srcAddr = MemoryUtils.getAddress(buffer) + buffer.position();
+		long srcAddr = buffer.address() + buffer.position();
 		long dstAddr = MemoryUtils.getAddress(mappedBuffer) + blockOffset + remoteOffset; 
 //		unsafe.copyMemory(srcAddr, dstAddr, buffer.remaining());
 		RdmaLocalFuture future = new RdmaLocalFuture(unsafe, srcAddr, dstAddr, buffer.remaining());
@@ -120,7 +122,7 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 	}
 
 	@Override
-	public StorageFuture read(ByteBuffer buffer, ByteBuffer region, BlockInfo remoteMr, long remoteOffset) throws IOException,
+	public StorageFuture read(CrailBuffer buffer, BlockInfo remoteMr, long remoteOffset) throws IOException,
 			InterruptedException {
 		if (buffer.remaining() > CrailConstants.BLOCK_SIZE){
 			throw new IOException("read size too large");
@@ -150,7 +152,7 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 			throw new IOException("remote fileOffset + remoteOffset + len too large " + tmpAddr);
 		}			
 		long srcAddr = MemoryUtils.getAddress(mappedBuffer) + blockOffset + remoteOffset;
-		long dstAddr = MemoryUtils.getAddress(buffer) + buffer.position();
+		long dstAddr = buffer.address() + buffer.position();
 //		unsafe.copyMemory(srcAddr, dstAddr, buffer.remaining());
 		RdmaLocalFuture future = new RdmaLocalFuture(unsafe, srcAddr, dstAddr, buffer.remaining());
 		return future;

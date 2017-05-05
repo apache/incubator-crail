@@ -25,11 +25,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Future;
 
+import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.CrailResult;
 
 public class DirectoryOutputStream {
 	private CoreOutputStream stream;
-	private ByteBuffer internalBuf;	
+	private CrailBuffer internalBuf;	
 	private CoreFileSystem fs;
 	private boolean open;
 

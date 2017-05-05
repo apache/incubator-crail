@@ -61,7 +61,7 @@ public class CoreStreamStatistics implements CrailStatistics.StatisticsProvider 
 	
 	@Override
 	public String providerName() {
-		return "Streams";
+		return "core/streams";
 	}
 
 	@Override

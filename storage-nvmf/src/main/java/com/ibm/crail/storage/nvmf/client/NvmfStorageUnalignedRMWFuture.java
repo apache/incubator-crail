@@ -22,6 +22,7 @@
 
 package com.ibm.crail.storage.nvmf.client;
 
+import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.storage.StorageResult;
 
@@ -37,8 +38,8 @@ public class NvmfStorageUnalignedRMWFuture extends NvmfStorageUnalignedFuture {
 	private boolean initDone;
 	private Future<StorageResult> writeFuture;
 
-	public NvmfStorageUnalignedRMWFuture(NvmfStorageFuture future, NvmfStorageEndpoint endpoint, ByteBuffer buffer,
-									  BlockInfo remoteMr, long remoteOffset, ByteBuffer stagingBuffer)
+	public NvmfStorageUnalignedRMWFuture(NvmfStorageFuture future, NvmfStorageEndpoint endpoint, CrailBuffer buffer,
+									  BlockInfo remoteMr, long remoteOffset, CrailBuffer stagingBuffer)
 			throws NoSuchFieldException, IllegalAccessException {
 		super(future, endpoint, buffer, remoteMr, remoteOffset, stagingBuffer);
 		initDone = false;
@@ -51,8 +52,8 @@ public class NvmfStorageUnalignedRMWFuture extends NvmfStorageUnalignedFuture {
 		if (!done) {
 			if (!initDone) {
 				initFuture.get(l, timeUnit);
-				long srcAddr = NvmfStorageUtils.getAddress(buffer) + localOffset;
-				long dstAddr = NvmfStorageUtils.getAddress(stagingBuffer) + NvmfStorageUtils.namespaceSectorOffset(
+				long srcAddr = buffer.address() + localOffset;
+				long dstAddr = stagingBuffer.address() + NvmfStorageUtils.namespaceSectorOffset(
 						endpoint.getSectorSize(), remoteOffset);
 				unsafe.copyMemory(srcAddr, dstAddr, len);
 
@@ -60,8 +61,7 @@ public class NvmfStorageUnalignedRMWFuture extends NvmfStorageUnalignedFuture {
 				int alignedLen = (int) NvmfStorageUtils.alignLength(endpoint.getSectorSize(), remoteOffset, len);
 				stagingBuffer.limit(alignedLen);
 				try {
-					writeFuture = endpoint.write(stagingBuffer, null, remoteMr,
-							NvmfStorageUtils.alignOffset(endpoint.getSectorSize(), remoteOffset));
+					writeFuture = endpoint.write(stagingBuffer, remoteMr, NvmfStorageUtils.alignOffset(endpoint.getSectorSize(), remoteOffset));
 				} catch (IOException e) {
 					throw new ExecutionException(e);
 				}

@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 
 import sun.nio.ch.DirectBuffer;
 
+import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.CrailInputStream;
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConstants;
@@ -57,13 +58,10 @@ public class CoreInputStream extends CoreStream implements CrailInputStream {
 		}
 	}
 	
-	final public Future<CrailResult> read(ByteBuffer dataBuf) throws Exception {
+	final public Future<CrailResult> read(CrailBuffer dataBuf) throws Exception {
 		if (!open) {
 			throw new IOException("stream already closed");
 		}
-		if (!(dataBuf instanceof DirectBuffer)) {
-			throw new IOException("buffer not offheap");
-		}		
 		if (dataBuf.remaining() <= 0) {
 			return noOp;
 		}
@@ -127,8 +125,8 @@ public class CoreInputStream extends CoreStream implements CrailInputStream {
 	
 	// --------------------------
 	
-	StorageFuture trigger(StorageEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception {
-		StorageFuture future = endpoint.read(buffer, region, block, opDesc.getBlockOffset());
+	StorageFuture trigger(StorageEndpoint endpoint, CoreSubOperation opDesc, CrailBuffer buffer, BlockInfo block) throws Exception {
+		StorageFuture future = endpoint.read(buffer, block, opDesc.getBlockOffset());
 		return future;
 	}	
 	

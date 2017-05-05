@@ -30,7 +30,7 @@ public class CrailConstants {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	public static final String VERSION_KEY = "crail.version";
-	public static int VERSION = 2818;
+	public static int VERSION = 2830;
 	
 	public static final String STORAGE_TYPES_KEY = "crail.storage.types";
 	public static String STORAGE_TYPES = "com.ibm.crail.storage.rdma.RdmaStorageTier";		
@@ -71,6 +71,9 @@ public class CrailConstants {
 	public static final String BUFFER_SIZE_KEY = "crail.buffersize";
 	public static int BUFFER_SIZE = 1048576;
 	
+	public static final String SLICE_SIZE_KEY = "crail.slicesize";
+	public static int SLICE_SIZE = BUFFER_SIZE;		
+	
 	public static final String SINGLETON_KEY = "crail.singleton";
 	public static boolean SINGLETON = false;	
 	
@@ -84,7 +87,7 @@ public class CrailConstants {
 	public static boolean DIRECTORY_RANDOMIZE = true;
 	
 	public static final String CACHE_IMPL_KEY = "crail.cacheimpl";
-	public static String CACHE_IMPL = "com.ibm.crail.utils.MappedBufferCache";		
+	public static String CACHE_IMPL = "com.ibm.crail.memory.MappedBufferCache";		
 	
 	public static final String NAMENODE_ADDRESS_KEY = "crail.namenode.address";
 	public static String NAMENODE_ADDRESS = "";
@@ -138,6 +141,9 @@ public class CrailConstants {
 		if (conf.get(BUFFER_SIZE_KEY) != null) {
 			BUFFER_SIZE = Integer.parseInt(conf.get(BUFFER_SIZE_KEY));
 		}	
+		if (conf.get(SLICE_SIZE_KEY) != null) {
+			SLICE_SIZE = Integer.parseInt(conf.get(SLICE_SIZE_KEY));
+		}			
 		if (conf.get(CrailConstants.SINGLETON_KEY) != null) {
 			SINGLETON = conf.getBoolean(CrailConstants.SINGLETON_KEY, false);
 		}	
@@ -182,6 +188,7 @@ public class CrailConstants {
 		LOG.info(RPC_TIMEOUT_KEY + " " + RPC_TIMEOUT);
 		LOG.info(DATA_TIMEOUT_KEY + " " + DATA_TIMEOUT);
 		LOG.info(BUFFER_SIZE_KEY + " " + BUFFER_SIZE);
+		LOG.info(SLICE_SIZE_KEY + " " + SLICE_SIZE);		
 		LOG.info(SINGLETON_KEY + " " + SINGLETON);
 		LOG.info(REGION_SIZE_KEY + " " + REGION_SIZE);
 		LOG.info(DIRECTORY_RECORD_KEY + " " + DIRECTORY_RECORD);
@@ -197,5 +204,9 @@ public class CrailConstants {
 		if (CrailConstants.BUFFER_SIZE % CrailConstants.DIRECTORY_RECORD != 0){
 			throw new IOException("crail.buffersize must be multiple of " + CrailConstants.DIRECTORY_RECORD);
 		}	
+		if (Math.max(CrailConstants.BUFFER_SIZE, CrailConstants.SLICE_SIZE) % Math.min(CrailConstants.BUFFER_SIZE, CrailConstants.SLICE_SIZE) != 0){
+			throw new IOException("crail.slicesize must be multiple of buffersize " + CrailConstants.BUFFER_SIZE);
+		}		
+		
 	}
 }

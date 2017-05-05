@@ -21,8 +21,10 @@
 
 package com.ibm.crail.storage.nvmf;
 
+import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.utils.DirectBufferCache;
+import com.ibm.crail.memory.BufferCache;
+import com.ibm.crail.memory.OffHeapBuffer;
 import com.ibm.disni.nvmef.NvmeEndpointGroup;
 
 import java.io.IOException;
@@ -31,7 +33,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 
-public class NvmfBufferCache extends DirectBufferCache {
+public class NvmfBufferCache extends BufferCache {
 	private static final int ALIGNMENT = 4096;
 	private NvmeEndpointGroup endpointGroup;
 
@@ -51,10 +53,10 @@ public class NvmfBufferCache extends DirectBufferCache {
 	}
 
 	@Override
-	protected ByteBuffer allocateBuffer() throws IOException {
+	public CrailBuffer allocateBuffer() throws IOException {
 		ByteBuffer buffer = endpointGroup.allocateBuffer(CrailConstants.BUFFER_SIZE, ALIGNMENT);
 		bufferPool.add(buffer);
-		return buffer;
+		return OffHeapBuffer.wrap(buffer);
 	}
 
 	@Override

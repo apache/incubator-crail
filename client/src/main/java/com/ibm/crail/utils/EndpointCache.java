@@ -52,7 +52,7 @@ public class EndpointCache implements CrailStatistics.StatisticsProvider {
 	
 	@Override
 	public String providerName() {
-		return "EndpointCache";
+		return "cache/endpoint";
 	}
 
 	@Override

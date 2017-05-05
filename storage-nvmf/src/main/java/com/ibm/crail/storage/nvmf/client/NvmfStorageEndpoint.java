@@ -22,14 +22,15 @@
 
 package com.ibm.crail.storage.nvmf.client;
 
+import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.storage.StorageFuture;
 import com.ibm.crail.storage.nvmf.NvmfBufferCache;
 import com.ibm.crail.storage.nvmf.NvmfStorageConstants;
+import com.ibm.crail.memory.BufferCache;
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.utils.CrailUtils;
-import com.ibm.crail.utils.DirectBufferCache;
 import com.ibm.disni.nvmef.NvmeCommand;
 import com.ibm.disni.nvmef.NvmeEndpoint;
 import com.ibm.disni.nvmef.NvmeEndpointGroup;
@@ -50,7 +51,7 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 	private final InetSocketAddress inetSocketAddress;
 	private final NvmeEndpoint endpoint;
 	private final int sectorSize;
-	private final DirectBufferCache cache;
+	private final BufferCache cache;
 	private final BlockingQueue<NvmeCommand> freeCommands;
 	private final NvmeCommand[] commands;
 	private final NvmfStorageFuture[] futures;
@@ -97,7 +98,7 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 		READ;
 	}
 
-	public StorageFuture Op(Operation op, ByteBuffer buffer, BlockInfo remoteMr, long remoteOffset)
+	public StorageFuture Op(Operation op, CrailBuffer buffer, BlockInfo remoteMr, long remoteOffset)
 			throws IOException, InterruptedException {
 		int length = buffer.remaining();
 		if (length > CrailConstants.BLOCK_SIZE){
@@ -138,7 +139,7 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 		StorageFuture future = null;
 		if (aligned) {
 //			LOG.info("aligned");
-			command.setBuffer(buffer).setLinearBlockAddress(lba);
+			command.setBuffer(buffer.getByteBuffer()).setLinearBlockAddress(lba);
 			switch(op) {
 				case READ:
 					command.read();
@@ -153,14 +154,14 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 //			LOG.info("unaligned");
 			long alignedLength = NvmfStorageUtils.alignLength(sectorSize, remoteOffset, length);
 
-			ByteBuffer stagingBuffer = cache.getBuffer();
+			CrailBuffer stagingBuffer = cache.getBuffer();
 			stagingBuffer.clear();
 			stagingBuffer.limit((int)alignedLength);
 			try {
 				switch(op) {
 					case READ: {
 						NvmfStorageFuture f = futures[(int)command.getId()] = new NvmfStorageFuture(this, (int)alignedLength);
-						command.setBuffer(stagingBuffer).setLinearBlockAddress(lba).read().execute();
+						command.setBuffer(stagingBuffer.getByteBuffer()).setLinearBlockAddress(lba).read().execute();
 						future = new NvmfStorageUnalignedReadFuture(f, this, buffer, remoteMr, remoteOffset, stagingBuffer);
 						break;
 					}
@@ -168,16 +169,16 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 						if (NvmfStorageUtils.namespaceSectorOffset(sectorSize, remoteOffset) == 0) {
 							// Do not read if the offset is aligned to sector size
 							int sizeToWrite = length;
-							stagingBuffer.put(buffer);
+							stagingBuffer.put(buffer.getByteBuffer());
 							stagingBuffer.position(0);
-							command.setBuffer(stagingBuffer).setLinearBlockAddress(lba).write().execute();
+							command.setBuffer(stagingBuffer.getByteBuffer()).setLinearBlockAddress(lba).write().execute();
 							future = futures[(int)command.getId()] = new NvmfStorageFuture(this, sizeToWrite);
 						} else {
 							// RMW but append only file system allows only reading last sector
 							// and dir entries are sector aligned
 							stagingBuffer.limit(sectorSize);
 							NvmfStorageFuture f = futures[(int)command.getId()] = new NvmfStorageFuture(this, sectorSize);
-							command.setBuffer(stagingBuffer).setLinearBlockAddress(lba).read().execute();
+							command.setBuffer(stagingBuffer.getByteBuffer()).setLinearBlockAddress(lba).read().execute();
 							future = new NvmfStorageUnalignedRMWFuture(f, this, buffer, remoteMr, remoteOffset, stagingBuffer);
 						}
 						break;
@@ -193,12 +194,12 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 		return future;
 	}
 
-	public StorageFuture write(ByteBuffer buffer, ByteBuffer region, BlockInfo blockInfo, long remoteOffset)
+	public StorageFuture write(CrailBuffer buffer, BlockInfo blockInfo, long remoteOffset)
 			throws IOException, InterruptedException {
 		return Op(Operation.WRITE, buffer, blockInfo, remoteOffset);
 	}
 
-	public StorageFuture read(ByteBuffer buffer, ByteBuffer region, BlockInfo blockInfo, long remoteOffset)
+	public StorageFuture read(CrailBuffer buffer, BlockInfo blockInfo, long remoteOffset)
 			throws IOException, InterruptedException {
 		return Op(Operation.READ, buffer, blockInfo, remoteOffset);
 	}
@@ -216,7 +217,7 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 		}
 	}
 
-	void putBuffer(ByteBuffer buffer) throws IOException {
+	void putBuffer(CrailBuffer buffer) throws IOException {
 		cache.putBuffer(buffer);
 	}
 

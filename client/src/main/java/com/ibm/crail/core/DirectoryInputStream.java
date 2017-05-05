@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 
+import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.utils.CrailUtils;
@@ -39,7 +40,7 @@ public class DirectoryInputStream implements Iterator<String> {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	private CoreInputStream stream;
-	private ByteBuffer internalBuf;	
+	private CrailBuffer internalBuf;	
 	private CoreFileSystem fs;
 	private String parent;
 	private String currentFile;

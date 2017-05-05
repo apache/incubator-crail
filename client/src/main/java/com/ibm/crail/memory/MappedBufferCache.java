@@ -19,7 +19,7 @@
  *
  */
 
-package com.ibm.crail.utils;
+package com.ibm.crail.memory;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,12 +34,13 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 
 import com.ibm.crail.conf.CrailConstants;
+import com.ibm.crail.utils.CrailUtils;
+import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.CrailStatistics;
 
-public class MappedBufferCache extends DirectBufferCache implements CrailStatistics.StatisticsProvider {
+public class MappedBufferCache extends BufferCache implements CrailStatistics.StatisticsProvider {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
-	private ConcurrentHashMap<Long, MappedByteBuffer> allocationMap;
 	private String id;
 	private String directory;
 	private File dir;
@@ -53,7 +54,6 @@ public class MappedBufferCache extends DirectBufferCache implements CrailStatist
 	public MappedBufferCache() throws IOException {
 		super();
 		
-		this.allocationMap = new ConcurrentHashMap<Long, MappedByteBuffer>();
 		id = "" + System.currentTimeMillis();
 		directory = CrailUtils.getCacheDirectory(id);
 		dir = new File(directory);
@@ -77,7 +77,7 @@ public class MappedBufferCache extends DirectBufferCache implements CrailStatist
 	
 	@Override
 	public String providerName() {
-		return "MappedBufferCache";
+		return "cache/mapped";
 	}
 
 	@Override
@@ -91,12 +91,6 @@ public class MappedBufferCache extends DirectBufferCache implements CrailStatist
 		this.cacheMissesHeap.set(0);
 	}	
 
-	@Override
-	public ByteBuffer getAllocationBuffer(ByteBuffer buffer) {
-		long address = CrailUtils.getAddress(buffer);
-		return allocationMap.get(address);
-	}	
-	
 	public long missedMap() {
 		return cacheMissesMap.get();
 	}
@@ -118,21 +112,11 @@ public class MappedBufferCache extends DirectBufferCache implements CrailStatist
 		LOG.info("mapped client cache closed");
 	}
 	
-	protected ByteBuffer allocateBuffer() throws IOException{
-//		this.cacheMisses.incrementAndGet();
-		ByteBuffer buffer = allocateRegion();
-		
-		if (buffer == null){
-			this.cacheMissesHeap.incrementAndGet();
-			buffer = ByteBuffer.allocateDirect(CrailConstants.BUFFER_SIZE);
-		} else {
-			this.cacheMissesMap.incrementAndGet();
-		}		
-		
-		return buffer;
+	public CrailBuffer allocateBuffer() throws IOException{
+		return allocateRegion();
 	}
 
-	private ByteBuffer allocateRegion() throws IOException {
+	private CrailBuffer allocateRegion() throws IOException {
 		if (currentRegion >= allocationCount){
 			return null;
 		}
@@ -141,33 +125,30 @@ public class MappedBufferCache extends DirectBufferCache implements CrailStatist
 		RandomAccessFile randomFile = new RandomAccessFile(path, "rw");
 		randomFile.setLength(CrailConstants.REGION_SIZE);
 		FileChannel channel = randomFile.getChannel();
-		MappedByteBuffer mappedBuffer = channel.map(MapMode.READ_WRITE, 0,
+		MappedByteBuffer _mappedBuffer = channel.map(MapMode.READ_WRITE, 0,
 				CrailConstants.REGION_SIZE);
+		CrailBuffer mappedBuffer = OffHeapBuffer.wrap(_mappedBuffer);
 		randomFile.close();
 		channel.close();
 
-		long mappedAddress = CrailUtils.getAddress(mappedBuffer);
-		ByteBuffer firstBuffer = slice(mappedBuffer, 0);
-		allocationMap.put(mappedAddress, mappedBuffer);
+		CrailBuffer firstBuffer = slice(mappedBuffer, 0);
 		
 		for (int j = 1; j < bufferCount; j++) {
 			int position = j * CrailConstants.BUFFER_SIZE;
-			ByteBuffer sliceBuffer = slice(mappedBuffer, position);
-			long address = CrailUtils.getAddress(sliceBuffer);
+			CrailBuffer sliceBuffer = slice(mappedBuffer, position);
 			this.putBufferInternal(sliceBuffer);
-			allocationMap.put(address, mappedBuffer);
 		}
 		mappedBuffer.clear();
 		
 		return firstBuffer;
 	}
 	
-	private ByteBuffer slice(MappedByteBuffer mappedBuffer, int position){
+	private CrailBuffer slice(CrailBuffer mappedBuffer, int position){
 		int limit = position + CrailConstants.BUFFER_SIZE;
 		mappedBuffer.clear();
 		mappedBuffer.position(position);
 		mappedBuffer.limit(limit);
-		ByteBuffer buffer = mappedBuffer.slice();			
+		CrailBuffer buffer = mappedBuffer.slice();			
 		return buffer;
 	}
 }

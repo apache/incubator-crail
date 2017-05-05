@@ -21,6 +21,7 @@
 
 package com.ibm.crail.utils;
 
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
@@ -31,6 +32,8 @@ import java.nio.ByteBuffer;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+
+import sun.misc.Unsafe;
 
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.DataNodeInfo;
@@ -56,12 +59,17 @@ public class CrailUtils {
 		return nnAddr;
 	}
 	
-	public static long blockStartAddress(long offset) {
+	public static final long blockStartAddress(long offset) {
 		long blockCount = offset / CrailConstants.BLOCK_SIZE;
 		return blockCount*CrailConstants.BLOCK_SIZE;
 	}
 	
-	public static long nextBlockAddress(long offset){
+	public static final long bufferStartAddress(long position, long sliceSize) {
+		long blockCount = position / sliceSize;
+		return blockCount*sliceSize;
+	}	
+	
+	public static final long nextBlockAddress(long offset){
 		if ((offset % CrailConstants.BLOCK_SIZE) == 0){
 			return offset;
 		} else {
@@ -69,7 +77,7 @@ public class CrailUtils {
 		}
 	}
 
-	public static int minFileBuf(long fileSize, int bufSize) {
+	public static final int minFileBuf(long fileSize, int bufSize) {
 		int fileLeftOver = Integer.MAX_VALUE;
 		
 		long _maxInt = (long) Integer.MAX_VALUE;
@@ -169,4 +177,11 @@ public class CrailUtils {
 	public static int getHostHash() throws UnknownHostException{
 		return InetAddress.getLocalHost().getCanonicalHostName().hashCode();
 	}
+	
+//	public static Unsafe getUnsafe() throws Exception {
+//		Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
+//		theUnsafe.setAccessible(true);
+//		Unsafe unsafe = (Unsafe) theUnsafe.get(null);
+//		return unsafe;
+//	}	
 }

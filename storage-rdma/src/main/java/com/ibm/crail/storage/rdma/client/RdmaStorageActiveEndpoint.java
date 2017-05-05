@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 
+import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.storage.StorageEndpoint;
@@ -121,7 +122,7 @@ public class RdmaStorageActiveEndpoint extends RdmaActiveEndpoint implements Sto
 	}
 	
 	@Override
-	public StorageFuture write(ByteBuffer buffer, ByteBuffer region, BlockInfo remoteMr, long remoteOffset) throws IOException, InterruptedException {
+	public StorageFuture write(CrailBuffer buffer, BlockInfo remoteMr, long remoteOffset) throws IOException, InterruptedException {
 		if (buffer.remaining() > CrailConstants.BLOCK_SIZE){
 			throw new IOException("write size too large " + buffer.remaining());
 		}
@@ -141,12 +142,12 @@ public class RdmaStorageActiveEndpoint extends RdmaActiveEndpoint implements Sto
 		if (deviceCache == null){
 			deviceCache = mrCache.getDeviceCache(this.getPd());
 		}
-		IbvMr localMr = deviceCache.get(region);
+		IbvMr localMr = deviceCache.get(buffer.getRegion());
 		if (localMr == null){
-			localMr = this.registerMemory(region).execute().free().getMr();
+			localMr = this.registerMemory(buffer.getRegion().getByteBuffer()).execute().free().getMr();
 			deviceCache.put(localMr);
 		}
-		long bufferAddress = MemoryUtils.getAddress(buffer);
+		long bufferAddress = buffer.address();
 		
 		SVCPostSend writeOp = writeOps.take();
 		
@@ -189,7 +190,7 @@ public class RdmaStorageActiveEndpoint extends RdmaActiveEndpoint implements Sto
 	}
 
 	@Override
-	public StorageFuture read(ByteBuffer buffer, ByteBuffer region, BlockInfo remoteMr, long remoteOffset) throws IOException, InterruptedException {
+	public StorageFuture read(CrailBuffer buffer, BlockInfo remoteMr, long remoteOffset) throws IOException, InterruptedException {
 		if (buffer.remaining() > CrailConstants.BLOCK_SIZE){
 			throw new IOException("read size too large");
 		}	
@@ -209,12 +210,12 @@ public class RdmaStorageActiveEndpoint extends RdmaActiveEndpoint implements Sto
 		if (deviceCache == null){
 			deviceCache = mrCache.getDeviceCache(this.getPd());
 		}
-		IbvMr localMr = deviceCache.get(region);
+		IbvMr localMr = deviceCache.get(buffer.getRegion());
 		if (localMr == null){
-			localMr = this.registerMemory(region).execute().free().getMr();
+			localMr = this.registerMemory(buffer.getRegion().getByteBuffer()).execute().free().getMr();
 			deviceCache.put(localMr);
 		}
-		long bufferAddress = MemoryUtils.getAddress(buffer);
+		long bufferAddress = buffer.address();
 				
 		SVCPostSend readOp = readOps.take();
 		

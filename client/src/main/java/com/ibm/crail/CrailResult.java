@@ -21,6 +21,6 @@
 
 package com.ibm.crail;
 
-public interface CrailResult  {
+public interface CrailResult {
 	public long getLen();	
 }

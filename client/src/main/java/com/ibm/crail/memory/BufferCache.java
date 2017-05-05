@@ -19,20 +19,25 @@
  *
  */
 
-package com.ibm.crail.utils;
+package com.ibm.crail.memory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import com.ibm.crail.CrailStatistics.StatisticsProvider;
 import com.ibm.crail.conf.CrailConstants;
+import com.ibm.crail.utils.CrailUtils;
+
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.slf4j.Logger;
+
 import com.ibm.crail.*;
 
-public class DirectBufferCache implements CrailStatistics.StatisticsProvider {
-	private LinkedBlockingQueue<ByteBuffer> cache;
+public abstract class BufferCache implements CrailStatistics.StatisticsProvider {
+	private static final Logger LOG = CrailUtils.getLogger();
+	private LinkedBlockingQueue<CrailBuffer> cache;
 	
 	private AtomicLong cacheGet;
 	private AtomicLong cachePut;
@@ -40,8 +45,8 @@ public class DirectBufferCache implements CrailStatistics.StatisticsProvider {
 	private AtomicLong cacheOut;
 	private AtomicLong cacheMax;
 	
-	public DirectBufferCache() throws IOException{
-		this.cache = new LinkedBlockingQueue<ByteBuffer>();
+	public BufferCache() throws IOException{
+		this.cache = new LinkedBlockingQueue<CrailBuffer>();
 		
 		this.cacheGet = new AtomicLong(0);
 		this.cachePut = new AtomicLong(0);
@@ -72,12 +77,12 @@ public class DirectBufferCache implements CrailStatistics.StatisticsProvider {
 		
 	}
 	
-	public ByteBuffer getBuffer() throws IOException {
+	public CrailBuffer getBuffer() throws IOException {
 		cacheGet.incrementAndGet();
 		cacheOut.incrementAndGet();
 		cacheMax.updateAndGet(x -> Math.max(x, cacheOut.get()));
 		
-		ByteBuffer buffer = cache.poll();
+		CrailBuffer buffer = cache.poll();
 		if (buffer == null){
 			synchronized(this){
 				buffer = cache.poll();
@@ -92,7 +97,7 @@ public class DirectBufferCache implements CrailStatistics.StatisticsProvider {
 		return buffer;
 	}
 	
-	public void putBuffer(ByteBuffer buffer) throws IOException{
+	public void putBuffer(CrailBuffer buffer) throws IOException{
 		if (buffer != null){
 			cachePut.incrementAndGet();
 			cacheOut.decrementAndGet();
@@ -100,7 +105,7 @@ public class DirectBufferCache implements CrailStatistics.StatisticsProvider {
 		}
 	}
 	
-	public void putBufferInternal(ByteBuffer buffer) throws IOException{
+	public void putBufferInternal(CrailBuffer buffer) throws IOException{
 		cache.add(buffer);
 	}	
 	
@@ -127,21 +132,15 @@ public class DirectBufferCache implements CrailStatistics.StatisticsProvider {
 	public void close(){
 		cache.clear();
 	}
-
-	protected ByteBuffer allocateBuffer() throws IOException{
-		return ByteBuffer.allocateDirect(CrailConstants.BUFFER_SIZE);
-	}
-
-	public ByteBuffer getAllocationBuffer(ByteBuffer buffer) {
-		return null;
-	}
 	
+	public abstract CrailBuffer allocateBuffer() throws IOException;
+
 	@SuppressWarnings("unchecked")
-	public static DirectBufferCache createInstance(String name) throws Exception {
+	public static BufferCache createInstance(String name) throws Exception {
 		Class<?> nodeClass = Class.forName(name);
-		if (DirectBufferCache.class.isAssignableFrom(nodeClass)){
-			Class<? extends DirectBufferCache> bufferCacheClass = (Class<? extends DirectBufferCache>) nodeClass;
-			DirectBufferCache bufferCache = bufferCacheClass.newInstance();
+		if (BufferCache.class.isAssignableFrom(nodeClass)){
+			Class<? extends BufferCache> bufferCacheClass = (Class<? extends BufferCache>) nodeClass;
+			BufferCache bufferCache = bufferCacheClass.newInstance();
 			return bufferCache;
 		} else {
 			throw new Exception("Cannot instantiate storage client of type " + name);

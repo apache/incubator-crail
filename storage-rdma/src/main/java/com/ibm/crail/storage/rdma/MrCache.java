@@ -27,6 +27,7 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.ibm.crail.CrailBuffer;
 import com.ibm.disni.util.MemoryUtils;
 import com.ibm.disni.rdma.verbs.IbvMr;
 import com.ibm.disni.rdma.verbs.IbvPd;
@@ -84,9 +85,8 @@ public class MrCache {
 			this.device = new ConcurrentHashMap<Long, IbvMr>();
 		}
 		
-		public IbvMr get(ByteBuffer buffer) throws IOException{
-			long address = MemoryUtils.getAddress(buffer);
-			IbvMr mr = device.get(address);
+		public IbvMr get(CrailBuffer buffer) throws IOException{
+			IbvMr mr = device.get(buffer.address());
 			return mr;
 		}
 		

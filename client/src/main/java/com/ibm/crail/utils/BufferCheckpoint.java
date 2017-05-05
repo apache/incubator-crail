@@ -23,19 +23,22 @@ package com.ibm.crail.utils;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentHashMap;
+
 import org.slf4j.Logger;
+
+import com.ibm.crail.CrailBuffer;
 
 public class BufferCheckpoint {
 	private static final Logger LOG = CrailUtils.getLogger();
-	private ConcurrentHashMap<Long, ByteBuffer> checkpoint;
+	private ConcurrentHashMap<Long, CrailBuffer> checkpoint;
 	
 	public BufferCheckpoint(){
-		this.checkpoint = new ConcurrentHashMap<Long, ByteBuffer>();
+		this.checkpoint = new ConcurrentHashMap<Long, CrailBuffer>();
 	}
 	
-	public void checkIn(ByteBuffer buffer) throws Exception {
-		long address = CrailUtils.getAddress(buffer);
-		ByteBuffer oldBuf = checkpoint.putIfAbsent(address, buffer);
+	public void checkIn(CrailBuffer buffer) throws Exception {
+		long address = buffer.address();
+		CrailBuffer oldBuf = checkpoint.putIfAbsent(address, buffer);
 		if (oldBuf != null){
 			LOG.info("ERROR Buffer already in use!");
 			StackTraceElement[] stack = Thread.currentThread().getStackTrace();
@@ -46,8 +49,8 @@ public class BufferCheckpoint {
 		}
 	}
 	
-	public void checkOut(ByteBuffer buffer){
-		long address = CrailUtils.getAddress(buffer);
+	public void checkOut(CrailBuffer buffer){
+		long address = buffer.address();
 		checkpoint.remove(address);
 	}
 }

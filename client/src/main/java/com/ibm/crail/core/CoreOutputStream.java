@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 
+import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.CrailOutputStream;
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.conf.CrailConstants;
@@ -57,12 +58,9 @@ public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 		}
 	}
 	
-	final public Future<CrailResult> write(ByteBuffer dataBuf) throws Exception {
+	final public Future<CrailResult> write(CrailBuffer dataBuf) throws Exception {
 		if (!open) {
 			throw new IOException("Stream closed, cannot write");
-		}
-		if (!(dataBuf instanceof DirectBuffer)) {
-			throw new IOException("buffer not offheap");
 		}
 		if (dataBuf.remaining() <= 0) {
 			return noOp;
@@ -111,8 +109,8 @@ public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 	
 	// ----------------------
 	
-	StorageFuture trigger(StorageEndpoint endpoint, CoreSubOperation opDesc, ByteBuffer buffer, ByteBuffer region, BlockInfo block) throws Exception {
-		StorageFuture dataFuture = endpoint.write(buffer, region, block, opDesc.getBlockOffset());
+	StorageFuture trigger(StorageEndpoint endpoint, CoreSubOperation opDesc, CrailBuffer buffer, BlockInfo block) throws Exception {
+		StorageFuture dataFuture = endpoint.write(buffer, block, opDesc.getBlockOffset());
 		return dataFuture;		
 	}	
 	

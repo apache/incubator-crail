@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 
 import com.ibm.crail.CrailBlockLocation;
+import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.CrailFS;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailResult;
@@ -46,6 +47,7 @@ import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.Upcoming;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
+import com.ibm.crail.memory.BufferCache;
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.metadata.DataNodeInfo;
 import com.ibm.crail.metadata.FileInfo;
@@ -63,7 +65,6 @@ import com.ibm.crail.rpc.RpcRenameFile;
 import com.ibm.crail.storage.StorageClient;
 import com.ibm.crail.utils.BlockCache;
 import com.ibm.crail.utils.BufferCheckpoint;
-import com.ibm.crail.utils.DirectBufferCache;
 import com.ibm.crail.utils.EndpointCache;
 import com.ibm.crail.utils.NextBlockCache;
 import com.ibm.crail.utils.CrailUtils;
@@ -87,7 +88,7 @@ public class CoreFileSystem extends CrailFS {
 	
 	private BlockCache blockCache;
 	private NextBlockCache nextBlockCache;
-	private DirectBufferCache bufferCache;
+	private BufferCache bufferCache;
 	private BufferCheckpoint bufferCheckpoint;
 	
 	private boolean isOpen;
@@ -127,7 +128,7 @@ public class CoreFileSystem extends CrailFS {
 		//Client
 		this.fsId = fsCount.getAndIncrement();
 		this.hostHash = CrailUtils.getHostHash();
-		this.bufferCache = DirectBufferCache.createInstance(CrailConstants.CACHE_IMPL);
+		this.bufferCache = BufferCache.createInstance(CrailConstants.CACHE_IMPL);
 		this.blockCache = new BlockCache();
 		this.nextBlockCache = new NextBlockCache();
 		this.openInputStreams = new ConcurrentHashMap<Long, CoreInputStream>();
@@ -137,9 +138,9 @@ public class CoreFileSystem extends CrailFS {
 		this.bufferCheckpoint = new BufferCheckpoint();
 		
 		this.statistics = new CrailStatistics();
-		this.ioStatsIn = new CoreIOStatistics("input");
+		this.ioStatsIn = new CoreIOStatistics("core/input");
 		statistics.addProvider(ioStatsIn);
-		this.ioStatsOut = new CoreIOStatistics("output");
+		this.ioStatsOut = new CoreIOStatistics("core/output");
 		statistics.addProvider(ioStatsOut);
 		this.streamStats = new CoreStreamStatistics();
 		statistics.addProvider(streamStats);
@@ -477,11 +478,11 @@ public class CoreFileSystem extends CrailFS {
 		}		
 	}
 
-	public ByteBuffer allocateBuffer() throws IOException {
+	public CrailBuffer allocateBuffer() throws IOException {
 		return this.bufferCache.getBuffer();
 	}
 	
-	public void freeBuffer(ByteBuffer buffer) throws IOException {
+	public void freeBuffer(CrailBuffer buffer) throws IOException {
 		this.bufferCache.putBuffer(buffer);
 	}	
 	
@@ -622,7 +623,7 @@ public class CoreFileSystem extends CrailFS {
 		return datanodeEndpointCache;
 	}
 
-	public DirectBufferCache getBufferCache() {
+	public BufferCache getBufferCache() {
 		return bufferCache;
 	}
 
