@@ -45,6 +45,9 @@ public abstract class BufferCache implements CrailStatistics.StatisticsProvider 
 	private AtomicLong cacheOut;
 	private AtomicLong cacheMax;
 	
+	private AtomicLong cacheMissesMap;
+	private AtomicLong cacheMissesHeap;		
+	
 	public BufferCache() throws IOException{
 		this.cache = new LinkedBlockingQueue<CrailBuffer>();
 		
@@ -53,16 +56,19 @@ public abstract class BufferCache implements CrailStatistics.StatisticsProvider 
 		this.cacheMisses = new AtomicLong(0);
 		this.cacheOut = new AtomicLong(0);
 		this.cacheMax = new AtomicLong(0);
+		
+		this.cacheMissesMap = new AtomicLong(0);
+		this.cacheMissesHeap = new AtomicLong(0);			
 	}
 	
 	@Override
 	public String providerName() {
-		return "DirectBufferCache";
+		return "cache/buffer";
 	}
 
 	@Override
 	public String printStatistics() {
-		return "cacheGet " + get() + ", cachePut " + put() + ", cacheMiss " + missed() + ", cacheSize " + size() +  ", cacheMax " + max();
+		return "cacheGet " + cacheGet.get() + ", cachePut " + cachePut.get() + ", cacheMiss " + cacheMisses.get() + ", cacheSize " + cache.size() +  ", cacheMax " + cacheMax.get() + ", mapMiss " + cacheMissesMap.get() + ", mapHeap " + cacheMissesHeap.get();
 	}
 	
 	public void resetStatistics(){
@@ -71,6 +77,8 @@ public abstract class BufferCache implements CrailStatistics.StatisticsProvider 
 		this.cacheMisses.set(0);
 		this.cacheOut.set(0);
 		this.cacheMax.set(0);
+		this.cacheMissesMap.set(0);
+		this.cacheMissesHeap.set(0);
 	}	
 	
 	public void mergeStatistics(StatisticsProvider provider){
@@ -89,6 +97,12 @@ public abstract class BufferCache implements CrailStatistics.StatisticsProvider 
 				if (buffer == null){
 					cacheMisses.incrementAndGet();
 					buffer = allocateBuffer();
+					if (buffer == null){
+						buffer = OffHeapBuffer.wrap(ByteBuffer.allocateDirect(CrailConstants.BUFFER_SIZE));
+						cacheMissesHeap.incrementAndGet();
+					} else {
+						cacheMissesMap.incrementAndGet();
+					}
 				}
 			}
 		} 
@@ -107,26 +121,6 @@ public abstract class BufferCache implements CrailStatistics.StatisticsProvider 
 	
 	public void putBufferInternal(CrailBuffer buffer) throws IOException{
 		cache.add(buffer);
-	}	
-	
-	public long get() {
-		return cacheGet.get();
-	}
-	
-	public long put(){
-		return cachePut.get();
-	}
-	
-	public long missed() {
-		return cacheMisses.get();
-	}
-	
-	public long max() {
-		return cacheMax.get();
-	}
-	
-	public long size() {
-		return cache.size();
 	}	
 	
 	public void close(){

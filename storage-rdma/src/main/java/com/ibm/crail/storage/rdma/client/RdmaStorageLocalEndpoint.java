@@ -36,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.conf.CrailConstants;
+import com.ibm.crail.memory.OffHeapBuffer;
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.storage.StorageFuture;
@@ -48,7 +49,7 @@ import sun.misc.Unsafe;
 
 public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 	private String indexDirPath;
-	private ConcurrentHashMap<Integer, MappedByteBuffer> bufferMap;
+	private ConcurrentHashMap<Integer, CrailBuffer> bufferMap;
 	private ConcurrentHashMap<Integer, RdmaBlockIndex> indexMap;
 	private Unsafe unsafe;
 	
@@ -58,7 +59,7 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 		}
 		
 		try {
-			this.bufferMap = new ConcurrentHashMap<Integer, MappedByteBuffer>();
+			this.bufferMap = new ConcurrentHashMap<Integer, CrailBuffer>();
 			this.indexMap = new ConcurrentHashMap<Integer, RdmaBlockIndex>();
 			this.unsafe = getUnsafe();
 			this.indexDirPath = RdmaStorageServer.getIndexDirectory(datanodeAddr);
@@ -78,7 +79,7 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 					indexStream.close();
 					indexChannel.close();
 					
-					bufferMap.put(blockIndex.getKey(), mappedBuffer);
+					bufferMap.put(blockIndex.getKey(), OffHeapBuffer.wrap(mappedBuffer));
 					indexMap.put(blockIndex.getKey(), blockIndex);
 				}				
 			}			
@@ -100,7 +101,7 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 			throw new IOException("remote offset too small " + remoteOffset);
 		}	
 		
-		ByteBuffer mappedBuffer = bufferMap.get(remoteMr.getLkey());
+		CrailBuffer mappedBuffer = bufferMap.get(remoteMr.getLkey());
 		if (mappedBuffer == null){
 			throw new IOException("No mapped buffer for this key");
 		}
@@ -115,7 +116,7 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 			throw new IOException("remote fileOffset + remoteOffset + len too large " + tmpAddr);
 		}		
 		long srcAddr = buffer.address() + buffer.position();
-		long dstAddr = MemoryUtils.getAddress(mappedBuffer) + blockOffset + remoteOffset; 
+		long dstAddr = mappedBuffer.address() + blockOffset + remoteOffset; 
 //		unsafe.copyMemory(srcAddr, dstAddr, buffer.remaining());
 		RdmaLocalFuture future = new RdmaLocalFuture(unsafe, srcAddr, dstAddr, buffer.remaining());
 		return future;
@@ -137,7 +138,7 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 			throw new IOException("remote offset too small " + remoteOffset);
 		}
 		
-		ByteBuffer mappedBuffer = bufferMap.get(remoteMr.getLkey());
+		CrailBuffer mappedBuffer = bufferMap.get(remoteMr.getLkey());
 		if (mappedBuffer == null){
 			throw new IOException("No mapped buffer for this key");
 		}
@@ -151,7 +152,7 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 			long tmpAddr = blockOffset + remoteOffset + buffer.remaining();
 			throw new IOException("remote fileOffset + remoteOffset + len too large " + tmpAddr);
 		}			
-		long srcAddr = MemoryUtils.getAddress(mappedBuffer) + blockOffset + remoteOffset;
+		long srcAddr = mappedBuffer.address() + blockOffset + remoteOffset;
 		long dstAddr = buffer.address() + buffer.position();
 //		unsafe.copyMemory(srcAddr, dstAddr, buffer.remaining());
 		RdmaLocalFuture future = new RdmaLocalFuture(unsafe, srcAddr, dstAddr, buffer.remaining());

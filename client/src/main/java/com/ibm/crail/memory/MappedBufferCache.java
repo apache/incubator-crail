@@ -38,7 +38,7 @@ import com.ibm.crail.utils.CrailUtils;
 import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.CrailStatistics;
 
-public class MappedBufferCache extends BufferCache implements CrailStatistics.StatisticsProvider {
+public class MappedBufferCache extends BufferCache {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	private String id;
@@ -48,9 +48,6 @@ public class MappedBufferCache extends BufferCache implements CrailStatistics.St
 	private long bufferCount;
 	private long currentRegion;	
 	
-	private AtomicLong cacheMissesMap;
-	private AtomicLong cacheMissesHeap;	
-
 	public MappedBufferCache() throws IOException {
 		super();
 		
@@ -68,35 +65,7 @@ public class MappedBufferCache extends BufferCache implements CrailStatistics.St
 		long _bufferSize = (long) CrailConstants.BUFFER_SIZE;
 		this.bufferCount = CrailConstants.REGION_SIZE / _bufferSize;
 		this.currentRegion = 0;
-		
-		this.cacheMissesMap = new AtomicLong(0);
-		this.cacheMissesHeap = new AtomicLong(0);		
-		
 		LOG.info("buffer cache, allocationCount " + allocationCount + ", bufferCount " + bufferCount);
-	}
-	
-	@Override
-	public String providerName() {
-		return "cache/mapped";
-	}
-
-	@Override
-	public String printStatistics() {
-		return super.printStatistics() + ", cacheMissMap " + missedMap() + ", cacheMissHeap " + missedHeap();
-	}	
-	
-	public void resetStatistics(){
-		super.resetStatistics();
-		this.cacheMissesMap.set(0);
-		this.cacheMissesHeap.set(0);
-	}	
-
-	public long missedMap() {
-		return cacheMissesMap.get();
-	}
-	
-	public long missedHeap() {
-		return cacheMissesHeap.get();
 	}
 	
 	@Override
