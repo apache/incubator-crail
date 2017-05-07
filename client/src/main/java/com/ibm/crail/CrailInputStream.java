@@ -22,10 +22,10 @@
 package com.ibm.crail;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.concurrent.Future;
 
 public interface CrailInputStream {
+	public CrailNode getFile();
 	public Future<CrailResult> read(CrailBuffer dataBuf) throws Exception;
 	public void seek(long pos) throws IOException;
 	public int available();

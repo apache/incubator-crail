@@ -21,8 +21,6 @@
 
 package com.ibm.crail.core;
 
-import java.nio.ByteBuffer;
-
 import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.utils.CrailUtils;

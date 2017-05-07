@@ -32,7 +32,6 @@ import com.ibm.crail.storage.StorageResult;
 import com.ibm.crail.storage.nvmf.NvmfStorageConstants;
 
 import java.lang.reflect.Field;
-import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;

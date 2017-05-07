@@ -289,6 +289,10 @@ public class CrailBufferedOutputStream extends OutputStream {
 	public void flush() throws IOException {
 		//flush should not be called, use purge instead!
 	}
+	
+	public CrailNode getFile() throws IOException {
+		return outputStream().getFile();
+	}	
 
 	private CrailBuffer getSlice() throws Exception {
 		CrailBuffer slice = readySlices.peek();

@@ -22,7 +22,6 @@
 package com.ibm.crail.core;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.concurrent.Future;

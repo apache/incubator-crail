@@ -24,19 +24,14 @@ package com.ibm.crail.memory;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.slf4j.Logger;
 
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.crail.CrailBuffer;
-import com.ibm.crail.CrailStatistics;
 
 public class MappedBufferCache extends BufferCache {
 	private static final Logger LOG = CrailUtils.getLogger();

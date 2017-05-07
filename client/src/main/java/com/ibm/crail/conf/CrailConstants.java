@@ -30,7 +30,7 @@ public class CrailConstants {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	public static final String VERSION_KEY = "crail.version";
-	public static int VERSION = 2830;
+	public static int VERSION = 2831;
 	
 	public static final String STORAGE_TYPES_KEY = "crail.storage.types";
 	public static String STORAGE_TYPES = "com.ibm.crail.storage.rdma.RdmaStorageTier";		
@@ -100,6 +100,9 @@ public class CrailConstants {
 	
 	public static final String NAMENODE_RPC_TYPE_KEY = "crail.namenode.rpc.type";
 	public static String NAMENODE_RPC_TYPE = "com.ibm.crail.namenode.rpc.darpc.DaRPCNameNode";	
+	
+	public static final String MULTISTREAM_BLOCKING_KEY = "crail.multistream.blocking";
+	public static boolean MULTISTREAM_BLOCKING = false;		
 	
 	public static void updateConstants(CrailConfiguration conf){
 		if (conf.get(STORAGE_TYPES_KEY) != null) {
@@ -171,6 +174,9 @@ public class CrailConstants {
 		if (conf.get(NAMENODE_RPC_TYPE_KEY) != null) {
 			NAMENODE_RPC_TYPE = conf.get(NAMENODE_RPC_TYPE_KEY);
 		}
+		if (conf.get(MULTISTREAM_BLOCKING_KEY) != null) {
+			MULTISTREAM_BLOCKING = conf.getBoolean(MULTISTREAM_BLOCKING_KEY, false);
+		}		
 	}
 	
 	public static void printConf(){
@@ -198,6 +204,7 @@ public class CrailConstants {
 		LOG.info(NAMENODE_BLOCKSELECTION_KEY + " " + NAMENODE_BLOCKSELECTION);
 		LOG.info(NAMENODE_FILEBLOCKS_KEY + " " + NAMENODE_FILEBLOCKS);
 		LOG.info(NAMENODE_RPC_TYPE_KEY + " " + NAMENODE_RPC_TYPE);
+		LOG.info(MULTISTREAM_BLOCKING_KEY + " " + MULTISTREAM_BLOCKING);
 	}
 	
 	public static void verify() throws IOException {

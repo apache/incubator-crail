@@ -6,7 +6,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.Assert;
-import java.nio.ByteBuffer;
 import java.util.Random;
 
 public class ClientTest {

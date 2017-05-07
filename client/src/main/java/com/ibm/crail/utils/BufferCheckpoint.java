@@ -21,7 +21,6 @@
 
 package com.ibm.crail.utils;
 
-import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;

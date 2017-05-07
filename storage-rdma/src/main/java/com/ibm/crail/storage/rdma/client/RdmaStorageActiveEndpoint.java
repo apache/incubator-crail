@@ -22,7 +22,6 @@
 package com.ibm.crail.storage.rdma.client;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -37,7 +36,6 @@ import com.ibm.crail.storage.rdma.MrCache;
 import com.ibm.crail.storage.rdma.RdmaConstants;
 import com.ibm.crail.storage.rdma.MrCache.DeviceMrCache;
 import com.ibm.crail.utils.AtomicIntegerModulo;
-import com.ibm.disni.util.MemoryUtils;
 import com.ibm.disni.rdma.verbs.*;
 import com.ibm.disni.rdma.verbs.SVCPostSend.SendWRMod;
 import com.ibm.disni.rdma.verbs.SVCPostSend.SgeMod;

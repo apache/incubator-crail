@@ -21,7 +21,6 @@
 
 package com.ibm.crail.utils;
 
-import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
@@ -32,8 +31,6 @@ import java.nio.ByteBuffer;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-
-import sun.misc.Unsafe;
 
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.DataNodeInfo;

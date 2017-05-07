@@ -42,7 +42,6 @@ import com.ibm.crail.CrailResult;
 import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.memory.OffHeapBuffer;
 import com.ibm.crail.utils.GetOpt;
 
 public class CrailBenchmark {
@@ -57,7 +56,7 @@ public class CrailBenchmark {
 		System.out.println(
 				"iobench -t <writeClusterHeap|writeClusterDirect|writeLocalHeap|writeLocalDirect|writeAsyncCluster|writeAsyncLocal|"
 				+ "readSequentialHeap|readSequentialDirect|readRandomHeap|readRandomDirect|readAsync|readMultiStream|"
-				+ "enumerateDir|keyGet|createFile|getFile|seek>"
+				+ "enumerateDir|keyGet|createFile|getFile|createMultiFile|writeInt|readInt|seekInt|readMultiStreamInt>"
 				+ "-f <filename> -s <size> -k <iterations> -b <batch> -e <experiments>");
 		System.exit(1);
 	}
@@ -791,21 +790,16 @@ public class CrailBenchmark {
 		fs.close();		
 	}
 	
-	void seek(String filename, int loop) throws Exception {
-		System.out.println("seek, filename " + filename  + ", loop " + loop);
+	void writeInt(String filename, int loop) throws Exception {
+		System.out.println("writeInt, filename " + filename  + ", loop " + loop);
 		CrailConfiguration conf = new CrailConfiguration();
 		CrailFS fs = CrailFS.newInstance(conf);
 		
 		//benchmark
 		System.out.println("starting benchmark...");
-		long _loop = (long) loop;
-		long _bufsize = (long) CrailConstants.BUFFER_SIZE;
-		long _capacity = _loop*_bufsize;
-		double sumbytes = 0;
 		double ops = 0;
 		CrailFile file = fs.create(filename, CrailNodeType.DATAFILE, 0, 0).get().asFile();
 		CrailBufferedOutputStream outputStream = file.getBufferedOutputStream(loop*4);	
-		long start = System.currentTimeMillis();
 		int intValue = 0;
 		System.out.println("starting write at position " + outputStream.position());
 		while (ops < loop) {
@@ -816,18 +810,43 @@ public class CrailBenchmark {
 		}
 		outputStream.purge().get();
 		outputStream.sync().get();
-//		outputStream.close();
-		ops = 0;
+		
+		fs.close();		
+		fs.getStatistics().print("close");		
+	}
+	
+	void readInt(String filename, int loop) throws Exception {
+		System.out.println("seek, filename " + filename  + ", loop " + loop);
+		CrailConfiguration conf = new CrailConfiguration();
+		CrailFS fs = CrailFS.newInstance(conf);
+		
+		//benchmark
+		System.out.println("starting benchmark...");
+		double ops = 0;
+		CrailFile file = fs.lookup(filename).get().asFile();
 		CrailBufferedInputStream inputStream = file.getBufferedInputStream(loop*4);	
 		System.out.println("starting read at position " + inputStream.position());
 		while (ops < loop) {
 			System.out.print("reading position " + inputStream.position() + ", expected " + inputStream.position()/4 + " ");
-			intValue = inputStream.readInt();
+			int intValue = inputStream.readInt();
 			System.out.println(", value " + intValue);
 			ops++;
 		}
-//		inputStream.close();
-		ops = 0;
+		inputStream.close();
+		
+		fs.close();		
+		fs.getStatistics().print("close");		
+	}
+	
+	void seekInt(String filename, int loop) throws Exception {
+		System.out.println("seek, filename " + filename  + ", loop " + loop);
+		CrailConfiguration conf = new CrailConfiguration();
+		CrailFS fs = CrailFS.newInstance(conf);
+		
+		//benchmark
+		System.out.println("starting benchmark...");
+		double ops = 0;
+		CrailFile file = fs.lookup(filename).get().asFile();
 		Random random = new Random();
 		long nbrOfInts = file.getCapacity() / 4;
 		CrailBufferedInputStream seekStream = file.getBufferedInputStream(loop*4);	
@@ -837,7 +856,7 @@ public class CrailBenchmark {
 			int intIndex = random.nextInt((int) nbrOfInts);
 			int pos = intIndex*4;
 			seekStream.seek((long) pos);
-			intValue = seekStream.readInt();
+			int intValue = seekStream.readInt();
 			if (intIndex != intValue){
 				falseMatches++;
 				System.out.println("reading, position " + pos + ", expected " + pos/4 + ", ########## value " + intValue);
@@ -846,30 +865,41 @@ public class CrailBenchmark {
 			}
 			ops++;
 		}			
-//		seekStream.close();
-		long end = System.currentTimeMillis();
-		double executionTime = ((double) (end - start)) / 1000.0;
-		double throughput = 0.0;
-		double latency = 0.0;
-		double sumbits = sumbytes * 8.0;
-		if (executionTime > 0) {
-			throughput = sumbits / executionTime / 1000.0 / 1000.0;
-			latency = 1000000.0 * executionTime / ops;
-		}
-		
-		outputStream.close();
-		inputStream.close();
 		seekStream.close();
+		long end = System.currentTimeMillis();
 		
-		System.out.println("execution time " + executionTime);
-		System.out.println("ops " + ops);
-		System.out.println("sumbytes " + sumbytes);
-		System.out.println("throughput " + throughput);
-		System.out.println("latency " + latency);
 		System.out.println("falseMatches " + falseMatches);
 		
 		fs.close();		
 		fs.getStatistics().print("close");
+	}	
+	
+	void readMultiStreamInt(String filename, int loop, int batch) throws Exception {
+		System.out.println("readMultiStreamInt, filename " + filename  + ", loop " + loop + ", batch " + batch);
+		CrailConfiguration conf = new CrailConfiguration();
+		CrailFS fs = CrailFS.newInstance(conf);
+		
+		System.out.println("starting benchmark...");
+		fs.getStatistics().reset();
+		CrailMultiStream multiStream = fs.lookup(filename).get().asMultiFile().getMultiStream(batch);
+		double ops = 0;
+		long falseMatches = 0;
+		while (ops < loop) {
+			System.out.print("reading position " + multiStream.position() + ", expected " + multiStream.position()/4 + " ");
+			long expected = multiStream.position()/4;
+			int intValue = multiStream.readInt();
+			if (expected != intValue){
+				falseMatches++;
+			}
+			System.out.println(", value " + intValue);
+			ops++;
+		}
+		multiStream.close();	
+		
+		System.out.println("falseMatches " + falseMatches);
+		
+		fs.getStatistics().print("close");
+		fs.close();
 	}	
 	
 	private void warmUp(CrailFS fs, String filename, int operations, ConcurrentLinkedQueue<CrailBuffer> bufferList) throws Exception {
@@ -895,7 +925,6 @@ public class CrailBenchmark {
 		GetOpt go = new GetOpt(_args, "t:f:s:k:b:w:e:");
 		go.optErr = true;
 		int ch = -1;
-		System.out.println("tmp....");
 		if (args.length < 2){
 			usage();
 		}
@@ -1025,8 +1054,14 @@ public class CrailBenchmark {
 			benchmark.browseDir(filename);
 		} else if (type.equalsIgnoreCase("early")) {
 			benchmark.early(filename);
-		} else if (type.equalsIgnoreCase("seek")) {
-			benchmark.seek(filename, loop);
+		} else if (type.equalsIgnoreCase("writeInt")) {
+			benchmark.writeInt(filename, loop);
+		} else if (type.equalsIgnoreCase("readInt")) {
+			benchmark.readInt(filename, loop);
+		} else if (type.equalsIgnoreCase("seekInt")) {
+			benchmark.seekInt(filename, loop);
+		} else if (type.equalsIgnoreCase("readMultiStreamInt")) {
+			benchmark.readMultiStreamInt(filename, loop, batch);
 		} else {
 			usage();
 			System.exit(0);

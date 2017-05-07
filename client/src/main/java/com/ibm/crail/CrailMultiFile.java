@@ -23,11 +23,17 @@ package com.ibm.crail;
 
 import java.util.Iterator;
 
+import com.ibm.crail.conf.CrailConstants;
+
 public interface CrailMultiFile extends CrailNode {
 	public abstract int files();
 	public abstract Iterator<String> listEntries() throws Exception;
 	
 	default CrailMultiStream getMultiStream(int outstanding) throws Exception{
-		return new CrailMultiStream(this.getFileSystem(), listEntries(), outstanding, files());
+		if (CrailConstants.MULTISTREAM_BLOCKING){
+			return new MultiStreamBlocking(this.getFileSystem(), listEntries(), outstanding, files());
+		} else {
+			return new MultiStreamNonBlocking(this.getFileSystem(), listEntries(), outstanding, files());
+		}
 	}
 }

@@ -22,7 +22,6 @@
 package com.ibm.crail.core;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -37,8 +36,6 @@ import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.storage.StorageFuture;
 import com.ibm.crail.utils.CrailImmediateOperation;
 import com.ibm.crail.utils.CrailUtils;
-
-import sun.nio.ch.DirectBuffer;
 
 public class CoreOutputStream extends CoreStream implements CrailOutputStream {
 	private static final Logger LOG = CrailUtils.getLogger();

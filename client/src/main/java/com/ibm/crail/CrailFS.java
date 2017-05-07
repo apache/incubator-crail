@@ -22,7 +22,6 @@
 package com.ibm.crail;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;

@@ -43,8 +43,6 @@ import com.ibm.crail.storage.StorageFuture;
 import com.ibm.crail.storage.rdma.RdmaConstants;
 import com.ibm.crail.storage.rdma.RdmaStorageServer;
 import com.ibm.disni.rdma.verbs.*;
-import com.ibm.disni.util.*;
-
 import sun.misc.Unsafe;
 
 public class RdmaStorageLocalEndpoint implements StorageEndpoint {

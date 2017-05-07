@@ -22,13 +22,11 @@
 package com.ibm.crail.storage.rdma;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.ibm.crail.CrailBuffer;
-import com.ibm.disni.util.MemoryUtils;
 import com.ibm.disni.rdma.verbs.IbvMr;
 import com.ibm.disni.rdma.verbs.IbvPd;
 

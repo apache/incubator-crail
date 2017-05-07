@@ -22,8 +22,6 @@
 package com.ibm.crail.storage;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.metadata.BlockInfo;
 
