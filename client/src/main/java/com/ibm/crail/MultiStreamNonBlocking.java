@@ -3,19 +3,20 @@ package com.ibm.crail;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 class MultiStreamNonBlocking extends BufferedInputStream implements CrailMultiStream {
 	private CrailFS fs;
 	private Iterator<String> paths;
-	private ArrayBlockingQueue<CrailInputStream> readyStreams;
-	private ArrayBlockingQueue<CrailInputStream> finalStreams;
+	private LinkedBlockingQueue<CrailInputStream> readyStreams;
+	private LinkedBlockingQueue<CrailInputStream> finalStreams;
 	
 	MultiStreamNonBlocking(CrailFS fs, Iterator<String> paths, int outstanding, int files) throws Exception {
 		super(fs, outstanding, 0);
 		this.fs = fs;
 		this.paths = paths;
-		this.readyStreams = new ArrayBlockingQueue<CrailInputStream>(outstanding);
-		this.finalStreams = new ArrayBlockingQueue<CrailInputStream>(outstanding);
+		this.readyStreams = new LinkedBlockingQueue<CrailInputStream>();
+		this.finalStreams = new LinkedBlockingQueue<CrailInputStream>();
 	}
 
 	@Override
