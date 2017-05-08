@@ -26,7 +26,7 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.concurrent.LinkedBlockingQueue;
 
-class MultiStreamBlocking implements CrailMultiStream {
+class MultiStreamBlocking {
 //	private static final Logger LOG = CrailUtils.getLogger();
 	
 	private CrailFS fs;
@@ -245,7 +245,6 @@ class MultiStreamBlocking implements CrailMultiStream {
 		}
 	}
 	
-	@Override
 	public final synchronized void close() throws IOException {
 		if (isClosed) {
 			return;
@@ -354,30 +353,5 @@ class MultiStreamBlocking implements CrailMultiStream {
 			current += ret;
 			return ret;		
 		}		
-	}
-
-	@Override
-	public double readDouble() throws Exception {
-		return 0;
-	}
-
-	@Override
-	public int readInt() throws Exception {
-		return 0;
-	}
-
-	@Override
-	public double readLong() throws Exception {
-		return 0;
-	}
-
-	@Override
-	public double readShort() throws Exception {
-		return 0;
-	}
-
-	@Override
-	public long position() {
-		return 0;
 	}
 }

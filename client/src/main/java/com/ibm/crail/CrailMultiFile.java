@@ -30,10 +30,6 @@ public interface CrailMultiFile extends CrailNode {
 	public abstract Iterator<String> listEntries() throws Exception;
 	
 	default CrailMultiStream getMultiStream(int outstanding) throws Exception{
-		if (CrailConstants.MULTISTREAM_BLOCKING){
-			return new MultiStreamBlocking(this.getFileSystem(), listEntries(), outstanding, files());
-		} else {
-			return new MultiStreamNonBlocking(this.getFileSystem(), listEntries(), outstanding, files());
-		}
+		return new CrailMultiStream(this.getFileSystem(), listEntries(), outstanding, files());
 	}
 }
