@@ -1,5 +1,6 @@
 package com.ibm.crail;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -175,6 +176,9 @@ abstract class BufferedInputStream extends InputStream {
 	
 	public final double readDouble() throws Exception {
 		CrailBuffer slice = getSlice(true);
+		if (slice == null){
+			throw new EOFException();
+		}
 		if (slice.remaining() >= Double.BYTES){
 			double val = slice.getDouble();
 			position += Double.BYTES;
@@ -191,6 +195,9 @@ abstract class BufferedInputStream extends InputStream {
 	
 	public final int readInt() throws Exception {
 		CrailBuffer slice = getSlice(true);
+		if (slice == null){
+			throw new EOFException();
+		}		
 		if (slice.remaining() >= Integer.BYTES){
 			int val = slice.getInt();
 			position += Integer.BYTES;
@@ -207,6 +214,9 @@ abstract class BufferedInputStream extends InputStream {
 	
 	public final double readLong() throws Exception {
 		CrailBuffer slice = getSlice(true);
+		if (slice == null){
+			throw new EOFException();
+		}		
 		if (slice.remaining() >= Long.BYTES){
 			long val = slice.getLong();
 			position += Long.BYTES;
@@ -223,6 +233,9 @@ abstract class BufferedInputStream extends InputStream {
 	
 	public final double readShort() throws Exception {
 		CrailBuffer slice = getSlice(true);
+		if (slice == null){
+			throw new EOFException();
+		}		
 		if (slice.remaining() >= Short.BYTES){
 			short val = slice.getShort();
 			position += Short.BYTES;
