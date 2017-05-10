@@ -5,12 +5,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.utils.CrailUtils;
+import com.ibm.crail.utils.RingBuffer;
 
 abstract class BufferedInputStream extends InputStream {
 	private static final Logger LOG = CrailUtils.getLogger();
@@ -19,10 +21,10 @@ abstract class BufferedInputStream extends InputStream {
 	private byte[] tmpByteBuf;
 	private ByteBuffer tmpBoundaryBuffer;
 	private LinkedList<CrailBuffer> originalBuffers;
-	private LinkedList<CrailBuffer> readySlices;
-	private LinkedList<CrailBuffer> pendingSlices;
-	private LinkedList<Future<CrailResult>> pendingFutures;	
-	private LinkedList<CrailBuffer> freeSlices;
+	private RingBuffer<CrailBuffer> readySlices;
+	private RingBuffer<CrailBuffer> pendingSlices;
+	private RingBuffer<Future<CrailResult>> pendingFutures;	
+	private RingBuffer<CrailBuffer> freeSlices;
 	private LinkedList<CrailBuffer> tmpSlices;
 	private long position;
 	private boolean open;
@@ -44,10 +46,10 @@ abstract class BufferedInputStream extends InputStream {
 		this.actualSliceSize = Math.min(CrailConstants.BUFFER_SIZE, CrailConstants.SLICE_SIZE);
 		int allocationSize = queueDepth*actualSliceSize;
 		this.originalBuffers = new LinkedList<CrailBuffer>();
-		this.readySlices = new LinkedList<CrailBuffer>();
-		this.pendingSlices = new LinkedList<CrailBuffer>();
-		this.freeSlices = new LinkedList<CrailBuffer>();
-		this.pendingFutures = new LinkedList<Future<CrailResult>>();
+		this.readySlices = new RingBuffer<CrailBuffer>(queueDepth);
+		this.pendingSlices = new RingBuffer<CrailBuffer>(queueDepth);
+		this.freeSlices = new RingBuffer<CrailBuffer>(queueDepth);
+		this.pendingFutures = new RingBuffer<Future<CrailResult>>(queueDepth);
 		this.tmpSlices = new LinkedList<CrailBuffer>();
 		
 		for (int currentSize = 0; currentSize < allocationSize; currentSize += CrailConstants.BUFFER_SIZE){

@@ -23,8 +23,8 @@ package com.ibm.crail.core;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -62,7 +62,7 @@ public abstract class CoreStream {
 	private long streamId;
 	private CoreIOStatistics ioStats;
 	private HashMap<Integer, CoreSubOperation> blockMap;
-	private LinkedList<RpcFuture<RpcGetBlock>> pendingBlocks;
+	private LinkedBlockingQueue<RpcFuture<RpcGetBlock>> pendingBlocks;
 	
 	abstract StorageFuture trigger(StorageEndpoint endpoint, CoreSubOperation opDesc, CrailBuffer buffer, BlockInfo block) throws Exception;
 	abstract void update(long newCapacity);	
@@ -83,7 +83,7 @@ public abstract class CoreStream {
 		this.ioStats = new CoreIOStatistics("core");
 		
 		this.blockMap = new HashMap<Integer, CoreSubOperation>();
-		this.pendingBlocks = new LinkedList<RpcFuture<RpcGetBlock>>();
+		this.pendingBlocks = new LinkedBlockingQueue<RpcFuture<RpcGetBlock>>();
 	}	
 	
 	final CoreDataOperation dataOperation(CrailBuffer dataBuf) throws Exception {

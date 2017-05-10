@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -43,6 +44,7 @@ import com.ibm.crail.CrailMultiStream;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.utils.GetOpt;
+import com.ibm.crail.utils.RingBuffer;
 
 public class CrailBenchmark {
 	private int warmup;
@@ -902,6 +904,51 @@ public class CrailBenchmark {
 		fs.close();
 	}	
 	
+	void collectionTest(int size, int loop) throws Exception {
+		System.out.println("collectionTest, size " + size  + ", loop " + loop);
+
+		RingBuffer<Object> ringBuffer = new RingBuffer<Object>(10);
+		ArrayBlockingQueue<Object> arrayQueue = new ArrayBlockingQueue<Object>(10);
+		LinkedBlockingQueue<Object> listQueue = new LinkedBlockingQueue<Object>();
+		
+		Object obj = new Object();
+		long start = System.currentTimeMillis();
+		for (int i = 0; i < loop; i++){
+			for (int j = 0; j < size; j++){
+				ringBuffer.add(obj);
+				Object tmp = ringBuffer.peek();
+				tmp = ringBuffer.poll();
+			}
+		}
+		long end = System.currentTimeMillis();
+		double executionTime = ((double) (end - start));
+		System.out.println("ringbuffer, execution time [ms] " + executionTime);
+		
+		start = System.currentTimeMillis();
+		for (int i = 0; i < loop; i++){
+			for (int j = 0; j < size; j++){
+				arrayQueue.add(obj);
+				Object tmp = arrayQueue.peek();
+				tmp = arrayQueue.poll();
+			}
+		}
+		end = System.currentTimeMillis();
+		executionTime = ((double) (end - start));
+		System.out.println("arrayQueue, execution time [ms] " + executionTime);		
+		
+		start = System.currentTimeMillis();
+		for (int i = 0; i < loop; i++){
+			for (int j = 0; j < size; j++){
+				listQueue.add(obj);
+				Object tmp = listQueue.peek();
+				tmp = listQueue.poll();
+			}
+		}
+		end = System.currentTimeMillis();
+		executionTime = ((double) (end - start));
+		System.out.println("arrayQueue, execution time [ms] " + executionTime);			
+	}	
+	
 	private void warmUp(CrailFS fs, String filename, int operations, ConcurrentLinkedQueue<CrailBuffer> bufferList) throws Exception {
 		String warmupFilename = filename + ".warmup";
 		System.out.println("warmUp, warmupFile " + warmupFilename + ", operations " + operations);
@@ -1062,6 +1109,8 @@ public class CrailBenchmark {
 			benchmark.seekInt(filename, loop);
 		} else if (type.equalsIgnoreCase("readMultiStreamInt")) {
 			benchmark.readMultiStreamInt(filename, loop, batch);
+		} else if (type.equalsIgnoreCase("collection")) {
+			benchmark.collectionTest(size, loop);
 		} else {
 			usage();
 			System.exit(0);

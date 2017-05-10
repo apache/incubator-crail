@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
@@ -32,6 +33,7 @@ import org.slf4j.Logger;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.utils.CrailImmediateOperation;
 import com.ibm.crail.utils.CrailUtils;
+import com.ibm.crail.utils.RingBuffer;
 
 
 public class CrailBufferedOutputStream extends OutputStream {
@@ -42,9 +44,9 @@ public class CrailBufferedOutputStream extends OutputStream {
 	private long writeHint;
 	private CrailOutputStream outputStream;
 	private LinkedList<CrailBuffer> originalBuffers;
-	private LinkedList<CrailBuffer> readySlices;
-	private LinkedList<CrailBuffer> pendingSlices;
-	private LinkedList<Future<CrailResult>> pendingFutures;
+	private RingBuffer<CrailBuffer> readySlices;
+	private RingBuffer<CrailBuffer> pendingSlices;
+	private RingBuffer<Future<CrailResult>> pendingFutures;
 	private long position;
 	private boolean open;
 	private CrailBufferedStatistics statistics;
@@ -65,9 +67,9 @@ public class CrailBufferedOutputStream extends OutputStream {
 		this.actualSliceSize = Math.min(CrailConstants.BUFFER_SIZE, CrailConstants.SLICE_SIZE);
 		int sliceCount = allocationSize / actualSliceSize;		
 		this.originalBuffers = new LinkedList<CrailBuffer>();
-		this.readySlices = new LinkedList<CrailBuffer>();
-		this.pendingSlices = new LinkedList<CrailBuffer>();
-		this.pendingFutures = new LinkedList<Future<CrailResult>>();
+		this.readySlices = new RingBuffer<CrailBuffer>(sliceCount);
+		this.pendingSlices = new RingBuffer<CrailBuffer>(sliceCount);
+		this.pendingFutures = new RingBuffer<Future<CrailResult>>(sliceCount);
 		
 		for (int currentSize = 0; currentSize < allocationSize; currentSize += CrailConstants.BUFFER_SIZE){
 			CrailBuffer buffer = crailFS.allocateBuffer();
