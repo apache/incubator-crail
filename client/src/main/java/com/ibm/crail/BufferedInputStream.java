@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
@@ -25,7 +24,7 @@ abstract class BufferedInputStream extends InputStream {
 	private RingBuffer<CrailBuffer> pendingSlices;
 	private RingBuffer<Future<CrailResult>> pendingFutures;	
 	private RingBuffer<CrailBuffer> freeSlices;
-	private LinkedList<CrailBuffer> tmpSlices;
+	private RingBuffer<CrailBuffer> tmpSlices;
 	private long position;
 	private boolean open;
 	private CrailBufferedStatistics statistics;
@@ -50,7 +49,7 @@ abstract class BufferedInputStream extends InputStream {
 		this.pendingSlices = new RingBuffer<CrailBuffer>(queueDepth);
 		this.freeSlices = new RingBuffer<CrailBuffer>(queueDepth);
 		this.pendingFutures = new RingBuffer<Future<CrailResult>>(queueDepth);
-		this.tmpSlices = new LinkedList<CrailBuffer>();
+		this.tmpSlices = new RingBuffer<CrailBuffer>(queueDepth);
 		
 		for (int currentSize = 0; currentSize < allocationSize; currentSize += CrailConstants.BUFFER_SIZE){
 			CrailBuffer buffer = fs.allocateBuffer();

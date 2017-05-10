@@ -12,7 +12,7 @@ public class RingBuffer<T> {
         this.elements = (T[]) new Object[capacity];
     }
 
-    public void reset() {
+    public void clear() {
         this.writePos = 0;
         this.available = 0;
     }
