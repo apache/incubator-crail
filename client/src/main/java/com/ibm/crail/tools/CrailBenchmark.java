@@ -1110,7 +1110,9 @@ public class CrailBenchmark {
 		} else if (type.equalsIgnoreCase("readMultiStreamInt")) {
 			benchmark.readMultiStreamInt(filename, loop, batch);
 		} else if (type.equalsIgnoreCase("collection")) {
-			benchmark.collectionTest(size, loop);
+			for (int i = 0; i < experiments; i++){
+				benchmark.collectionTest(size, loop);
+			}
 		} else {
 			usage();
 			System.exit(0);
