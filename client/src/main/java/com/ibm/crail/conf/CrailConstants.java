@@ -30,7 +30,7 @@ public class CrailConstants {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	public static final String VERSION_KEY = "crail.version";
-	public static int VERSION = 2834;
+	public static int VERSION = 2835;
 	
 	public static final String STORAGE_TYPES_KEY = "crail.storage.types";
 	public static String STORAGE_TYPES = "com.ibm.crail.storage.rdma.RdmaStorageTier";		

@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
@@ -20,10 +19,10 @@ abstract class BufferedInputStream extends InputStream {
 	private byte[] tmpByteBuf;
 	private ByteBuffer tmpBoundaryBuffer;
 	private LinkedList<CrailBuffer> originalBuffers;
-	private ArrayBlockingQueue<CrailBuffer> readySlices;
-	private ArrayBlockingQueue<CrailBuffer> pendingSlices;
-	private ArrayBlockingQueue<Future<CrailResult>> pendingFutures;	
-	private ArrayBlockingQueue<CrailBuffer> freeSlices;
+	private LinkedList<CrailBuffer> readySlices;
+	private LinkedList<CrailBuffer> pendingSlices;
+	private LinkedList<Future<CrailResult>> pendingFutures;	
+	private LinkedList<CrailBuffer> freeSlices;
 	private LinkedList<CrailBuffer> tmpSlices;
 	private long position;
 	private boolean open;
@@ -45,10 +44,10 @@ abstract class BufferedInputStream extends InputStream {
 		this.actualSliceSize = Math.min(CrailConstants.BUFFER_SIZE, CrailConstants.SLICE_SIZE);
 		int allocationSize = queueDepth*actualSliceSize;
 		this.originalBuffers = new LinkedList<CrailBuffer>();
-		this.readySlices = new ArrayBlockingQueue<CrailBuffer>(queueDepth);
-		this.pendingSlices = new ArrayBlockingQueue<CrailBuffer>(queueDepth);
-		this.freeSlices = new ArrayBlockingQueue<CrailBuffer>(queueDepth);
-		this.pendingFutures = new ArrayBlockingQueue<Future<CrailResult>>(queueDepth);
+		this.readySlices = new LinkedList<CrailBuffer>();
+		this.pendingSlices = new LinkedList<CrailBuffer>();
+		this.freeSlices = new LinkedList<CrailBuffer>();
+		this.pendingFutures = new LinkedList<Future<CrailResult>>();
 		this.tmpSlices = new LinkedList<CrailBuffer>();
 		
 		for (int currentSize = 0; currentSize < allocationSize; currentSize += CrailConstants.BUFFER_SIZE){
