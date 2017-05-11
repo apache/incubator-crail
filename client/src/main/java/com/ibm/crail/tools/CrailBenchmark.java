@@ -40,7 +40,6 @@ import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailOutputStream;
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.CrailNodeType;
-import com.ibm.crail.CrailMultiStream;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.utils.GetOpt;
@@ -458,7 +457,7 @@ public class CrailBenchmark {
 		fs.getStatistics().reset();
 		ByteBuffer buf = ByteBuffer.allocate(size);
 		for (int i = 0; i < loop; i++){
-			CrailMultiStream multiStream = fs.lookup(filename).get().asMultiFile().getMultiStream(batch);
+			CrailBufferedInputStream multiStream = fs.lookup(filename).get().asMultiFile().getMultiStream(batch);
 			double sumbytes = 0;
 			long _sumbytes = 0;
 			double ops = 0;
@@ -883,7 +882,7 @@ public class CrailBenchmark {
 		
 		System.out.println("starting benchmark...");
 		fs.getStatistics().reset();
-		CrailMultiStream multiStream = fs.lookup(filename).get().asMultiFile().getMultiStream(batch);
+		CrailBufferedInputStream multiStream = fs.lookup(filename).get().asMultiFile().getMultiStream(batch);
 		double ops = 0;
 		long falseMatches = 0;
 		while (ops < loop) {

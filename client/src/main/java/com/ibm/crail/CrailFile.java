@@ -31,7 +31,7 @@ public interface CrailFile extends CrailNode {
 	public abstract long getFd();
 
 	default CrailBufferedInputStream getBufferedInputStream(long readHint) throws Exception {
-		return new CrailBufferedInputStream(this, readHint);
+		return new FileBufferedInputStream(this, readHint);
 	}
 	
 	default CrailBufferedOutputStream getBufferedOutputStream(long writeHint) throws Exception {

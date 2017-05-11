@@ -7,13 +7,13 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import com.ibm.crail.utils.RingBuffer;
 
-public class CrailMultiStream extends BufferedInputStream {
+class MultiFileBufferedInputStream extends CrailBufferedInputStream {
 	private CrailFS fs;
 	private Iterator<String> paths;
 	private RingBuffer<CrailInputStream> readyStreams;
 	private LinkedList<CrailInputStream> finalStreams;
 	
-	CrailMultiStream(CrailFS fs, Iterator<String> paths, int outstanding, int files) throws Exception {
+	MultiFileBufferedInputStream(CrailFS fs, Iterator<String> paths, int outstanding, int files) throws Exception {
 		super(fs, outstanding, 0);
 		this.fs = fs;
 		this.paths = paths;
