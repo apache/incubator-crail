@@ -30,8 +30,4 @@ public class NvmfStorageUtils {
 	public static long alignOffset(int sectorSize, long fileOffset) {
 		return fileOffset - namespaceSectorOffset(sectorSize, fileOffset);
 	}
-
-	public static long getAddress(ByteBuffer buffer) {
-		return ((DirectBuffer)buffer).address();
-	}
 }
