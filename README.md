@@ -40,7 +40,7 @@ To configure Crail use crail-site.conf.template as a basis and modify it to matc
 There are a general file system properties and specific properties for the different storage tiers. A typical configuration for the general file system section may look as follows:
 
     crail.namenode.address                crail://namenode:9060
-    crail.datanode.types                  com.ibm.crail.storage.rdma.RdmaStorageTier
+    crail.storage.types                  com.ibm.crail.storage.rdma.RdmaStorageTier
     crail.cachepath                       /memory/cache
     crail.cachelimit                      12884901888
     crail.blocksize                       1048576
