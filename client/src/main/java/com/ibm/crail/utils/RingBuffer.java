@@ -17,9 +17,13 @@ public class RingBuffer<T> {
         this.available = 0;
     }
 
-    public int size() { 
+    public int capacity() { 
     	return this.size; 
     }
+    
+    public int size() { 
+    	return this.available; 
+    }    
     
     public boolean isEmpty(){ 
     	return this.available == 0; 
