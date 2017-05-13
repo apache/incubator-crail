@@ -42,6 +42,7 @@ import com.ibm.crail.CrailResult;
 import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
+import com.ibm.crail.memory.OffHeapBuffer;
 import com.ibm.crail.utils.GetOpt;
 import com.ibm.crail.utils.RingBuffer;
 
@@ -72,7 +73,15 @@ public class CrailBenchmark {
 			hosthash = fs.getHostHash();
 		}
 		
-		CrailBuffer buf = fs.allocateBuffer().limit(size).slice();
+		CrailBuffer buf = null;
+		if (size == CrailConstants.BUFFER_SIZE){
+			buf = fs.allocateBuffer();
+		} else if (size < CrailConstants.BUFFER_SIZE){
+			buf = fs.allocateBuffer();
+			buf.clear().limit(size);
+		} else {
+			buf = OffHeapBuffer.wrap(ByteBuffer.allocateDirect(size));
+		}
 		
 		//warmup
 		ConcurrentLinkedQueue<CrailBuffer> bufferQueue = new ConcurrentLinkedQueue<CrailBuffer>();
@@ -136,7 +145,15 @@ public class CrailBenchmark {
 		
 		ConcurrentLinkedQueue<CrailBuffer> bufferQueue = new ConcurrentLinkedQueue<CrailBuffer>();
 		for (int i = 0; i < batch; i++){
-			CrailBuffer buf = fs.allocateBuffer().limit(size).slice();
+			CrailBuffer buf = null;
+			if (size == CrailConstants.BUFFER_SIZE){
+				buf = fs.allocateBuffer();
+			} else if (size < CrailConstants.BUFFER_SIZE){
+				buf = fs.allocateBuffer();
+				buf.clear().limit(size);
+			} else {
+				buf = OffHeapBuffer.wrap(ByteBuffer.allocateDirect(size));
+			}
 			bufferQueue.add(buf);
 		}
 		
@@ -212,8 +229,15 @@ public class CrailBenchmark {
 		CrailConfiguration conf = new CrailConfiguration();
 		CrailFS fs = CrailFS.newInstance(conf);
 
-		CrailBuffer buf = fs.allocateBuffer().limit(size).slice();
-		buf.clear();	
+		CrailBuffer buf = null;
+		if (size == CrailConstants.BUFFER_SIZE){
+			buf = fs.allocateBuffer();
+		} else if (size < CrailConstants.BUFFER_SIZE){
+			buf = fs.allocateBuffer();
+			buf.clear().limit(size);
+		} else {
+			buf = OffHeapBuffer.wrap(ByteBuffer.allocateDirect(size));
+		}
 		
 		//warmup
 		ConcurrentLinkedQueue<CrailBuffer> bufferQueue = new ConcurrentLinkedQueue<CrailBuffer>();
@@ -289,7 +313,15 @@ public class CrailBenchmark {
 		CrailConfiguration conf = new CrailConfiguration();
 		CrailFS fs = CrailFS.newInstance(conf);
 
-		CrailBuffer buf = fs.allocateBuffer().limit(size).slice();
+		CrailBuffer buf = null;
+		if (size == CrailConstants.BUFFER_SIZE){
+			buf = fs.allocateBuffer();
+		} else if (size < CrailConstants.BUFFER_SIZE){
+			buf = fs.allocateBuffer();
+			buf.clear().limit(size);
+		} else {
+			buf = OffHeapBuffer.wrap(ByteBuffer.allocateDirect(size));
+		}
 		
 		//warmup
 		ConcurrentLinkedQueue<CrailBuffer> bufferQueue = new ConcurrentLinkedQueue<CrailBuffer>();
@@ -367,7 +399,15 @@ public class CrailBenchmark {
 		
 		ConcurrentLinkedQueue<CrailBuffer> bufferQueue = new ConcurrentLinkedQueue<CrailBuffer>();
 		for (int i = 0; i < batch; i++){
-			CrailBuffer buf = fs.allocateBuffer().limit(size).slice();
+			CrailBuffer buf = null;
+			if (size == CrailConstants.BUFFER_SIZE){
+				buf = fs.allocateBuffer();
+			} else if (size < CrailConstants.BUFFER_SIZE){
+				buf = fs.allocateBuffer();
+				buf.clear().limit(size);
+			} else {
+				buf = OffHeapBuffer.wrap(ByteBuffer.allocateDirect(size));
+			}
 			bufferQueue.add(buf);
 		}
 
@@ -455,7 +495,16 @@ public class CrailBenchmark {
 		//benchmark
 		System.out.println("starting benchmark...");
 		fs.getStatistics().reset();
-		ByteBuffer buf = ByteBuffer.allocate(size);
+		CrailBuffer _buf = null;
+		if (size == CrailConstants.BUFFER_SIZE){
+			_buf = fs.allocateBuffer();
+		} else if (size < CrailConstants.BUFFER_SIZE){
+			_buf = fs.allocateBuffer();
+			_buf.clear().limit(size);
+		} else {
+			_buf = OffHeapBuffer.wrap(ByteBuffer.allocateDirect(size));
+		}		
+		ByteBuffer buf = _buf.getByteBuffer();
 		for (int i = 0; i < loop; i++){
 			CrailBufferedInputStream multiStream = fs.lookup(filename).get().asMultiFile().getMultiStream(batch);
 			double sumbytes = 0;
