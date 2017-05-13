@@ -77,8 +77,9 @@ public class CrailBenchmark {
 		if (size == CrailConstants.BUFFER_SIZE){
 			buf = fs.allocateBuffer();
 		} else if (size < CrailConstants.BUFFER_SIZE){
-			buf = fs.allocateBuffer();
-			buf.clear().limit(size);
+			CrailBuffer _buf = fs.allocateBuffer();
+			_buf.clear().limit(size);
+			buf = _buf.slice();
 		} else {
 			buf = OffHeapBuffer.wrap(ByteBuffer.allocateDirect(size));
 		}
@@ -149,8 +150,9 @@ public class CrailBenchmark {
 			if (size == CrailConstants.BUFFER_SIZE){
 				buf = fs.allocateBuffer();
 			} else if (size < CrailConstants.BUFFER_SIZE){
-				buf = fs.allocateBuffer();
-				buf.clear().limit(size);
+				CrailBuffer _buf = fs.allocateBuffer();
+				_buf.clear().limit(size);
+				buf = _buf.slice();
 			} else {
 				buf = OffHeapBuffer.wrap(ByteBuffer.allocateDirect(size));
 			}
@@ -233,8 +235,9 @@ public class CrailBenchmark {
 		if (size == CrailConstants.BUFFER_SIZE){
 			buf = fs.allocateBuffer();
 		} else if (size < CrailConstants.BUFFER_SIZE){
-			buf = fs.allocateBuffer();
-			buf.clear().limit(size);
+			CrailBuffer _buf = fs.allocateBuffer();
+			_buf.clear().limit(size);
+			buf = _buf.slice();
 		} else {
 			buf = OffHeapBuffer.wrap(ByteBuffer.allocateDirect(size));
 		}
@@ -317,8 +320,9 @@ public class CrailBenchmark {
 		if (size == CrailConstants.BUFFER_SIZE){
 			buf = fs.allocateBuffer();
 		} else if (size < CrailConstants.BUFFER_SIZE){
-			buf = fs.allocateBuffer();
-			buf.clear().limit(size);
+			CrailBuffer _buf = fs.allocateBuffer();
+			_buf.clear().limit(size);
+			buf = _buf.slice();
 		} else {
 			buf = OffHeapBuffer.wrap(ByteBuffer.allocateDirect(size));
 		}
@@ -403,8 +407,9 @@ public class CrailBenchmark {
 			if (size == CrailConstants.BUFFER_SIZE){
 				buf = fs.allocateBuffer();
 			} else if (size < CrailConstants.BUFFER_SIZE){
-				buf = fs.allocateBuffer();
-				buf.clear().limit(size);
+				CrailBuffer _buf = fs.allocateBuffer();
+				_buf.clear().limit(size);
+				buf = _buf.slice();
 			} else {
 				buf = OffHeapBuffer.wrap(ByteBuffer.allocateDirect(size));
 			}
@@ -499,8 +504,9 @@ public class CrailBenchmark {
 		if (size == CrailConstants.BUFFER_SIZE){
 			_buf = fs.allocateBuffer();
 		} else if (size < CrailConstants.BUFFER_SIZE){
-			_buf = fs.allocateBuffer();
-			_buf.clear().limit(size);
+			CrailBuffer __buf = fs.allocateBuffer();
+			__buf.clear().limit(size);
+			_buf = __buf.slice();
 		} else {
 			_buf = OffHeapBuffer.wrap(ByteBuffer.allocateDirect(size));
 		}		
