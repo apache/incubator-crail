@@ -46,7 +46,7 @@ There are a general file system properties and specific properties for the diffe
     crail.blocksize                       1048576
     crail.buffersize                      1048576
 
-In this configuration the namenode is configured to run using port 9060 on host 'namenode', which must be a valid host in the cluster. The cachepath property needs to point to a directory that is used by the file system to allocate memory for the client cache. Up to cachelimit size, all the memory that is used by Crail will be allocated via mmap from this location. Ideally, the directory specified in cachepath points to a hugetlbfs mountpoint. Aside from the general properties, each storage tier needs to be configured separately.
+In this configuration the namenode is configured to run using port 9060 on host 'namenode', which must be a valid host in the cluster. We further configure a single storage tier, in this case the RDMA-based DRAM tier. The cachepath property needs to point to a directory that is used by the file system to allocate memory for the client cache. Up to cachelimit size, all the memory that is used by Crail will be allocated via mmap from this location. Ideally, the directory specified in cachepath points to a hugetlbfs mountpoint. Aside from the general properties, each storage tier needs to be configured separately.
 
 ### RDMA/DRAM Storage
 
@@ -69,6 +69,10 @@ Crail supports optimized local operations via memcpy (instead of RDMA) in case a
     crail.storage.rdma.indexpath         /index
     
 ### NVMf/Flash Storage    
+
+Crail is a multi-tiered storage system. Additinoal tiers can be enabled by adding them to the configuration as follows.
+
+    crail.datanode.types                  com.ibm.crail.storage.rdma.RdmaStorageTier,com.ibm.crail.storage.nvmf.NvmfStorageTier
 
 For the NVMf storage tier we need to configure the server IP that is used when listening for new connections. We also need to configure the PCI address of the flash device we want to use, as well as the huge page mount point to be used for allocating memory. 
 
@@ -97,9 +101,7 @@ Now you should have a small deployment up with just one datanode. In this case t
 
     ./bin/crail datanode -t com.ibm.crail.storage.NvmfStorageTier
 
-This would start the shared storage datanode. Note that configuration in crail-site.conf needs to have the specific properties set of this type of datanode, in order for this to work. Also, in order for the storage tier to become visible to clients, it has to be enlisted in the list of datanode types as follows:
-
-    crail.datanode.types                  com.ibm.crail.storage.rdma.RdmaStorageTier,com.ibm.crail.datanode.storage.nvmf.NvmfStorageTier
+This would start the shared storage datanode. Note that configuration in crail-site.conf needs to have the specific properties set of this type of datanode, in order for this to work. 
 
 ### Larger deployments
 
