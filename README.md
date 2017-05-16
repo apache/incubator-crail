@@ -99,7 +99,7 @@ To start a datanode run the following command on a host in the cluster (ideally 
 
 Now you should have a small deployment up with just one datanode. In this case the datanode is of type RDMA/DRAM, which is the default datnode. If you want to start a different storage tier you can do so by passing a specific datanode class as follows:
 
-    ./bin/crail datanode -t com.ibm.crail.storage.NvmfStorageTier
+    ./bin/crail datanode -t com.ibm.crail.storage.nvmf.NvmfStorageTier
 
 This would start the shared storage datanode. Note that configuration in crail-site.conf needs to have the specific properties set of this type of datanode, in order for this to work. 
 
