@@ -40,7 +40,7 @@ To configure Crail use crail-site.conf.template as a basis and modify it to matc
 There are a general file system properties and specific properties for the different storage tiers. A typical configuration for the general file system section may look as follows:
 
     crail.namenode.address                crail://namenode:9060
-    crail.storage.types                  com.ibm.crail.storage.rdma.RdmaStorageTier
+    crail.storage.types                   com.ibm.crail.storage.rdma.RdmaStorageTier
     crail.cachepath                       /memory/cache
     crail.cachelimit                      12884901888
     crail.blocksize                       1048576
@@ -95,11 +95,11 @@ To start a datanode run the following command on a host in the cluster (ideally 
 
 Now you should have a small deployment up with just one datanode. In this case the datanode is of type RDMA/DRAM, which is the default datnode. If you want to start a different storage tier you can do so by passing a specific datanode class as follows:
 
-    ./bin/crail datanode -t com.ibm.crail.datanode.storage.NvmfStorageTier
+    ./bin/crail datanode -t com.ibm.crail.storage.NvmfStorageTier
 
 This would start the shared storage datanode. Note that configuration in crail-site.conf needs to have the specific properties set of this type of datanode, in order for this to work. Also, in order for the storage tier to become visible to clients, it has to be enlisted in the list of datanode types as follows:
 
-    crail.datanode.types                  com.ibm.crail.storage.rdma.RdmaStorageTier,com.ibm.crail.datanode.storage.NvmfStorageTier
+    crail.datanode.types                  com.ibm.crail.storage.rdma.RdmaStorageTier,com.ibm.crail.datanode.storage.nvmf.NvmfStorageTier
 
 ### Larger deployments
 
@@ -114,7 +114,7 @@ Similarly, Crail can be stopped by using
 For this to work include the list of machines to start datanodes in conf/slaves. You can start multiple datanode of different types on the same host as follows:
 
     host02-ib
-    host02-ib -t com.ibm.crail.datanode.storage.NvmfStorageTier
+    host02-ib -t com.ibm.crail.storage.nvmf.NvmfStorageTier
     host03-ib
 
 In this example, we are configuring a Crail cluster with 2 physical hosts but 3 datanodes and two different storage tiers.
