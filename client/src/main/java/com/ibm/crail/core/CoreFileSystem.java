@@ -89,6 +89,7 @@ public class CoreFileSystem extends CrailFS {
 	private NextBlockCache nextBlockCache;
 	private BufferCache bufferCache;
 	private BufferCheckpoint bufferCheckpoint;
+	private ConcurrentHashMap<String, String> locationMap;
 	
 	private boolean isOpen;
 	private int fsId;
@@ -135,6 +136,8 @@ public class CoreFileSystem extends CrailFS {
 		this.streamCounter = new AtomicLong(0);
 		this.isOpen = true;
 		this.bufferCheckpoint = new BufferCheckpoint();
+		this.locationMap = new ConcurrentHashMap<String, String>();
+		CrailUtils.parseMap(CrailConstants.LOCATION_MAP, locationMap);
 		
 		this.statistics = new CrailStatistics();
 		this.ioStatsIn = new CoreIOStatistics("core/input");
@@ -440,16 +443,16 @@ public class CoreFileSystem extends CrailFS {
 			DataNodeInfo dnInfo = offset2DataNode.get(location.getOffset());
 			DataNodeInfo mainDataNode = dataNodeSet.get(dnInfo.key());
 			InetSocketAddress address = CrailUtils.datanodeInfo2SocketAddr(mainDataNode);
-			names[0] = address.getAddress().getCanonicalHostName() + ":" + address.getPort(); 
-			hosts[0] = address.getAddress().getCanonicalHostName();
+			names[0] = getMappedLocation(address.getAddress().getCanonicalHostName()) + ":" + address.getPort(); 
+			hosts[0] = getMappedLocation(address.getAddress().getCanonicalHostName());
 			topology[0] = "/default-rack/" + names[0];
 			storageTiers[0] = mainDataNode.getStorageTier();
 			locationTiers[0] = mainDataNode.getLocationAffinity();
 			for (int j = 1; j < locationSize; j++){
 				DataNodeInfo replicaDataNode = dataNodeArray.get(blockIndex);
 				address = CrailUtils.datanodeInfo2SocketAddr(replicaDataNode);
-				names[j] = address.getAddress().getCanonicalHostName() + ":" + address.getPort(); 
-				hosts[j] = address.getAddress().getCanonicalHostName();
+				names[j] = getMappedLocation(address.getAddress().getCanonicalHostName()) + ":" + address.getPort(); 
+				hosts[j] = getMappedLocation(address.getAddress().getCanonicalHostName());
 				topology[j] = "/default-rack/" + names[j];
 				storageTiers[j] = replicaDataNode.getStorageTier();
 				locationTiers[j] = replicaDataNode.getLocationAffinity();				
@@ -542,6 +545,15 @@ public class CoreFileSystem extends CrailFS {
 		}
 	}
 
+	public BufferCache getBufferCache() {
+		return bufferCache;
+	}
+
+	public void purgeCache() {
+		blockCache.purge();
+		nextBlockCache.purge();
+	}
+
 	//-------------------------------------------------------------
 	
 	CoreOutputStream getOutputStream(CoreNode file, long writeHint) throws Exception {
@@ -621,13 +633,9 @@ public class CoreFileSystem extends CrailFS {
 	EndpointCache getDatanodeEndpointCache() {
 		return datanodeEndpointCache;
 	}
-
-	public BufferCache getBufferCache() {
-		return bufferCache;
-	}
-
-	public void purgeCache() {
-		blockCache.purge();
-		nextBlockCache.purge();
+	
+	String getMappedLocation(String hostname){
+		String mappedValue = locationMap.get(hostname);
+		return mappedValue != null ? mappedValue : hostname;
 	}
 }

@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -43,6 +44,7 @@ import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.memory.OffHeapBuffer;
+import com.ibm.crail.utils.CrailUtils;
 import com.ibm.crail.utils.GetOpt;
 import com.ibm.crail.utils.RingBuffer;
 
@@ -958,6 +960,20 @@ public class CrailBenchmark {
 		fs.close();
 	}	
 	
+	void locationMap() throws Exception {
+		CrailConfiguration conf = new CrailConfiguration();
+		CrailFS fs = CrailFS.newInstance(conf);
+		ConcurrentHashMap<String, String> locationMap = new ConcurrentHashMap<String, String>();
+		CrailUtils.parseMap(CrailConstants.LOCATION_MAP, locationMap);
+		
+		System.out.println("Parsing locationMap " + CrailConstants.LOCATION_MAP);
+		for (String key : locationMap.keySet()){
+			System.out.println("key " + key + ", value " + locationMap.get(key));
+		}
+		
+		fs.close();
+	}
+	
 	void collectionTest(int size, int loop) throws Exception {
 		System.out.println("collectionTest, size " + size  + ", loop " + loop);
 
@@ -1167,6 +1183,8 @@ public class CrailBenchmark {
 			for (int i = 0; i < experiments; i++){
 				benchmark.collectionTest(size, loop);
 			}
+		} else if (type.equalsIgnoreCase("locationMap")) {
+			benchmark.locationMap();
 		} else {
 			usage();
 			System.exit(0);

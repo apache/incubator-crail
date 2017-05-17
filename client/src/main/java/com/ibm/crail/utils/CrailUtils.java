@@ -28,6 +28,8 @@ import java.net.SocketException;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -175,10 +177,17 @@ public class CrailUtils {
 		return InetAddress.getLocalHost().getCanonicalHostName().hashCode();
 	}
 	
-//	public static Unsafe getUnsafe() throws Exception {
-//		Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
-//		theUnsafe.setAccessible(true);
-//		Unsafe unsafe = (Unsafe) theUnsafe.get(null);
-//		return unsafe;
-//	}	
+	public static void parseMap(String config, ConcurrentHashMap<String, String> map) throws Exception {
+		StringTokenizer tupleTokenizer = new StringTokenizer(config, "/");
+		while(tupleTokenizer.hasMoreTokens()){
+			String tuple = tupleTokenizer.nextToken();
+			StringTokenizer commaTokenizer = new StringTokenizer(tuple, ",");
+			if (commaTokenizer.countTokens() != 2){
+				throw new Exception("parsing Map, wrong format!");
+			}
+			String key = commaTokenizer.nextToken();
+			String value = commaTokenizer.nextToken();
+			map.put(key, value);
+		}
+	}
 }

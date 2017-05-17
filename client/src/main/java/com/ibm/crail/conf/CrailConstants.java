@@ -30,7 +30,7 @@ public class CrailConstants {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	public static final String VERSION_KEY = "crail.version";
-	public static int VERSION = 2841;
+	public static int VERSION = 2842;
 	
 	public static final String STORAGE_TYPES_KEY = "crail.storage.types";
 	public static String STORAGE_TYPES = "com.ibm.crail.storage.rdma.RdmaStorageTier";		
@@ -101,8 +101,8 @@ public class CrailConstants {
 	public static final String NAMENODE_RPC_TYPE_KEY = "crail.namenode.rpc.type";
 	public static String NAMENODE_RPC_TYPE = "com.ibm.crail.namenode.rpc.darpc.DaRPCNameNode";	
 	
-	public static final String MULTISTREAM_BLOCKING_KEY = "crail.multistream.blocking";
-	public static boolean MULTISTREAM_BLOCKING = false;		
+	public static final String LOCATION_MAP_KEY = "crail.location.map";
+	public static String LOCATION_MAP = "";		
 	
 	public static void updateConstants(CrailConfiguration conf){
 		if (conf.get(STORAGE_TYPES_KEY) != null) {
@@ -161,7 +161,10 @@ public class CrailConstants {
 		}
 		if (conf.get(CACHE_IMPL_KEY) != null) {
 			CACHE_IMPL = conf.get(CACHE_IMPL_KEY);
-		}			
+		}
+		if (conf.get(LOCATION_MAP_KEY) != null) {
+			LOCATION_MAP = conf.get(LOCATION_MAP_KEY);
+		}		
 		if (conf.get(NAMENODE_ADDRESS_KEY) != null) {
 			NAMENODE_ADDRESS = conf.get(NAMENODE_ADDRESS_KEY);
 		} 
@@ -174,9 +177,6 @@ public class CrailConstants {
 		if (conf.get(NAMENODE_RPC_TYPE_KEY) != null) {
 			NAMENODE_RPC_TYPE = conf.get(NAMENODE_RPC_TYPE_KEY);
 		}
-		if (conf.get(MULTISTREAM_BLOCKING_KEY) != null) {
-			MULTISTREAM_BLOCKING = conf.getBoolean(MULTISTREAM_BLOCKING_KEY, false);
-		}		
 	}
 	
 	public static void printConf(){
@@ -200,11 +200,11 @@ public class CrailConstants {
 		LOG.info(DIRECTORY_RECORD_KEY + " " + DIRECTORY_RECORD);
 		LOG.info(DIRECTORY_RANDOMIZE_KEY + " " + DIRECTORY_RANDOMIZE);		
 		LOG.info(CACHE_IMPL_KEY + " " + CACHE_IMPL);
+		LOG.info(LOCATION_MAP_KEY + " " + LOCATION_MAP);
 		LOG.info(NAMENODE_ADDRESS_KEY + " " + NAMENODE_ADDRESS);
 		LOG.info(NAMENODE_BLOCKSELECTION_KEY + " " + NAMENODE_BLOCKSELECTION);
 		LOG.info(NAMENODE_FILEBLOCKS_KEY + " " + NAMENODE_FILEBLOCKS);
 		LOG.info(NAMENODE_RPC_TYPE_KEY + " " + NAMENODE_RPC_TYPE);
-		LOG.info(MULTISTREAM_BLOCKING_KEY + " " + MULTISTREAM_BLOCKING);
 	}
 	
 	public static void verify() throws IOException {
