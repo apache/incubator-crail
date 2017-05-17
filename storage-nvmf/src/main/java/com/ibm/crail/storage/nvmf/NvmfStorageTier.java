@@ -42,8 +42,15 @@ public class NvmfStorageTier extends StorageTier {
 
 	private static final Logger LOG = CrailUtils.getLogger();
 	private static NvmeEndpointGroup clientGroup;
+	private boolean initialized = false;
 
 	public void init(CrailConfiguration crailConfiguration, String[] args) throws IOException {
+
+		if (initialized) {
+			throw new IOException("NvmfStorageTier already initialized");
+		}
+		initialized = true;
+
 		NvmfStorageConstants.updateConstants(crailConfiguration);
 
 		if (args != null) {
@@ -76,13 +83,6 @@ public class NvmfStorageTier extends StorageTier {
 		}
 
 		NvmfStorageConstants.verify();
-
-		if (clientGroup != null) {
-			throw new IOException("NvmfStorageTier already initialized");
-		}
-		clientGroup = new NvmeEndpointGroup(new NvmeTransportType[]{NvmeTransportType.RDMA},
-				NvmfStorageConstants.HUGEDIR,
-				NvmfStorageConstants.MEMPOOL);
 	}
 
 	public void printConf(Logger logger) {
@@ -90,11 +90,16 @@ public class NvmfStorageTier extends StorageTier {
 	}
 
 	public static NvmeEndpointGroup getEndpointGroup() {
+		if (clientGroup == null) {
+			clientGroup = new NvmeEndpointGroup(new NvmeTransportType[]{NvmeTransportType.RDMA},
+					NvmfStorageConstants.HUGEDIR,
+					NvmfStorageConstants.MEMPOOL);
+		}
 		return clientGroup;
 	}
 
 	public StorageEndpoint createEndpoint(InetSocketAddress inetSocketAddress) throws IOException {
-		return new NvmfStorageEndpoint(clientGroup, inetSocketAddress);
+		return new NvmfStorageEndpoint(getEndpointGroup(), inetSocketAddress);
 	}
 
 	public NvmfStorageServer launchServer() throws Exception {
