@@ -2,11 +2,14 @@ package com.ibm.crail;
 
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
+import com.ibm.crail.memory.OffHeapBuffer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.Assert;
 import java.util.Random;
+
+import java.nio.ByteBuffer;
 
 public class ClientTest {
 
@@ -75,7 +78,7 @@ public class ClientTest {
 		int toWrite = position - (int)outputStream.position();
 		Assert.assertTrue(toWrite >= 0);
 		if (toWrite != 0) {
-			CrailBuffer outputBuffer = fs.allocateBuffer();
+			CrailBuffer outputBuffer = OffHeapBuffer.wrap(ByteBuffer.allocateDirect(toWrite));
 			outputBuffer.limit(toWrite);
 			fillRandom(outputBuffer);
 			CrailResult result = outputStream.write(outputBuffer).get();
@@ -86,8 +89,8 @@ public class ClientTest {
 	}
 
 	void directStream(int length, int position, int remoteOffset) throws Exception {
-		CrailBuffer outputBuffer = fs.allocateBuffer();
-		CrailBuffer inputBuffer = fs.allocateBuffer();
+		CrailBuffer outputBuffer = OffHeapBuffer.wrap(ByteBuffer.allocateDirect(length + position));
+		CrailBuffer inputBuffer = OffHeapBuffer.wrap(ByteBuffer.allocateDirect(outputBuffer.capacity()));
 
 		System.err.println("DirectStream write/read with from buffer position = " +
 				position + ", length = " + length + ", remoteOffset = " + remoteOffset);
