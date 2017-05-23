@@ -35,7 +35,7 @@ import java.util.concurrent.TimeoutException;
 
 public class NvmfStorageFuture implements StorageFuture, StorageResult {
 
-	private final NvmfStorageEndpoint endpoint;
+	protected final NvmfStorageEndpoint endpoint;
 	private final int len;
 	private Exception exception;
 	private volatile boolean done;

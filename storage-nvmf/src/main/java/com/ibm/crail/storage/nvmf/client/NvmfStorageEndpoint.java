@@ -154,7 +154,6 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 			long alignedLength = NvmfStorageUtils.alignLength(sectorSize, remoteOffset, length);
 
 			CrailBuffer stagingBuffer = cache.getBuffer();
-			stagingBuffer.clear();
 			stagingBuffer.limit((int)alignedLength);
 			try {
 				switch(op) {
@@ -171,7 +170,7 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 							stagingBuffer.put(buffer.getByteBuffer());
 							stagingBuffer.position(0);
 							command.setBuffer(stagingBuffer.getByteBuffer()).setLinearBlockAddress(lba).write().execute();
-							future = futures[(int)command.getId()] = new NvmfStorageFuture(this, sizeToWrite);
+							future = futures[(int)command.getId()] = new NvmfStorageUnalignedWriteFuture(this, sizeToWrite, stagingBuffer);
 						} else {
 							// RMW but append only file system allows only reading last sector
 							// and dir entries are sector aligned

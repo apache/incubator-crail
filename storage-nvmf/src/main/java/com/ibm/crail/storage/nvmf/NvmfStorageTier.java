@@ -98,7 +98,7 @@ public class NvmfStorageTier extends StorageTier {
 		return clientGroup;
 	}
 
-	public StorageEndpoint createEndpoint(InetSocketAddress inetSocketAddress) throws IOException {
+	public synchronized StorageEndpoint createEndpoint(InetSocketAddress inetSocketAddress) throws IOException {
 		return new NvmfStorageEndpoint(getEndpointGroup(), inetSocketAddress);
 	}
 
