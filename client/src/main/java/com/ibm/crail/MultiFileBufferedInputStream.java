@@ -25,13 +25,13 @@ class MultiFileBufferedInputStream extends CrailBufferedInputStream {
 	public CrailInputStream getStream() throws Exception {
 		while(readyStreams.isEmpty() && paths.hasNext()){
 			String path = paths.next();
-			CrailFile file = fs.lookup(path).get().asFile();
-			if (file == null){
-				throw new Exception("File not found, name " + path);
-			}
-			if (file.getCapacity() > 0){
-				CrailInputStream stream = file.getDirectInputStream(file.getCapacity());
-				readyStreams.add(stream);
+			CrailNode node = fs.lookup(path).get();
+			if (node != null){
+				CrailFile file = node.asFile();
+				if (file.getCapacity() > 0){
+					CrailInputStream stream = file.getDirectInputStream(file.getCapacity());
+					readyStreams.add(stream);
+				}
 			}
 		}
 		return readyStreams.peek();
