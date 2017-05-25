@@ -1020,7 +1020,8 @@ public class CrailBenchmark {
 	}	
 	
 	private void warmUp(CrailFS fs, String filename, int operations, ConcurrentLinkedQueue<CrailBuffer> bufferList) throws Exception {
-		String warmupFilename = filename + ".warmup";
+		Random random = new Random();
+		String warmupFilename = filename + random.nextInt();
 		System.out.println("warmUp, warmupFile " + warmupFilename + ", operations " + operations);
 		if (operations > 0){
 			CrailFile warmupFile = fs.create(warmupFilename, CrailNodeType.DATAFILE, 0, 0).get().asFile();
