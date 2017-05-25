@@ -521,7 +521,7 @@ public class CrailBenchmark {
 			buf.clear();
 			long start = System.currentTimeMillis();
 			int ret = multiStream.read(buf);
-			while(ret > 0){
+			while(ret >= 0){
 				sumbytes = sumbytes + ret;
 				long _ret = (long) ret;
 				_sumbytes +=  _ret;				

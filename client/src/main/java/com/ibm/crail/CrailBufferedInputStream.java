@@ -109,7 +109,7 @@ public abstract class CrailBufferedInputStream extends InputStream {
 
 			int sumLen = 0;
 			while (len > 0) {
-				CrailBuffer slice = getSlice(true);
+				CrailBuffer slice = getSlice(false);
 				if (slice == null){
 					break;
 				}
@@ -123,7 +123,7 @@ public abstract class CrailBufferedInputStream extends InputStream {
 			}	
 			if (sumLen > 0){
 				return sumLen;
-			} else if (position < capacity){
+			} else if (readySlices.size() + pendingSlices.size() > 0){
 				return 0;
 			} else {
 				return -1;
@@ -147,7 +147,7 @@ public abstract class CrailBufferedInputStream extends InputStream {
 			int len = dataBuf.remaining();
 			int sumLen = 0;
 			while (len > 0) {
-				CrailBuffer slice = getSlice(true);
+				CrailBuffer slice = getSlice(false);
 				if (slice == null){
 					break;
 				}				
@@ -163,7 +163,7 @@ public abstract class CrailBufferedInputStream extends InputStream {
 			}
 			if (sumLen > 0){
 				return sumLen;
-			} else if (position < capacity){
+			} else if (readySlices.size() + pendingSlices.size() > 0){
 				return 0;
 			} else {
 				return -1;
