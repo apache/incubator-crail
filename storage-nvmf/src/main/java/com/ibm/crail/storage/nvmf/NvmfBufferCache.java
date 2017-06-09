@@ -29,6 +29,8 @@ import com.ibm.disni.nvmef.NvmeEndpointGroup;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -37,7 +39,7 @@ public class NvmfBufferCache extends BufferCache {
 	private static final int ALIGNMENT = 4096;
 	private NvmeEndpointGroup endpointGroup;
 
-	private Set<ByteBuffer> bufferPool = ConcurrentHashMap.newKeySet();
+	private List<ByteBuffer> bufferPool = new ArrayList<>();
 
 	public NvmfBufferCache() throws IOException {
 		super();
@@ -65,5 +67,6 @@ public class NvmfBufferCache extends BufferCache {
 		for (ByteBuffer buffer : bufferPool) {
 			endpointGroup.freeBuffer(buffer);
 		}
+		bufferPool.clear();
 	}
 }
