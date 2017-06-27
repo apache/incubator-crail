@@ -29,6 +29,9 @@ import com.ibm.crail.CrailBlockLocation;
 import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFS;
 import com.ibm.crail.CrailFile;
+import com.ibm.crail.CrailMultiFile;
+import com.ibm.crail.CrailNode;
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.core.CoreFileSystem;
@@ -51,7 +54,7 @@ public class CrailFsck {
 		System.exit(1);
 	}		
 	
-	public void getLocations(String filename, int offset, int length) throws Exception {
+	public void getLocations(String filename, long offset, long length) throws Exception {
 		System.out.println("getLocations, filename " + filename + ", offset " + offset + ", len " + length);
 		CrailConfiguration conf = new CrailConfiguration();
 		CrailFS fs = CrailFS.newInstance(conf);
@@ -66,14 +69,29 @@ public class CrailFsck {
 		HashMap<String, AtomicInteger> stats = new HashMap<String, AtomicInteger>();
 		CrailConfiguration conf = new CrailConfiguration();
 		CrailFS fs = CrailFS.newInstance(conf);
-		CrailDirectory directory = fs.lookup(filename).get().asDirectory();
+		CrailNode node = fs.lookup(filename).get();
 		
-		Iterator<String> iter = directory.listEntries();
-		while (iter.hasNext()) {
-			String path = iter.next();
-			CrailFile child = fs.lookup(path).get().asFile();
-			printPath(stats, fs, child.getPath(), 0, child.getCapacity());
+		if (node.getType() == CrailNodeType.DIRECTORY){
+			CrailDirectory directory = node.asDirectory();
+			Iterator<String> iter = directory.listEntries();
+			while (iter.hasNext()) {
+				String path = iter.next();
+				CrailFile child = fs.lookup(path).get().asFile();
+				walkBlocks(stats, fs, child.getPath(), 0, child.getCapacity());
+			}
+		} else if (node.getType() == CrailNodeType.DATAFILE){
+			CrailFile file = node.asFile();
+			walkBlocks(stats, fs, file.getPath(), 0, file.getCapacity());
+		} else if (node.getType() == CrailNodeType.MULTIFILE){
+			CrailMultiFile directory = node.asMultiFile();
+			Iterator<String> iter = directory.listEntries();
+			while (iter.hasNext()) {
+				String path = iter.next();
+				CrailFile child = fs.lookup(path).get().asFile();
+				walkBlocks(stats, fs, child.getPath(), 0, child.getCapacity());
+			}
 		}
+		
 		printStats(stats);	
 		fs.close();
 	}
@@ -124,14 +142,14 @@ public class CrailFsck {
 		}
 	}
 
-	private void printPath(HashMap<String, AtomicInteger> stats, CrailFS fs, String filePath, long offset, long len) throws Exception {
-		System.out.println("printing locations for path " + filePath);
+	private void walkBlocks(HashMap<String, AtomicInteger> stats, CrailFS fs, String filePath, long offset, long len) throws Exception {
+//		System.out.println("printing locations for path " + filePath);
 		CrailBlockLocation locations[] = fs.lookup(filePath).get().asFile().getBlockLocations(offset, len);
 		for (int i = 0; i < locations.length; i++){
 			for (int j = 0; j < locations[i].getNames().length; j++){
 				String name = locations[i].getNames()[j];
 				String host = name.split(":")[0];
-				System.out.println("..........names " + host);
+//				System.out.println("..........names " + host);
 				incStats(stats, host);
 			}
 		}
@@ -157,8 +175,8 @@ public class CrailFsck {
 		
 		String type = "";
 		String filename = "/tmp.dat";
-		int offset = 0;
-		int length = 1;
+		long offset = 0;
+		long length = 1;
 		boolean randomize = false;
 		
 		while ((ch = go.getopt()) != GetOpt.optEOF) {
@@ -167,9 +185,9 @@ public class CrailFsck {
 			} else if ((char) ch == 'f') {
 				filename = go.optArgGet();
 			} else if ((char) ch == 'y') {
-				offset = Integer.parseInt(go.optArgGet());
+				offset = Long.parseLong(go.optArgGet());
 			} else if ((char) ch == 'l') {
-				length = Integer.parseInt(go.optArgGet());
+				length = Long.parseLong(go.optArgGet());
 			} else if ((char) ch == 'r') {
 				randomize = Boolean.parseBoolean(go.optArgGet());
 			} else {
