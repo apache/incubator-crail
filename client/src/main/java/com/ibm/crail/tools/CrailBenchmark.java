@@ -795,7 +795,7 @@ public class CrailBenchmark {
 		CrailConfiguration conf = new CrailConfiguration();
 		CrailFS fs = CrailFS.newInstance(conf);
 		
-		CrailBuffer buf = fs.allocateBuffer();
+		CrailBuffer buf = fs.allocateBuffer().clear().limit(size).slice();
 		CrailFile file = fs.create(filename, CrailNodeType.DATAFILE, 0, 0).get().asFile();
 		file.syncDir();
 		CrailOutputStream directOutputStream = file.getDirectOutputStream(0);
