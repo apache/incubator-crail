@@ -109,7 +109,7 @@ public abstract class CrailBufferedInputStream extends InputStream {
 
 			int sumLen = 0;
 			while (len > 0) {
-				CrailBuffer slice = getSlice(false);
+				CrailBuffer slice = getSlice(true);
 				if (slice == null){
 					break;
 				}
@@ -147,7 +147,7 @@ public abstract class CrailBufferedInputStream extends InputStream {
 			int len = dataBuf.remaining();
 			int sumLen = 0;
 			while (len > 0) {
-				CrailBuffer slice = getSlice(false);
+				CrailBuffer slice = getSlice(true);
 				if (slice == null){
 					break;
 				}				

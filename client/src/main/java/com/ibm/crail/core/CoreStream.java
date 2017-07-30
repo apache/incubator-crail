@@ -232,6 +232,7 @@ public abstract class CoreStream {
 	private StorageFuture prepareAndTrigger(CoreSubOperation opDesc, CrailBuffer dataBuf, BlockInfo block) throws Exception {
 		try {
 			StorageEndpoint endpoint = endpointCache.getDataEndpoint(block.getDnInfo());
+			dataBuf.clear();
 			dataBuf.position(opDesc.getBufferPosition());
 			dataBuf.limit(dataBuf.position() + opDesc.getLen());
 			StorageFuture subFuture = trigger(endpoint, opDesc, dataBuf, block);
