@@ -9,7 +9,7 @@ crail.namenode.address			crail://<hostname>:9060
 crail.namenode.blockselection		roundrobin
 crail.namenode.darpc.queuesize		64
 crail.namenode.darpc.polling		false
-crail.storage.types 			com.ibm.crail.datanode.rdma.RdmaStorageTier
+crail.storage.types 			com.ibm.crail.storage.rdma.RdmaStorageTier
 crail.storage.rdma.interface            eth0
 crail.storage.rdma.port                 50040
 crail.storage.rdma.allocationsize       1073741824
