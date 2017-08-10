@@ -31,7 +31,7 @@ import com.ibm.crail.metadata.FileName;
 
 public interface RpcConnection {
 	public abstract RpcFuture<RpcCreateFile> createFile(
-			FileName filename, CrailNodeType type, int storageAffinity, int locationAffinity) throws IOException;
+			FileName filename, CrailNodeType type, int storageClass, int locationClass) throws IOException;
 
 	public abstract RpcFuture<RpcGetFile> getFile(FileName filename,
 			boolean writeable) throws IOException;
@@ -46,7 +46,7 @@ public interface RpcConnection {
 			FileName srcHash, FileName dstHash) throws IOException;
 
 	public abstract RpcFuture<RpcGetBlock> getBlock(long fd,
-			long token, long position, int storageAffinity, int locationAffinity, long capacity) throws IOException;
+			long token, long position, long capacity) throws IOException;
 
 	public abstract RpcFuture<RpcGetLocation> getLocation(
 			FileName fileName, long position) throws IOException;

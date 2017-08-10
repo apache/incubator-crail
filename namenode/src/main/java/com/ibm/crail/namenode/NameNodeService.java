@@ -72,11 +72,11 @@ public class NameNodeService implements RpcNameNodeService {
 		FileName fileHash = request.getFileName();
 		CrailNodeType type = request.getFileType();
 		boolean writeable = type.isDirectory() ? false : true; 
-		int storageAffinity = request.getStorageAffinity();
-		int locationAffinity = request.getLocationAffinity();
+		int storageClass = request.getStorageClass();
+		int locationClass = request.getLocationClass();
 		
 		//check params
-		if (type.isContainer() && locationAffinity > 0){
+		if (type.isContainer() && locationClass > 0){
 			return RpcErrors.ERR_DIR_LOCATION_AFFINITY_MISMATCH;
 		}
 		
@@ -92,12 +92,19 @@ public class NameNodeService implements RpcNameNodeService {
 			return RpcErrors.ERR_PARENT_NOT_DIR;
 		}
 		
-		AbstractNode fileInfo = FileBlocks.createNode(fileHash.getFileComponent(), type);
+		if (storageClass < 0){
+			storageClass = parentInfo.getStorageClass();
+		}
+		if (locationClass < 0){
+			locationClass = parentInfo.getLocationClass();
+		}
+		
+		AbstractNode fileInfo = FileBlocks.createNode(fileHash.getFileComponent(), type, storageClass, locationClass);
 		if (!parentInfo.addChild(fileInfo)){
 			return RpcErrors.ERR_FILE_EXISTS;
 		}
 		
-		BlockInfo fileBlock = blockStore.getBlock(storageAffinity, locationAffinity);
+		BlockInfo fileBlock = blockStore.getBlock(fileInfo.getStorageClass(), fileInfo.getLocationClass());
 		if (fileBlock == null){
 			return RpcErrors.ERR_NO_FREE_BLOCKS;
 		}			
@@ -108,7 +115,7 @@ public class NameNodeService implements RpcNameNodeService {
 		int index = CrailUtils.computeIndex(fileInfo.getDirOffset());
 		BlockInfo parentBlock = parentInfo.getBlock(index);
 		if (parentBlock == null){
-			parentBlock = blockStore.getBlock(0, 0);
+			parentBlock = blockStore.getBlock(parentInfo.getStorageClass(), parentInfo.getLocationClass());
 			if (parentBlock == null){
 				return RpcErrors.ERR_NO_FREE_BLOCKS;
 			}			
@@ -333,7 +340,7 @@ public class NameNodeService implements RpcNameNodeService {
 		index = CrailUtils.computeIndex(srcFile.getDirOffset());
 		BlockInfo dstBlock = dstParent.getBlock(index);
 		if (dstBlock == null){
-			dstBlock = blockStore.getBlock(0, 0);
+			dstBlock = blockStore.getBlock(dstParent.getStorageClass(), dstParent.getLocationClass());
 			if (dstBlock == null){
 				return RpcErrors.ERR_NO_FREE_BLOCKS;
 			}			
@@ -394,7 +401,7 @@ public class NameNodeService implements RpcNameNodeService {
 		
 		//get params
 		BlockInfo blockInfo = request.getBlockInfo();
-		DataNodeInfo dnInfoExt = new DataNodeInfo(blockInfo.getDnInfo().getStorageTier(), blockInfo.getDnInfo().getLocationAffinity(), blockInfo.getDnInfo().getIpAddress(), blockInfo.getDnInfo().getPort());
+		DataNodeInfo dnInfoExt = new DataNodeInfo(blockInfo.getDnInfo().getStorageType(), blockInfo.getDnInfo().getStorageClass(), blockInfo.getDnInfo().getLocationClass(), blockInfo.getDnInfo().getIpAddress(), blockInfo.getDnInfo().getPort());
 		
 		//rpc
 		int realBlocks = (int) (((long) blockInfo.getLength()) / CrailConstants.BLOCK_SIZE) ;
@@ -425,8 +432,6 @@ public class NameNodeService implements RpcNameNodeService {
 		long fd = request.getFd();
 		long token = request.getToken();
 		long position = request.getPosition();
-		int storageAffinity = request.getStorageAffinity();
-		int locationAffinitiy = request.getLocationAffinity();
 		long capacity = request.getCapacity();
 		
 		//check params
@@ -447,7 +452,7 @@ public class NameNodeService implements RpcNameNodeService {
 		
 		BlockInfo block = fileInfo.getBlock(index);
 		if (block == null && fileInfo.getToken() == token){
-			block = blockStore.getBlock(storageAffinity, locationAffinitiy);
+			block = blockStore.getBlock(fileInfo.getStorageClass(), fileInfo.getLocationClass());
 			if (block == null){
 				return RpcErrors.ERR_NO_FREE_BLOCKS;
 			}

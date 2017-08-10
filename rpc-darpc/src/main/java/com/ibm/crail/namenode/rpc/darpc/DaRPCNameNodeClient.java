@@ -62,12 +62,12 @@ public class DaRPCNameNodeClient implements RpcConnection {
 	}	
 	
 	@Override
-	public RpcFuture<RpcCreateFile> createFile(FileName filename, CrailNodeType type, int storageAffinity, int locationAffinity) throws IOException {
+	public RpcFuture<RpcCreateFile> createFile(FileName filename, CrailNodeType type, int storageClass, int locationClass) throws IOException {
 		if (CrailConstants.DEBUG){
-			LOG.debug("RPC: createFile, fileType " + type + ", affinity " + locationAffinity);
+			LOG.debug("RPC: createFile, fileType " + type + ", storageClass " + storageClass + ", locationClass " + locationClass);
 		}
 		
-		RpcRequestMessage.CreateFileReq createFileReq = new RpcRequestMessage.CreateFileReq(filename, type, storageAffinity, locationAffinity);
+		RpcRequestMessage.CreateFileReq createFileReq = new RpcRequestMessage.CreateFileReq(filename, type, storageClass, locationClass);
 		DaRPCNameNodeRequest request = new DaRPCNameNodeRequest(createFileReq);
 		request.setCommand(RpcProtocol.CMD_CREATE_FILE);
 		
@@ -162,12 +162,12 @@ public class DaRPCNameNodeClient implements RpcConnection {
 	}
 	
 	@Override
-	public DaRPCNameNodeFuture<RpcGetBlock> getBlock(long fd, long token, long position, int storageAffinity, int locationAffinity, long capacity) throws IOException {
+	public DaRPCNameNodeFuture<RpcGetBlock> getBlock(long fd, long token, long position, long capacity) throws IOException {
 		if (CrailConstants.DEBUG){
 			LOG.debug("RPC: getBlock, fd " + fd + ", token " + token + ", position " + position + ", capacity " + capacity);
 		}
 		
-		RpcRequestMessage.GetBlockReq getBlockReq = new RpcRequestMessage.GetBlockReq(fd, token, position, storageAffinity, locationAffinity, capacity);
+		RpcRequestMessage.GetBlockReq getBlockReq = new RpcRequestMessage.GetBlockReq(fd, token, position, capacity);
 		DaRPCNameNodeRequest request = new DaRPCNameNodeRequest(getBlockReq);
 		request.setCommand(RpcProtocol.CMD_GET_BLOCK);
 		

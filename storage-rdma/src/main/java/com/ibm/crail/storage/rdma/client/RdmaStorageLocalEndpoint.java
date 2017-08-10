@@ -34,6 +34,8 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.slf4j.Logger;
+
 import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.memory.OffHeapBuffer;
@@ -42,48 +44,46 @@ import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.storage.StorageFuture;
 import com.ibm.crail.storage.rdma.RdmaConstants;
 import com.ibm.crail.storage.rdma.RdmaStorageServer;
+import com.ibm.crail.utils.CrailUtils;
 import com.ibm.disni.rdma.verbs.*;
+
 import sun.misc.Unsafe;
 
 public class RdmaStorageLocalEndpoint implements StorageEndpoint {
+	private static final Logger LOG = CrailUtils.getLogger();
 	private String indexDirPath;
 	private ConcurrentHashMap<Integer, CrailBuffer> bufferMap;
 	private ConcurrentHashMap<Integer, RdmaBlockIndex> indexMap;
 	private Unsafe unsafe;
+	private InetSocketAddress address;
 	
-	public RdmaStorageLocalEndpoint(InetSocketAddress datanodeAddr) throws IOException {
-		if (datanodeAddr == null){
-			throw new IOException("Datanode address not valid!");
-		}
-		
-		try {
-			this.bufferMap = new ConcurrentHashMap<Integer, CrailBuffer>();
-			this.indexMap = new ConcurrentHashMap<Integer, RdmaBlockIndex>();
-			this.unsafe = getUnsafe();
-			this.indexDirPath = RdmaStorageServer.getIndexDirectory(datanodeAddr);
-			File indexDir = new File(indexDirPath);
-			ByteBuffer fileBuffer = ByteBuffer.allocate(CrailConstants.BUFFER_SIZE);
-			if (indexDir.exists()){
-				for (File indexFile : indexDir.listFiles()) {
-					FileInputStream indexStream = new FileInputStream(indexFile);
-					FileChannel indexChannel = indexStream.getChannel();
-					fileBuffer.clear();
-					indexChannel.read(fileBuffer);
-					fileBuffer.flip();
-					RdmaBlockIndex blockIndex = new RdmaBlockIndex();
-					blockIndex.update(fileBuffer);
-					File dataFile = new File(blockIndex.getPath());
-					MappedByteBuffer mappedBuffer = mmap(dataFile);
-					indexStream.close();
-					indexChannel.close();
-					
-					bufferMap.put(blockIndex.getKey(), OffHeapBuffer.wrap(mappedBuffer));
-					indexMap.put(blockIndex.getKey(), blockIndex);
-				}				
-			}			
-		} catch(Exception e){
-			throw new IOException(e);
-		}
+	public RdmaStorageLocalEndpoint(InetSocketAddress datanodeAddr) throws Exception {
+		LOG.info("new local endpoint for address " + datanodeAddr);
+		this.address = datanodeAddr;
+		this.bufferMap = new ConcurrentHashMap<Integer, CrailBuffer>();
+		this.indexMap = new ConcurrentHashMap<Integer, RdmaBlockIndex>();
+		this.unsafe = getUnsafe();
+		this.indexDirPath = RdmaStorageServer.getIndexDirectory(datanodeAddr);
+		File indexDir = new File(indexDirPath);
+		ByteBuffer fileBuffer = ByteBuffer.allocate(CrailConstants.BUFFER_SIZE);
+		if (indexDir.exists()){
+			for (File indexFile : indexDir.listFiles()) {
+				FileInputStream indexStream = new FileInputStream(indexFile);
+				FileChannel indexChannel = indexStream.getChannel();
+				fileBuffer.clear();
+				indexChannel.read(fileBuffer);
+				fileBuffer.flip();
+				RdmaBlockIndex blockIndex = new RdmaBlockIndex();
+				blockIndex.update(fileBuffer);
+				File dataFile = new File(blockIndex.getPath());
+				MappedByteBuffer mappedBuffer = mmap(dataFile);
+				indexStream.close();
+				indexChannel.close();
+				
+				bufferMap.put(blockIndex.getKey(), OffHeapBuffer.wrap(mappedBuffer));
+				indexMap.put(blockIndex.getKey(), blockIndex);
+			}				
+		}			
 	}
 
 	@Override
@@ -101,11 +101,11 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 		
 		CrailBuffer mappedBuffer = bufferMap.get(remoteMr.getLkey());
 		if (mappedBuffer == null){
-			throw new IOException("No mapped buffer for this key");
+			throw new IOException("No mapped buffer for this key " + remoteMr.getLkey() + ", address " + address);
 		}
 		RdmaBlockIndex blockIndex = indexMap.get(remoteMr.getLkey());
 		if (blockIndex == null){
-			throw new IOException("No index for this key");
+			throw new IOException("No index for this key " + remoteMr.getLkey() + ", address " + address);
 		}
 		
 		long blockOffset = remoteMr.getAddr() - blockIndex.getAddr();

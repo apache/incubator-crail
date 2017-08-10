@@ -24,7 +24,9 @@ package com.ibm.crail.storage.rdma.client;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.HashMap;
 
+import com.ibm.crail.metadata.DataNodeInfo;
 import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.storage.rdma.MrCache;
 import com.ibm.crail.storage.rdma.RdmaConstants;
@@ -33,35 +35,41 @@ import com.ibm.crail.utils.CrailUtils;
 import com.ibm.disni.rdma.*;
 
 public class RdmaStoragePassiveGroup extends RdmaPassiveEndpointGroup<RdmaStoragePassiveEndpoint> implements RdmaStorageGroup {
-	private RdmaStorageLocalEndpoint localEndpoint;
+	private HashMap<InetSocketAddress, RdmaStorageLocalEndpoint> localCache;
 	private MrCache mrCache;
 
-	public RdmaStoragePassiveGroup(int timeout, int maxWR, int maxSge, int cqSize, MrCache mrCache, InetSocketAddress datanodeAddr)
+	public RdmaStoragePassiveGroup(int timeout, int maxWR, int maxSge, int cqSize, MrCache mrCache)
 			throws IOException {
 		super(timeout, maxWR, maxSge, cqSize);
 		try {
 			this.mrCache = mrCache;
-			if (datanodeAddr != null){
-				this.localEndpoint = new RdmaStorageLocalEndpoint(datanodeAddr);
-			} else {
-				this.localEndpoint = null;
-			}
+			this.localCache = new HashMap<InetSocketAddress, RdmaStorageLocalEndpoint>();
 		} catch(Exception e){
 			throw new IOException(e);
 		}
 	}
-
-	public StorageEndpoint createEndpoint(InetSocketAddress inetAddress) throws IOException {
-		if (RdmaConstants.STORAGE_RDMA_LOCAL_MAP && CrailUtils.isLocalAddress(inetAddress.getAddress())){
-			return this.localEndpoint;
-		} 
-		RdmaStoragePassiveEndpoint endpoint = super.createEndpoint();
+	
+	public StorageEndpoint createEndpoint(DataNodeInfo info) throws IOException {
 		try {
-			URI uri = URI.create("rdma://" + inetAddress.getAddress().getHostAddress() + ":" + inetAddress.getPort());
-			endpoint.connect(uri);
+			return createEndpoint(CrailUtils.datanodeInfo2SocketAddr(info));
 		} catch(Exception e){
 			throw new IOException(e);
 		}
+	}	
+
+	public StorageEndpoint createEndpoint(InetSocketAddress inetAddress) throws Exception {
+		if (RdmaConstants.STORAGE_RDMA_LOCAL_MAP && CrailUtils.isLocalAddress(inetAddress.getAddress())){
+			RdmaStorageLocalEndpoint localEndpoint = localCache.get(inetAddress.getAddress());
+			if (localEndpoint == null){
+				localEndpoint = new RdmaStorageLocalEndpoint(inetAddress);
+				localCache.put(inetAddress, localEndpoint);
+			}
+			return localEndpoint;
+		} 
+		
+		RdmaStoragePassiveEndpoint endpoint = super.createEndpoint();
+		URI uri = URI.create("rdma://" + inetAddress.getAddress().getHostAddress() + ":" + inetAddress.getPort());
+		endpoint.connect(uri);
 		return endpoint;
 	}
 	

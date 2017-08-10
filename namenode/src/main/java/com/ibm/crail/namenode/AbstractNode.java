@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.ibm.crail.CrailNodeType;
+import com.ibm.crail.CrailStorageClass;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.metadata.FileInfo;
@@ -42,25 +43,29 @@ public abstract class AbstractNode extends FileInfo implements Delayed {
 	private AtomicLong dirOffsetCounter;
 	private ConcurrentHashMap<Integer, AbstractNode> children;
 	private long delay;
+	private int storageClass;
+	private int locationClass;
 	
 	public static AbstractNode createRoot() throws IOException {
-		return new DirectoryBlocks(new FileName("/").getFileComponent(), CrailNodeType.DIRECTORY);
+		return new DirectoryBlocks(new FileName("/").getFileComponent(), CrailNodeType.DIRECTORY, CrailConstants.STORAGE_ROOTCLASS, 0);
 	}
 	
-	public static AbstractNode createNode(int fileComponent, CrailNodeType type) throws IOException {
+	public static AbstractNode createNode(int fileComponent, CrailNodeType type, int storageClass, int locationClass) throws IOException {
 		if (type == CrailNodeType.DIRECTORY){
-			return new DirectoryBlocks(fileComponent, CrailNodeType.DIRECTORY);
+			return new DirectoryBlocks(fileComponent, CrailNodeType.DIRECTORY, storageClass, locationClass);
 		} else if (type == CrailNodeType.MULTIFILE){
-			return new DirectoryBlocks(fileComponent, CrailNodeType.MULTIFILE);
+			return new DirectoryBlocks(fileComponent, CrailNodeType.MULTIFILE, storageClass, locationClass);
 		} else {
-			return new FileBlocks(fileComponent, CrailNodeType.DATAFILE);
+			return new FileBlocks(fileComponent, CrailNodeType.DATAFILE, storageClass, locationClass);
 		}
 	}
 	
-	public AbstractNode(int fileComponent, CrailNodeType type){
+	public AbstractNode(int fileComponent, CrailNodeType type, int storageClass, int locationAffinity){
 		super(fdcount.incrementAndGet(), type);
 		
 		this.fileComponent = fileComponent;
+		this.storageClass = storageClass;
+		this.locationClass = locationAffinity;
 		this.children = new ConcurrentHashMap<Integer, AbstractNode>();
 		this.delay = System.currentTimeMillis();
 		this.dirOffsetCounter = new AtomicLong(0);
@@ -138,5 +143,13 @@ public abstract class AbstractNode extends FileInfo implements Delayed {
 	@Override
 	public int compareTo(Delayed o) {
 		return 0;
+	}
+
+	public int getStorageClass() {
+		return storageClass;
+	}
+
+	public int getLocationClass() {
+		return locationClass;
 	}
 }

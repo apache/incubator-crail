@@ -27,7 +27,8 @@ class CoreBlockLocation implements CrailBlockLocation {
 	private String[] names;
 	private String[] hosts;
 	private String[] topology;
-	private int[] storageTiers;
+	private int[] storageTypes;
+	private int[] storageClasses;
 	private int[] locationAffinities;
 	private long offset; 
 	private long length;
@@ -75,13 +76,21 @@ class CoreBlockLocation implements CrailBlockLocation {
 		this.topology = topology;
 	}
 
-	public int[] getStorageTiers() {
-		return storageTiers;
+	public int[] getStorageTypes() {
+		return storageTypes;
 	}
 
-	public void setStorageTiers(int[] storageTiers) {
-		this.storageTiers = storageTiers;
+	public void setStorageTypes(int[] storageTypes) {
+		this.storageTypes = storageTypes;
 	}
+	
+	public int[] getStorageClasses() {
+		return storageClasses;
+	}
+
+	public void setStorageClasses(int[] storageClasses) {
+		this.storageClasses = storageClasses;
+	}	
 
 	public int[] getLocationAffinities() {
 		return locationAffinities;
@@ -100,10 +109,14 @@ class CoreBlockLocation implements CrailBlockLocation {
 		      result.append(',');
 		      result.append(h);
 		    }
-		    for (int i = 0; i < storageTiers.length; i++){
+		    for (int i = 0; i < storageTypes.length; i++){
 		    	result.append(',');
-		    	result.append(storageTiers[i]);
+		    	result.append(storageTypes[i]);
 		    }
+		    for (int i = 0; i < storageClasses.length; i++){
+		    	result.append(',');
+		    	result.append(storageClasses[i]);
+		    }		    
 		    for (int i = 0; i < locationAffinities.length; i++){
 		    	result.append(',');
 		    	result.append(locationAffinities[i]);

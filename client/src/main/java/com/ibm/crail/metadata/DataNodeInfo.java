@@ -28,28 +28,31 @@ import com.ibm.crail.utils.CrailUtils;
 
 public class DataNodeInfo {
 	private static final Logger LOG = CrailUtils.getLogger();
-	public static final int CSIZE = 16;
+	public static final int CSIZE = 20;
 	
-	private int storageTier;
-	private int locationAffinity;
+	private int storageType;
+	private int storageClass;
+	private int locationClass;
 	private byte[] ipAddress;
 	private int port;	
 	
 	private long key;
 	
 	public DataNodeInfo(){
-		this.storageTier = 0;
-		this.locationAffinity = 0;
+		this.storageType = 0;
+		this.storageClass = 0;
+		this.locationClass = 0;
 		this.ipAddress = new byte[4];
 		this.port = 0;		
 		this.key = 0;
 	}
 	
-	public DataNodeInfo(int storageTier, int locationAffinity, byte[] ipAddress, int port){
+	public DataNodeInfo(int storageType, int storageClass, int locationClass, byte[] ipAddress, int port){
 		this();
 		
-		this.storageTier = storageTier;
-		this.locationAffinity = locationAffinity;
+		this.storageType = storageType;
+		this.storageClass = storageClass;
+		this.locationClass = locationClass;
 		for (int i = 0; i < ipAddress.length; i++){
 			this.ipAddress[i] = ipAddress[i];
 		}
@@ -57,8 +60,9 @@ public class DataNodeInfo {
 	}	
 	
 	void setDataNodeInfo(DataNodeInfo info) {
-		this.storageTier = info.getStorageTier();
-		this.locationAffinity = info.getLocationAffinity();
+		this.storageType = info.getStorageType();
+		this.storageClass = info.getStorageClass();
+		this.locationClass = info.getLocationClass();
 		for (int i = 0; i < ipAddress.length; i++){
 			this.ipAddress[i] = info.getIpAddress()[i];
 		}		
@@ -66,16 +70,18 @@ public class DataNodeInfo {
 	}
 
 	public int write(ByteBuffer buffer){
-		buffer.putInt(storageTier);
-		buffer.putInt(locationAffinity);
+		buffer.putInt(storageType);
+		buffer.putInt(storageClass);
+		buffer.putInt(locationClass);
 		buffer.put(ipAddress);
 		buffer.putInt(port);		
 		return CSIZE;
 	}
 	
 	public void update(ByteBuffer buffer) throws UnknownHostException {
-		this.storageTier = buffer.getInt();
-		this.locationAffinity = buffer.getInt();
+		this.storageType = buffer.getInt();
+		this.storageClass = buffer.getInt();
+		this.locationClass = buffer.getInt();
 		buffer.get(ipAddress);
 		this.port = buffer.getInt();
 	}	
@@ -88,13 +94,17 @@ public class DataNodeInfo {
 		return port;
 	}
 
-	public int getLocationAffinity() {
-		return locationAffinity;
+	public int getLocationClass() {
+		return locationClass;
 	}
 
-	public int getStorageTier() {
-		return storageTier;
+	public int getStorageType() {
+		return storageType;
 	}
+	
+	public int getStorageClass() {
+		return storageClass;
+	}	
 	
 	public long key(){
 		if (key == 0){

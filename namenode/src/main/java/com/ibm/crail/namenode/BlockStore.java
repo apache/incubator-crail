@@ -23,13 +23,10 @@ package com.ibm.crail.namenode;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import org.slf4j.Logger;
-
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.metadata.DataNodeInfo;
@@ -38,31 +35,32 @@ import com.ibm.crail.utils.AtomicIntegerModulo;
 import com.ibm.crail.utils.CrailUtils;
 
 public class BlockStore {
-	private StorageTier[] storageTiers;
+	private static final Logger LOG = CrailUtils.getLogger();
+	
+	private StorageClass[] storageClasses;
 	
 	public BlockStore(){
-		StringTokenizer tokenizer = new StringTokenizer(CrailConstants.STORAGE_TYPES, ",");
-		storageTiers = new StorageTier[tokenizer.countTokens()];
-		for (int i = 0; i < tokenizer.countTokens(); i++){
-			this.storageTiers[i] = new StorageTier(i);
+		storageClasses = new StorageClass[CrailConstants.STORAGE_CLASSES]; 
+		for (int i = 0; i < CrailConstants.STORAGE_CLASSES; i++){
+			this.storageClasses[i] = new StorageClass(i);
 		}		
 	}
 
 	public short addBlock(BlockInfo blockInfo) throws UnknownHostException {
-		int storageTier = blockInfo.getDnInfo().getStorageTier();
-		return storageTiers[storageTier].addBlock(blockInfo);
+		int storageClass = blockInfo.getDnInfo().getStorageClass();
+		return storageClasses[storageClass].addBlock(blockInfo);
 	}
 
-	public BlockInfo getBlock(int storageAffinity, int locationAffinity) throws InterruptedException {
+	public BlockInfo getBlock(int storageClass, int locationAffinity) throws InterruptedException {
 		BlockInfo block = null;
-		if (storageAffinity > 0){
-			if (storageAffinity < storageTiers.length){
-				block = storageTiers[storageAffinity].getBlock(locationAffinity);
+		if (storageClass > 0){
+			if (storageClass < storageClasses.length){
+				block = storageClasses[storageClass].getBlock(locationAffinity);
 			}
 		}
 		if (block == null){
-			for (int i = 0; i < storageTiers.length; i++){
-				block = storageTiers[i].getBlock(locationAffinity);
+			for (int i = 0; i < storageClasses.length; i++){
+				block = storageClasses[i].getBlock(locationAffinity);
 				if (block != null){
 					break;
 				}
@@ -73,32 +71,31 @@ public class BlockStore {
 	}
 
 	public DataNodeBlocks getDataNode(DataNodeInfo dnInfo) {
-		int tier = dnInfo.getStorageTier();
-		return storageTiers[tier].getDataNode(dnInfo);
+		int storageClass = dnInfo.getStorageClass();
+		return storageClasses[storageClass].getDataNode(dnInfo);
 	}
 	
 }
 
-class StorageTier {
+class StorageClass {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
-	private int storageTier;
+	private int storageClass;
 	private ConcurrentHashMap<Long, DataNodeBlocks> membership;
 	private ConcurrentHashMap<Integer, DataNodeArray> affinitySets;
 	private DataNodeArray anySet;
 	private BlockSelection blockSelection;
 	
-	public StorageTier(int storageTier){
+	public StorageClass(int storageClass){
+		this.storageClass = storageClass;
+		this.membership = new ConcurrentHashMap<Long, DataNodeBlocks>();
+		this.affinitySets = new ConcurrentHashMap<Integer, DataNodeArray>();
 		if (CrailConstants.NAMENODE_BLOCKSELECTION.equalsIgnoreCase("roundrobin")){
 			this.blockSelection = new RoundRobinBlockSelection();
 		} else {
 			this.blockSelection = new RandomBlockSelection();
 		}
-		this.storageTier = storageTier;
-		this.membership = new ConcurrentHashMap<Long, DataNodeBlocks>();
-		this.affinitySets = new ConcurrentHashMap<Integer, DataNodeArray>();
 		this.anySet = new DataNodeArray(blockSelection);
-//		this.anyCounter = new AtomicIntegerModulo();
 	}
 	
 	short addBlock(BlockInfo block) throws UnknownHostException {
@@ -106,7 +103,6 @@ class StorageTier {
 		DataNodeBlocks current = membership.get(dnAddress);
 		if (current == null) {
 			current = DataNodeBlocks.fromDataNodeInfo(block.getDnInfo());
-			LOG.info("new datanode, address " + current.key() + ", tier " + current.getStorageTier());
 			addDataNode(current);
 		}
 
@@ -148,11 +144,11 @@ class StorageTier {
 	//---------------
 	
 	private void _addDataNode(DataNodeBlocks dataNode){
-//		LOG.info("adding datanode for affinity " + dataNode.getAffinity());
-		DataNodeArray hostMap = affinitySets.get(dataNode.getLocationAffinity());
+		LOG.info("adding datanode " + CrailUtils.getIPAddressFromBytes(dataNode.getIpAddress()) + ":" + dataNode.getPort() + " of type " + dataNode.getStorageType() + " to storage class " + storageClass);
+		DataNodeArray hostMap = affinitySets.get(dataNode.getLocationClass());
 		if (hostMap == null){
 			hostMap = new DataNodeArray(blockSelection);
-			DataNodeArray oldMap = affinitySets.putIfAbsent(dataNode.getLocationAffinity(), hostMap);
+			DataNodeArray oldMap = affinitySets.putIfAbsent(dataNode.getLocationClass(), hostMap);
 			if (oldMap != null){
 				hostMap = oldMap;
 			}
@@ -224,24 +220,22 @@ class StorageTier {
 			try {
 				BlockInfo block = null;
 				int size = arrayList.size();
-				int startIndex = blockSelection.getNext(size);
-				for (int i = 0; i < size; i++){
-					int index = (startIndex + i) % size;
-					DataNodeBlocks anyDn = arrayList.get(index);
-					block = anyDn.getFreeBlock();
-					if (block != null){
-						break;
-					} 
+				if (size > 0){
+					int startIndex = blockSelection.getNext(size);
+					for (int i = 0; i < size; i++){
+						int index = (startIndex + i) % size;
+						DataNodeBlocks anyDn = arrayList.get(index);
+						block = anyDn.getFreeBlock();
+						if (block != null){
+							break;
+						} 
+					}
 				}
 				return block;
 			} finally {
 				lock.readLock().unlock();
 			}
-		}		
-	}
-
-	public int getStorageTier() {
-		return storageTier;
+		}
 	}
 }
 

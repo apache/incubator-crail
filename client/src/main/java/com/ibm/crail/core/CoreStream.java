@@ -110,7 +110,7 @@ public abstract class CoreStream {
 				pendingBlocks.add(rpcFuture);
 			} else {
 				this.syncedCapacity = fileInfo.getCapacity();
-				RpcFuture<RpcGetBlock> rpcFuture = namenodeClientRpc.getBlock(fileInfo.getFd(), fileInfo.getToken(), position, node.storageAffinity(), node.locationAffinity(), syncedCapacity);
+				RpcFuture<RpcGetBlock> rpcFuture = namenodeClientRpc.getBlock(fileInfo.getFd(), fileInfo.getToken(), position, syncedCapacity);
 				blockMap.put(rpcFuture.getTicket(), subOperation);
 				pendingBlocks.add(rpcFuture);
 			}
@@ -166,7 +166,7 @@ public abstract class CoreStream {
 			return;
 		}
 		this.syncedCapacity = fileInfo.getCapacity();
-		RpcFuture<RpcGetBlock> nextBlock = namenodeClientRpc.getBlock(fileInfo.getFd(), fileInfo.getToken(), position, node.storageAffinity(), node.locationAffinity(), syncedCapacity);
+		RpcFuture<RpcGetBlock> nextBlock = namenodeClientRpc.getBlock(fileInfo.getFd(), fileInfo.getToken(), position, syncedCapacity);
 		nextBlock.setPrefetched(true);
 		nextBlockCache.put(key, nextBlock);
 		this.ioStats.incPrefetchedOps();
@@ -240,6 +240,7 @@ public abstract class CoreStream {
 			return subFuture;
 		} catch(IOException e){
 			LOG.info("ERROR: failed data operation");
+			e.printStackTrace();
 			throw e;
 		}
 	}

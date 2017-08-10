@@ -22,79 +22,132 @@
 package com.ibm.crail.storage;
 
 import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.StringTokenizer;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 
+import com.ibm.crail.CrailStorageClass;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.DataNodeStatistics;
 import com.ibm.crail.rpc.RpcClient;
 import com.ibm.crail.rpc.RpcConnection;
 import com.ibm.crail.utils.CrailUtils;
-import com.ibm.crail.utils.GetOpt;
 
 public interface StorageServer {
-	public abstract void registerResources(StorageRpcClient client) throws Exception;	
+	public abstract StorageResource allocateResource() throws Exception;
 	public abstract boolean isAlive();
 	public abstract InetSocketAddress getAddress();
 	
-	public static void main(String[] args){
-		try{
-			Logger LOG = CrailUtils.getLogger();
-			GetOpt go = new GetOpt(args, "t:");
-			go.optErr = true;
-			int ch = -1;
-			String name = "com.ibm.crail.storage.rdma.RdmaStorageTier";
-			CrailConfiguration conf = new CrailConfiguration();
+	public static void main(String[] args) throws Exception {
+		Logger LOG = CrailUtils.getLogger();
+		CrailConfiguration conf = new CrailConfiguration();
+		CrailConstants.updateConstants(conf);
+		CrailConstants.printConf();
+		CrailConstants.verify();
+		
+		int splitIndex = 0;
+		for (String param : args){
+			if (param.equalsIgnoreCase("--")){
+				break;
+			} 
+			splitIndex++;
+		}
+		
+		//default values
+		StringTokenizer tokenizer = new StringTokenizer(CrailConstants.STORAGE_TYPES, ",");
+		if (!tokenizer.hasMoreTokens()){
+			throw new Exception("No storage types defined!");
+		}
+		String storageName = tokenizer.nextToken();
+		int storageType = 0;
+		HashMap<String, Integer> storageTypes = new HashMap<String, Integer>();
+		storageTypes.put(storageName, storageType);
+		for (int type = 1; tokenizer.hasMoreElements(); type++){
+			String name = tokenizer.nextToken();
+			storageTypes.put(name, type);
+		}
+		int storageClass = -1;
+		
+		//custom values
+		if (args != null) {
+			Option typeOption = Option.builder("t").desc("storage type to start").hasArg().build();
+			Option classOption = Option.builder("c").desc("storage class the server will attach to").hasArg().build();
+			Options options = new Options();
+			options.addOption(typeOption);
+			options.addOption(classOption);
+			CommandLineParser parser = new DefaultParser();
 			
-			while ((ch = go.getopt()) != GetOpt.optEOF) {
-				if ((char) ch == 't') {
-					name = go.optArgGet();
-				}
+			try {
+				CommandLine line = parser.parse(options, Arrays.copyOfRange(args, 0, splitIndex));
+				if (line.hasOption(typeOption.getOpt())) {
+					storageName = line.getOptionValue(typeOption.getOpt());
+					storageType = storageTypes.get(storageName).intValue();
+					System.out.println("has custom storageName " + storageName);
+				}				
+				if (line.hasOption(classOption.getOpt())) {
+					storageClass = Integer.parseInt(line.getOptionValue(classOption.getOpt()));
+					System.out.println("has custom storageClass " + storageClass);
+				}					
+			} catch (ParseException e) {
+				HelpFormatter formatter = new HelpFormatter();
+				formatter.printHelp("Storage tier", options);
+				System.exit(-1);
 			}
-
-			CrailConstants.updateConstants(conf);
-			CrailConstants.printConf();
-			CrailConstants.verify();				
-	
-			StorageTier storageTier = StorageTier.createInstance(name);
-			if (storageTier == null){
-				throw new Exception("Cannot instantiate datanode of type " + name);
+		}
+		if (storageClass < 0){
+			storageClass = storageType;
+		}
+		
+		StorageTier storageTier = StorageTier.createInstance(storageName);
+		if (storageTier == null){
+			throw new Exception("Cannot instantiate datanode of type " + storageName);
+		}
+		
+		String extraParams[] = null;
+		splitIndex++;
+		if (args.length > splitIndex){
+			extraParams = new String[args.length - splitIndex];
+			for (int i = splitIndex; i < args.length; i++){
+				extraParams[i-splitIndex] = args[i];
 			}
-			
-			StringTokenizer tokenizer = new StringTokenizer(CrailConstants.STORAGE_TYPES, ",");
-			int storageTierIndex = 0;
-			while (tokenizer.hasMoreTokens()){
-				String storageTierName = tokenizer.nextToken();
-				if (storageTierName.equalsIgnoreCase(storageTier.getClass().getName())){
-					break;
-				} else {
-					storageTierIndex++;
-				}
-			}	
-			
-			storageTier.init(conf, args);
-			storageTier.printConf(LOG);		
-			
-			InetSocketAddress nnAddr = CrailUtils.getNameNodeAddress();
-			RpcClient rpcClient = RpcClient.createInstance(CrailConstants.NAMENODE_RPC_TYPE);
-			rpcClient.init(conf, args);
-			rpcClient.printConf(LOG);					
-			RpcConnection rpcConnection = rpcClient.connect(nnAddr);
-			LOG.info("connected to namenode at " + nnAddr);				
-			
-			StorageServer server = storageTier.launchServer();
-			StorageRpcClient storageRpc = new StorageRpcClient(storageTierIndex, server.getAddress(), rpcConnection);
-			server.registerResources(storageRpc);
-			
-			while (server.isAlive()) {
-				DataNodeStatistics statistics = storageRpc.getDataNode();
-				LOG.info("datanode statistics, freeBlocks " + statistics.getFreeBlockCount());
-				Thread.sleep(2000);
-			}			
-		} catch(Exception e){
-			e.printStackTrace();
-		}		
+		}
+		storageTier.init(conf, extraParams);
+		storageTier.printConf(LOG);		
+		
+		InetSocketAddress nnAddr = CrailUtils.getNameNodeAddress();
+		RpcClient rpcClient = RpcClient.createInstance(CrailConstants.NAMENODE_RPC_TYPE);
+		rpcClient.init(conf, args);
+		rpcClient.printConf(LOG);					
+		RpcConnection rpcConnection = rpcClient.connect(nnAddr);
+		LOG.info("connected to namenode at " + nnAddr);				
+		
+		StorageServer server = storageTier.launchServer();
+		StorageRpcClient storageRpc = new StorageRpcClient(storageType, CrailStorageClass.get(storageClass), server.getAddress(), rpcConnection);
+		
+		while (server.isAlive()) {
+			StorageResource resource = server.allocateResource();
+			if (resource == null){
+				break;
+			} else {
+				storageRpc.setBlock(resource.getAddress(), resource.getLength(), resource.getKey());
+				LOG.info("datanode statistics, freeBlocks " + storageRpc.getDataNode().getFreeBlockCount());		
+			}
+		}
+		
+		while (server.isAlive()) {
+			DataNodeStatistics statistics = storageRpc.getDataNode();
+			LOG.info("datanode statistics, freeBlocks " + statistics.getFreeBlockCount());
+			Thread.sleep(2000);
+		}			
 	}
 }

@@ -37,8 +37,8 @@ import com.ibm.crail.metadata.FileInfo;
 public class CoreFile extends CoreNode implements CrailFile {
 	private Semaphore outputStreams;
 	
-	public CoreFile(CoreFileSystem fs, FileInfo fileInfo, String path, int storageAffinity, int locationAffinity){
-		super(fs, fileInfo, path, storageAffinity, locationAffinity);
+	public CoreFile(CoreFileSystem fs, FileInfo fileInfo, String path){
+		super(fs, fileInfo, path);
 		this.outputStreams = new Semaphore(1);
 	}
 	
@@ -63,10 +63,6 @@ public class CoreFile extends CoreNode implements CrailFile {
 		return super.getOutputStream(writeHint);
 	}
 	
-	public CrailBlockLocation[] getBlockLocations(long start, long len) throws Exception{
-		return fs.getBlockLocations(path, start, len);
-	}	
-	
 	public long getToken() {
 		return fileInfo.getToken();
 	}
@@ -89,12 +85,10 @@ class CoreEarlyFile implements CrailFile {
 	private CoreFileSystem fs;
 	private String path;
 	private CrailNodeType type;
-	private int storageAffnity;
-	private int locationAffnity;
 	private CreateNodeFuture future;
 	private CrailFile file;
 	
-	public CoreEarlyFile(CoreFileSystem fs, String path, CrailNodeType type, int storageAffinity, int locationAffinity, CreateNodeFuture future) {
+	public CoreEarlyFile(CoreFileSystem fs, String path, CrailNodeType type, CreateNodeFuture future) {
 		this.fs = fs;
 		this.path = path;
 		this.type = type;
@@ -160,16 +154,6 @@ class CoreEarlyFile implements CrailFile {
 	@Override
 	public CrailMultiFile asMultiFile() throws Exception {
 		throw new Exception("this is not a multifile");
-	}
-
-	@Override
-	public int locationAffinity() {
-		return this.locationAffnity;
-	}
-
-	@Override
-	public int storageAffinity() {
-		return this.storageAffnity;
 	}
 
 	@Override

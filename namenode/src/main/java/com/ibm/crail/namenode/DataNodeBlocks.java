@@ -24,19 +24,24 @@ package com.ibm.crail.namenode;
 import java.net.UnknownHostException;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.slf4j.Logger;
+
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.metadata.DataNodeInfo;
+import com.ibm.crail.utils.CrailUtils;
 
 public class DataNodeBlocks extends DataNodeInfo {
+	private static final Logger LOG = CrailUtils.getLogger();
+	
 	private LinkedBlockingQueue<BlockInfo> freeBlocks;
 	
 	public static DataNodeBlocks fromDataNodeInfo(DataNodeInfo dnInfo) throws UnknownHostException{
-		DataNodeBlocks dnInfoNn = new DataNodeBlocks(dnInfo.getStorageTier(), dnInfo.getLocationAffinity(), dnInfo.getIpAddress(), dnInfo.getPort());
+		DataNodeBlocks dnInfoNn = new DataNodeBlocks(dnInfo.getStorageType(), dnInfo.getStorageClass(), dnInfo.getLocationClass(), dnInfo.getIpAddress(), dnInfo.getPort());
 		return dnInfoNn;
 	}	
 
-	public DataNodeBlocks(int tier, int hosthash, byte[] ipAddress, int port) throws UnknownHostException {
-		super(tier, hosthash, ipAddress, port);
+	public DataNodeBlocks(int storageType, int getStorageClass, int locationClass, byte[] ipAddress, int port) throws UnknownHostException {
+		super(storageType, getStorageClass, locationClass, ipAddress, port);
 		this.freeBlocks = new LinkedBlockingQueue<BlockInfo>();
 	}
 	

@@ -57,8 +57,10 @@ import com.ibm.crail.CrailBlockLocation;
 import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailFS;
+import com.ibm.crail.CrailLocationClass;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailNodeType;
+import com.ibm.crail.CrailStorageClass;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.rpc.RpcErrors;
@@ -68,20 +70,13 @@ public class CrailHDFS extends AbstractFileSystem {
 	private static final Logger LOG = CrailUtils.getLogger();
 	private CrailFS dfs;
 	private Path workingDir;
-	private int localAffinity;
 	
 	public CrailHDFS(final URI uri, final Configuration conf) throws IOException, URISyntaxException {
 		super(uri, "crail", true, 9000);
 		
 		try {
 			CrailConfiguration crailConf = new CrailConfiguration();
-			CrailHDFSConstants.updateConstants(crailConf);
-			CrailHDFSConstants.printConf(LOG);
 			this.dfs = CrailFS.newInstance(crailConf);
-			this.localAffinity = 0;
-			if (CrailHDFSConstants.LOCAL_AFFINITY){
-				localAffinity = dfs.getHostHash();
-			}
 			Path _workingDir = new Path("/user/" + CrailConstants.USER);
 			this.workingDir = new Path("/user/" + CrailConstants.USER).makeQualified(uri, _workingDir);
 			LOG.info("CrailHDFS initialization done..");
@@ -104,7 +99,7 @@ public class CrailHDFS extends AbstractFileSystem {
 	public FSDataOutputStream createInternal(Path path, EnumSet<CreateFlag> flag, FsPermission absolutePermission, int bufferSize, short replication, long blockSize, Progressable progress, ChecksumOpt checksumOpt, boolean createParent) throws AccessControlException, FileAlreadyExistsException, FileNotFoundException, ParentNotDirectoryException, UnsupportedFileSystemException, UnresolvedLinkException, IOException {
 		CrailFile fileInfo = null;
 		try {
-			fileInfo = dfs.create(path.toUri().getRawPath(), CrailNodeType.DATAFILE, CrailHDFSConstants.STORAGE_AFFINITY, localAffinity).get().asFile();
+			fileInfo = dfs.create(path.toUri().getRawPath(), CrailNodeType.DATAFILE, CrailStorageClass.PARENT, CrailLocationClass.PARENT).get().asFile();
 		} catch(Exception e){
 			if (e.getMessage().contains(RpcErrors.messages[RpcErrors.ERR_PARENT_MISSING])){
 				fileInfo = null;
@@ -117,7 +112,7 @@ public class CrailHDFS extends AbstractFileSystem {
 			Path parent = path.getParent();
 			this.mkdir(parent, FsPermission.getDirDefault(), true);
 			try {
-				fileInfo = dfs.create(path.toUri().getRawPath(), CrailNodeType.DATAFILE, CrailHDFSConstants.STORAGE_AFFINITY, localAffinity).get().asFile();
+				fileInfo = dfs.create(path.toUri().getRawPath(), CrailNodeType.DATAFILE, CrailStorageClass.PARENT, CrailLocationClass.PARENT).get().asFile();
 			} catch(Exception e){
 				throw new IOException(e);
 			}
@@ -145,7 +140,7 @@ public class CrailHDFS extends AbstractFileSystem {
 	@Override
 	public void mkdir(Path path, FsPermission permission, boolean createParent) throws AccessControlException, FileAlreadyExistsException, FileNotFoundException, UnresolvedLinkException, IOException {
 		try {
-			CrailDirectory file = dfs.create(path.toUri().getRawPath(), CrailNodeType.DIRECTORY, 0, 0).get().asDirectory();
+			CrailDirectory file = dfs.create(path.toUri().getRawPath(), CrailNodeType.DIRECTORY, CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT).get().asDirectory();
 			file.syncDir();
 		} catch(Exception e){
 			if (e.getMessage().contains(RpcErrors.messages[RpcErrors.ERR_PARENT_MISSING])){

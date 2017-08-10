@@ -21,24 +21,33 @@
 
 package com.ibm.crail.tools;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 
 import com.ibm.crail.CrailBlockLocation;
 import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFS;
 import com.ibm.crail.CrailFile;
+import com.ibm.crail.CrailLocationClass;
 import com.ibm.crail.CrailMultiFile;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailNodeType;
+import com.ibm.crail.CrailStorageClass;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.core.CoreFileSystem;
 import com.ibm.crail.core.DirectoryInputStream;
 import com.ibm.crail.core.DirectoryRecord;
 import com.ibm.crail.metadata.FileName;
-import com.ibm.crail.utils.GetOpt;
 import com.ibm.crail.utils.CrailUtils;
 
 public class CrailFsck {
@@ -47,18 +56,12 @@ public class CrailFsck {
 		
 	}
 	
-	public static void usage() {
-		System.out.println("Usage: ");
-		System.out.println("fsck -t <getLocations|directoryDump|namenodeDump|blockStatistics|ping> " + 
-		"-f <file/dir> -y <offset> -l <length> -r <true/false>");
-		System.exit(1);
-	}		
-	
 	public void getLocations(String filename, long offset, long length) throws Exception {
 		System.out.println("getLocations, filename " + filename + ", offset " + offset + ", len " + length);
 		CrailConfiguration conf = new CrailConfiguration();
 		CrailFS fs = CrailFS.newInstance(conf);
-		CrailBlockLocation locations[] = fs.lookup(filename).get().asFile().getBlockLocations(offset, length);
+		
+		CrailBlockLocation locations[] = fs.lookup(filename).get().getBlockLocations(offset, length);
 		for (int i = 0; i < locations.length; i++){
 			System.out.println("location " + i + " : " + locations[i].toString());
 		}	
@@ -121,13 +124,21 @@ public class CrailFsck {
 		fs.closeFileSystem();
 	}
 	
-	private void ping() throws Exception {
+	public void ping() throws Exception {
 		CrailConfiguration conf = new CrailConfiguration();
 		CrailConstants.updateConstants(conf);
 		CoreFileSystem fs = new CoreFileSystem(conf);
 		fs.ping();
 		fs.closeFileSystem();		
 	}
+	
+	public void createDirectory(String filename, int storageClass, int locationClass) throws Exception {
+		System.out.println("createDirectory, filename " + filename + ", storageClass " + storageClass + ", locationClass " + locationClass);
+		CrailConfiguration conf = new CrailConfiguration();
+		CrailFS fs = CrailFS.newInstance(conf);
+		fs.create(filename, CrailNodeType.DIRECTORY, CrailStorageClass.get(storageClass), CrailLocationClass.get(locationClass)).get().syncDir();
+		fs.close();
+	}	
 	
 	//-----------------
 
@@ -164,36 +175,49 @@ public class CrailFsck {
 
 	
 	public static void main(String[] args) throws Exception {
-		String[] _args = args;
-		GetOpt go = new GetOpt(_args, "t:f:y:l:r:");
-		go.optErr = true;
-		int ch = -1;
-		
-		if (args.length < 2){
-			usage();
-		}
-		
 		String type = "";
 		String filename = "/tmp.dat";
 		long offset = 0;
 		long length = 1;
-		boolean randomize = false;
+		boolean randomize = false;	
+		int storageClass = 0;
+		int locationClass = 0;		
 		
-		while ((ch = go.getopt()) != GetOpt.optEOF) {
-			if ((char) ch == 't') {
-				type = go.optArgGet();
-			} else if ((char) ch == 'f') {
-				filename = go.optArgGet();
-			} else if ((char) ch == 'y') {
-				offset = Long.parseLong(go.optArgGet());
-			} else if ((char) ch == 'l') {
-				length = Long.parseLong(go.optArgGet());
-			} else if ((char) ch == 'r') {
-				randomize = Boolean.parseBoolean(go.optArgGet());
-			} else {
-				System.exit(1); // undefined option
-			}
-		}		
+		Option typeOption = Option.builder("t").desc("type of experiment [getLocations|directoryDump|namenodeDump|blockStatistics|ping|createDirectory]").hasArg().build();
+		Option fileOption = Option.builder("f").desc("filename").hasArg().build();
+		Option offsetOption = Option.builder("y").desc("offset into the file").hasArg().build();
+		Option lengthOption = Option.builder("l").desc("length of the file [bytes]").hasArg().build();
+		Option storageOption = Option.builder("c").desc("storageClass for file [1..n]").hasArg().build();
+		Option locationOption = Option.builder("p").desc("locationClass for file [1..n]").hasArg().build();		
+		
+		Options options = new Options();
+		options.addOption(typeOption);
+		options.addOption(fileOption);
+		options.addOption(offsetOption);
+		options.addOption(lengthOption);
+		options.addOption(storageOption);
+		options.addOption(locationOption);		
+		
+		CommandLineParser parser = new DefaultParser();
+		CommandLine line = parser.parse(options, Arrays.copyOfRange(args, 0, args.length));
+		if (line.hasOption(typeOption.getOpt())) {
+			type = line.getOptionValue(typeOption.getOpt());
+		}
+		if (line.hasOption(fileOption.getOpt())) {
+			filename = line.getOptionValue(fileOption.getOpt());
+		}
+		if (line.hasOption(offsetOption.getOpt())) {
+			offset = Long.parseLong(line.getOptionValue(offsetOption.getOpt()));
+		}
+		if (line.hasOption(lengthOption.getOpt())) {
+			length = Long.parseLong(line.getOptionValue(lengthOption.getOpt()));
+		}
+		if (line.hasOption(storageOption.getOpt())) {
+			storageClass = Integer.parseInt(line.getOptionValue(storageOption.getOpt()));
+		}
+		if (line.hasOption(locationOption.getOpt())) {
+			locationClass = Integer.parseInt(line.getOptionValue(locationOption.getOpt()));
+		}			
 		
 		CrailFsck fsck = new CrailFsck();
 		if (type.equals("getLocations")){
@@ -206,9 +230,12 @@ public class CrailFsck {
 			fsck.blockStatistics(filename);
 		} else if (type.equals("ping")){
 			fsck.ping();
+		} else if (type.equals("createDirectory")){
+			fsck.createDirectory(filename, storageClass, locationClass);
 		} else {
-			usage();
-			System.exit(0);			
+			HelpFormatter formatter = new HelpFormatter();
+			formatter.printHelp("crail fsck", options);
+			System.exit(-1);	
 		}
 	}
 }

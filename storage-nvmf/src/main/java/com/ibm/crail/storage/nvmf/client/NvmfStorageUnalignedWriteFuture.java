@@ -1,13 +1,9 @@
 package com.ibm.crail.storage.nvmf.client;
 
 import com.ibm.crail.CrailBuffer;
-import com.ibm.crail.storage.StorageResult;
 import com.ibm.disni.nvmef.spdk.NvmeStatusCodeType;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Created by jpf on 23.05.17.

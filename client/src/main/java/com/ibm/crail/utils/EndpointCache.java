@@ -38,14 +38,14 @@ public class EndpointCache implements CrailStatistics.StatisticsProvider {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	private boolean isOpen;
-	private ConcurrentHashMap<Integer, StorageEndpointCache> storageCaches = new ConcurrentHashMap<Integer, StorageEndpointCache>();
+	private ConcurrentHashMap<Integer, StorageEndpointCache> storageCaches;
 	
-	public EndpointCache(int fsId, LinkedList<StorageClient> storageGroups){
-		int storageTier = 0;
-		for (StorageClient group : storageGroups){
-			StorageEndpointCache cache = new StorageEndpointCache(fsId, group);
-			LOG.info("adding tier to cache " + storageTier);
-			storageCaches.put(storageTier++, cache);
+	public EndpointCache(int fsId, LinkedList<StorageClient> storageClients){
+		this.storageCaches = new ConcurrentHashMap<Integer, StorageEndpointCache>();
+		int storageType = 0;
+		for (StorageClient storageClient : storageClients){
+			StorageEndpointCache cache = new StorageEndpointCache(fsId, storageClient, storageType);
+			storageCaches.put(storageType++, cache);
 		}
 		this.isOpen = true;
 	}
@@ -69,7 +69,10 @@ public class EndpointCache implements CrailStatistics.StatisticsProvider {
 	}	
 	
 	public StorageEndpoint getDataEndpoint(DataNodeInfo dataNodeInfo) throws IOException, InterruptedException {
-		return storageCaches.get(dataNodeInfo.getStorageTier()).getDataEndpoint(dataNodeInfo);
+		StorageEndpointCache cache = storageCaches.get(dataNodeInfo.getStorageType());
+		StorageEndpoint endpoint = cache.getDataEndpoint(dataNodeInfo);
+		return endpoint;
+//		return storageCaches.get(dataNodeInfo.getStorageType()).getDataEndpoint(dataNodeInfo);
 	}
 	
 	public int size() {
@@ -93,18 +96,20 @@ public class EndpointCache implements CrailStatistics.StatisticsProvider {
 	//-------------------------------
 	
 	public static class StorageEndpointCache {
-		private StorageClient datanodeGroup;
+		private StorageClient storageClient;
 		private ConcurrentHashMap<Long, Object> locktable;
 		private ConcurrentHashMap<Long, StorageEndpoint> cache;
 		private int fsId;
 		private boolean isOpen;
+		private int storageType;
 		
-		public StorageEndpointCache(int fsId, StorageClient datanodeGroup){
+		public StorageEndpointCache(int fsId, StorageClient storageClient, int storageType){
 			this.fsId = fsId;
-			this.datanodeGroup = datanodeGroup;
+			this.storageClient = storageClient;
 			this.cache = new ConcurrentHashMap<Long, StorageEndpoint>();
 			this.locktable = new ConcurrentHashMap<Long, Object>();
 			this.isOpen = true;
+			this.storageType = storageType;
 		}	
 		
 		public void close() throws IOException {
@@ -113,7 +118,7 @@ public class EndpointCache implements CrailStatistics.StatisticsProvider {
 			}
 			
 			try {
-				datanodeGroup.close();
+				storageClient.close();
 			} catch(Exception e){
 				throw new IOException(e);
 			}
@@ -126,7 +131,7 @@ public class EndpointCache implements CrailStatistics.StatisticsProvider {
 				synchronized (lock) {
 					endpoint = cache.get(dataNodeInfo.key());
 					if (endpoint == null){
-						endpoint = datanodeGroup.createEndpoint(CrailUtils.datanodeInfo2SocketAddr(dataNodeInfo));
+						endpoint = storageClient.createEndpoint(dataNodeInfo);
 						cache.put(dataNodeInfo.key(), endpoint);
 						if (CrailConstants.DEBUG) {
 							LOG.info("EndpointCache miss " + CrailUtils.datanodeInfo2SocketAddr(dataNodeInfo) + ", fsId " + fsId + ", cache size " + cache.size());
@@ -143,6 +148,10 @@ public class EndpointCache implements CrailStatistics.StatisticsProvider {
 
 		public int size() {
 			return cache.size();
+		}
+		
+		public int getStorageType(){
+			return this.storageType;
 		}
 		
 		private Object getLock(long key){

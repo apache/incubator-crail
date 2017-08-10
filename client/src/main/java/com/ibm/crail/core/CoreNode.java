@@ -23,6 +23,7 @@ package com.ibm.crail.core;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
+import com.ibm.crail.CrailBlockLocation;
 import com.ibm.crail.CrailMultiFile;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailNodeType;
@@ -32,24 +33,20 @@ public class CoreNode implements CrailNode {
 	protected CoreFileSystem fs;
 	protected FileInfo fileInfo;
 	protected String path;
-	protected int storageAffinity;
-	protected int locationAffinity;	
 	private LinkedBlockingQueue<CoreSyncOperation> syncOperations;
 	
-	public static CoreNode create(CoreFileSystem fs, FileInfo fileInfo, String path, int storageAffinity, int locationAffinity) {
+	public static CoreNode create(CoreFileSystem fs, FileInfo fileInfo, String path) {
 		if (fileInfo.getType().isContainer()){
-			return new CoreDirectory(fs, fileInfo, path, storageAffinity, locationAffinity);		
+			return new CoreDirectory(fs, fileInfo, path);		
 		} else {
-			return new CoreFile(fs, fileInfo, path, storageAffinity, locationAffinity);
+			return new CoreFile(fs, fileInfo, path);
 		}
 	}	
 	
-	protected CoreNode(CoreFileSystem fs, FileInfo fileInfo, String path, int storageAffinity, int locationAffinity){
+	protected CoreNode(CoreFileSystem fs, FileInfo fileInfo, String path){
 		this.fs = fs;
 		this.fileInfo = fileInfo;
 		this.path = path;
-		this.storageAffinity = storageAffinity;
-		this.locationAffinity = locationAffinity;
 		this.syncOperations = new LinkedBlockingQueue<CoreSyncOperation>();
 	}	
 
@@ -75,14 +72,6 @@ public class CoreNode implements CrailNode {
 		return fileInfo.getType();
 	}
 	
-	public int storageAffinity(){
-		return storageAffinity;
-	}	
-
-	public int locationAffinity() {
-		return locationAffinity;
-	}
-	
 	public long getFd() {
 		return fileInfo.getFd();
 	}	
@@ -106,7 +95,11 @@ public class CoreNode implements CrailNode {
 	
 	public CrailMultiFile asMultiFile() throws Exception {
 		throw new Exception("Type of file unclear");
-	}		
+	}	
+	
+	public CrailBlockLocation[] getBlockLocations(long start, long len) throws Exception {
+		return fs.getBlockLocations(path, start, len);
+	}	
 	
 	protected CoreInputStream getInputStream(long readHint) throws Exception{
 		return fs.getInputStream(this, readHint);

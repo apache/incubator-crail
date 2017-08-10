@@ -19,18 +19,32 @@
  *
  */
 
-package com.ibm.crail;
+package com.ibm.crail.storage;
 
+public class StorageResource {
+	private long address;
+	private int length;
+	private int key;
+	
+	public static StorageResource createResource(long address, int length, int key){
+		return new StorageResource(address, length, key);
+	}
+	
+	private StorageResource(long address, int length, int key){
+		this.address = address;
+		this.length = length;
+		this.key = key;
+	}
 
-public interface CrailNode {
-	public CrailFS getFileSystem();
-	public String getPath(); 
-	public abstract CrailNode syncDir() throws Exception;
-	public abstract long getModificationTime();
-	public abstract long getCapacity();
-	public abstract CrailNodeType getType();
-	public abstract CrailFile asFile() throws Exception;
-	public abstract CrailDirectory asDirectory() throws Exception;
-	public abstract CrailMultiFile asMultiFile() throws Exception;
-	public abstract CrailBlockLocation[] getBlockLocations(long start, long len) throws Exception;
+	public long getAddress() {
+		return address;
+	}
+
+	public int getLength() {
+		return length;
+	}
+
+	public int getKey() {
+		return key;
+	}
 }

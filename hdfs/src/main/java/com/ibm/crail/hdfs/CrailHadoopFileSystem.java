@@ -45,8 +45,10 @@ import com.ibm.crail.CrailBlockLocation;
 import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailFS;
+import com.ibm.crail.CrailLocationClass;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailNodeType;
+import com.ibm.crail.CrailStorageClass;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.rpc.RpcErrors;
@@ -57,7 +59,6 @@ public class CrailHadoopFileSystem extends FileSystem {
 	private CrailFS dfs;
 	private Path workingDir;
 	private URI uri;
-	private int localAffinity;
 	
 	public CrailHadoopFileSystem() throws IOException {
 		LOG.info("CrailHadoopFileSystem construction");
@@ -71,13 +72,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 		
 		try {
 			CrailConfiguration crailConf = new CrailConfiguration();
-			CrailHDFSConstants.updateConstants(crailConf);
-			CrailHDFSConstants.printConf(LOG);			
 			this.dfs = CrailFS.newInstance(crailConf);
-			this.localAffinity = 0;
-			if (CrailHDFSConstants.LOCAL_AFFINITY){
-				localAffinity = dfs.getHostHash();
-			}			
 			Path _workingDir = new Path("/user/" + CrailConstants.USER);
 			this.workingDir = new Path("/user/" + CrailConstants.USER).makeQualified(uri, _workingDir);	
 			this.uri = URI.create(CrailConstants.NAMENODE_ADDRESS);
@@ -112,7 +107,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 			long blockSize, Progressable progress) throws IOException {
 		CrailFile fileInfo = null;
 		try {
-			fileInfo = dfs.create(path.toUri().getRawPath(), CrailNodeType.DATAFILE, CrailHDFSConstants.STORAGE_AFFINITY, localAffinity).get().asFile();
+			fileInfo = dfs.create(path.toUri().getRawPath(), CrailNodeType.DATAFILE, CrailStorageClass.PARENT, CrailLocationClass.PARENT).get().asFile();
 		} catch (Exception e) {
 			if (e.getMessage().contains(RpcErrors.messages[RpcErrors.ERR_PARENT_MISSING])) {
 				fileInfo = null;
@@ -125,7 +120,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 			Path parent = path.getParent();
 			this.mkdirs(parent, FsPermission.getDirDefault());
 			try {
-				fileInfo = dfs.create(path.toUri().getRawPath(), CrailNodeType.DATAFILE, CrailHDFSConstants.STORAGE_AFFINITY, localAffinity).get().asFile();
+				fileInfo = dfs.create(path.toUri().getRawPath(), CrailNodeType.DATAFILE, CrailStorageClass.PARENT, CrailLocationClass.PARENT).get().asFile();
 			} catch (Exception e) {
 				throw new IOException(e);
 			}
@@ -218,7 +213,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 	@Override
 	public boolean mkdirs(Path path, FsPermission permission) throws IOException {
 		try {
-			CrailDirectory file = dfs.create(path.toUri().getRawPath(), CrailNodeType.DIRECTORY, 0, 0).get().asDirectory();
+			CrailDirectory file = dfs.create(path.toUri().getRawPath(), CrailNodeType.DIRECTORY, CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT).get().asDirectory();
 			file.syncDir();
 			return true;
 		} catch(Exception e){

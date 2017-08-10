@@ -24,9 +24,6 @@ package com.ibm.crail;
 public interface CrailFile extends CrailNode {
 	public abstract CrailInputStream getDirectInputStream(long readHint) throws Exception;
 	public abstract CrailOutputStream getDirectOutputStream(long writeHint) throws Exception;
-	public abstract CrailBlockLocation[] getBlockLocations(long start, long len) throws Exception;
-	public abstract int locationAffinity();
-	public abstract int storageAffinity();
 	public abstract long getToken();
 	public abstract long getFd();
 

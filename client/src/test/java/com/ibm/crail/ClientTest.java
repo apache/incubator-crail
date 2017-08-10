@@ -21,7 +21,7 @@ public class ClientTest {
 	public void init() throws Exception {
 		CrailConfiguration conf = new CrailConfiguration();
 		fs = CrailFS.newInstance(conf);
-		fs.create(basePath, CrailNodeType.DIRECTORY, 0, 0).get();
+		fs.create(basePath, CrailNodeType.DIRECTORY, CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT).get();
 	}
 
 	@After
@@ -32,14 +32,14 @@ public class ClientTest {
 	@Test
 	public void testCreateFile() throws Exception {
 		String filename = basePath + "/fooCreate"; 
-		fs.create(filename,  CrailNodeType.DATAFILE, 0, 0).get();
+		fs.create(filename,  CrailNodeType.DATAFILE, CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT).get();
 		fs.lookup(filename).get().asFile();
 	}
 
 	@Test
 	public void testDeleteFile() throws Exception {
 		String filename = basePath + "/fooDelete"; 
-		fs.create(filename, CrailNodeType.DATAFILE, 0, 0).get();
+		fs.create(filename, CrailNodeType.DATAFILE, CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT).get();
 		fs.delete(filename, false).get();
 		Assert.assertNull(fs.lookup(filename).get());
 	}
@@ -47,7 +47,7 @@ public class ClientTest {
 	@Test
 	public void testRenameFile() throws Exception {
 		String srcname = basePath + "/fooRename";
-		fs.create(srcname, CrailNodeType.DATAFILE, 0, 0).get();
+		fs.create(srcname, CrailNodeType.DATAFILE, CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT).get();
 		String dstname = basePath + "/barRename";
 		fs.rename(srcname, dstname).get();
 		Assert.assertNull(fs.lookup(srcname).get());
@@ -62,7 +62,7 @@ public class ClientTest {
 	@Test
 	public void testCreateDirectory() throws Exception {
 		String filename = basePath + "/fooDir";
-		fs.create(filename, CrailNodeType.DIRECTORY, 0, 0).get();
+		fs.create(filename, CrailNodeType.DIRECTORY, CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT).get();
 		fs.lookup(filename).get().asDirectory();
 	}
 
@@ -96,7 +96,7 @@ public class ClientTest {
 				position + ", length = " + length + ", remoteOffset = " + remoteOffset);
 
 		String filename = basePath + "/fooOutputStream" + length;
-		CrailFile file = fs.create(filename,CrailNodeType.DATAFILE,  0, 0).get().asFile();
+		CrailFile file = fs.create(filename,CrailNodeType.DATAFILE,  CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT).get().asFile();
 		CrailOutputStream outputStream = file.getDirectOutputStream(0);
 		CrailInputStream inputStream = file.getDirectInputStream(0);
 

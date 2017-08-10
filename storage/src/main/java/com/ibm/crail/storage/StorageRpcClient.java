@@ -27,6 +27,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 
+import com.ibm.crail.CrailLocationClass;
+import com.ibm.crail.CrailStorageClass;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.metadata.DataNodeInfo;
@@ -40,21 +42,22 @@ public class StorageRpcClient {
 	public static final Logger LOG = CrailUtils.getLogger();
 	
 	private InetSocketAddress serverAddress;
-	private int storageTierIndex;
-	private int hostHash;
+	private int storageType;
+	private CrailStorageClass storageClass;
+	private CrailLocationClass locationClass;
 	private RpcConnection rpcConnection;	
 
-	public StorageRpcClient(int storageTierIndex, InetSocketAddress serverAddress, RpcConnection rpcConnection) throws Exception {
-		this.storageTierIndex = storageTierIndex;
+	public StorageRpcClient(int storageType, CrailStorageClass storageClass, InetSocketAddress serverAddress, RpcConnection rpcConnection) throws Exception {
+		this.storageType = storageType;
+		this.storageClass = storageClass;
 		this.serverAddress = serverAddress;
-		this.hostHash = CrailUtils.getHostHash();
+		this.locationClass = CrailUtils.getLocationClass();
 		this.rpcConnection = rpcConnection;
-		LOG.info("hosthash " + hostHash);		
 	}
 	
 	public void setBlock(long addr, int length, int key) throws Exception {
 		InetSocketAddress inetAddress = serverAddress;
-		DataNodeInfo dnInfo = new DataNodeInfo(storageTierIndex, hostHash, inetAddress.getAddress().getAddress(), inetAddress.getPort());
+		DataNodeInfo dnInfo = new DataNodeInfo(storageType, storageClass.value(), locationClass.value(), inetAddress.getAddress().getAddress(), inetAddress.getPort());
 		BlockInfo blockInfo = new BlockInfo(dnInfo, addr, length, key);
 		RpcVoid res = rpcConnection.setBlock(blockInfo).get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
 		if (res.getError() != RpcErrors.ERR_OK){
@@ -65,7 +68,7 @@ public class StorageRpcClient {
 	
 	public DataNodeStatistics getDataNode() throws Exception{
 		InetSocketAddress inetAddress = serverAddress;
-		DataNodeInfo dnInfo = new DataNodeInfo(storageTierIndex, hostHash, inetAddress.getAddress().getAddress(), inetAddress.getPort());
+		DataNodeInfo dnInfo = new DataNodeInfo(storageType, storageClass.value(), locationClass.value(), inetAddress.getAddress().getAddress(), inetAddress.getPort());
 		return this.rpcConnection.getDataNode(dnInfo).get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS).getStatistics();
 	}	
 }

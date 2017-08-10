@@ -27,6 +27,6 @@ public interface CrailBlockLocation {
 	public String[] getNames();
 	public String[] getHosts();
 	public String[] getTopology();
-	public int[] getStorageTiers();
+	public int[] getStorageTypes();
 	public int[] getLocationAffinities();
 }

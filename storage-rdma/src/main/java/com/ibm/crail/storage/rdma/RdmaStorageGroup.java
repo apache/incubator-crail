@@ -22,13 +22,12 @@
 package com.ibm.crail.storage.rdma;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-
+import com.ibm.crail.metadata.DataNodeInfo;
 import com.ibm.crail.storage.StorageEndpoint;
 
 public interface RdmaStorageGroup {
 
-	public StorageEndpoint createEndpoint(InetSocketAddress inetAddress) throws IOException;
+	public StorageEndpoint createEndpoint(DataNodeInfo info) throws IOException;
 
 	public void close() throws InterruptedException, IOException;
 	

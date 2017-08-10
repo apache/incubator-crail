@@ -30,8 +30,8 @@ import com.ibm.crail.metadata.FileInfo;
 
 class CoreDirectory extends CoreNode implements CrailDirectory, CrailMultiFile {
 	
-	public CoreDirectory(CoreFileSystem fs, FileInfo fileInfo, String path, int storageAffinity, int locationAffinity){
-		super(fs, fileInfo, path, storageAffinity, locationAffinity);
+	public CoreDirectory(CoreFileSystem fs, FileInfo fileInfo, String path){
+		super(fs, fileInfo, path);
 		this.fs = fs;
 		this.fileInfo = fileInfo;
 		this.path = path;

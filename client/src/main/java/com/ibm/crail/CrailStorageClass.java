@@ -21,16 +21,26 @@
 
 package com.ibm.crail;
 
-
-public interface CrailNode {
-	public CrailFS getFileSystem();
-	public String getPath(); 
-	public abstract CrailNode syncDir() throws Exception;
-	public abstract long getModificationTime();
-	public abstract long getCapacity();
-	public abstract CrailNodeType getType();
-	public abstract CrailFile asFile() throws Exception;
-	public abstract CrailDirectory asDirectory() throws Exception;
-	public abstract CrailMultiFile asMultiFile() throws Exception;
-	public abstract CrailBlockLocation[] getBlockLocations(long start, long len) throws Exception;
+public class CrailStorageClass {
+	public static final CrailStorageClass PARENT = CrailStorageClass.get(-1);
+	public static final CrailStorageClass DEFAULT = CrailStorageClass.get(0);
+	
+	private int value;
+	
+	public static CrailStorageClass get(int value){
+		return new CrailStorageClass(value);
+	}
+	
+	private CrailStorageClass(int value){
+		this.value = value;
+	}
+	
+	public int value(){
+		return this.value;
+	}
+	
+	@Override
+	public String toString() {
+		return "" + value;
+	}	
 }

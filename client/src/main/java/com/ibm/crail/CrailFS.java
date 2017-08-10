@@ -36,14 +36,14 @@ public abstract class CrailFS {
 	private static AtomicLong referenceCounter = new AtomicLong(0);
 	private static CrailFS instance = null;
 	
-	public abstract Upcoming<CrailNode> create(String path, CrailNodeType type, int locationAffinity, int storageAffinity) throws Exception;
+	public abstract Upcoming<CrailNode> create(String path, CrailNodeType type, CrailStorageClass storageClass, CrailLocationClass locationClass) throws Exception;
 	public abstract Upcoming<CrailNode> lookup(String path) throws Exception;
 	public abstract Upcoming<CrailNode> rename(String srcPath, String dstPath) throws Exception;
 	public abstract Upcoming<CrailNode> delete(String path, boolean recursive) throws Exception;
 	public abstract CrailBuffer allocateBuffer() throws Exception;
 	public abstract void freeBuffer(CrailBuffer buffer) throws Exception;
 	public abstract CrailStatistics getStatistics();
-	public abstract int getHostHash();
+	public abstract CrailLocationClass getLocationClass();
 	protected abstract void closeFileSystem() throws Exception;
 	
 	public void close() throws Exception {

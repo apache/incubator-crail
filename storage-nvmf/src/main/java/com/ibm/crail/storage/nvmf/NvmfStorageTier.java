@@ -23,6 +23,7 @@
 package com.ibm.crail.storage.nvmf;
 
 import com.ibm.crail.conf.CrailConfiguration;
+import com.ibm.crail.metadata.DataNodeInfo;
 import com.ibm.crail.storage.StorageEndpoint;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.crail.storage.StorageTier;
@@ -35,7 +36,6 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.Arrays;
 
 public class NvmfStorageTier extends StorageTier {
@@ -65,7 +65,7 @@ public class NvmfStorageTier extends StorageTier {
 			HelpFormatter formatter = new HelpFormatter();
 			CommandLine line = null;
 			try {
-				line = parser.parse(options, Arrays.copyOfRange(args, 2, args.length));
+				line = parser.parse(options, Arrays.copyOfRange(args, 0, args.length));
 				if (line.hasOption(port.getOpt())) {
 					NvmfStorageConstants.PORT = ((Number) line.getParsedOptionValue(port.getOpt())).intValue();
 				}
@@ -98,8 +98,8 @@ public class NvmfStorageTier extends StorageTier {
 		return clientGroup;
 	}
 
-	public synchronized StorageEndpoint createEndpoint(InetSocketAddress inetSocketAddress) throws IOException {
-		return new NvmfStorageEndpoint(getEndpointGroup(), inetSocketAddress);
+	public synchronized StorageEndpoint createEndpoint(DataNodeInfo info) throws IOException {
+		return new NvmfStorageEndpoint(getEndpointGroup(), CrailUtils.datanodeInfo2SocketAddr(info));
 	}
 
 	public NvmfStorageServer launchServer() throws Exception {

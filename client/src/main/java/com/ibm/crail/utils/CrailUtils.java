@@ -34,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
+import com.ibm.crail.CrailLocationClass;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.DataNodeInfo;
 
@@ -173,8 +174,8 @@ public class CrailUtils {
 		return new InetSocketAddress(InetAddress.getByAddress(dnInfo.getIpAddress()), dnInfo.getPort());
 	}
 	
-	public static int getHostHash() throws UnknownHostException{
-		return InetAddress.getLocalHost().getCanonicalHostName().hashCode();
+	public static CrailLocationClass getLocationClass() throws UnknownHostException{
+		return CrailLocationClass.get(InetAddress.getLocalHost().getCanonicalHostName().hashCode());
 	}
 	
 	public static void parseMap(String config, ConcurrentHashMap<String, String> map) throws Exception {
@@ -189,5 +190,19 @@ public class CrailUtils {
 			String value = commaTokenizer.nextToken();
 			map.put(key, value);
 		}
+	}
+
+	public static int getStorageClasses(String storageTypes) {
+		StringTokenizer tokenizer = new StringTokenizer(storageTypes, ",");
+		return tokenizer.countTokens();
+	}
+	
+	public static String getIPAddressFromBytes(byte[] bytes){
+		String address = "/unresolved";
+		try {
+			address = InetAddress.getByAddress(bytes).toString();
+		} catch(Exception e){
+		}
+		return address;
 	}
 }

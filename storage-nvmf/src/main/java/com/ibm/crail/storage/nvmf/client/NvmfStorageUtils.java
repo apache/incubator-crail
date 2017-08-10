@@ -2,10 +2,6 @@ package com.ibm.crail.storage.nvmf.client;
 
 import com.ibm.crail.metadata.BlockInfo;
 
-import sun.nio.ch.DirectBuffer;
-
-import java.nio.ByteBuffer;
-
 /**
  * Created by jpf on 14.02.17.
  */

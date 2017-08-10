@@ -36,21 +36,21 @@ public class RpcRequestMessage {
 		
 		protected FileName filename;
 		protected CrailNodeType type;
-		protected int storageAffinity;
-		protected int locationAffinity;
+		protected int storageClass;
+		protected int locationClass;
 		
 		public CreateFileReq(){
 			this.filename = new FileName();
 			this.type = CrailNodeType.DATAFILE;
-			this.storageAffinity = 0;
-			this.locationAffinity = 0;
+			this.storageClass = 0;
+			this.locationClass = 0;
 		}
 		
-		public CreateFileReq(FileName filename, CrailNodeType type, int storageAffinity, int locationAffinity) {
+		public CreateFileReq(FileName filename, CrailNodeType type, int storageClass, int locationClass) {
 			this.filename = filename;
 			this.type = type;
-			this.storageAffinity = storageAffinity;
-			this.locationAffinity = locationAffinity;
+			this.storageClass = storageClass;
+			this.locationClass = locationClass;
 		}
 
 		public FileName getFileName() {
@@ -61,12 +61,12 @@ public class RpcRequestMessage {
 			return type;
 		}
 		
-		public int getStorageAffinity() {
-			return storageAffinity;
+		public int getStorageClass() {
+			return storageClass;
 		}		
 		
-		public int getLocationAffinity() {
-			return locationAffinity;
+		public int getLocationClass() {
+			return locationClass;
 		}
 		
 		
@@ -81,8 +81,8 @@ public class RpcRequestMessage {
 		public int write(ByteBuffer buffer) {
 			int written = filename.write(buffer);
 			buffer.putInt(type.getLabel());
-			buffer.putInt(storageAffinity);
-			buffer.putInt(locationAffinity);
+			buffer.putInt(storageClass);
+			buffer.putInt(locationClass);
 			written += 12;
 			
 			return written;
@@ -92,8 +92,8 @@ public class RpcRequestMessage {
 			filename.update(buffer);
 			int tmp = buffer.getInt();
 			type = CrailNodeType.parse(tmp);
-			storageAffinity = buffer.getInt();
-			locationAffinity = buffer.getInt();
+			storageClass = buffer.getInt();
+			locationClass = buffer.getInt();
 		}
 	}
 	
@@ -287,13 +287,13 @@ public class RpcRequestMessage {
 	}	
 	
 	public static class GetBlockReq implements RpcProtocol.NameNodeRpcMessage {
-		public static int CSIZE = 40;
+		public static int CSIZE = 32;
 		
 		protected long fd;
 		protected long token;
 		protected long position;
-		protected int storageAffinity;
-		protected int locationAffinity;
+//		protected int storageAffinity;
+//		protected int locationAffinity;
 		protected long capacity;
 
 		public GetBlockReq(){
@@ -303,12 +303,12 @@ public class RpcRequestMessage {
 			this.capacity = 0;	
 		}
 		
-		public GetBlockReq(long fd, long token, long position, int storageAffinity, int locationAffinity, long capacity) {
+		public GetBlockReq(long fd, long token, long position, long capacity) {
 			this.fd = fd;
 			this.token = token;
 			this.position = position;
-			this.storageAffinity = storageAffinity;
-			this.locationAffinity = locationAffinity;
+//			this.storageAffinity = storageAffinity;
+//			this.locationAffinity = locationAffinity;
 			this.capacity = capacity;
 		}
 
@@ -324,13 +324,13 @@ public class RpcRequestMessage {
 			return token;
 		}
 		
-		public int getStorageAffinity(){
-			return storageAffinity;
-		}
-		
-		public int getLocationAffinity(){
-			return locationAffinity;
-		}
+//		public int getStorageAffinity(){
+//			return storageAffinity;
+//		}
+//		
+//		public int getLocationAffinity(){
+//			return locationAffinity;
+//		}
 
 		public long getCapacity(){
 			return capacity;
@@ -349,8 +349,8 @@ public class RpcRequestMessage {
 			buffer.putLong(fd);
 			buffer.putLong(token);
 			buffer.putLong(position);
-			buffer.putInt(storageAffinity);
-			buffer.putInt(locationAffinity);
+//			buffer.putInt(storageAffinity);
+//			buffer.putInt(locationAffinity);
 			buffer.putLong(capacity);
 			return CSIZE;
 		}		
@@ -359,8 +359,8 @@ public class RpcRequestMessage {
 			fd = buffer.getLong();
 			token = buffer.getLong();
 			position = buffer.getLong();
-			storageAffinity = buffer.getInt();
-			locationAffinity = buffer.getInt();
+//			storageAffinity = buffer.getInt();
+//			locationAffinity = buffer.getInt();
 			capacity = buffer.getLong();
 		}		
 	}

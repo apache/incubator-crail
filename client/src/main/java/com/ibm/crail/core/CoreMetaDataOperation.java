@@ -151,28 +151,24 @@ class CreateNodeFuture extends CoreMetaDataOperation<RpcCreateFile, CrailNode> {
 	private CoreFileSystem fs;
 	private String path;
 	private CrailNodeType type;
-	private int storageAffinity;
-	private int locationAffinity;
 
-	public CreateNodeFuture(CoreFileSystem fs, String path, CrailNodeType type, int storageAffinity, int locationAffinity, Future<RpcCreateFile> fileRes) {
+	public CreateNodeFuture(CoreFileSystem fs, String path, CrailNodeType type, Future<RpcCreateFile> fileRes) {
 		super(fileRes);
 		this.fs = fs;
 		this.path = path;
 		this.type = type;
-		this.storageAffinity = storageAffinity;
-		this.locationAffinity = locationAffinity;
 	}
 
 	@Override
 	CrailNode process(RpcCreateFile response) throws Exception {
-		return fs._createNode(path, type, storageAffinity, locationAffinity, response);
+		return fs._createNode(path, type, response);
 	}
 
 	@Override
 	public CrailNode early() throws Exception {
 		switch(type){
 		case DATAFILE:
-			return new CoreEarlyFile(fs, path, type, storageAffinity, locationAffinity, this);
+			return new CoreEarlyFile(fs, path, type, this);
 		case DIRECTORY:
 		case MULTIFILE:
 			return null;

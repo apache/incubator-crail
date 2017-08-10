@@ -22,15 +22,14 @@
 package com.ibm.crail.storage;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-
 import org.slf4j.Logger;
 
 import com.ibm.crail.conf.CrailConfiguration;
+import com.ibm.crail.metadata.DataNodeInfo;
 
 public interface StorageClient {
-	public abstract void init(CrailConfiguration conf, String[] args) throws IOException;
-	public abstract StorageEndpoint createEndpoint(InetSocketAddress inetAddress) throws IOException;	
+	public abstract void init(CrailConfiguration conf, String[] args) throws Exception;
+	public abstract StorageEndpoint createEndpoint(DataNodeInfo info) throws IOException;	
 	public abstract void close() throws Exception;
 	public abstract void printConf(Logger log);
 	

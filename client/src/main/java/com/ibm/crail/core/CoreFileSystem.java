@@ -39,10 +39,12 @@ import org.slf4j.Logger;
 import com.ibm.crail.CrailBlockLocation;
 import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.CrailFS;
+import com.ibm.crail.CrailLocationClass;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailResult;
 import com.ibm.crail.CrailStatistics;
 import com.ibm.crail.CrailNodeType;
+import com.ibm.crail.CrailStorageClass;
 import com.ibm.crail.Upcoming;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
@@ -93,7 +95,7 @@ public class CoreFileSystem extends CrailFS {
 	
 	private boolean isOpen;
 	private int fsId;
-	private int hostHash;
+	private CrailLocationClass localClass;
 	
 	private CoreIOStatistics ioStatsIn;
 	private CoreIOStatistics ioStatsOut;
@@ -127,7 +129,7 @@ public class CoreFileSystem extends CrailFS {
 		
 		//Client
 		this.fsId = fsCount.getAndIncrement();
-		this.hostHash = CrailUtils.getHostHash();
+		this.localClass = CrailUtils.getLocationClass();
 		this.bufferCache = BufferCache.createInstance(CrailConstants.CACHE_IMPL);
 		this.blockCache = new BlockCache();
 		this.nextBlockCache = new NextBlockCache();
@@ -150,18 +152,18 @@ public class CoreFileSystem extends CrailFS {
 		statistics.addProvider(datanodeEndpointCache);
 	}
 	
-	public Upcoming<CrailNode> create(String path, CrailNodeType type, int storageAffinity, int locationAffinity) throws Exception {
+	public Upcoming<CrailNode> create(String path, CrailNodeType type, CrailStorageClass storageClass, CrailLocationClass locationClass) throws Exception {
 		FileName name = new FileName(path);
 		
 		if (CrailConstants.DEBUG){
-			LOG.info("createNode: name " + path + ", type " + type + ", storageAffinity " + storageAffinity + ", locationAffinity " + locationAffinity);
+			LOG.info("createNode: name " + path + ", type " + type + ", storageAffinity " + storageClass + ", locationAffinity " + locationClass);
 		}
 
-		RpcFuture<RpcCreateFile> fileRes = namenodeClientRpc.createFile(name, type, storageAffinity, locationAffinity);
-		return new CreateNodeFuture(this, path, type, storageAffinity, locationAffinity, fileRes);
+		RpcFuture<RpcCreateFile> fileRes = namenodeClientRpc.createFile(name, type, storageClass.value(), locationClass.value());
+		return new CreateNodeFuture(this, path, type, fileRes);
 	}	
 	
-	CoreNode _createNode(String path, CrailNodeType type, int storageAffinity, int locationAffinity, RpcCreateFile fileRes) throws Exception {
+	CoreNode _createNode(String path, CrailNodeType type, RpcCreateFile fileRes) throws Exception {
 		if (fileRes.getError() == RpcErrors.ERR_PARENT_MISSING){
 			throw new IOException("createNode: " + RpcErrors.messages[fileRes.getError()] + ", name " + path);
 		} else if  (fileRes.getError() == RpcErrors.ERR_FILE_EXISTS){
@@ -190,7 +192,7 @@ public class CoreFileSystem extends CrailFS {
 		
 		long adjustedCapacity = fileInfo.getDirOffset()*CrailConstants.DIRECTORY_RECORD + CrailConstants.DIRECTORY_RECORD;
 		dirInfo.setCapacity(Math.max(dirInfo.getCapacity(), adjustedCapacity));
-		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path), 0, 0);
+		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path));
 		DirectoryOutputStream stream = dirFile.getDirectoryOutputStream();
 		DirectoryRecord record = new DirectoryRecord(true, path);
 		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());
@@ -200,7 +202,7 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("createFile: name " + path + ", success, fd " + fileInfo.getFd() + ", token " + fileInfo.getToken());
 		}
 		
-		CoreNode node = CoreNode.create(this, fileInfo, path, storageAffinity, locationAffinity);
+		CoreNode node = CoreNode.create(this, fileInfo, path);
 		node.addSyncOperation(syncOperation);
 		return node;
 	}	
@@ -235,7 +237,7 @@ public class CoreFileSystem extends CrailFS {
 			BlockInfo fileBlock = fileRes.getFileBlock();
 			getBlockCache(fileInfo.getFd()).put(CoreSubOperation.createKey(fileInfo.getFd(), 0), fileBlock);
 			
-			node = CoreNode.create(this, fileInfo, path, 0, 0);
+			node = CoreNode.create(this, fileInfo, path);
 		} 
 		return node;
 	}	
@@ -284,7 +286,7 @@ public class CoreFileSystem extends CrailFS {
 		BlockInfo dirBlock = renameRes.getDstBlock();
 		getBlockCache(dstDir.getFd()).put(CoreSubOperation.createKey(dstDir.getFd(), dstFile.getDirOffset()), dirBlock);		
 		
-		CoreDirectory dirSrc = new CoreDirectory(this, srcParent, CrailUtils.getParent(src), 0, 0);
+		CoreDirectory dirSrc = new CoreDirectory(this, srcParent, CrailUtils.getParent(src));
 		DirectoryOutputStream streamSrc = dirSrc.getDirectoryOutputStream();
 		DirectoryRecord recordSrc = new DirectoryRecord(false, src);
 		Future<CrailResult> futureSrc = streamSrc.writeRecord(recordSrc, srcFile.getDirOffset());	
@@ -292,7 +294,7 @@ public class CoreFileSystem extends CrailFS {
 		
 		long adjustedCapacity = dstFile.getDirOffset()*CrailConstants.DIRECTORY_RECORD + CrailConstants.DIRECTORY_RECORD;
 		dstDir.setCapacity(Math.max(dstDir.getCapacity(), adjustedCapacity));
-		CoreDirectory dirDst = new CoreDirectory(this, dstDir, CrailUtils.getParent(dst), 0, 0);
+		CoreDirectory dirDst = new CoreDirectory(this, dstDir, CrailUtils.getParent(dst));
 		DirectoryOutputStream streamDst = dirDst.getDirectoryOutputStream();
 		DirectoryRecord recordDst = new DirectoryRecord(true, dst);
 		Future<CrailResult> futureDst = streamDst.writeRecord(recordDst, dstFile.getDirOffset());			
@@ -304,7 +306,7 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("rename: srcname " + src + ", dstname " + dst + ", success");
 		}
 		
-		CoreNode node = CoreNode.create(this, dstFile, dst, 0, 0);
+		CoreNode node = CoreNode.create(this, dstFile, dst);
 		node.addSyncOperation(syncOperationSrc);
 		node.addSyncOperation(syncOperationDst);
 		return node;
@@ -334,7 +336,7 @@ public class CoreFileSystem extends CrailFS {
 		FileInfo fileInfo = fileRes.getFile();
 		FileInfo dirInfo = fileRes.getParent();
 		
-		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path), 0, 0);
+		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path));
 		DirectoryOutputStream stream = dirFile.getDirectoryOutputStream();
 		DirectoryRecord record = new DirectoryRecord(false, path);
 		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());	
@@ -346,7 +348,7 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("delete: name " + path + ", recursive " + recursive + ", success");
 		}
 		
-		CoreNode node = CoreNode.create(this, fileInfo, path, 0, 0);
+		CoreNode node = CoreNode.create(this, fileInfo, path);
 		node.addSyncOperation(syncOperation);
 		return node;
 	}	
@@ -374,7 +376,7 @@ public class CoreFileSystem extends CrailFS {
 			throw new FileNotFoundException(RpcErrors.messages[RpcErrors.ERR_FILE_IS_NOT_DIR]);
 		}
 		
-		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, name, 0, 0);
+		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, name);
 		DirectoryInputStream inputStream = dirFile.getDirectoryInputStream(randomize);
 		return inputStream;
 	}	
@@ -437,7 +439,8 @@ public class CoreFileSystem extends CrailFS {
 			String[] hosts = new String[locationSize];
 			String[] names = new String[locationSize];
 			String[] topology = new String[locationSize];
-			int[] storageTiers = new int[locationSize];
+			int[] storageType = new int[locationSize];
+			int[] storageClass = new int[locationSize];
 			int[] locationTiers = new int[locationSize];
 			
 			DataNodeInfo dnInfo = offset2DataNode.get(location.getOffset());
@@ -446,22 +449,25 @@ public class CoreFileSystem extends CrailFS {
 			names[0] = getMappedLocation(address.getAddress().getCanonicalHostName()) + ":" + address.getPort(); 
 			hosts[0] = getMappedLocation(address.getAddress().getCanonicalHostName());
 			topology[0] = "/default-rack/" + names[0];
-			storageTiers[0] = mainDataNode.getStorageTier();
-			locationTiers[0] = mainDataNode.getLocationAffinity();
+			storageType[0] = mainDataNode.getStorageType();
+			storageClass[0] = mainDataNode.getStorageClass();
+			locationTiers[0] = mainDataNode.getLocationClass();
 			for (int j = 1; j < locationSize; j++){
 				DataNodeInfo replicaDataNode = dataNodeArray.get(blockIndex);
 				address = CrailUtils.datanodeInfo2SocketAddr(replicaDataNode);
 				names[j] = getMappedLocation(address.getAddress().getCanonicalHostName()) + ":" + address.getPort(); 
 				hosts[j] = getMappedLocation(address.getAddress().getCanonicalHostName());
 				topology[j] = "/default-rack/" + names[j];
-				storageTiers[j] = replicaDataNode.getStorageTier();
-				locationTiers[j] = replicaDataNode.getLocationAffinity();				
+				storageType[j] = replicaDataNode.getStorageType();
+				storageClass[j] = replicaDataNode.getStorageClass();
+				locationTiers[j] = replicaDataNode.getLocationClass();				
 				blockIndex = (blockIndex + 1) % dataNodeArray.size();
 			}
 			location.setNames(names);
 			location.setHosts(hosts);
 			location.setTopologyPaths(topology);
-			location.setStorageTiers(storageTiers);
+			location.setStorageTypes(storageType);
+			location.setStorageClasses(storageClass);
 			location.setLocationAffinities(locationTiers);
 		}
 		
@@ -492,8 +498,8 @@ public class CoreFileSystem extends CrailFS {
 		return fsId;
 	}	
 	
-	public int getHostHash() {
-		return hostHash;
+	public CrailLocationClass getLocationClass() {
+		return localClass;
 	}
 	
 	public BufferCheckpoint getBufferCheckpoint() {

@@ -1,5 +1,6 @@
 crail.blocksize				1048576
 crail.buffersize			1048576
+crail.slicesize				524288
 crail.regionsize			1073741824
 crail.cachelimit			1073741824
 crail.cachepath				<path, should be huge page mountpoint>

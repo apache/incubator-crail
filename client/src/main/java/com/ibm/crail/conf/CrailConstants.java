@@ -30,15 +30,12 @@ public class CrailConstants {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	public static final String VERSION_KEY = "crail.version";
-	public static int VERSION = 2847;
+	public static int VERSION = 2900;
 	
-	public static final String STORAGE_TYPES_KEY = "crail.storage.types";
-	public static String STORAGE_TYPES = "com.ibm.crail.storage.rdma.RdmaStorageTier";		
-
-	public static final String DIRECTORY_DEPTH_KEY = "crail.directory.depth";
+	public static final String DIRECTORY_DEPTH_KEY = "crail.directorydepth";
 	public static int DIRECTORY_DEPTH = 16;
 	
-	public static final String TOKEN_EXPIRATION_KEY = "crail.token.expiration";
+	public static final String TOKEN_EXPIRATION_KEY = "crail.tokenexpiration";
 	public static long TOKEN_EXPIRATION = 10;
 	
 	public static final String BLOCK_SIZE_KEY = "crail.blocksize";
@@ -53,7 +50,7 @@ public class CrailConstants {
 	public static final String USER_KEY = "crail.user";
 	public static String USER = "stu";
 	
-	public static final String SHADOW_REPLICATION_KEY = "crail.shadow.replication";
+	public static final String SHADOW_REPLICATION_KEY = "crail.shadowreplication";
 	public static int SHADOW_REPLICATION = 1;	
 	
 	public static final String DEBUG_KEY = "crail.debug";
@@ -62,17 +59,17 @@ public class CrailConstants {
 	public static final String STATISTICS_KEY = "crail.statistics";
 	public static boolean STATISTICS = true;	
 	
-	public static final String RPC_TIMEOUT_KEY = "crail.rpc.timeout";
+	public static final String RPC_TIMEOUT_KEY = "crail.rpctimeout";
 	public static int RPC_TIMEOUT = 1000;
 	
-	public static final String DATA_TIMEOUT_KEY = "crail.data.timeout";
+	public static final String DATA_TIMEOUT_KEY = "crail.datatimeout";
 	public static int DATA_TIMEOUT = 1000;	
 	
 	public static final String BUFFER_SIZE_KEY = "crail.buffersize";
 	public static int BUFFER_SIZE = 1048576;
 	
 	public static final String SLICE_SIZE_KEY = "crail.slicesize";
-	public static int SLICE_SIZE = BUFFER_SIZE;		
+	public static int SLICE_SIZE = 524288;		
 	
 	public static final String SINGLETON_KEY = "crail.singleton";
 	public static boolean SINGLETON = false;	
@@ -87,8 +84,12 @@ public class CrailConstants {
 	public static boolean DIRECTORY_RANDOMIZE = true;
 	
 	public static final String CACHE_IMPL_KEY = "crail.cacheimpl";
-	public static String CACHE_IMPL = "com.ibm.crail.memory.MappedBufferCache";		
+	public static String CACHE_IMPL = "com.ibm.crail.memory.MappedBufferCache";
 	
+	public static final String LOCATION_MAP_KEY = "crail.locationmap";
+	public static String LOCATION_MAP = "";		
+	
+	//namenode interface
 	public static final String NAMENODE_ADDRESS_KEY = "crail.namenode.address";
 	public static String NAMENODE_ADDRESS = "";
 	
@@ -98,16 +99,21 @@ public class CrailConstants {
 	public static final String NAMENODE_BLOCKSELECTION_KEY = "crail.namenode.blockselection";
 	public static String NAMENODE_BLOCKSELECTION = "roundrobin";	
 	
-	public static final String NAMENODE_RPC_TYPE_KEY = "crail.namenode.rpc.type";
-	public static String NAMENODE_RPC_TYPE = "com.ibm.crail.namenode.rpc.darpc.DaRPCNameNode";	
+	public static final String NAMENODE_RPC_TYPE_KEY = "crail.namenode.rpctype";
+	public static String NAMENODE_RPC_TYPE = "com.ibm.crail.namenode.rpc.darpc.DaRPCNameNode";
 	
-	public static final String LOCATION_MAP_KEY = "crail.location.map";
-	public static String LOCATION_MAP = "";		
+	//storage interface
+	public static final String STORAGE_TYPES_KEY = "crail.storage.types";
+	public static String STORAGE_TYPES = "com.ibm.crail.storage.rdma.RdmaStorageTier";		
+	
+	public static final String STORAGE_CLASSES_KEY = "crail.storage.classes";
+	public static int STORAGE_CLASSES = 1;	
+	
+	public static final String STORAGE_ROOTCLASS_KEY = "crail.storage.rootclass";
+	public static int STORAGE_ROOTCLASS = 0;		
 	
 	public static void updateConstants(CrailConfiguration conf){
-		if (conf.get(STORAGE_TYPES_KEY) != null) {
-			STORAGE_TYPES = conf.get(STORAGE_TYPES_KEY);
-		}			
+		//general
 		if (conf.get(DIRECTORY_DEPTH_KEY) != null) {
 			DIRECTORY_DEPTH = Integer.parseInt(conf.get(DIRECTORY_DEPTH_KEY));
 		}			
@@ -165,6 +171,8 @@ public class CrailConstants {
 		if (conf.get(LOCATION_MAP_KEY) != null) {
 			LOCATION_MAP = conf.get(LOCATION_MAP_KEY);
 		}		
+		
+		//namenode interface
 		if (conf.get(NAMENODE_ADDRESS_KEY) != null) {
 			NAMENODE_ADDRESS = conf.get(NAMENODE_ADDRESS_KEY);
 		} 
@@ -177,11 +185,23 @@ public class CrailConstants {
 		if (conf.get(NAMENODE_RPC_TYPE_KEY) != null) {
 			NAMENODE_RPC_TYPE = conf.get(NAMENODE_RPC_TYPE_KEY);
 		}
+		
+		//storage interface
+		if (conf.get(STORAGE_TYPES_KEY) != null) {
+			STORAGE_TYPES = conf.get(STORAGE_TYPES_KEY);
+		}	
+		if (conf.get(STORAGE_CLASSES_KEY) != null) {
+			STORAGE_CLASSES = Math.max(Integer.parseInt(conf.get(STORAGE_CLASSES_KEY)), CrailUtils.getStorageClasses(STORAGE_TYPES)); 
+		} else {
+			STORAGE_CLASSES = CrailUtils.getStorageClasses(STORAGE_TYPES);
+		}
+		if (conf.get(STORAGE_ROOTCLASS_KEY) != null) {
+			STORAGE_ROOTCLASS = Integer.parseInt(conf.get(STORAGE_ROOTCLASS_KEY));
+		}			
 	}
 	
 	public static void printConf(){
 		LOG.info(VERSION_KEY + " " + VERSION);
-		LOG.info(STORAGE_TYPES_KEY + " " + STORAGE_TYPES);
 		LOG.info(DIRECTORY_DEPTH_KEY + " " + DIRECTORY_DEPTH);
 		LOG.info(TOKEN_EXPIRATION_KEY + " " + TOKEN_EXPIRATION);
 		LOG.info(BLOCK_SIZE_KEY + " " + BLOCK_SIZE);
@@ -201,10 +221,13 @@ public class CrailConstants {
 		LOG.info(DIRECTORY_RANDOMIZE_KEY + " " + DIRECTORY_RANDOMIZE);		
 		LOG.info(CACHE_IMPL_KEY + " " + CACHE_IMPL);
 		LOG.info(LOCATION_MAP_KEY + " " + LOCATION_MAP);
-		LOG.info(NAMENODE_ADDRESS_KEY + " " + NAMENODE_ADDRESS);
 		LOG.info(NAMENODE_BLOCKSELECTION_KEY + " " + NAMENODE_BLOCKSELECTION);
 		LOG.info(NAMENODE_FILEBLOCKS_KEY + " " + NAMENODE_FILEBLOCKS);
 		LOG.info(NAMENODE_RPC_TYPE_KEY + " " + NAMENODE_RPC_TYPE);
+		LOG.info(STORAGE_TYPES_KEY + " " + STORAGE_TYPES);
+		LOG.info(STORAGE_CLASSES_KEY + " " + STORAGE_CLASSES);
+		LOG.info(STORAGE_ROOTCLASS_KEY + " " + STORAGE_ROOTCLASS);		
+		LOG.info(NAMENODE_ADDRESS_KEY + " " + NAMENODE_ADDRESS);		
 	}
 	
 	public static void verify() throws IOException {
@@ -213,6 +236,9 @@ public class CrailConstants {
 		}	
 		if (Math.max(CrailConstants.BUFFER_SIZE, CrailConstants.SLICE_SIZE) % Math.min(CrailConstants.BUFFER_SIZE, CrailConstants.SLICE_SIZE) != 0){
 			throw new IOException("crail.slicesize must be multiple of buffersize " + CrailConstants.BUFFER_SIZE);
+		}
+		if (CrailConstants.STORAGE_CLASSES < CrailUtils.getStorageClasses(STORAGE_TYPES)){
+			throw new IOException("crail.storage.classes cannot be smaller than the number of storage types " + CrailUtils.getStorageClasses(STORAGE_TYPES));
 		}		
 		
 	}

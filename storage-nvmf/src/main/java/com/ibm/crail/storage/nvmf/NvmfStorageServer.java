@@ -22,8 +22,7 @@
 
 package com.ibm.crail.storage.nvmf;
 
-import com.ibm.crail.metadata.DataNodeStatistics;
-import com.ibm.crail.storage.StorageRpcClient;
+import com.ibm.crail.storage.StorageResource;
 import com.ibm.crail.storage.StorageServer;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.disni.nvmef.NvmeEndpoint;
@@ -47,7 +46,12 @@ public class NvmfStorageServer implements Runnable, StorageServer {
 	private final NvmeServerEndpoint serverEndpoint;
 	private final Set<NvmeEndpoint> allEndpoints;
 	private boolean isAlive;
-
+	private NvmeController controller;
+	private NvmeNamespace namespace;
+	private long namespaceSize;
+	private long alignedSize;
+	private long addr;
+	
 	public NvmfStorageServer() throws Exception {
 		this.allEndpoints = ConcurrentHashMap.newKeySet();
 		this.group = new NvmeEndpointGroup(new NvmeTransportType[]{NvmeTransportType.PCIE, NvmeTransportType.RDMA}, NvmfStorageConstants.HUGEDIR, NvmfStorageConstants.MEMPOOL);
@@ -55,6 +59,12 @@ public class NvmfStorageServer implements Runnable, StorageServer {
 		URI url = new URI("nvmef://" + NvmfStorageConstants.IP_ADDR.getHostAddress() + ":" + NvmfStorageConstants.PORT + "/0/1?subsystem=nqn.2016-06.io.spdk:cnode1&pci=" + NvmfStorageConstants.PCIE_ADDR);
 		serverEndpoint.bind(url);
 		this.isAlive = false;
+		
+		this.controller = serverEndpoint.getNvmecontroller();
+		this.namespace = controller.getNamespace(NvmfStorageConstants.NAMESPACE);
+		this.namespaceSize = namespace.getSize();
+		this.alignedSize = namespaceSize - (namespaceSize % NvmfStorageConstants.ALLOCATION_SIZE);	
+		this.addr = 0;
 	}
 
 	public void close(NvmeEndpoint ep) {
@@ -82,24 +92,18 @@ public class NvmfStorageServer implements Runnable, StorageServer {
 	}
 
 	@Override
-	public void registerResources(StorageRpcClient client) throws Exception {
-		NvmeController controller = serverEndpoint.getNvmecontroller();
-		NvmeNamespace namespace = controller.getNamespace(NvmfStorageConstants.NAMESPACE);
-		long namespaceSize = namespace.getSize();
-		long alignedSize = namespaceSize - (namespaceSize % NvmfStorageConstants.ALLOCATION_SIZE);
-
-
-		long addr = 0;
-		while (alignedSize > 0) {
-			DataNodeStatistics statistics = client.getDataNode();
-			LOG.info("datanode statistics, freeBlocks " + statistics.getFreeBlockCount());
-
+	public StorageResource allocateResource() throws Exception {
+		StorageResource resource = null;
+		
+		if (alignedSize > 0){
 			LOG.info("new block, length " + NvmfStorageConstants.ALLOCATION_SIZE);
 			LOG.debug("block stag 0, addr " + addr + ", length " + NvmfStorageConstants.ALLOCATION_SIZE);
 			alignedSize -= NvmfStorageConstants.ALLOCATION_SIZE;
-			client.setBlock(addr, (int)NvmfStorageConstants.ALLOCATION_SIZE, 0);
-			addr += NvmfStorageConstants.ALLOCATION_SIZE;
+			resource = StorageResource.createResource(addr, (int)NvmfStorageConstants.ALLOCATION_SIZE, 0);
+			addr += NvmfStorageConstants.ALLOCATION_SIZE;			
 		}
+		
+		return resource;
 	}
 
 	@Override
