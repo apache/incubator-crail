@@ -53,8 +53,11 @@ public class NvmfStorageConstants {
 	public static final String HUGEDIR_KEY = "hugedir";
 	public static String HUGEDIR  = null;
 
-	public static final String MEMPOOL_KEY = "memorypool";
-	public static long MEMPOOL = 256;
+	public static final String SERVER_MEMPOOL_KEY = "servermempool";
+	public static long SERVER_MEMPOOL = 256;
+
+	public static final String CLIENT_MEMPOOL_KEY = "clientmempool";
+	public static long CLIENT_MEMPOOL = 256;
 
 	public static final TimeUnit TIME_UNIT = TimeUnit.MINUTES;
 	public static final long TIME_OUT = 15;
@@ -98,9 +101,14 @@ public class NvmfStorageConstants {
 			HUGEDIR = arg.length() == 0 ? null : arg;
 		}
 
-		arg = get(conf, MEMPOOL_KEY);
+		arg = get(conf, SERVER_MEMPOOL_KEY);
 		if (arg != null) {
-			MEMPOOL = Long.parseLong(arg);
+			SERVER_MEMPOOL = Long.parseLong(arg);
+		}
+
+		arg = get(conf, CLIENT_MEMPOOL_KEY);
+		if (arg != null) {
+			CLIENT_MEMPOOL = Long.parseLong(arg);
 		}
 	}
 
@@ -122,6 +130,7 @@ public class NvmfStorageConstants {
 		logger.info(fullKey(NAMESPACE_KEY) + " " + NAMESPACE);
 		logger.info(fullKey(ALLOCATION_SIZE_KEY) + " " + ALLOCATION_SIZE);
 		logger.info(fullKey(HUGEDIR_KEY) + " " + HUGEDIR);
-		logger.info(fullKey(MEMPOOL_KEY) + " " + MEMPOOL);
+		logger.info(fullKey(SERVER_MEMPOOL_KEY) + " " + SERVER_MEMPOOL);
+		logger.info(fullKey(CLIENT_MEMPOOL_KEY) + " " + CLIENT_MEMPOOL);
 	}
 }

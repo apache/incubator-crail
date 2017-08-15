@@ -93,7 +93,7 @@ public class NvmfStorageTier extends StorageTier {
 		if (clientGroup == null) {
 			clientGroup = new NvmeEndpointGroup(new NvmeTransportType[]{NvmeTransportType.RDMA},
 					NvmfStorageConstants.HUGEDIR,
-					NvmfStorageConstants.MEMPOOL);
+					NvmfStorageConstants.CLIENT_MEMPOOL);
 		}
 		return clientGroup;
 	}

@@ -76,10 +76,11 @@ Crail is a multi-tiered storage system. Additinoal tiers can be enabled by addin
 
 For the NVMf storage tier we need to configure the server IP that is used when listening for new connections. We also need to configure the PCI address of the flash device we want to use, as well as the huge page mount point to be used for allocating memory. 
 
-    crail.storage.nvmf.bindip		10.40.0.XX
-    crail.storage.nvmf.pcieaddr		0000:11:00.0
-    crail.storage.nvmf.hugedir		/dev/hugepages
-    crail.storage.nvmf.socketmem		512,512
+    crail.storage.nvmf.bindip           10.40.0.XX
+    crail.storage.nvmf.pcieaddr         0000:11:00.0
+    crail.storage.nvmf.hugedir          /dev/hugepages
+    crail.storage.nvmf.servermempool    512
+    crail.storage.nvmf.clientmempool    512
 
 
 ## Deploying
