@@ -92,11 +92,9 @@ public interface StorageServer {
 				if (line.hasOption(typeOption.getOpt())) {
 					storageName = line.getOptionValue(typeOption.getOpt());
 					storageType = storageTypes.get(storageName).intValue();
-					System.out.println("has custom storageName " + storageName);
 				}				
 				if (line.hasOption(classOption.getOpt())) {
 					storageClass = Integer.parseInt(line.getOptionValue(classOption.getOpt()));
-					System.out.println("has custom storageClass " + storageClass);
 				}					
 			} catch (ParseException e) {
 				HelpFormatter formatter = new HelpFormatter();
