@@ -72,7 +72,7 @@ Crail supports optimized local operations via memcpy (instead of RDMA) in case a
 
 Crail is a multi-tiered storage system. Additinoal tiers can be enabled by adding them to the configuration as follows.
 
-    crail.datanode.types                  com.ibm.crail.storage.rdma.RdmaStorageTier,com.ibm.crail.storage.nvmf.NvmfStorageTier
+    crail.storage.types                  com.ibm.crail.storage.rdma.RdmaStorageTier,com.ibm.crail.storage.nvmf.NvmfStorageTier
 
 For the NVMf storage tier we need to configure the server IP that is used when listening for new connections. We also need to configure the PCI address of the flash device we want to use, as well as the huge page mount point to be used for allocating memory. 
 
@@ -213,13 +213,13 @@ Crail provides a set of benchmark tools to measure the performance. Type
 
 to get an overview of the available benchmarks. For instance, to benchmark the sequential write performance, type
 
-    ./bin/crail iobench -t writeClusterDirect -s 1048576 -k 102400 -f /tmp.dat
+    ./bin/crail iobench -t write -s 1048576 -k 102400 -f /tmp.dat
 
 This will create a file of size 100G, written sequentially in a sequence of 1MB operations. 
 
 To read a file sequentially, type
 
-    ./bin/crail iobench -t readSequentialDirect -s 1048576 -k 102400 -f /tmp.dat
+    ./bin/crail iobench -t read -s 1048576 -k 102400 -f /tmp.dat
 
 This command issues 102400 read operations of 1MB each.
 
