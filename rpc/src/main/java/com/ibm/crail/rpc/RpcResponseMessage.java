@@ -24,7 +24,6 @@ package com.ibm.crail.rpc;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.metadata.DataNodeStatistics;
 import com.ibm.crail.metadata.FileInfo;
@@ -592,6 +591,10 @@ public class RpcResponseMessage {
 		
 		public short getError(){
 			return 0;
+		}
+
+		public void setServiceId(long serviceId) {
+			this.statistics.setServiceId(serviceId);
 		}		
 	}	
 	

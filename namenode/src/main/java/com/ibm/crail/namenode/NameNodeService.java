@@ -22,8 +22,11 @@
 package com.ibm.crail.namenode;
 
 import java.io.IOException;
+import java.net.URI;
+import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.DelayQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 
@@ -41,26 +44,42 @@ import com.ibm.crail.rpc.RpcRequestMessage;
 import com.ibm.crail.rpc.RpcResponseMessage;
 import com.ibm.crail.utils.CrailUtils;
 
-public class NameNodeService implements RpcNameNodeService {
+public class NameNodeService implements RpcNameNodeService, Sequencer {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	//data structures for datanodes, blocks, files
+	private long serviceId;
+	private long serviceSize;
+	private AtomicLong sequenceId;
 	private BlockStore blockStore;
 	private DelayQueue<AbstractNode> deleteQueue;
 	private FileStore fileTree;
 	private ConcurrentHashMap<Long, AbstractNode> fileTable;	
-
+	private GCServer gcServer;
 	
-	NameNodeService(DelayQueue<AbstractNode> deleteQueue) throws IOException {
+	public NameNodeService() throws IOException {
+		URI uri = URI.create(CrailConstants.NAMENODE_ADDRESS);
+		String query = uri.getRawQuery();
+		StringTokenizer tokenizer = new StringTokenizer(query, "&");
+		this.serviceId = Long.parseLong(tokenizer.nextToken().substring(3));
+		this.serviceSize = Long.parseLong(tokenizer.nextToken().substring(5));
+		this.sequenceId = new AtomicLong(serviceId);
 		this.blockStore = new BlockStore();
-		this.deleteQueue = deleteQueue;
-		this.fileTree = new FileStore();
+		this.deleteQueue = new DelayQueue<AbstractNode>();
+		this.fileTree = new FileStore(this);
 		this.fileTable = new ConcurrentHashMap<Long, AbstractNode>();
+		this.gcServer = new GCServer(this, deleteQueue);
 		
 		AbstractNode root = fileTree.getRoot();
 		fileTable.put(root.getFd(), root);
+		Thread gc = new Thread(gcServer);
+		gc.start();				
 	}
 	
+	public long getNextId(){
+		return sequenceId.getAndAdd(serviceSize);
+	}
+
 	@Override
 	public short createFile(RpcRequestMessage.CreateFileReq request, RpcResponseMessage.CreateFileRes response, RpcNameNodeState errorState) throws Exception {
 		//check protocol
@@ -99,7 +118,7 @@ public class NameNodeService implements RpcNameNodeService {
 			locationClass = parentInfo.getLocationClass();
 		}
 		
-		AbstractNode fileInfo = FileBlocks.createNode(fileHash.getFileComponent(), type, storageClass, locationClass);
+		AbstractNode fileInfo = fileTree.createNode(fileHash.getFileComponent(), type, storageClass, locationClass);
 		if (!parentInfo.addChild(fileInfo)){
 			return RpcErrors.ERR_FILE_EXISTS;
 		}
@@ -387,6 +406,7 @@ public class NameNodeService implements RpcNameNodeService {
 			return RpcErrors.ERR_DATANODE_NOT_REGISTERED;
 		}
 		
+		response.setServiceId(serviceId);
 		response.setFreeBlockCount(dnInfoNn.getBlockCount());
 		
 		return RpcErrors.ERR_OK;

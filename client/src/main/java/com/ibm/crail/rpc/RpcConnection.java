@@ -63,6 +63,8 @@ public interface RpcConnection {
 	public abstract RpcFuture<RpcPing> pingNameNode()
 			throws Exception;
 	
+	public abstract void close() throws Exception;
+	
 	@SuppressWarnings("unchecked")
 	public static RpcConnection createInstance(String name) throws Exception {
 		Class<?> nodeClass = Class.forName(name);

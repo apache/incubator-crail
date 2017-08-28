@@ -21,24 +21,19 @@
 
 package com.ibm.crail.namenode;
 
-import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
 import com.ibm.crail.CrailNodeType;
-import com.ibm.crail.CrailStorageClass;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.metadata.FileInfo;
-import com.ibm.crail.metadata.FileName;
 
 public abstract class AbstractNode extends FileInfo implements Delayed {
-	private static AtomicLong fdcount = new AtomicLong(0);
-	
+//	private static AtomicLong fdcount = new AtomicLong(0);
 	private int fileComponent;
 	private AtomicLong dirOffsetCounter;
 	private ConcurrentHashMap<Integer, AbstractNode> children;
@@ -46,22 +41,8 @@ public abstract class AbstractNode extends FileInfo implements Delayed {
 	private int storageClass;
 	private int locationClass;
 	
-	public static AbstractNode createRoot() throws IOException {
-		return new DirectoryBlocks(new FileName("/").getFileComponent(), CrailNodeType.DIRECTORY, CrailConstants.STORAGE_ROOTCLASS, 0);
-	}
-	
-	public static AbstractNode createNode(int fileComponent, CrailNodeType type, int storageClass, int locationClass) throws IOException {
-		if (type == CrailNodeType.DIRECTORY){
-			return new DirectoryBlocks(fileComponent, CrailNodeType.DIRECTORY, storageClass, locationClass);
-		} else if (type == CrailNodeType.MULTIFILE){
-			return new DirectoryBlocks(fileComponent, CrailNodeType.MULTIFILE, storageClass, locationClass);
-		} else {
-			return new FileBlocks(fileComponent, CrailNodeType.DATAFILE, storageClass, locationClass);
-		}
-	}
-	
-	public AbstractNode(int fileComponent, CrailNodeType type, int storageClass, int locationAffinity){
-		super(fdcount.incrementAndGet(), type);
+	public AbstractNode(long fd, int fileComponent, CrailNodeType type, int storageClass, int locationAffinity){
+		super(fd, type);
 		
 		this.fileComponent = fileComponent;
 		this.storageClass = storageClass;

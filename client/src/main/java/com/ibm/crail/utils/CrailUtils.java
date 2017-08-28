@@ -30,6 +30,8 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -54,11 +56,81 @@ public class CrailUtils {
 	}	
 	
 	public static InetSocketAddress getNameNodeAddress() {
-		URI uri = URI.create(CrailConstants.NAMENODE_ADDRESS);
-		InetSocketAddress nnAddr = createSocketAddrForHost(uri.getHost(), uri.getPort());
+		StringTokenizer tupleTokenizer = new StringTokenizer(CrailConstants.NAMENODE_ADDRESS, ",");
+		LinkedBlockingQueue<URI> namenodes = new LinkedBlockingQueue<URI>();
+		while(tupleTokenizer.hasMoreTokens()){
+			String address = tupleTokenizer.nextToken();
+			URI uri = URI.create(address);
+			namenodes.add(uri);
+		}
+		
+		URI master = namenodes.poll();
+		InetSocketAddress nnAddr = createSocketAddrForHost(master.getHost(), master.getPort());
 		return nnAddr;
 	}
 	
+	public static URI getPrimaryNameNode() {
+		StringTokenizer tupleTokenizer = new StringTokenizer(CrailConstants.NAMENODE_ADDRESS, ",");
+		LinkedBlockingQueue<URI> namenodes = new LinkedBlockingQueue<URI>();
+		while(tupleTokenizer.hasMoreTokens()){
+			String address = tupleTokenizer.nextToken();
+			URI uri = URI.create(address);
+			namenodes.add(uri);
+		}
+		
+		URI master = namenodes.poll();
+		return master;
+	}	
+	
+	public static boolean verifyNamenode(String namenode) {
+		StringTokenizer tupleTokenizer = new StringTokenizer(CrailConstants.NAMENODE_ADDRESS, ",");
+		ConcurrentHashMap<String, Object> namenodes = new ConcurrentHashMap<String, Object>();
+		while(tupleTokenizer.hasMoreTokens()){
+			String address = tupleTokenizer.nextToken();
+			URI uri = URI.create(address);
+			String node = uri.getHost() + ":" + uri.getPort();
+			namenodes.put(node, node);
+		}		
+		
+		URI uri = URI.create(namenode);
+		String node = uri.getHost() + ":" + uri.getPort();
+		return namenodes.containsKey(node);
+	}
+
+	public static ConcurrentLinkedQueue<InetSocketAddress> getNameNodeList() {
+		StringTokenizer tupleTokenizer = new StringTokenizer(CrailConstants.NAMENODE_ADDRESS, ",");
+		ConcurrentLinkedQueue<InetSocketAddress> namenodes = new ConcurrentLinkedQueue<InetSocketAddress>();
+		while(tupleTokenizer.hasMoreTokens()){
+			String token = tupleTokenizer.nextToken();
+			URI uri = URI.create(token);
+			InetSocketAddress address = createSocketAddrForHost(uri.getHost(), uri.getPort());
+			namenodes.add(address);
+		}
+		return namenodes;
+	}
+	
+	public static long getServiceId(String namenode) {
+		StringTokenizer tupleTokenizer = new StringTokenizer(CrailConstants.NAMENODE_ADDRESS, ",");
+		ConcurrentHashMap<String, Long> namenodes = new ConcurrentHashMap<String, Long>();
+		long serviceId = 0;
+		while(tupleTokenizer.hasMoreTokens()){
+			String address = tupleTokenizer.nextToken();
+			URI uri = URI.create(address);
+			String node = uri.getHost() + ":" + uri.getPort();
+			namenodes.put(node, serviceId++);
+		}	
+		
+		URI uri = URI.create(namenode);
+		String node = uri.getHost() + ":" + uri.getPort();		
+		long id = namenodes.get(node);
+		return id;
+	}
+
+	public static long getServiceSize() {
+		StringTokenizer tupleTokenizer = new StringTokenizer(CrailConstants.NAMENODE_ADDRESS, ",");
+		return tupleTokenizer.countTokens();
+	}	
+
 	public static final long blockStartAddress(long offset) {
 		long blockCount = offset / CrailConstants.BLOCK_SIZE;
 		return blockCount*CrailConstants.BLOCK_SIZE;
@@ -205,4 +277,5 @@ public class CrailUtils {
 		}
 		return address;
 	}
+
 }

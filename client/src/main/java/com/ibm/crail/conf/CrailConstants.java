@@ -22,6 +22,7 @@
 package com.ibm.crail.conf;
 
 import java.io.IOException;
+
 import org.slf4j.Logger;
 
 import com.ibm.crail.utils.CrailUtils;
@@ -30,7 +31,7 @@ public class CrailConstants {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	public static final String VERSION_KEY = "crail.version";
-	public static int VERSION = 2900;
+	public static int VERSION = 2990;
 	
 	public static final String DIRECTORY_DEPTH_KEY = "crail.directorydepth";
 	public static int DIRECTORY_DEPTH = 16;
@@ -101,6 +102,9 @@ public class CrailConstants {
 	
 	public static final String NAMENODE_RPC_TYPE_KEY = "crail.namenode.rpctype";
 	public static String NAMENODE_RPC_TYPE = "com.ibm.crail.namenode.rpc.darpc.DaRPCNameNode";
+	
+	public static final String NAMENODE_RPC_SERVICE_KEY = "crail.namenode.rpcservice";
+	public static String NAMENODE_RPC_SERVICE = "com.ibm.crail.namenode.NameNodeService";	
 	
 	//storage interface
 	public static final String STORAGE_TYPES_KEY = "crail.storage.types";

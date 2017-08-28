@@ -25,6 +25,7 @@ import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -41,6 +42,7 @@ import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.DataNodeStatistics;
 import com.ibm.crail.rpc.RpcClient;
 import com.ibm.crail.rpc.RpcConnection;
+import com.ibm.crail.rpc.RpcDispatcher;
 import com.ibm.crail.utils.CrailUtils;
 
 public interface StorageServer {
@@ -122,29 +124,63 @@ public interface StorageServer {
 		storageTier.init(conf, extraParams);
 		storageTier.printConf(LOG);		
 		
-		InetSocketAddress nnAddr = CrailUtils.getNameNodeAddress();
 		RpcClient rpcClient = RpcClient.createInstance(CrailConstants.NAMENODE_RPC_TYPE);
 		rpcClient.init(conf, args);
 		rpcClient.printConf(LOG);					
-		RpcConnection rpcConnection = rpcClient.connect(nnAddr);
-		LOG.info("connected to namenode at " + nnAddr);				
+		
+		ConcurrentLinkedQueue<InetSocketAddress> namenodeList = CrailUtils.getNameNodeList();
+		ConcurrentLinkedQueue<RpcConnection> connectionList = new ConcurrentLinkedQueue<RpcConnection>();
+		while(!namenodeList.isEmpty()){
+			InetSocketAddress address = namenodeList.poll();
+			RpcConnection connection = rpcClient.connect(address);
+			connectionList.add(connection);
+		}
+		RpcConnection rpcConnection = connectionList.peek();
+		if (connectionList.size() > 1){
+			rpcConnection = new RpcDispatcher(connectionList);
+		}		
+		LOG.info("connected to namenode(s) " + rpcConnection.toString());				
 		
 		StorageServer server = storageTier.launchServer();
 		StorageRpcClient storageRpc = new StorageRpcClient(storageType, CrailStorageClass.get(storageClass), server.getAddress(), rpcConnection);
 		
+		HashMap<Long, Long> blockCount = new HashMap<Long, Long>();
+		long sumCount = 0;
 		while (server.isAlive()) {
 			StorageResource resource = server.allocateResource();
 			if (resource == null){
 				break;
 			} else {
 				storageRpc.setBlock(resource.getAddress(), resource.getLength(), resource.getKey());
-				LOG.info("datanode statistics, freeBlocks " + storageRpc.getDataNode().getFreeBlockCount());		
+				DataNodeStatistics stats = storageRpc.getDataNode();
+				long newCount = stats.getFreeBlockCount();
+				long serviceId = stats.getServiceId();
+				
+				long oldCount = 0;
+				if (blockCount.containsKey(serviceId)){
+					oldCount = blockCount.get(serviceId);
+				}
+				long diffCount = newCount - oldCount;
+				blockCount.put(serviceId, newCount);
+				sumCount += diffCount;
+				LOG.info("datanode statistics, freeBlocks " + sumCount);		
 			}
 		}
 		
 		while (server.isAlive()) {
-			DataNodeStatistics statistics = storageRpc.getDataNode();
-			LOG.info("datanode statistics, freeBlocks " + statistics.getFreeBlockCount());
+			DataNodeStatistics stats = storageRpc.getDataNode();
+			long newCount = stats.getFreeBlockCount();
+			long serviceId = stats.getServiceId();
+			
+			long oldCount = 0;
+			if (blockCount.containsKey(serviceId)){
+				oldCount = blockCount.get(serviceId);
+			}
+			long diffCount = newCount - oldCount;
+			blockCount.put(serviceId, newCount);
+			sumCount += diffCount;			
+			
+			LOG.info("datanode statistics, freeBlocks " + sumCount);
 			Thread.sleep(2000);
 		}			
 	}

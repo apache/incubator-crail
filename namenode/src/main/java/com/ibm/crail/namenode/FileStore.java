@@ -23,17 +23,30 @@ package com.ibm.crail.namenode;
 
 import java.io.IOException;
 
+import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.FileName;
 import com.ibm.crail.rpc.RpcErrors;
 import com.ibm.crail.rpc.RpcNameNodeState;
 
 public class FileStore {
+	private Sequencer sequencer;
 	private AbstractNode root;
 	
-	public FileStore() throws IOException { 
-		this.root = DirectoryBlocks.createRoot();
+	public FileStore(Sequencer sequencer) throws IOException { 
+		this.sequencer = sequencer;
+		this.root = createNode(new FileName("/").getFileComponent(), CrailNodeType.DIRECTORY, CrailConstants.STORAGE_ROOTCLASS, 0);
 	}
+	
+	public AbstractNode createNode(int fileComponent, CrailNodeType type, int storageClass, int locationClass) throws IOException {
+		if (type == CrailNodeType.DIRECTORY){
+			return new DirectoryBlocks(sequencer.getNextId(), fileComponent, CrailNodeType.DIRECTORY, storageClass, locationClass);
+		} else if (type == CrailNodeType.MULTIFILE){
+			return new DirectoryBlocks(sequencer.getNextId(), fileComponent, CrailNodeType.MULTIFILE, storageClass, locationClass);
+		} else {
+			return new FileBlocks(sequencer.getNextId(), fileComponent, CrailNodeType.DATAFILE, storageClass, locationClass);
+		}
+	}	
 	
 	public AbstractNode retrieveFile(FileName filename, RpcNameNodeState error) throws Exception{
 		return retrieveFileInternal(filename, filename.getLength(), error);

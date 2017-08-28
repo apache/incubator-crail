@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -53,6 +54,7 @@ import com.ibm.crail.metadata.BlockInfo;
 import com.ibm.crail.metadata.DataNodeInfo;
 import com.ibm.crail.metadata.FileInfo;
 import com.ibm.crail.metadata.FileName;
+import com.ibm.crail.rpc.RpcDispatcher;
 import com.ibm.crail.rpc.RpcErrors;
 import com.ibm.crail.rpc.RpcClient;
 import com.ibm.crail.rpc.RpcConnection;
@@ -77,8 +79,8 @@ public class CoreFileSystem extends CrailFS {
 	private static AtomicInteger fsCount = new AtomicInteger(0);
 	
 	//namenode operations
-	private RpcClient rpcNameNode;
-	private RpcConnection namenodeClientRpc;
+	private RpcClient rpcClient;
+	private RpcConnection rpcConnection;
 	
 	//datanode operations
 	private EndpointCache datanodeEndpointCache;
@@ -121,11 +123,22 @@ public class CoreFileSystem extends CrailFS {
 		
 		//Namenode
 		InetSocketAddress nnAddr = CrailUtils.getNameNodeAddress();
-		this.rpcNameNode = RpcClient.createInstance(CrailConstants.NAMENODE_RPC_TYPE);
-		rpcNameNode.init(conf, null);
-		rpcNameNode.printConf(LOG);		
-		this.namenodeClientRpc = rpcNameNode.connect(nnAddr);
-		LOG.info("connected to namenode at " + nnAddr);		
+		this.rpcClient = RpcClient.createInstance(CrailConstants.NAMENODE_RPC_TYPE);
+		rpcClient.init(conf, null);
+		rpcClient.printConf(LOG);	
+		ConcurrentLinkedQueue<InetSocketAddress> namenodeList = CrailUtils.getNameNodeList();
+		ConcurrentLinkedQueue<RpcConnection> connectionList = new ConcurrentLinkedQueue<RpcConnection>();
+		while(!namenodeList.isEmpty()){
+			InetSocketAddress address = namenodeList.poll();
+			RpcConnection connection = rpcClient.connect(address);
+			connectionList.add(connection);
+		}
+		if (connectionList.size() == 1){
+			this.rpcConnection = connectionList.poll();
+		} else {
+			this.rpcConnection = new RpcDispatcher(connectionList);
+		}
+		LOG.info("connected to namenode(s) " + rpcConnection);		
 		
 		//Client
 		this.fsId = fsCount.getAndIncrement();
@@ -159,7 +172,7 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("createNode: name " + path + ", type " + type + ", storageAffinity " + storageClass + ", locationAffinity " + locationClass);
 		}
 
-		RpcFuture<RpcCreateFile> fileRes = namenodeClientRpc.createFile(name, type, storageClass.value(), locationClass.value());
+		RpcFuture<RpcCreateFile> fileRes = rpcConnection.createFile(name, type, storageClass.value(), locationClass.value());
 		return new CreateNodeFuture(this, path, type, fileRes);
 	}	
 	
@@ -214,7 +227,7 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("lookupDirectory: path " + path);
 		}
 		
-		RpcFuture<RpcGetFile> fileRes = namenodeClientRpc.getFile(name, false);
+		RpcFuture<RpcGetFile> fileRes = rpcConnection.getFile(name, false);
 		return new LookupNodeFuture(this, path, fileRes);
 	}	
 	
@@ -251,7 +264,7 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("rename: srcname " + src + ", dstname " + dst);
 		}
 		
-		RpcFuture<RpcRenameFile> renameRes = namenodeClientRpc.renameFile(srcPath, dstPath);
+		RpcFuture<RpcRenameFile> renameRes = rpcConnection.renameFile(srcPath, dstPath);
 		return new RenameNodeFuture(this, src, dst, renameRes);
 	}
 	
@@ -319,7 +332,7 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("delete: name " + path + ", recursive " + recursive);
 		}
 
-		RpcFuture<RpcDeleteFile> fileRes = namenodeClientRpc.removeFile(name, recursive);
+		RpcFuture<RpcDeleteFile> fileRes = rpcConnection.removeFile(name, recursive);
 		return new DeleteNodeFuture(this, path, recursive, fileRes);
 	}	
 	
@@ -364,7 +377,7 @@ public class CoreFileSystem extends CrailFS {
 			LOG.info("getDirectoryList: " + name);
 		}
 
-		RpcGetFile fileRes = namenodeClientRpc.getFile(directory, false).get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
+		RpcGetFile fileRes = rpcConnection.getFile(directory, false).get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
 		if (fileRes.getError() != RpcErrors.ERR_OK) {
 			LOG.info("getDirectoryList: " + RpcErrors.messages[fileRes.getError()]);
 			throw new FileNotFoundException(RpcErrors.messages[fileRes.getError()]);
@@ -408,7 +421,7 @@ public class CoreFileSystem extends CrailFS {
 		HashMap<Long, DataNodeInfo> offset2DataNode = new HashMap<Long, DataNodeInfo>();
 	
 		for (long current = CrailUtils.blockStartAddress(start); current < start + len; current += CrailConstants.BLOCK_SIZE){
-			RpcGetLocation getLocationRes = namenodeClientRpc.getLocation(name, current).get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
+			RpcGetLocation getLocationRes = rpcConnection.getLocation(name, current).get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
 			if (getLocationRes.getError() != RpcErrors.ERR_OK) {
 				LOG.info("location: " + RpcErrors.messages[getLocationRes.getError()]);
 				throw new IOException(RpcErrors.messages[getLocationRes.getError()]);
@@ -475,11 +488,11 @@ public class CoreFileSystem extends CrailFS {
 	}
 	
 	public void dumpNameNode() throws Exception {
-		namenodeClientRpc.dumpNameNode().get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
+		rpcConnection.dumpNameNode().get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
 	}	
 	
 	public void ping() throws Exception {
-		RpcPing pingRes = namenodeClientRpc.pingNameNode().get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
+		RpcPing pingRes = rpcConnection.pingNameNode().get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
 		if (pingRes.getError() != RpcErrors.ERR_OK) {
 			LOG.info("Ping: " + RpcErrors.messages[pingRes.getError()]);
 			throw new IOException(RpcErrors.messages[pingRes.getError()]);
@@ -541,13 +554,14 @@ public class CoreFileSystem extends CrailFS {
 	
 		bufferCache.close();
 		datanodeEndpointCache.close();
-		rpcNameNode.close();
+		rpcConnection.close();
+		rpcClient.close();
 		this.isOpen = false;
 	}
 
 	public void closeFile(FileInfo fileInfo) throws Exception {
 		if (fileInfo.getToken() > 0){
-			namenodeClientRpc.setFile(fileInfo, true).get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);				
+			rpcConnection.setFile(fileInfo, true).get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);				
 		}
 	}
 
@@ -633,7 +647,7 @@ public class CoreFileSystem extends CrailFS {
 	}	
 
 	RpcConnection getNamenodeClientRpc() {
-		return namenodeClientRpc;
+		return rpcConnection;
 	}
 
 	EndpointCache getDatanodeEndpointCache() {

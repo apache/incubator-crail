@@ -22,6 +22,7 @@
 package com.ibm.crail.rpc;
 
 public interface RpcNameNodeService {
+	
 	public abstract short createFile(RpcRequestMessage.CreateFileReq request,
 			RpcResponseMessage.CreateFileRes response, RpcNameNodeState errorState)
 			throws Exception;
@@ -67,4 +68,16 @@ public interface RpcNameNodeService {
 	public abstract short ping(RpcRequestMessage.PingNameNodeReq request,
 			RpcResponseMessage.PingNameNodeRes response, RpcNameNodeState errorState)
 			throws Exception;
+	
+	@SuppressWarnings("unchecked")
+	public static RpcNameNodeService createInstance(String name) throws Exception {
+		Class<?> serviceClass = Class.forName(name);
+		if (RpcNameNodeService.class.isAssignableFrom(serviceClass)){
+			Class<? extends RpcNameNodeService> rpcService = (Class<? extends RpcNameNodeService>) serviceClass;
+			RpcNameNodeService service = rpcService.newInstance();
+			return service;
+		} else {
+			throw new Exception("Cannot instantiate RPC service of type " + name);
+		}
+	}	
 }

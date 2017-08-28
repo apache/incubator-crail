@@ -21,61 +21,27 @@
 
 package com.ibm.crail.namenode.rpc.darpc;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import org.slf4j.Logger;
-import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.rpc.RpcBinding;
-import com.ibm.crail.rpc.RpcConnection;
 import com.ibm.crail.rpc.RpcNameNodeService;
 import com.ibm.crail.utils.CrailUtils;
-import com.ibm.darpc.DaRPCClientEndpoint;
-import com.ibm.darpc.DaRPCClientGroup;
 import com.ibm.darpc.DaRPCServerEndpoint;
 import com.ibm.darpc.DaRPCServerGroup;
 import com.ibm.disni.rdma.RdmaServerEndpoint;
 
-public class DaRPCNameNode implements RpcBinding {
+public class DaRPCNameNode extends DaRPCNameNodeClient implements RpcBinding {
 	private static final Logger LOG = CrailUtils.getLogger();
-	
-	private DaRPCClientGroup<DaRPCNameNodeRequest, DaRPCNameNodeResponse> namenodeClientGroup;
-	private DaRPCClientEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> namenodeClientEp;
 	
 	private DaRPCServerGroup<DaRPCNameNodeRequest, DaRPCNameNodeResponse> namenodeServerGroup;
 	private RdmaServerEndpoint<DaRPCServerEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse>> namenodeServerEp;
 	
 	public DaRPCNameNode(){
-		this.namenodeClientEp = null;
-		this.namenodeClientGroup = null;
 		this.namenodeServerEp = null;
 		this.namenodeServerGroup = null;
 	}
 	
-	public void init(CrailConfiguration conf, String[] args) throws IOException{
-		DaRPCConstants.updateConstants(conf);
-		DaRPCConstants.verify();		
-	}
-	
-	public void printConf(Logger logger){
-		DaRPCConstants.printConf(logger);
-	}
-
-	@Override
-	public RpcConnection connect(InetSocketAddress address) throws Exception {
-		DaRPCNameNodeProtocol namenodeProtocol = new DaRPCNameNodeProtocol();
-		this.namenodeClientGroup = DaRPCClientGroup.createClientGroup(namenodeProtocol, 100, DaRPCConstants.NAMENODE_DARPC_MAXINLINE, DaRPCConstants.NAMENODE_DARPC_RECVQUEUE, DaRPCConstants.NAMENODE_DARPC_SENDQUEUE);
-		LOG.info("rpc group started, recvQueue " + namenodeClientGroup.recvQueueSize());
-		this.namenodeClientEp = namenodeClientGroup.createEndpoint();
-		InetSocketAddress nnAddr = CrailUtils.getNameNodeAddress();
-		LOG.info("connecting to namenode at " + nnAddr);
-		URI uri = URI.create("rdma://" + nnAddr.getAddress().getHostAddress() + ":" + nnAddr.getPort());
-		namenodeClientEp.connect(uri);
-		DaRPCNameNodeClient namenodeClientRpc = new DaRPCNameNodeClient(namenodeClientEp);
-		return namenodeClientRpc;
-		
-	}
-
 	@Override
 	public void run(RpcNameNodeService service) {
 		try {
@@ -109,14 +75,6 @@ public class DaRPCNameNode implements RpcBinding {
 	@Override
 	public void close() {
 		try {
-			if (namenodeClientEp != null){
-				namenodeClientEp.close();
-				namenodeClientEp = null;
-			}
-			if (namenodeClientGroup != null){
-				namenodeClientGroup.close();
-				namenodeClientGroup = null;
-			}
 			if (namenodeServerEp != null){
 				namenodeServerEp.close();
 				namenodeServerEp = null;

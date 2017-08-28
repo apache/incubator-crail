@@ -25,24 +25,24 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 
 public class DataNodeStatistics {
-	public static final int CSIZE = 4;
+	public static final int CSIZE = 12;
 	
+	private long serviceId;
 	private int freeBlockCount;
 	
 	public DataNodeStatistics(){
+		this.serviceId = 0;
 		this.freeBlockCount = 0;
 	}
 	
-	public DataNodeStatistics(int freeBlockCount){
-		this.freeBlockCount = freeBlockCount;
-	}
-	
 	public int write(ByteBuffer buffer){
+		buffer.putLong(serviceId);
 		buffer.putInt(freeBlockCount);
 		return CSIZE;
 	}
 	
 	public void update(ByteBuffer buffer) throws UnknownHostException {
+		this.serviceId = buffer.getLong();
 		this.freeBlockCount = buffer.getInt();
 	}
 
@@ -55,6 +55,15 @@ public class DataNodeStatistics {
 	}
 
 	public void setStatistics(DataNodeStatistics statistics) {
+		this.serviceId = statistics.getServiceId();
 		this.freeBlockCount = statistics.getFreeBlockCount();
+	}
+
+	public void setServiceId(long serviceId) {
+		this.serviceId = serviceId;
 	}	
+	
+	public long getServiceId(){
+		return serviceId;
+	}
 }
