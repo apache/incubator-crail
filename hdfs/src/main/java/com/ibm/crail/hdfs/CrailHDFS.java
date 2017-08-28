@@ -140,7 +140,7 @@ public class CrailHDFS extends AbstractFileSystem {
 	@Override
 	public void mkdir(Path path, FsPermission permission, boolean createParent) throws AccessControlException, FileAlreadyExistsException, FileNotFoundException, UnresolvedLinkException, IOException {
 		try {
-			CrailDirectory file = dfs.create(path.toUri().getRawPath(), CrailNodeType.DIRECTORY, CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT).get().asDirectory();
+			CrailDirectory file = dfs.create(path.toUri().getRawPath(), CrailNodeType.DIRECTORY, CrailStorageClass.PARENT, CrailLocationClass.DEFAULT).get().asDirectory();
 			file.syncDir();
 		} catch(Exception e){
 			if (e.getMessage().contains(RpcErrors.messages[RpcErrors.ERR_PARENT_MISSING])){
