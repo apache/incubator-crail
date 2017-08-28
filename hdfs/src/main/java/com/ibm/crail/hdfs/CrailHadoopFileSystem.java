@@ -213,7 +213,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 	@Override
 	public boolean mkdirs(Path path, FsPermission permission) throws IOException {
 		try {
-			CrailDirectory file = dfs.create(path.toUri().getRawPath(), CrailNodeType.DIRECTORY, CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT).get().asDirectory();
+			CrailDirectory file = dfs.create(path.toUri().getRawPath(), CrailNodeType.DIRECTORY, CrailStorageClass.PARENT, CrailLocationClass.DEFAULT).get().asDirectory();
 			file.syncDir();
 			return true;
 		} catch(Exception e){
