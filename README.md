@@ -175,9 +175,9 @@ The simplest way to create a file in Crail is as follows:
 
     CrailFile file = fs.create(filename, CrailNodeType.DATAFILE, CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT).get().syncDir();
 
-Aside from the actual filename, the 'create()' takes as input to the storage and location classes which are preferences about the storage tier and physical location that this file should created in. Crail tries to satisfy these preferences later when the file is written. In the example we do not request any particular storage or location affinity.
+Aside from the actual filename, the 'create()' call takes as input the storage and location classes which are preferences for the storage tier and physical location that this file should be created in. Crail tries to satisfy these preferences later when the file is written. In the example we do not request any particular storage or location affinity.
 
-This 'create()' command is non-blocking, calling 'get()' on the returning future object awaits the completion of the call. At that time, the file has been created, but its directory entry may not be visible. Therefore, the file may not yet show up in a file enumeration of the given parent directory. Calling 'syncDir()' waits to for the directory entry to be completed. Both the 'get()' and the 'syncDir()' can be deffered to a later time at which they may become non-blocking operations as well. 
+This 'create()' command is non-blocking, calling 'get()' on the returning future object awaits the completion of the call. At that time, the file has been created, but its directory entry may not be visible. Therefore, the file may not yet show up in a file enumeration of the given parent directory. Calling 'syncDir()' waits to for the directory entry to be completed. Both the 'get()' and the 'syncDir()' operation can be deffered to a later time at which they may become non-blocking operations. 
 
 Once the file is created, a file stream can be obtained for writing:
 
