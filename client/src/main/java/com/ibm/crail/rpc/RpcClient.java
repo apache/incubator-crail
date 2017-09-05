@@ -21,15 +21,12 @@
 
 package com.ibm.crail.rpc;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
-
 import org.slf4j.Logger;
-
 import com.ibm.crail.conf.CrailConfiguration;
 
 public interface RpcClient {
-	public abstract void init(CrailConfiguration conf, String[] args) throws IOException;
+	public abstract void init(CrailConfiguration conf, String[] args) throws Exception;
 	public abstract void printConf(Logger log);
 	public RpcConnection connect(InetSocketAddress address)  throws Exception ;
 	public void close();
