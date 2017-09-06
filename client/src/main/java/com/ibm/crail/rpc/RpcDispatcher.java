@@ -2,6 +2,7 @@ package com.ibm.crail.rpc;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
 import org.slf4j.Logger;
 
 import com.ibm.crail.CrailNodeType;
@@ -31,7 +32,7 @@ public class RpcDispatcher implements RpcConnection {
 	public RpcFuture<RpcCreateFile> createFile(FileName filename,
 			CrailNodeType type, int storageClass, int locationClass)
 			throws IOException {
-		int index = filename.getComponent(0) % connections.length;
+		int index = computeIndex(filename.getComponent(0));
 //		LOG.info("issuing create file for filename [" + filename.toString() + "], on index " + index);
 		return connections[index].createFile(filename, type, storageClass, locationClass);
 	}
@@ -39,7 +40,7 @@ public class RpcDispatcher implements RpcConnection {
 	@Override
 	public RpcFuture<RpcGetFile> getFile(FileName filename, boolean writeable)
 			throws IOException {
-		int index = filename.getComponent(0) % connections.length;
+		int index = computeIndex(filename.getComponent(0));
 //		LOG.info("issuing get file for filename [" + filename.toString() + "], on index " + index);
 		return connections[index].getFile(filename, writeable);
 	}
@@ -47,9 +48,7 @@ public class RpcDispatcher implements RpcConnection {
 	@Override
 	public RpcFuture<RpcVoid> setFile(FileInfo fileInfo, boolean close)
 			throws IOException {
-		long connectionsLength = (long) connections.length;
-		long _index = fileInfo.getFd() % connectionsLength;
-		int index = (int) _index;
+		int index = computeIndex(fileInfo.getFd());
 //		LOG.info("issuing set file for fd [" + fileInfo.getFd() + "], on index " + index);
 		return connections[index].setFile(fileInfo, close);
 	}
@@ -57,7 +56,7 @@ public class RpcDispatcher implements RpcConnection {
 	@Override
 	public RpcFuture<RpcDeleteFile> removeFile(FileName filename,
 			boolean recursive) throws IOException {
-		int index = filename.getComponent(0) % connections.length;
+		int index = computeIndex(filename.getComponent(0));
 //		LOG.info("issuing remove file for filename [" + filename.toString() + "], on index " + index);		
 		return connections[index].removeFile(filename, recursive);
 	}
@@ -65,8 +64,8 @@ public class RpcDispatcher implements RpcConnection {
 	@Override
 	public RpcFuture<RpcRenameFile> renameFile(FileName srcHash,
 			FileName dstHash) throws IOException {
-		int srcIndex = srcHash.getComponent(0) % connections.length;
-		int dstIndex = srcHash.getComponent(0) % connections.length;
+		int srcIndex = computeIndex(srcHash.getComponent(0));
+		int dstIndex = computeIndex(srcHash.getComponent(0));
 //		LOG.info("issuing remove file for src [" + srcHash.toString() + "," + dstHash.toString() + "], on index " + srcIndex);	
 		if (srcIndex != dstIndex){
 			throw new IOException("Rename not supported across namenode domains");
@@ -78,9 +77,7 @@ public class RpcDispatcher implements RpcConnection {
 	@Override
 	public RpcFuture<RpcGetBlock> getBlock(long fd, long token, long position,
 			long capacity) throws IOException {
-		long connectionsLength = (long) connections.length;
-		long _index = fd % connectionsLength;
-		int index = (int) _index;
+		int index = computeIndex(fd);
 //		LOG.info("issuing get block for fd [" + fd + "], on index " + index);		
 		return connections[index].getBlock(fd, token, position, capacity);
 	}
@@ -88,7 +85,7 @@ public class RpcDispatcher implements RpcConnection {
 	@Override
 	public RpcFuture<RpcGetLocation> getLocation(FileName fileName,
 			long position) throws IOException {
-		int index = fileName.getComponent(0) % connections.length;
+		int index = computeIndex(fileName.getComponent(0));
 //		LOG.info("issuing get location for filename [" + fileName.toString() + "], on index " + index);			
 		return connections[index].getLocation(fileName, position);
 	}
@@ -121,6 +118,13 @@ public class RpcDispatcher implements RpcConnection {
 	}
 
 	@Override
+	public void close() throws Exception {
+		for (RpcConnection connection : connections){
+			connection.close();
+		}
+	}
+
+	@Override
 	public String toString() {
 		String address = "";
 		for (RpcConnection connection : connections){
@@ -130,8 +134,15 @@ public class RpcDispatcher implements RpcConnection {
 		return address;
 	}
 
-	@Override
-	public void close() throws Exception {
-		connections[0].close();
+	private int computeIndex(int component) {
+		int index = ((component % connections.length) + connections.length) % connections.length;
+		return index;
 	}
+	
+	private int computeIndex(long component) {
+		long connectionsLength = (long) connections.length;
+		long _index = ((component % connectionsLength) + connectionsLength) % connectionsLength;
+		int index = (int) _index;
+		return index;
+	}	
 }

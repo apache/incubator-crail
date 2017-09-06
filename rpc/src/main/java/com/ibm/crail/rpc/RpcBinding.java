@@ -23,7 +23,7 @@ package com.ibm.crail.rpc;
 
 
 public interface RpcBinding extends RpcClient {
-	public void run(RpcNameNodeService service);
+	public RpcServer launchServer(RpcNameNodeService service);
 	
 	@SuppressWarnings("unchecked")
 	public static RpcBinding createInstance(String name) throws Exception {

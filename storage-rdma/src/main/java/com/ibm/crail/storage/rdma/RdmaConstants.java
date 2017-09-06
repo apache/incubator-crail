@@ -22,13 +22,24 @@
 package com.ibm.crail.storage.rdma;
 
 import java.io.IOException;
+import java.util.Arrays;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
+import com.ibm.crail.utils.CrailUtils;
 
 public class RdmaConstants {
+	private static final Logger LOG = CrailUtils.getLogger();
+	
 	public static final String STORAGE_RDMA_INTERFACE_KEY = "crail.storage.rdma.interface";
 	public static String STORAGE_RDMA_INTERFACE = "eth5";
 
@@ -108,5 +119,37 @@ public class RdmaConstants {
 		logger.info(STORAGE_RDMA_LOCAL_MAP_KEY + " " + STORAGE_RDMA_LOCAL_MAP);
 		logger.info(STORAGE_RDMA_QUEUESIZE_KEY + " " + STORAGE_RDMA_QUEUESIZE);
 		logger.info(STORAGE_RDMA_TYPE_KEY + " " + STORAGE_RDMA_TYPE);
+	}
+	
+	public static void init(CrailConfiguration conf, String[] args) throws Exception {
+		if (args != null) {
+			Option interfaceOption = Option.builder("i").desc("interface to start server on").hasArg().build();
+			Option portOption = Option.builder("p").desc("port to start server on").hasArg().build();
+			Options options = new Options();
+			options.addOption(interfaceOption);
+			options.addOption(portOption);
+			CommandLineParser parser = new DefaultParser();
+
+			try {
+				CommandLine line = parser.parse(options, Arrays.copyOfRange(args, 0, args.length));
+				if (line.hasOption(interfaceOption.getOpt())) {
+					String ifname = line.getOptionValue(interfaceOption.getOpt());
+					LOG.info("using custom interface " + ifname);
+					conf.set(RdmaConstants.STORAGE_RDMA_INTERFACE_KEY, ifname);
+				}
+				if (line.hasOption(portOption.getOpt())) {
+					String port = line.getOptionValue(portOption.getOpt());
+					LOG.info("using custom port " + port);
+					conf.set(RdmaConstants.STORAGE_RDMA_PORT_KEY, port);
+				}
+			} catch (ParseException e) {
+				HelpFormatter formatter = new HelpFormatter();
+				formatter.printHelp("RDMA storage tier", options);
+				System.exit(-1);
+			}
+		}
+
+		RdmaConstants.updateConstants(conf);
+		RdmaConstants.verify();
 	}	
 }
