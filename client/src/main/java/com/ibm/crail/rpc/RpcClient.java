@@ -22,12 +22,10 @@
 package com.ibm.crail.rpc;
 
 import java.net.InetSocketAddress;
-import org.slf4j.Logger;
-import com.ibm.crail.conf.CrailConfiguration;
 
-public interface RpcClient {
-	public abstract void init(CrailConfiguration conf, String[] args) throws Exception;
-	public abstract void printConf(Logger log);
+import com.ibm.crail.conf.Configurable;
+
+public interface RpcClient extends Configurable {
 	public RpcConnection connect(InetSocketAddress address)  throws Exception ;
 	public void close();
 	

@@ -23,6 +23,7 @@ package com.ibm.crail.namenode;
 
 import java.net.URI;
 import java.util.Arrays;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -36,6 +37,7 @@ import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.rpc.RpcBinding;
 import com.ibm.crail.rpc.RpcNameNodeService;
+import com.ibm.crail.rpc.RpcServer;
 import com.ibm.crail.utils.CrailUtils;
 
 public class NameNode {
@@ -86,9 +88,10 @@ public class NameNode {
 		
 		RpcNameNodeService service = RpcNameNodeService.createInstance(CrailConstants.NAMENODE_RPC_SERVICE);
 		RpcBinding rpcBinding = RpcBinding.createInstance(CrailConstants.NAMENODE_RPC_TYPE);
-		rpcBinding.init(conf, null);
-		rpcBinding.printConf(LOG);
-		rpcBinding.run(service);
+		RpcServer rpcServer = rpcBinding.launchServer(service);
+		rpcServer.init(conf, null);
+		rpcServer.printConf(LOG);
+		rpcServer.run();
 		System.exit(0);;
 	}
 }

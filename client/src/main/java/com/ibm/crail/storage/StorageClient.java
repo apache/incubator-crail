@@ -22,16 +22,12 @@
 package com.ibm.crail.storage;
 
 import java.io.IOException;
-import org.slf4j.Logger;
-
-import com.ibm.crail.conf.CrailConfiguration;
+import com.ibm.crail.conf.Configurable;
 import com.ibm.crail.metadata.DataNodeInfo;
 
-public interface StorageClient {
-	public abstract void init(CrailConfiguration conf, String[] args) throws Exception;
+public interface StorageClient extends Configurable {
 	public abstract StorageEndpoint createEndpoint(DataNodeInfo info) throws IOException;	
 	public abstract void close() throws Exception;
-	public abstract void printConf(Logger log);
 	
 	@SuppressWarnings("unchecked")
 	public static StorageClient createInstance(String name) throws Exception {

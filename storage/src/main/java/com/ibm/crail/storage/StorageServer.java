@@ -37,6 +37,7 @@ import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 
 import com.ibm.crail.CrailStorageClass;
+import com.ibm.crail.conf.Configurable;
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.DataNodeStatistics;
@@ -45,7 +46,7 @@ import com.ibm.crail.rpc.RpcConnection;
 import com.ibm.crail.rpc.RpcDispatcher;
 import com.ibm.crail.utils.CrailUtils;
 
-public interface StorageServer {
+public interface StorageServer extends Configurable, Runnable {
 	public abstract StorageResource allocateResource() throws Exception;
 	public abstract boolean isAlive();
 	public abstract InetSocketAddress getAddress();
@@ -112,6 +113,7 @@ public interface StorageServer {
 		if (storageTier == null){
 			throw new Exception("Cannot instantiate datanode of type " + storageName);
 		}
+		StorageServer server = storageTier.launchServer();
 		
 		String extraParams[] = null;
 		splitIndex++;
@@ -121,8 +123,11 @@ public interface StorageServer {
 				extraParams[i-splitIndex] = args[i];
 			}
 		}
-		storageTier.init(conf, extraParams);
-		storageTier.printConf(LOG);		
+		server.init(conf, extraParams);
+		server.printConf(LOG);
+		
+		Thread thread = new Thread(server);
+		thread.start();
 		
 		RpcClient rpcClient = RpcClient.createInstance(CrailConstants.NAMENODE_RPC_TYPE);
 		rpcClient.init(conf, args);
@@ -141,7 +146,7 @@ public interface StorageServer {
 		}		
 		LOG.info("connected to namenode(s) " + rpcConnection.toString());				
 		
-		StorageServer server = storageTier.launchServer();
+		
 		StorageRpcClient storageRpc = new StorageRpcClient(storageType, CrailStorageClass.get(storageClass), server.getAddress(), rpcConnection);
 		
 		HashMap<Long, Long> blockCount = new HashMap<Long, Long>();
