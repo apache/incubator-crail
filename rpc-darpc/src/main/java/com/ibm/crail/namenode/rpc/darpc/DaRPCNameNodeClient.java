@@ -14,15 +14,19 @@ import com.ibm.darpc.DaRPCClientGroup;
 public class DaRPCNameNodeClient implements RpcClient {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
+	private DaRPCNameNodeProtocol namenodeProtocol;
 	private DaRPCClientGroup<DaRPCNameNodeRequest, DaRPCNameNodeResponse> namenodeClientGroup;
 	
 	public DaRPCNameNodeClient(){
+		this.namenodeProtocol = new DaRPCNameNodeProtocol();
 		this.namenodeClientGroup = null;
 	}
 	
-	public void init(CrailConfiguration conf, String[] args) throws IOException{
+	public void init(CrailConfiguration conf, String[] args) throws Exception{
 		DaRPCConstants.updateConstants(conf);
-		DaRPCConstants.verify();		
+		DaRPCConstants.verify();
+		this.namenodeClientGroup = DaRPCClientGroup.createClientGroup(namenodeProtocol, 100, DaRPCConstants.NAMENODE_DARPC_MAXINLINE, DaRPCConstants.NAMENODE_DARPC_RECVQUEUE, DaRPCConstants.NAMENODE_DARPC_SENDQUEUE);
+		LOG.info("rpc group started, recvQueue " + namenodeClientGroup.recvQueueSize());
 	}
 	
 	public void printConf(Logger logger){
@@ -31,9 +35,6 @@ public class DaRPCNameNodeClient implements RpcClient {
 
 	@Override
 	public RpcConnection connect(InetSocketAddress address) throws Exception {
-		DaRPCNameNodeProtocol namenodeProtocol = new DaRPCNameNodeProtocol();
-		this.namenodeClientGroup = DaRPCClientGroup.createClientGroup(namenodeProtocol, 100, DaRPCConstants.NAMENODE_DARPC_MAXINLINE, DaRPCConstants.NAMENODE_DARPC_RECVQUEUE, DaRPCConstants.NAMENODE_DARPC_SENDQUEUE);
-		LOG.info("rpc group started, recvQueue " + namenodeClientGroup.recvQueueSize());
 		DaRPCClientEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> namenodeEndopoint = namenodeClientGroup.createEndpoint();
 //		LOG.info("connecting to namenode at " + address);
 		URI uri = URI.create("rdma://" + address.getAddress().getHostAddress() + ":" + address.getPort());

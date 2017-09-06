@@ -41,7 +41,7 @@ public class MrCache {
 		this.cacheOps = new AtomicLong(0);
 	}
 	
-	public DeviceMrCache getDeviceCache(IbvPd pd){
+	public DeviceMrCache getDeviceCache(IbvPd pd) throws IOException {
 		DeviceMrCache deviceCache = cache.get(pd.getHandle());
 		if (deviceCache == null) {
 			deviceCache = new DeviceMrCache(pd);

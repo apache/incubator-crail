@@ -22,6 +22,7 @@
 package com.ibm.crail.namenode.rpc.darpc;
 
 import java.util.concurrent.atomic.AtomicLong;
+import java.io.IOException;
 
 import org.slf4j.Logger;
 
@@ -161,7 +162,12 @@ public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol implements DaR
 	
 	@Override
 	public void open(DaRPCServerEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> endpoint) {
-		LOG.info("RPC connection, qpnum " + endpoint.getQp().getQp_num());
+		try {
+			LOG.info("RPC connection, qpnum " + endpoint.getQp().getQp_num());
+		} catch(IOException e)
+		{
+			LOG.info("RPC connection, cannot get qpnum, because QP is not open.\n");
+		}
 	}	
 
 	@Override

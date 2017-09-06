@@ -71,6 +71,11 @@
       <artifactId>crail-rpc-darpc</artifactId>
       <version>1.0</version>
     </dependency>
+    <dependency>
+      <groupId>com.ibm.crail</groupId>
+      <artifactId>crail-kv</artifactId>
+      <version>1.0</version>
+    </dependency>
   </dependencies>
 
   <build>

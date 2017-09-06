@@ -83,6 +83,7 @@
     <module>rpc</module>
     <module>rpc-darpc</module>
     <module>hdfs</module>
+    <module>keyvalue</module>
     <module>assembly</module>
   </modules>
 
