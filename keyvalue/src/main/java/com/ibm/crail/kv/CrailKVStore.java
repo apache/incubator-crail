@@ -24,7 +24,7 @@ public class CrailKVStore {
 	public CrailKVStore() throws Exception {
 		CrailConfiguration crailConf = new CrailConfiguration();
 		this.crail = CrailFS.newInstance(crailConf);
-		LOG.info("CrailKVStore* initialization done..");
+		LOG.info("CrailKVStore initialization done..");
 	}
 	
 	public void createTable(String table, CrailStorageClass storageClass, CrailLocationClass locationClass) throws Exception{
@@ -53,7 +53,7 @@ public class CrailKVStore {
 	public CrailOutputStream writeKey(String table, String key) throws Exception{
 		table = setTable(table);
 		String path = table + "/" + key;
-		LOG.info("read key, name " + path);
+		LOG.info("write key, name " + path);
 		CrailFile file = crail.create(path, CrailNodeType.DATAFILE, CrailStorageClass.PARENT, CrailLocationClass.DEFAULT).get().asFile();
 		CrailOutputStream stream = file.getDirectOutputStream(0);
 		return stream;
@@ -62,8 +62,8 @@ public class CrailKVStore {
 	public void readKey(String table, String key, ByteBuffer value) throws Exception {
 		table = setTable(table);
 		String path = table + "/" + key;
-		LOG.info("write key, name " + path);
-		CrailFile file = crail.create(path, CrailNodeType.DATAFILE, CrailStorageClass.PARENT, CrailLocationClass.DEFAULT).get().asFile();
+		LOG.info("read key, name " + path);
+		CrailFile file = crail.lookup(path).get().asFile();
 		CrailInputStream stream = file.getDirectInputStream(file.getCapacity());
 		CrailBuffer crailBuffer = OffHeapBuffer.wrap(value);
 		stream.read(crailBuffer).get();
@@ -74,7 +74,7 @@ public class CrailKVStore {
 		table = setTable(table);
 		String path = table + "/" + key;
 		LOG.info("read key, name " + path);
-		CrailFile file = crail.create(path, CrailNodeType.DATAFILE, CrailStorageClass.PARENT, CrailLocationClass.DEFAULT).get().asFile();
+		CrailFile file = crail.lookup(path).get().asFile();
 		CrailInputStream stream = file.getDirectInputStream(file.getCapacity());
 		return stream;
 	}	
@@ -93,9 +93,7 @@ public class CrailKVStore {
 		StringTokenizer tokenizer = new StringTokenizer(name, "/");
 		if (tokenizer.countTokens() != 1){
 			throw new Exception("table name should not include '/' characters");
-		} else {
-			LOG.info("setTable " + name);
-		}
+		} 
 		return name;
 	}
 }

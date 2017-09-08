@@ -38,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 
+import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.storage.StorageResource;
 import com.ibm.crail.storage.StorageServer;
@@ -63,12 +64,20 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 	
 	public RdmaStorageServer() throws Exception {
 		this.isAlive = false;
+		this.serverAddr = null;
+		this.datanodeGroup = null;
+		this.datanodeServerEndpoint = null;
+		this.allEndpoints = new ConcurrentHashMap<Integer, RdmaEndpoint>();
+	}
+	
+	public void init(CrailConfiguration conf, String[] args) throws Exception {
+		RdmaConstants.init(conf, args);
+
 		this.serverAddr = getDataNodeAddress();
 		if (serverAddr == null){
 			LOG.info("Configured network interface " + RdmaConstants.STORAGE_RDMA_INTERFACE + " cannot be found..exiting!!!");
 			return;
 		}
-		this.allEndpoints = new ConcurrentHashMap<Integer, RdmaEndpoint>();
 		URI uri = URI.create("rdma://" + serverAddr.getAddress().getHostAddress() + ":" + serverAddr.getPort());
 		this.datanodeGroup = new RdmaPassiveEndpointGroup<RdmaStorageServerEndpoint>(-1, RdmaConstants.STORAGE_RDMA_QUEUESIZE, 4, RdmaConstants.STORAGE_RDMA_QUEUESIZE*100);
 		this.datanodeServerEndpoint = datanodeGroup.createServerEndpoint();		
@@ -81,28 +90,13 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 		this.allocatedSize = 0;
 		this.fileCount = 0;
 		this.fileBuffer = ByteBuffer.allocateDirect(CrailConstants.BUFFER_SIZE);
-		clean();
+		clean();		
 	}
 	
-	private void clean(){
-		File dataDir = new File(dataDirPath);
-		if (!dataDir.exists()){
-			dataDir.mkdirs();
-		}
-		for (File child : dataDir.listFiles()) {
-			child.delete();
-		}
+	public void printConf(Logger logger){
+		RdmaConstants.printConf(logger);
+	}
 
-		File indexDir = new File(indexDirPath);
-		if (!indexDir.exists()){
-			indexDir.mkdirs();
-		}
-		for (File child : indexDir.listFiles()) {
-			child.delete();
-		}			
-		LOG.info("crail data/index directories cleaned");			
-	}
-	
 	public void close(RdmaEndpoint ep) {
 		try {
 			allEndpoints.remove(ep.getEndpointId());
@@ -215,5 +209,24 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 	@Override
 	public boolean isAlive() {
 		return isAlive;
+	}
+
+	private void clean(){
+		File dataDir = new File(dataDirPath);
+		if (!dataDir.exists()){
+			dataDir.mkdirs();
+		}
+		for (File child : dataDir.listFiles()) {
+			child.delete();
+		}
+	
+		File indexDir = new File(indexDirPath);
+		if (!indexDir.exists()){
+			indexDir.mkdirs();
+		}
+		for (File child : indexDir.listFiles()) {
+			child.delete();
+		}			
+		LOG.info("crail data/index directories cleaned");			
 	}
 }

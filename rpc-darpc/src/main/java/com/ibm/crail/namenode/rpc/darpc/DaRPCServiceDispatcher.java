@@ -164,8 +164,7 @@ public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol implements DaR
 	public void open(DaRPCServerEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> endpoint) {
 		try {
 			LOG.info("RPC connection, qpnum " + endpoint.getQp().getQp_num());
-		} catch(IOException e)
-		{
+		} catch(IOException e) {
 			LOG.info("RPC connection, cannot get qpnum, because QP is not open.\n");
 		}
 	}	

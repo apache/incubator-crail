@@ -24,11 +24,20 @@ package com.ibm.crail.storage.nvmf;
 
 import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.conf.CrailConstants;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 public class NvmfStorageConstants {
@@ -133,4 +142,39 @@ public class NvmfStorageConstants {
 		logger.info(fullKey(SERVER_MEMPOOL_KEY) + " " + SERVER_MEMPOOL);
 		logger.info(fullKey(CLIENT_MEMPOOL_KEY) + " " + CLIENT_MEMPOOL);
 	}
+	
+	public static void init(CrailConfiguration crailConfiguration, String[] args) throws IOException {
+		NvmfStorageConstants.updateConstants(crailConfiguration);
+
+		if (args != null) {
+			Options options = new Options();
+			Option bindIp = Option.builder("a").desc("ip address to bind to").hasArg().build();
+			Option port = Option.builder("p").desc("port to bind to").hasArg().type(Number.class).build();
+			Option pcieAddress = Option.builder("s").desc("PCIe address of NVMe device").hasArg().build();
+			options.addOption(bindIp);
+			options.addOption(port);
+			options.addOption(pcieAddress);
+			CommandLineParser parser = new DefaultParser();
+			HelpFormatter formatter = new HelpFormatter();
+			CommandLine line = null;
+			try {
+				line = parser.parse(options, Arrays.copyOfRange(args, 0, args.length));
+				if (line.hasOption(port.getOpt())) {
+					NvmfStorageConstants.PORT = ((Number) line.getParsedOptionValue(port.getOpt())).intValue();
+				}
+			} catch (ParseException e) {
+				System.err.println(e.getMessage());
+				formatter.printHelp("NVMe storage tier", options);
+				System.exit(-1);
+			}
+			if (line.hasOption(bindIp.getOpt())) {
+				NvmfStorageConstants.IP_ADDR = InetAddress.getByName(line.getOptionValue(bindIp.getOpt()));
+			}
+			if (line.hasOption(pcieAddress.getOpt())) {
+				NvmfStorageConstants.PCIE_ADDR = line.getOptionValue(pcieAddress.getOpt());
+			}
+		}
+
+		NvmfStorageConstants.verify();
+	}	
 }

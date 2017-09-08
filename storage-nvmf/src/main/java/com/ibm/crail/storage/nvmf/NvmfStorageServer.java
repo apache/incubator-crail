@@ -22,6 +22,7 @@
 
 package com.ibm.crail.storage.nvmf;
 
+import com.ibm.crail.conf.CrailConfiguration;
 import com.ibm.crail.storage.StorageResource;
 import com.ibm.crail.storage.StorageServer;
 import com.ibm.crail.utils.CrailUtils;
@@ -34,12 +35,13 @@ import com.ibm.disni.nvmef.spdk.NvmeTransportType;
 
 import org.slf4j.Logger;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class NvmfStorageServer implements Runnable, StorageServer {
+public class NvmfStorageServer implements StorageServer {
 	private static final Logger LOG = CrailUtils.getLogger();
 
 	private final NvmeEndpointGroup group;
@@ -51,6 +53,7 @@ public class NvmfStorageServer implements Runnable, StorageServer {
 	private long namespaceSize;
 	private long alignedSize;
 	private long addr;
+	private boolean initialized = false;
 	
 	public NvmfStorageServer() throws Exception {
 		this.allEndpoints = ConcurrentHashMap.newKeySet();
@@ -65,6 +68,20 @@ public class NvmfStorageServer implements Runnable, StorageServer {
 		this.namespaceSize = namespace.getSize();
 		this.alignedSize = namespaceSize - (namespaceSize % NvmfStorageConstants.ALLOCATION_SIZE);	
 		this.addr = 0;
+	}
+	
+	public void init(CrailConfiguration crailConfiguration, String[] args) throws IOException {
+		if (initialized) {
+			throw new IOException("NvmfStorageTier already initialized");
+		}
+		initialized = true;
+		
+		NvmfStorageConstants.init(crailConfiguration, args);
+	}	
+
+	@Override
+	public void printConf(Logger log) {
+		NvmfStorageConstants.printConf(log);		
 	}
 
 	public void close(NvmeEndpoint ep) {

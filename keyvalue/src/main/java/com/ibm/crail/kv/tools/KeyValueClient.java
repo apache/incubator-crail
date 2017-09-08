@@ -1,4 +1,4 @@
-package com.ibm.crail.kv;
+package com.ibm.crail.kv.tools;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -13,6 +13,7 @@ import org.apache.commons.cli.ParseException;
 
 import com.ibm.crail.CrailLocationClass;
 import com.ibm.crail.CrailStorageClass;
+import com.ibm.crail.kv.CrailKVStore;
 
 public class KeyValueClient implements Runnable {
 	private int tables;
@@ -30,11 +31,13 @@ public class KeyValueClient implements Runnable {
 		try {
 			CrailKVStore kvStore = new CrailKVStore();
 			
+			System.out.println("creating tables...");
 			for (int i = 0; i < tables; i++){
 				String table = "table" + i;
 				kvStore.createTable(table, CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT);
 			}
 			
+			System.out.println("writing keys...");			
 			ByteBuffer buffer = ByteBuffer.allocateDirect(size);
 			for (int i = 0; i < keys; i++){
 				int index = i % tables;
@@ -44,13 +47,18 @@ public class KeyValueClient implements Runnable {
 				kvStore.writeKey(table, key, buffer);
 			}
 			
+			System.out.println("reading keys...");
 			for (int i = 0; i < keys; i++){
 				int index = i % tables;
 				String table = "table" + index;
 				String key = "key" + i;
 				buffer.clear();
 				kvStore.readKey(table, key, buffer);
-			}			
+			}	
+			
+			System.out.println("closing...");
+			kvStore.close();
+			System.out.println("done...");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -92,6 +100,7 @@ public class KeyValueClient implements Runnable {
 		Thread thread = new Thread(client);
 		thread.start();
 		thread.join();
+		System.out.println("exiting..");
 	}
 	
 }

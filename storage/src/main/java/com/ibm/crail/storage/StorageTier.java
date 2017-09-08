@@ -21,7 +21,7 @@
 
 package com.ibm.crail.storage;
 
-public abstract class StorageTier implements StorageClient {
+public interface StorageTier extends StorageClient {
 	
 	public abstract StorageServer launchServer() throws Exception;
 	

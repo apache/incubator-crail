@@ -1,6 +1,5 @@
 package com.ibm.crail.namenode.rpc.darpc;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import org.slf4j.Logger;
@@ -18,13 +17,14 @@ public class DaRPCNameNodeClient implements RpcClient {
 	private DaRPCClientGroup<DaRPCNameNodeRequest, DaRPCNameNodeResponse> namenodeClientGroup;
 	
 	public DaRPCNameNodeClient(){
-		this.namenodeProtocol = new DaRPCNameNodeProtocol();
+		this.namenodeProtocol = null;
 		this.namenodeClientGroup = null;
 	}
 	
 	public void init(CrailConfiguration conf, String[] args) throws Exception{
 		DaRPCConstants.updateConstants(conf);
 		DaRPCConstants.verify();
+		this.namenodeProtocol = new DaRPCNameNodeProtocol();
 		this.namenodeClientGroup = DaRPCClientGroup.createClientGroup(namenodeProtocol, 100, DaRPCConstants.NAMENODE_DARPC_MAXINLINE, DaRPCConstants.NAMENODE_DARPC_RECVQUEUE, DaRPCConstants.NAMENODE_DARPC_SENDQUEUE);
 		LOG.info("rpc group started, recvQueue " + namenodeClientGroup.recvQueueSize());
 	}
