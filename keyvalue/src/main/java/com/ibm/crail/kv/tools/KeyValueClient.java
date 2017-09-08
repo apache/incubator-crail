@@ -1,4 +1,4 @@
-package com.ibm.crail.kv;
+package com.ibm.crail.kv.tools;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -13,6 +13,7 @@ import org.apache.commons.cli.ParseException;
 
 import com.ibm.crail.CrailLocationClass;
 import com.ibm.crail.CrailStorageClass;
+import com.ibm.crail.kv.CrailKVStore;
 
 public class KeyValueClient implements Runnable {
 	private int tables;
