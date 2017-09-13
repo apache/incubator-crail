@@ -214,13 +214,13 @@ public abstract class CrailBufferedInputStream extends InputStream {
 		}
 	}
 
-	public final double readFloat() throws Exception {
+	public final float readFloat() throws Exception {
 		CrailBuffer slice = getSlice(true);
 		if (slice == null){
 			throw new EOFException();
 		}
 		if (slice.remaining() >= Float.BYTES){
-			double val = slice.getFloat();
+			float val = slice.getFloat();
 			position += Float.BYTES;
 			syncSlice();
 			return val;
