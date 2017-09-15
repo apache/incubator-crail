@@ -44,9 +44,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class NvmfStorageServer implements StorageServer {
 	private static final Logger LOG = CrailUtils.getLogger();
 
-	private final NvmeEndpointGroup group;
-	private final NvmeServerEndpoint serverEndpoint;
-	private final Set<NvmeEndpoint> allEndpoints;
+	private NvmeEndpointGroup group;
+	private NvmeServerEndpoint serverEndpoint;
+	private Set<NvmeEndpoint> allEndpoints;
 	private boolean isAlive;
 	private NvmeController controller;
 	private NvmeNamespace namespace;
@@ -55,8 +55,17 @@ public class NvmfStorageServer implements StorageServer {
 	private long addr;
 	private boolean initialized = false;
 	
-	public NvmfStorageServer() throws Exception {
+	public NvmfStorageServer() {
 		this.allEndpoints = ConcurrentHashMap.newKeySet();
+	}
+	
+	public void init(CrailConfiguration crailConfiguration, String[] args) throws Exception {
+		if (initialized) {
+			throw new IOException("NvmfStorageTier already initialized");
+		}
+		initialized = true;
+		NvmfStorageConstants.init(crailConfiguration, args);
+		
 		this.group = new NvmeEndpointGroup(new NvmeTransportType[]{NvmeTransportType.PCIE, NvmeTransportType.RDMA}, NvmfStorageConstants.HUGEDIR, NvmfStorageConstants.SERVER_MEMPOOL);
 		this.serverEndpoint = group.createServerEndpoint();
 		URI url = new URI("nvmef://" + NvmfStorageConstants.IP_ADDR.getHostAddress() + ":" + NvmfStorageConstants.PORT + "/0/1?subsystem=nqn.2016-06.io.spdk:cnode1&pci=" + NvmfStorageConstants.PCIE_ADDR);
@@ -68,15 +77,6 @@ public class NvmfStorageServer implements StorageServer {
 		this.namespaceSize = namespace.getSize();
 		this.alignedSize = namespaceSize - (namespaceSize % NvmfStorageConstants.ALLOCATION_SIZE);	
 		this.addr = 0;
-	}
-	
-	public void init(CrailConfiguration crailConfiguration, String[] args) throws IOException {
-		if (initialized) {
-			throw new IOException("NvmfStorageTier already initialized");
-		}
-		initialized = true;
-		
-		NvmfStorageConstants.init(crailConfiguration, args);
 	}	
 
 	@Override
