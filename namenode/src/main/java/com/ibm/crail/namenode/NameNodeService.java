@@ -429,7 +429,8 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 		short error = RpcErrors.ERR_OK;
 		for (int i = 0; i < realBlocks; i++){
 			long newAddr = blockInfo.getAddr() + offset;
-			BlockInfo nnBlock = new BlockInfo(dnInfoExt, newAddr, (int) CrailConstants.BLOCK_SIZE, blockInfo.getLkey());
+			long newLba = blockInfo.getLba() + offset;
+			BlockInfo nnBlock = new BlockInfo(dnInfoExt, newLba, newAddr, (int) CrailConstants.BLOCK_SIZE, blockInfo.getLkey());
 			error = blockStore.addBlock(nnBlock);
 			offset += CrailConstants.BLOCK_SIZE;
 			

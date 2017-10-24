@@ -39,10 +39,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 
 import com.ibm.crail.conf.CrailConfiguration;
-import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.storage.StorageResource;
 import com.ibm.crail.storage.StorageServer;
-import com.ibm.crail.storage.rdma.client.RdmaBlockIndex;
 import com.ibm.crail.utils.CrailUtils;
 import com.ibm.disni.rdma.*;
 import com.ibm.disni.rdma.verbs.IbvMr;
@@ -57,10 +55,8 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 	private boolean isAlive;
 	
 	private String dataDirPath;
-	private String indexDirPath;
 	private long allocatedSize;
 	private int fileCount;
-	private ByteBuffer fileBuffer;
 	
 	public RdmaStorageServer() throws Exception {
 		this.isAlive = false;
@@ -85,11 +81,9 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 		datanodeServerEndpoint.bind(uri);
 		LOG.info("RdmaDataNode started, maxWR " + datanodeGroup.getMaxWR() + ", maxSge " + datanodeGroup.getMaxSge() + ", cqSize " + datanodeGroup.getCqSize());
 		this.dataDirPath = getDatanodeDirectory(serverAddr);
-		this.indexDirPath = getIndexDirectory(serverAddr);
-		LOG.info("dataPath " + dataDirPath + ", indexPath " + indexDirPath);
+		LOG.info("dataPath " + dataDirPath);
 		this.allocatedSize = 0;
 		this.fileCount = 0;
-		this.fileBuffer = ByteBuffer.allocateDirect(CrailConstants.BUFFER_SIZE);
 		clean();		
 	}
 	
@@ -124,20 +118,8 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 			//register buffer
 			allocatedSize += dataBuffer.capacity();
 			IbvMr mr = datanodeServerEndpoint.registerMemory(dataBuffer).execute().free().getMr();
-			
-			//write index file
-			String indexFilePath = indexDirPath + "/" + mr.getLkey();
-			File indexFile = new File(indexFilePath);
-			FileOutputStream indexStream = new FileOutputStream(indexFile);
-			FileChannel indexChannel = indexStream.getChannel();
-			RdmaBlockIndex blockIndex = new RdmaBlockIndex(mr.getLkey(), mr.getAddr(), dataFilePath);
-			fileBuffer.clear();
-			blockIndex.write(fileBuffer);
-			fileBuffer.flip();
-			indexChannel.write(fileBuffer);
-			indexChannel.close();
-			indexStream.close();	
-			
+
+			//create resource
 			resource = StorageResource.createResource(mr.getAddr(), mr.getLength(), mr.getLkey());
 		}
 		
@@ -176,15 +158,6 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 		}
 	}
 	
-	public static String getIndexDirectory(InetSocketAddress inetAddress){
-		String address = inetAddress.getAddress().toString();
-		if (address.startsWith("/")){
-			return RdmaConstants.STORAGE_RDMA_INDEX_PATH + address + "-"  + inetAddress.getPort();
-		} else {
-			return RdmaConstants.STORAGE_RDMA_INDEX_PATH + address + "-"  + inetAddress.getPort();
-		}
-	}
-	
 	public static InetSocketAddress getDataNodeAddress() throws IOException {
 		String ifname = RdmaConstants.STORAGE_RDMA_INTERFACE;
 		int port = RdmaConstants.STORAGE_RDMA_PORT;
@@ -220,13 +193,6 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 			child.delete();
 		}
 	
-		File indexDir = new File(indexDirPath);
-		if (!indexDir.exists()){
-			indexDir.mkdirs();
-		}
-		for (File child : indexDir.listFiles()) {
-			child.delete();
-		}			
-		LOG.info("crail data/index directories cleaned");			
+		LOG.info("crail data directory cleaned");			
 	}
 }

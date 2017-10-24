@@ -51,39 +51,26 @@ import sun.misc.Unsafe;
 
 public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 	private static final Logger LOG = CrailUtils.getLogger();
-	private String indexDirPath;
-	private ConcurrentHashMap<Integer, CrailBuffer> bufferMap;
-	private ConcurrentHashMap<Integer, RdmaBlockIndex> indexMap;
+	private ConcurrentHashMap<Long, CrailBuffer> bufferMap;
 	private Unsafe unsafe;
 	private InetSocketAddress address;
 	
 	public RdmaStorageLocalEndpoint(InetSocketAddress datanodeAddr) throws Exception {
 		LOG.info("new local endpoint for address " + datanodeAddr);
+		String dataPath = RdmaStorageServer.getDatanodeDirectory(datanodeAddr);
+		File dataDir = new File(dataPath);
+		if (!dataDir.exists()){
+			throw new Exception("Local RDMA data path missing");
+		}
 		this.address = datanodeAddr;
-		this.bufferMap = new ConcurrentHashMap<Integer, CrailBuffer>();
-		this.indexMap = new ConcurrentHashMap<Integer, RdmaBlockIndex>();
+		this.bufferMap = new ConcurrentHashMap<Long, CrailBuffer>();
 		this.unsafe = getUnsafe();
-		this.indexDirPath = RdmaStorageServer.getIndexDirectory(datanodeAddr);
-		File indexDir = new File(indexDirPath);
-		ByteBuffer fileBuffer = ByteBuffer.allocate(CrailConstants.BUFFER_SIZE);
-		if (indexDir.exists()){
-			for (File indexFile : indexDir.listFiles()) {
-				FileInputStream indexStream = new FileInputStream(indexFile);
-				FileChannel indexChannel = indexStream.getChannel();
-				fileBuffer.clear();
-				indexChannel.read(fileBuffer);
-				fileBuffer.flip();
-				RdmaBlockIndex blockIndex = new RdmaBlockIndex();
-				blockIndex.update(fileBuffer);
-				File dataFile = new File(blockIndex.getPath());
-				MappedByteBuffer mappedBuffer = mmap(dataFile);
-				indexStream.close();
-				indexChannel.close();
-				
-				bufferMap.put(blockIndex.getKey(), OffHeapBuffer.wrap(mappedBuffer));
-				indexMap.put(blockIndex.getKey(), blockIndex);
-			}				
-		}			
+		long lba = 0;
+		for (File dataFile : dataDir.listFiles()) {
+			MappedByteBuffer mappedBuffer = mmap(dataFile);
+			bufferMap.put(lba, OffHeapBuffer.wrap(mappedBuffer));
+			lba += mappedBuffer.capacity();
+		}				
 	}
 
 	@Override
@@ -99,23 +86,20 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 			throw new IOException("remote offset too small " + remoteOffset);
 		}	
 		
-		CrailBuffer mappedBuffer = bufferMap.get(remoteMr.getLkey());
+		long alignedLba = getAlignedLba(remoteMr.getLba());
+		long lbaOffset = getLbaOffset(remoteMr.getLba());
+		
+		CrailBuffer mappedBuffer = bufferMap.get(alignedLba);
 		if (mappedBuffer == null){
 			throw new IOException("No mapped buffer for this key " + remoteMr.getLkey() + ", address " + address);
 		}
-		RdmaBlockIndex blockIndex = indexMap.get(remoteMr.getLkey());
-		if (blockIndex == null){
-			throw new IOException("No index for this key " + remoteMr.getLkey() + ", address " + address);
-		}
 		
-		long blockOffset = remoteMr.getAddr() - blockIndex.getAddr();
-		if (blockOffset + remoteOffset + buffer.remaining() > RdmaConstants.STORAGE_RDMA_ALLOCATION_SIZE){
-			long tmpAddr = blockOffset + remoteOffset + buffer.remaining();
+		if (lbaOffset + remoteOffset + buffer.remaining() > RdmaConstants.STORAGE_RDMA_ALLOCATION_SIZE){
+			long tmpAddr = lbaOffset + remoteOffset + buffer.remaining();
 			throw new IOException("remote fileOffset + remoteOffset + len too large " + tmpAddr);
 		}		
 		long srcAddr = buffer.address() + buffer.position();
-		long dstAddr = mappedBuffer.address() + blockOffset + remoteOffset; 
-//		unsafe.copyMemory(srcAddr, dstAddr, buffer.remaining());
+		long dstAddr = mappedBuffer.address() + lbaOffset + remoteOffset; 
 		RdmaLocalFuture future = new RdmaLocalFuture(unsafe, srcAddr, dstAddr, buffer.remaining());
 		return future;
 	}
@@ -129,32 +113,36 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 		if (buffer.remaining() <= 0){
 			throw new IOException("read size too small, len " + buffer.remaining());
 		}
-		if (buffer.position() < 0){
-			throw new IOException("local offset too small " + buffer.position());
-		}
 		if (remoteOffset < 0){
 			throw new IOException("remote offset too small " + remoteOffset);
 		}
+		if (buffer.position() < 0){
+			throw new IOException("local offset too small " + buffer.position());
+		}
 		
-		CrailBuffer mappedBuffer = bufferMap.get(remoteMr.getLkey());
+		long alignedLba = getAlignedLba(remoteMr.getLba());
+		long lbaOffset = getLbaOffset(remoteMr.getLba());
+		
+		CrailBuffer mappedBuffer = bufferMap.get(alignedLba);
 		if (mappedBuffer == null){
 			throw new IOException("No mapped buffer for this key");
 		}
-		RdmaBlockIndex blockIndex = indexMap.get(remoteMr.getLkey());
-		if (blockIndex == null){
-			throw new IOException("No index for this key");
-		}		
-
-		long blockOffset = remoteMr.getAddr() - blockIndex.getAddr();
-		if (blockOffset + remoteOffset + buffer.remaining() > RdmaConstants.STORAGE_RDMA_ALLOCATION_SIZE){
-			long tmpAddr = blockOffset + remoteOffset + buffer.remaining();
+		if (lbaOffset + remoteOffset + buffer.remaining() > RdmaConstants.STORAGE_RDMA_ALLOCATION_SIZE){
+			long tmpAddr = lbaOffset + remoteOffset + buffer.remaining();
 			throw new IOException("remote fileOffset + remoteOffset + len too large " + tmpAddr);
 		}			
-		long srcAddr = mappedBuffer.address() + blockOffset + remoteOffset;
+		long srcAddr = mappedBuffer.address() + lbaOffset + remoteOffset;
 		long dstAddr = buffer.address() + buffer.position();
-//		unsafe.copyMemory(srcAddr, dstAddr, buffer.remaining());
 		RdmaLocalFuture future = new RdmaLocalFuture(unsafe, srcAddr, dstAddr, buffer.remaining());
 		return future;
+	}
+	
+	private static long getAlignedLba(long remoteLba){
+		return (remoteLba / RdmaConstants.STORAGE_RDMA_ALLOCATION_SIZE) * RdmaConstants.STORAGE_RDMA_ALLOCATION_SIZE;
+	}
+	
+	private static long getLbaOffset(long remoteLba){
+		return remoteLba % RdmaConstants.STORAGE_RDMA_ALLOCATION_SIZE;
 	}
 
 	@Override

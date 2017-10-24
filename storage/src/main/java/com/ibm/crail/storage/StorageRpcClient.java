@@ -55,10 +55,10 @@ public class StorageRpcClient {
 		this.rpcConnection = rpcConnection;
 	}
 	
-	public void setBlock(long addr, int length, int key) throws Exception {
+	public void setBlock(long lba, long addr, int length, int key) throws Exception {
 		InetSocketAddress inetAddress = serverAddress;
 		DataNodeInfo dnInfo = new DataNodeInfo(storageType, storageClass.value(), locationClass.value(), inetAddress.getAddress().getAddress(), inetAddress.getPort());
-		BlockInfo blockInfo = new BlockInfo(dnInfo, addr, length, key);
+		BlockInfo blockInfo = new BlockInfo(dnInfo, lba, addr, length, key);
 		RpcVoid res = rpcConnection.setBlock(blockInfo).get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
 		if (res.getError() != RpcErrors.ERR_OK){
 			LOG.info("setBlock: " + RpcErrors.messages[res.getError()]);

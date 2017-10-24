@@ -151,12 +151,15 @@ public interface StorageServer extends Configurable, Runnable {
 		
 		HashMap<Long, Long> blockCount = new HashMap<Long, Long>();
 		long sumCount = 0;
+		long lba = 0;
 		while (server.isAlive()) {
 			StorageResource resource = server.allocateResource();
 			if (resource == null){
 				break;
 			} else {
-				storageRpc.setBlock(resource.getAddress(), resource.getLength(), resource.getKey());
+				storageRpc.setBlock(lba, resource.getAddress(), resource.getLength(), resource.getKey());
+				lba += (long) resource.getLength();
+				
 				DataNodeStatistics stats = storageRpc.getDataNode();
 				long newCount = stats.getFreeBlockCount();
 				long serviceId = stats.getServiceId();

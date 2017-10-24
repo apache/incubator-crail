@@ -55,9 +55,6 @@ public class RdmaConstants {
 	public static final String STORAGE_RDMA_DATA_PATH_KEY = "crail.storage.rdma.datapath";
 	public static String STORAGE_RDMA_DATA_PATH = "/home/stu/craildata/data";
 
-	public static final String STORAGE_RDMA_INDEX_PATH_KEY = "crail.storage.rdma.indexpath";
-	public static String STORAGE_RDMA_INDEX_PATH = "/home/stu/craildata/index";
-	
 	public static final String STORAGE_RDMA_LOCAL_MAP_KEY = "crail.storage.rdma.localmap";
 	public static boolean STORAGE_RDMA_LOCAL_MAP = true;
 	
@@ -83,9 +80,6 @@ public class RdmaConstants {
 		if (conf.get(STORAGE_RDMA_DATA_PATH_KEY) != null) {
 			STORAGE_RDMA_DATA_PATH = conf.get(STORAGE_RDMA_DATA_PATH_KEY);
 		}		
-		if (conf.get(STORAGE_RDMA_INDEX_PATH_KEY) != null) {
-			STORAGE_RDMA_INDEX_PATH = conf.get(STORAGE_RDMA_INDEX_PATH_KEY);
-		}			
 		if (conf.get(STORAGE_RDMA_LOCAL_MAP_KEY) != null) {
 			STORAGE_RDMA_LOCAL_MAP = conf.getBoolean(STORAGE_RDMA_LOCAL_MAP_KEY, false);
 		}			
@@ -115,7 +109,6 @@ public class RdmaConstants {
 		logger.info(STORAGE_RDMA_STORAGE_LIMIT_KEY + " " + STORAGE_RDMA_STORAGE_LIMIT);
 		logger.info(STORAGE_RDMA_ALLOCATION_SIZE_KEY + " " + STORAGE_RDMA_ALLOCATION_SIZE);
 		logger.info(STORAGE_RDMA_DATA_PATH_KEY + " " + STORAGE_RDMA_DATA_PATH);
-		logger.info(STORAGE_RDMA_INDEX_PATH_KEY + " " + STORAGE_RDMA_INDEX_PATH);
 		logger.info(STORAGE_RDMA_LOCAL_MAP_KEY + " " + STORAGE_RDMA_LOCAL_MAP);
 		logger.info(STORAGE_RDMA_QUEUESIZE_KEY + " " + STORAGE_RDMA_QUEUESIZE);
 		logger.info(STORAGE_RDMA_TYPE_KEY + " " + STORAGE_RDMA_TYPE);
