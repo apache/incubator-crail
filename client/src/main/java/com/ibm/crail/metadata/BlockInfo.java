@@ -59,11 +59,11 @@ public class BlockInfo {
 	}
 
 	public int write(ByteBuffer buffer){
-		dnInfo.write(buffer);
-		buffer.putLong(lba);
-		buffer.putLong(addr);
-		buffer.putInt(length);
-		buffer.putInt(lkey);
+		this.getDnInfo().write(buffer);
+		buffer.putLong(this.getLba());
+		buffer.putLong(this.getAddr());
+		buffer.putInt(this.getLength());
+		buffer.putInt(this.getLkey());
 		return CSIZE;
 	}
 	

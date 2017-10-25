@@ -26,6 +26,7 @@ import java.nio.ByteBuffer;
 
 import com.ibm.crail.CrailBuffer;
 import com.ibm.crail.utils.CrailUtils;
+
 import sun.nio.ch.DirectBuffer;
 
 public class OffHeapBuffer implements CrailBuffer {
@@ -126,8 +127,18 @@ public class OffHeapBuffer implements CrailBuffer {
 		return buffer;
 	}	
 	
+	@Override
+	public byte get() {
+		return buffer.get();
+	}
+
 	//ByteBuffer data
 	
+	@Override
+	public ByteBuffer put(byte b) {
+		return buffer.put(b);
+	}
+
 	@Override
 	public CrailBuffer get(byte[] dst, int offset, int length) {
 		buffer.get(dst, offset, length);

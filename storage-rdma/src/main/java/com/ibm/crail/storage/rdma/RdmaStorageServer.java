@@ -79,12 +79,14 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 		this.datanodeServerEndpoint = datanodeGroup.createServerEndpoint();		
 		datanodeGroup.init(new RdmaStorageEndpointFactory(datanodeGroup, this));
 		datanodeServerEndpoint.bind(uri);
-		LOG.info("RdmaDataNode started, maxWR " + datanodeGroup.getMaxWR() + ", maxSge " + datanodeGroup.getMaxSge() + ", cqSize " + datanodeGroup.getCqSize());
+		
 		this.dataDirPath = getDatanodeDirectory(serverAddr);
 		LOG.info("dataPath " + dataDirPath);
 		this.allocatedSize = 0;
 		this.fileCount = 0;
-		clean();		
+		if (!RdmaConstants.STORAGE_RDMA_PERSISTENT){
+			clean();		
+		} 
 	}
 	
 	public void printConf(Logger logger){
@@ -109,7 +111,9 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 			int fileId = fileCount++;
 			String dataFilePath = dataDirPath + "/" + fileId;
 			RandomAccessFile dataFile = new RandomAccessFile(dataFilePath, "rw");
-			dataFile.setLength(RdmaConstants.STORAGE_RDMA_ALLOCATION_SIZE);
+			if (!RdmaConstants.STORAGE_RDMA_PERSISTENT){
+				dataFile.setLength(RdmaConstants.STORAGE_RDMA_ALLOCATION_SIZE);
+			}
 			FileChannel dataChannel = dataFile.getChannel();
 			ByteBuffer dataBuffer = dataChannel.map(MapMode.READ_WRITE, 0, RdmaConstants.STORAGE_RDMA_ALLOCATION_SIZE);
 			dataFile.close();
@@ -130,7 +134,7 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 	public void run() {
 		try {
 			this.isAlive = true;
-			LOG.info("RdmaDataNodeServer started at " + serverAddr);
+			LOG.info("rdma storage server started, address " + serverAddr + ", persistent " + RdmaConstants.STORAGE_RDMA_PERSISTENT + ", maxWR " + datanodeGroup.getMaxWR() + ", maxSge " + datanodeGroup.getMaxSge() + ", cqSize " + datanodeGroup.getCqSize());
 			while(true){
 				RdmaEndpoint clientEndpoint = datanodeServerEndpoint.accept();
 				allEndpoints.put(clientEndpoint.getEndpointId(), clientEndpoint);
@@ -192,7 +196,5 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 		for (File child : dataDir.listFiles()) {
 			child.delete();
 		}
-	
-		LOG.info("crail data directory cleaned");			
 	}
 }

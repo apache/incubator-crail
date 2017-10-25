@@ -46,16 +46,28 @@ public class BlockStore {
 		}		
 	}
 
-	public short addBlock(BlockInfo blockInfo) throws UnknownHostException {
+	public short addBlock(NameNodeBlockInfo blockInfo) throws UnknownHostException {
 		int storageClass = blockInfo.getDnInfo().getStorageClass();
 		return storageClasses[storageClass].addBlock(blockInfo);
 	}
 
-	public BlockInfo getBlock(int storageClass, int locationAffinity) throws InterruptedException {
-		BlockInfo block = null;
+	public boolean regionExists(BlockInfo region) {
+		int storageClass = region.getDnInfo().getStorageClass();
+		return storageClasses[storageClass].regionExists(region);
+	}
+
+	public short updateRegion(BlockInfo region) {
+		int storageClass = region.getDnInfo().getStorageClass();
+		return storageClasses[storageClass].updateRegion(region);
+	}
+
+	public NameNodeBlockInfo getBlock(int storageClass, int locationAffinity) throws InterruptedException {
+		NameNodeBlockInfo block = null;
 		if (storageClass > 0){
 			if (storageClass < storageClasses.length){
 				block = storageClasses[storageClass].getBlock(locationAffinity);
+			} else {
+				//TODO: warn if requested storage class is invalid
 			}
 		}
 		if (block == null){
@@ -98,7 +110,27 @@ class StorageClass {
 		this.anySet = new DataNodeArray(blockSelection);
 	}
 	
-	short addBlock(BlockInfo block) throws UnknownHostException {
+	public short updateRegion(BlockInfo region) {
+		long dnAddress = region.getDnInfo().key();
+		DataNodeBlocks current = membership.get(dnAddress);
+		if (current == null) {
+			return RpcErrors.ERR_ADD_BLOCK_FAILED;
+		} else {
+			return current.updateRegion(region);
+		}
+	}
+
+	public boolean regionExists(BlockInfo region) {
+		long dnAddress = region.getDnInfo().key();
+		DataNodeBlocks current = membership.get(dnAddress);
+		if (current == null) {
+			return false;
+		} else {
+			return current.regionExists(region);
+		}
+	}
+
+	short addBlock(NameNodeBlockInfo block) throws UnknownHostException {
 		long dnAddress = block.getDnInfo().key();
 		DataNodeBlocks current = membership.get(dnAddress);
 		if (current == null) {
@@ -106,12 +138,13 @@ class StorageClass {
 			addDataNode(current);
 		}
 
+		current.touch();
 		current.addFreeBlock(block);
 		return RpcErrors.ERR_OK;
 	}
 
-	BlockInfo getBlock(int affinity) throws InterruptedException {
-		BlockInfo block = null;
+	NameNodeBlockInfo getBlock(int affinity) throws InterruptedException {
+		NameNodeBlockInfo block = null;
 		if (affinity == 0) {
 			block = anySet.get();
 		} else {
@@ -157,8 +190,8 @@ class StorageClass {
 		anySet.add(dataNode);
 	}
 	
-	private BlockInfo _getAffinityBlock(int affinity) throws InterruptedException {
-		BlockInfo block = null;
+	private NameNodeBlockInfo _getAffinityBlock(int affinity) throws InterruptedException {
+		NameNodeBlockInfo block = null;
 		DataNodeArray affinitySet = affinitySets.get(affinity);
 		if (affinitySet != null){
 			block = affinitySet.get();
@@ -215,17 +248,19 @@ class StorageClass {
 			}
 		}
 		
-		private BlockInfo get() throws InterruptedException {
+		private NameNodeBlockInfo get() throws InterruptedException {
 			lock.readLock().lock();
 			try {
-				BlockInfo block = null;
+				NameNodeBlockInfo block = null;
 				int size = arrayList.size();
 				if (size > 0){
 					int startIndex = blockSelection.getNext(size);
 					for (int i = 0; i < size; i++){
 						int index = (startIndex + i) % size;
 						DataNodeBlocks anyDn = arrayList.get(index);
-						block = anyDn.getFreeBlock();
+						if (anyDn.isOnline()){
+							block = anyDn.getFreeBlock();
+						}
 						if (block != null){
 							break;
 						} 

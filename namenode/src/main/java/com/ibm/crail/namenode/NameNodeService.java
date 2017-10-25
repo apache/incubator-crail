@@ -123,7 +123,7 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 			return RpcErrors.ERR_FILE_EXISTS;
 		}
 		
-		BlockInfo fileBlock = blockStore.getBlock(fileInfo.getStorageClass(), fileInfo.getLocationClass());
+		NameNodeBlockInfo fileBlock = blockStore.getBlock(fileInfo.getStorageClass(), fileInfo.getLocationClass());
 		if (fileBlock == null){
 			return RpcErrors.ERR_NO_FREE_BLOCKS;
 		}			
@@ -132,7 +132,7 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 		}
 		
 		int index = CrailUtils.computeIndex(fileInfo.getDirOffset());
-		BlockInfo parentBlock = parentInfo.getBlock(index);
+		NameNodeBlockInfo parentBlock = parentInfo.getBlock(index);
 		if (parentBlock == null){
 			parentBlock = blockStore.getBlock(parentInfo.getStorageClass(), parentInfo.getLocationClass());
 			if (parentBlock == null){
@@ -318,7 +318,7 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 		
 		//directory block
 		int index = CrailUtils.computeIndex(srcFile.getDirOffset());
-		BlockInfo srcBlock = srcParent.getBlock(index);
+		NameNodeBlockInfo srcBlock = srcParent.getBlock(index);
 		if (srcBlock == null){
 			return RpcErrors.ERR_GET_FILE_FAILED;
 		}
@@ -357,7 +357,7 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 		
 		//directory block
 		index = CrailUtils.computeIndex(srcFile.getDirOffset());
-		BlockInfo dstBlock = dstParent.getBlock(index);
+		NameNodeBlockInfo dstBlock = dstParent.getBlock(index);
 		if (dstBlock == null){
 			dstBlock = blockStore.getBlock(dstParent.getStorageClass(), dstParent.getLocationClass());
 			if (dstBlock == null){
@@ -406,6 +406,7 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 			return RpcErrors.ERR_DATANODE_NOT_REGISTERED;
 		}
 		
+		dnInfoNn.touch();
 		response.setServiceId(serviceId);
 		response.setFreeBlockCount(dnInfoNn.getBlockCount());
 		
@@ -420,22 +421,24 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 		}		
 		
 		//get params
-		BlockInfo blockInfo = request.getBlockInfo();
-		DataNodeInfo dnInfoExt = new DataNodeInfo(blockInfo.getDnInfo().getStorageType(), blockInfo.getDnInfo().getStorageClass(), blockInfo.getDnInfo().getLocationClass(), blockInfo.getDnInfo().getIpAddress(), blockInfo.getDnInfo().getPort());
+		BlockInfo region = new BlockInfo();
+		region.setBlockInfo(request.getBlockInfo());
 		
-		//rpc
-		int realBlocks = (int) (((long) blockInfo.getLength()) / CrailConstants.BLOCK_SIZE) ;
-		long offset = 0;
 		short error = RpcErrors.ERR_OK;
-		for (int i = 0; i < realBlocks; i++){
-			long newAddr = blockInfo.getAddr() + offset;
-			long newLba = blockInfo.getLba() + offset;
-			BlockInfo nnBlock = new BlockInfo(dnInfoExt, newLba, newAddr, (int) CrailConstants.BLOCK_SIZE, blockInfo.getLkey());
-			error = blockStore.addBlock(nnBlock);
-			offset += CrailConstants.BLOCK_SIZE;
-			
-			if (error != RpcErrors.ERR_OK){
-				break;
+		if (blockStore.regionExists(region)){
+			error = blockStore.updateRegion(region);
+		} else {
+			//rpc
+			int realBlocks = (int) (((long) region.getLength()) / CrailConstants.BLOCK_SIZE) ;
+			long offset = 0;
+			for (int i = 0; i < realBlocks; i++){
+				NameNodeBlockInfo nnBlock = new NameNodeBlockInfo(region, offset, (int) CrailConstants.BLOCK_SIZE);
+				error = blockStore.addBlock(nnBlock);
+				offset += CrailConstants.BLOCK_SIZE;
+				
+				if (error != RpcErrors.ERR_OK){
+					break;
+				}
 			}
 		}
 		
@@ -471,7 +474,7 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 			return RpcErrors.ERR_POSITION_NEGATIV;			
 		}
 		
-		BlockInfo block = fileInfo.getBlock(index);
+		NameNodeBlockInfo block = fileInfo.getBlock(index);
 		if (block == null && fileInfo.getToken() == token){
 			block = blockStore.getBlock(fileInfo.getStorageClass(), fileInfo.getLocationClass());
 			if (block == null){

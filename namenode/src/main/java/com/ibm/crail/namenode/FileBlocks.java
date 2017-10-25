@@ -32,21 +32,21 @@ import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.BlockInfo;
 
 public class FileBlocks extends AbstractNode {
-	private ArrayList<BlockInfo> blocks;
+	private ArrayList<NameNodeBlockInfo> blocks;
 	private final ReentrantReadWriteLock lock;
 	private final Lock readLock;
 	private final Lock writeLock;
 	
 	public FileBlocks(long fd, int fileComponent, CrailNodeType type, int storageClass, int locationClass) {
 		super(fd, fileComponent, type, storageClass, locationClass);
-		this.blocks = new ArrayList<BlockInfo>(CrailConstants.NAMENODE_FILEBLOCKS);
+		this.blocks = new ArrayList<NameNodeBlockInfo>(CrailConstants.NAMENODE_FILEBLOCKS);
 		this.lock = new ReentrantReadWriteLock();
 		this.readLock = lock.readLock();
 		this.writeLock = lock.writeLock();
 	}
 
 	@Override
-	public BlockInfo getBlock(int index) {
+	public NameNodeBlockInfo getBlock(int index) {
 		readLock.lock();
 		try {
 			if (index < blocks.size()){
@@ -62,7 +62,7 @@ public class FileBlocks extends AbstractNode {
 	}
 
 	@Override
-	public boolean addBlock(int index, BlockInfo block) {
+	public boolean addBlock(int index, NameNodeBlockInfo block) {
 		writeLock.lock();
 		try {
 			if (index == blocks.size()){
@@ -80,9 +80,9 @@ public class FileBlocks extends AbstractNode {
 	public void freeBlocks(BlockStore blockStore) throws UnknownHostException {
 		readLock.lock();
 		try {
-			Iterator<BlockInfo> iter = blocks.iterator();
+			Iterator<NameNodeBlockInfo> iter = blocks.iterator();
 			while (iter.hasNext()){
-				BlockInfo blockInfo = iter.next();
+				NameNodeBlockInfo blockInfo = iter.next();
 				blockStore.addBlock(blockInfo);
 			}	
 		} finally {

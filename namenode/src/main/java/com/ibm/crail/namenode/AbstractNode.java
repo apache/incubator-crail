@@ -76,9 +76,9 @@ public abstract class AbstractNode extends FileInfo implements Delayed {
 		this.fileComponent = newFileComponent;
 	}	
 
-	public abstract BlockInfo getBlock(int index);
+	public abstract NameNodeBlockInfo getBlock(int index);
 
-	public abstract boolean addBlock(int index, BlockInfo block);
+	public abstract boolean addBlock(int index, NameNodeBlockInfo block);
 	
 	public abstract void freeBlocks(BlockStore blockStore) throws UnknownHostException;
 	

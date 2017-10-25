@@ -31,7 +31,7 @@ public class CrailConstants {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	public static final String VERSION_KEY = "crail.version";
-	public static int VERSION = 2993;
+	public static int VERSION = 2994;
 	
 	public static final String DIRECTORY_DEPTH_KEY = "crail.directorydepth";
 	public static int DIRECTORY_DEPTH = 16;
@@ -115,6 +115,9 @@ public class CrailConstants {
 	
 	public static final String STORAGE_ROOTCLASS_KEY = "crail.storage.rootclass";
 	public static int STORAGE_ROOTCLASS = 0;		
+	
+	public static final String STORAGE_KEEPALIVE_KEY = "crail.storage.keepalive";
+	public static int STORAGE_KEEPALIVE = 2;		
 	
 	public static void updateConstants(CrailConfiguration conf){
 		//general
@@ -201,7 +204,10 @@ public class CrailConstants {
 		}
 		if (conf.get(STORAGE_ROOTCLASS_KEY) != null) {
 			STORAGE_ROOTCLASS = Integer.parseInt(conf.get(STORAGE_ROOTCLASS_KEY));
-		}			
+		}	
+		if (conf.get(STORAGE_KEEPALIVE_KEY) != null) {
+			STORAGE_KEEPALIVE = Integer.parseInt(conf.get(STORAGE_KEEPALIVE_KEY));
+		}		
 	}
 	
 	public static void printConf(){
@@ -225,13 +231,14 @@ public class CrailConstants {
 		LOG.info(DIRECTORY_RANDOMIZE_KEY + " " + DIRECTORY_RANDOMIZE);		
 		LOG.info(CACHE_IMPL_KEY + " " + CACHE_IMPL);
 		LOG.info(LOCATION_MAP_KEY + " " + LOCATION_MAP);
+		LOG.info(NAMENODE_ADDRESS_KEY + " " + NAMENODE_ADDRESS);		
 		LOG.info(NAMENODE_BLOCKSELECTION_KEY + " " + NAMENODE_BLOCKSELECTION);
 		LOG.info(NAMENODE_FILEBLOCKS_KEY + " " + NAMENODE_FILEBLOCKS);
 		LOG.info(NAMENODE_RPC_TYPE_KEY + " " + NAMENODE_RPC_TYPE);
 		LOG.info(STORAGE_TYPES_KEY + " " + STORAGE_TYPES);
 		LOG.info(STORAGE_CLASSES_KEY + " " + STORAGE_CLASSES);
-		LOG.info(STORAGE_ROOTCLASS_KEY + " " + STORAGE_ROOTCLASS);		
-		LOG.info(NAMENODE_ADDRESS_KEY + " " + NAMENODE_ADDRESS);		
+		LOG.info(STORAGE_ROOTCLASS_KEY + " " + STORAGE_ROOTCLASS);
+		LOG.info(STORAGE_KEEPALIVE_KEY + " " + STORAGE_KEEPALIVE);
 	}
 	
 	public static void verify() throws IOException {

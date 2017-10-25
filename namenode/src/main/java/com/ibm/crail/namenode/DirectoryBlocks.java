@@ -29,29 +29,29 @@ import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.metadata.BlockInfo;
 
 public class DirectoryBlocks extends AbstractNode {
-	private ConcurrentHashMap<Integer, BlockInfo> blocks;
+	private ConcurrentHashMap<Integer, NameNodeBlockInfo> blocks;
 	
 	DirectoryBlocks(long fd, int fileComponent, CrailNodeType type, int storageClass, int locationClass) {
 		super(fd, fileComponent, type, storageClass, locationClass);
-		this.blocks = new ConcurrentHashMap<Integer, BlockInfo>();
+		this.blocks = new ConcurrentHashMap<Integer, NameNodeBlockInfo>();
 	}
 
 	@Override
-	public BlockInfo getBlock(int index) {
+	public NameNodeBlockInfo getBlock(int index) {
 		return blocks.get(index);
 	}
 
 	@Override
-	public boolean addBlock(int index, BlockInfo block) {
+	public boolean addBlock(int index, NameNodeBlockInfo block) {
 		BlockInfo old = blocks.putIfAbsent(index, block);
 		return old == null;
 	}
 
 	@Override
 	public void freeBlocks(BlockStore blockStore) throws UnknownHostException {
-		Iterator<BlockInfo> iter = blocks.values().iterator();
+		Iterator<NameNodeBlockInfo> iter = blocks.values().iterator();
 		while (iter.hasNext()){
-			BlockInfo blockInfo = iter.next();
+			NameNodeBlockInfo blockInfo = iter.next();
 			blockStore.addBlock(blockInfo);
 		}	
 	}

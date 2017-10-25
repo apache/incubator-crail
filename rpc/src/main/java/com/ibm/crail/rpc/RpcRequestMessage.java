@@ -292,8 +292,6 @@ public class RpcRequestMessage {
 		protected long fd;
 		protected long token;
 		protected long position;
-//		protected int storageAffinity;
-//		protected int locationAffinity;
 		protected long capacity;
 
 		public GetBlockReq(){
@@ -307,8 +305,6 @@ public class RpcRequestMessage {
 			this.fd = fd;
 			this.token = token;
 			this.position = position;
-//			this.storageAffinity = storageAffinity;
-//			this.locationAffinity = locationAffinity;
 			this.capacity = capacity;
 		}
 
@@ -324,14 +320,6 @@ public class RpcRequestMessage {
 			return token;
 		}
 		
-//		public int getStorageAffinity(){
-//			return storageAffinity;
-//		}
-//		
-//		public int getLocationAffinity(){
-//			return locationAffinity;
-//		}
-
 		public long getCapacity(){
 			return capacity;
 		}
@@ -349,8 +337,6 @@ public class RpcRequestMessage {
 			buffer.putLong(fd);
 			buffer.putLong(token);
 			buffer.putLong(position);
-//			buffer.putInt(storageAffinity);
-//			buffer.putInt(locationAffinity);
 			buffer.putLong(capacity);
 			return CSIZE;
 		}		
@@ -359,8 +345,6 @@ public class RpcRequestMessage {
 			fd = buffer.getLong();
 			token = buffer.getLong();
 			position = buffer.getLong();
-//			storageAffinity = buffer.getInt();
-//			locationAffinity = buffer.getInt();
 			capacity = buffer.getLong();
 		}		
 	}

@@ -57,6 +57,10 @@ public interface CrailBuffer {
 	
 	//ByteBuffer data
 	
+	public byte get();
+	
+	public ByteBuffer put(byte b);
+	
 	public CrailBuffer get(byte[] buf, int off, int bufferRemaining);
 	
 	public CrailBuffer put(byte[] dataBuf, int off, int bufferRemaining);

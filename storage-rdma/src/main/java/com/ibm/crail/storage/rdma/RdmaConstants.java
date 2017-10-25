@@ -64,6 +64,9 @@ public class RdmaConstants {
 	public static final String STORAGE_RDMA_TYPE_KEY = "crail.storage.rdma.type";
 	public static String STORAGE_RDMA_TYPE = "passive";	
 	
+	public static final String STORAGE_RDMA_PERSISTENT_KEY = "crail.storage.rdma.persistent";
+	public static boolean STORAGE_RDMA_PERSISTENT = false;		
+	
 	public static void updateConstants(CrailConfiguration conf){
 		if (conf.get(STORAGE_RDMA_INTERFACE_KEY) != null) {
 			STORAGE_RDMA_INTERFACE = conf.get(STORAGE_RDMA_INTERFACE_KEY);
@@ -88,6 +91,9 @@ public class RdmaConstants {
 		}			
 		if (conf.get(STORAGE_RDMA_TYPE_KEY) != null) {
 			STORAGE_RDMA_TYPE = conf.get(STORAGE_RDMA_TYPE_KEY);
+		}	
+		if (conf.get(STORAGE_RDMA_PERSISTENT_KEY) != null) {
+			STORAGE_RDMA_PERSISTENT = conf.getBoolean(STORAGE_RDMA_PERSISTENT_KEY, false);
 		}		
 	}
 	
@@ -118,9 +124,11 @@ public class RdmaConstants {
 		if (args != null) {
 			Option interfaceOption = Option.builder("i").desc("interface to start server on").hasArg().build();
 			Option portOption = Option.builder("p").desc("port to start server on").hasArg().build();
+			Option persistencyOption = Option.builder("s").desc("start from persistent state").build();
 			Options options = new Options();
 			options.addOption(interfaceOption);
 			options.addOption(portOption);
+			options.addOption(persistencyOption);
 			CommandLineParser parser = new DefaultParser();
 
 			try {
@@ -135,6 +143,9 @@ public class RdmaConstants {
 					LOG.info("using custom port " + port);
 					conf.set(RdmaConstants.STORAGE_RDMA_PORT_KEY, port);
 				}
+				if (line.hasOption(persistencyOption.getOpt())) {
+					conf.set(RdmaConstants.STORAGE_RDMA_PERSISTENT_KEY, "true");
+				}				
 			} catch (ParseException e) {
 				HelpFormatter formatter = new HelpFormatter();
 				formatter.printHelp("RDMA storage tier", options);
