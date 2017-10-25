@@ -213,6 +213,25 @@ public abstract class CrailBufferedInputStream extends InputStream {
 			return tmpBoundaryBuffer.getDouble();
 		}
 	}
+
+	public final float readFloat() throws Exception {
+		CrailBuffer slice = getSlice(true);
+		if (slice == null){
+			throw new EOFException();
+		}
+		if (slice.remaining() >= Float.BYTES){
+			float val = slice.getFloat();
+			position += Float.BYTES;
+			syncSlice();
+			return val;
+		} else {
+			tmpBoundaryBuffer.clear();
+			tmpBoundaryBuffer.limit(Float.BYTES);
+			read(tmpBoundaryBuffer);
+			tmpBoundaryBuffer.flip();
+			return tmpBoundaryBuffer.getFloat();
+		}
+	}
 	
 	public final int readInt() throws Exception {
 		CrailBuffer slice = getSlice(true);

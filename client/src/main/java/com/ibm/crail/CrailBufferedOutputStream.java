@@ -168,6 +168,20 @@ public class CrailBufferedOutputStream extends OutputStream {
 			write(tmpBoundaryBuffer);
 		}
 	}
+
+	public final void writeFloat(float value) throws Exception {
+		CrailBuffer slice = getSlice();
+		if (slice.remaining() >= Float.BYTES){
+			slice.putFloat(value);
+			syncSlice();
+			position += Float.BYTES;
+		} else {
+			tmpBoundaryBuffer.clear();
+			tmpBoundaryBuffer.putFloat(value);
+			tmpBoundaryBuffer.flip();
+			write(tmpBoundaryBuffer);
+		}
+	}
 	
 	public final void writeInt(int value) throws Exception {
 		CrailBuffer slice = getSlice();
