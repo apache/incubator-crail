@@ -31,7 +31,7 @@ public class CrailConstants {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	public static final String VERSION_KEY = "crail.version";
-	public static int VERSION = 2994;
+	public static int VERSION = 2995;
 	
 	public static final String DIRECTORY_DEPTH_KEY = "crail.directorydepth";
 	public static int DIRECTORY_DEPTH = 16;
@@ -105,6 +105,9 @@ public class CrailConstants {
 	
 	public static final String NAMENODE_RPC_SERVICE_KEY = "crail.namenode.rpcservice";
 	public static String NAMENODE_RPC_SERVICE = "com.ibm.crail.namenode.NameNodeService";	
+	
+	public static final String NAMENODE_LOG_KEY = "crail.namenode.log";
+	public static String NAMENODE_LOG = "";		
 	
 	//storage interface
 	public static final String STORAGE_TYPES_KEY = "crail.storage.types";
@@ -192,6 +195,9 @@ public class CrailConstants {
 		if (conf.get(NAMENODE_RPC_TYPE_KEY) != null) {
 			NAMENODE_RPC_TYPE = conf.get(NAMENODE_RPC_TYPE_KEY);
 		}
+		if (conf.get(NAMENODE_LOG_KEY) != null) {
+			NAMENODE_LOG = conf.get(NAMENODE_LOG_KEY);
+		}		
 		
 		//storage interface
 		if (conf.get(STORAGE_TYPES_KEY) != null) {
@@ -235,6 +241,7 @@ public class CrailConstants {
 		LOG.info(NAMENODE_BLOCKSELECTION_KEY + " " + NAMENODE_BLOCKSELECTION);
 		LOG.info(NAMENODE_FILEBLOCKS_KEY + " " + NAMENODE_FILEBLOCKS);
 		LOG.info(NAMENODE_RPC_TYPE_KEY + " " + NAMENODE_RPC_TYPE);
+		LOG.info(NAMENODE_LOG_KEY + " " + NAMENODE_LOG);
 		LOG.info(STORAGE_TYPES_KEY + " " + STORAGE_TYPES);
 		LOG.info(STORAGE_CLASSES_KEY + " " + STORAGE_CLASSES);
 		LOG.info(STORAGE_ROOTCLASS_KEY + " " + STORAGE_ROOTCLASS);

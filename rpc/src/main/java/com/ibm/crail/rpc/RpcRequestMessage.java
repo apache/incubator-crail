@@ -95,6 +95,13 @@ public class RpcRequestMessage {
 			storageClass = buffer.getInt();
 			locationClass = buffer.getInt();
 		}
+
+		@Override
+		public String toString() {
+			return "CreateFileReq [filename=" + filename + ", type=" + type
+					+ ", storageClass=" + storageClass + ", locationClass="
+					+ locationClass + "]";
+		}
 	}
 	
 	public static class GetFileReq implements RpcProtocol.NameNodeRpcMessage {
@@ -191,6 +198,12 @@ public class RpcRequestMessage {
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
 			}
+		}
+
+		@Override
+		public String toString() {
+			return "SetFileReq [fileInfo=" + fileInfo + ", close=" + close
+					+ "]";
 		}		
 	}
 	
@@ -283,6 +296,12 @@ public class RpcRequestMessage {
 		public void update(ByteBuffer buffer) {
 			srcFileName.update(buffer);
 			dstFileName.update(buffer);
+		}
+
+		@Override
+		public String toString() {
+			return "RenameFileReq [srcFileName=" + srcFileName
+					+ ", dstFileName=" + dstFileName + "]";
 		}		
 	}	
 	
@@ -346,6 +365,16 @@ public class RpcRequestMessage {
 			token = buffer.getLong();
 			position = buffer.getLong();
 			capacity = buffer.getLong();
+		}
+
+		@Override
+		public String toString() {
+			return "GetBlockReq [fd=" + fd + ", token=" + token + ", position="
+					+ position + ", capacity=" + capacity + "]";
+		}
+
+		public void setToken(long value) {
+			this.token = value;
 		}		
 	}
 	
@@ -429,7 +458,14 @@ public class RpcRequestMessage {
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
 			}
-		}		
+		}
+
+		@Override
+		public String toString() {
+			return "SetBlockReq [blockInfo=" + blockInfo + "]";
+		}
+		
+		
 	}	
 	
 	public static class GetDataNodeReq implements RpcProtocol.NameNodeRpcMessage {

@@ -94,4 +94,10 @@ public class BlockInfo {
 	public DataNodeInfo getDnInfo() {
 		return dnInfo;
 	}
+
+	@Override
+	public String toString() {
+		return "BlockInfo [dnInfo=" + dnInfo + ", lba=" + lba + ", addr="
+				+ addr + ", length=" + length + ", lkey=" + lkey + "]";
+	}
 }

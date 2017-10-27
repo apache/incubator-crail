@@ -29,7 +29,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.conf.CrailConstants;
-import com.ibm.crail.metadata.BlockInfo;
 
 public class FileBlocks extends AbstractNode {
 	private ArrayList<NameNodeBlockInfo> blocks;

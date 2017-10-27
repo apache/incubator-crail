@@ -23,7 +23,10 @@ package com.ibm.crail.metadata;
 
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+
 import org.slf4j.Logger;
+
 import com.ibm.crail.utils.CrailUtils;
 
 public class DataNodeInfo {
@@ -112,5 +115,13 @@ public class DataNodeInfo {
 			key = (((long)a) << 32) | (port & 0xffffffffL);
 		}
 		return key;
+	}
+
+	@Override
+	public String toString() {
+		return "DataNodeInfo [storageType=" + storageType + ", storageClass="
+				+ storageClass + ", locationClass=" + locationClass
+				+ ", ipAddress=" + Arrays.toString(ipAddress) + ", port="
+				+ port + ", key=" + key + "]";
 	}
 }

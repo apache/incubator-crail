@@ -189,7 +189,7 @@ public interface StorageServer extends Configurable, Runnable {
 			sumCount += diffCount;			
 			
 			LOG.info("datanode statistics, freeBlocks " + sumCount);
-			Thread.sleep(CrailConstants.STORAGE_KEEPALIVE);
+			Thread.sleep(CrailConstants.STORAGE_KEEPALIVE*1000);
 		}			
 	}
 }

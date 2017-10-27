@@ -87,6 +87,10 @@ public class NameNode {
 		CrailConstants.verify();
 		
 		RpcNameNodeService service = RpcNameNodeService.createInstance(CrailConstants.NAMENODE_RPC_SERVICE);
+		if (!CrailConstants.NAMENODE_LOG.isEmpty()){
+			LogDispatcher logDispatcher = new LogDispatcher(service);
+			service = logDispatcher;
+		}
 		RpcBinding rpcBinding = RpcBinding.createInstance(CrailConstants.NAMENODE_RPC_TYPE);
 		RpcServer rpcServer = rpcBinding.launchServer(service);
 		rpcServer.init(conf, null);

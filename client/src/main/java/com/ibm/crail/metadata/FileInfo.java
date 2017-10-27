@@ -154,4 +154,8 @@ public class FileInfo {
 	public boolean tokenFree(){
 		return System.nanoTime() > token;
 	}
+
+	public void setToken(long value) {
+		this.token = value;
+	}
 }
