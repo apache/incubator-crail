@@ -227,7 +227,7 @@ The tool also contains benchmarks to read files randomly, or to measure the perf
 
 ## Applications
 
-Crail is used by [Spark-IO](https://github.com/zrlio/spark-io), a high-performance shuffle engine for Spark. [Crail-Terasort](https://github.com/zrlio/crail-terasort) is a fast sorting benchmark for Spark based on Crail. 
+Crail is used by [Crail-Spark-IO](https://github.com/zrlio/crail-spark-io), a high-performance shuffle engine for Spark. [Crail-Terasort](https://github.com/zrlio/crail-terasort) is a fast sorting benchmark for Spark based on Crail. 
 
 ## Contributions
 
