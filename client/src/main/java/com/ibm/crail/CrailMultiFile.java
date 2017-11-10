@@ -21,12 +21,7 @@
 
 package com.ibm.crail;
 
-import java.util.Iterator;
-
-public interface CrailMultiFile extends CrailNode {
-	public abstract int files();
-	public abstract Iterator<String> listEntries() throws Exception;
-	
+public interface CrailMultiFile extends CrailContainer {
 	default CrailBufferedInputStream getMultiStream(int outstanding) throws Exception{
 		return new MultiFileBufferedInputStream(this.getFileSystem(), listEntries(), outstanding, files());
 	}

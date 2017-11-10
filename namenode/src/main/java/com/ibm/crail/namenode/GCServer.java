@@ -21,7 +21,6 @@
 
 package com.ibm.crail.namenode;
 
-import java.util.Iterator;
 import java.util.concurrent.DelayQueue;
 
 import org.slf4j.Logger;
@@ -44,12 +43,8 @@ public class GCServer implements Runnable {
 		while(true){
 			try{
 				AbstractNode file = deleteQueue.take();
-//				LOG.info("GC: removing deleted file to queue, fd " + file.getFd() + ", queue size " + deleteQueue.size());
-				Iterator<AbstractNode> iter = file.childIterator();
-				while(iter.hasNext()){
-					AbstractNode child = iter.next();
-					deleteQueue.add(child);
-//					LOG.info("GC: adding deleted child to queue, fd " + child.getFd() + ", queue size " + deleteQueue.size());
+				if (file.getType().isContainer()){
+					file.clearChildren(deleteQueue);
 				}
 				rpcService.freeFile(file);
 			} catch(Exception e){

@@ -40,11 +40,17 @@ public class FileStore {
 	
 	public AbstractNode createNode(int fileComponent, CrailNodeType type, int storageClass, int locationClass) throws IOException {
 		if (type == CrailNodeType.DIRECTORY){
-			return new DirectoryBlocks(sequencer.getNextId(), fileComponent, CrailNodeType.DIRECTORY, storageClass, locationClass);
+			return new DirectoryBlocks(sequencer.getNextId(), fileComponent, type, storageClass, locationClass);
 		} else if (type == CrailNodeType.MULTIFILE){
-			return new DirectoryBlocks(sequencer.getNextId(), fileComponent, CrailNodeType.MULTIFILE, storageClass, locationClass);
+			return new MultiFileBlocks(sequencer.getNextId(), fileComponent, type, storageClass, locationClass);
+		} else if (type == CrailNodeType.TABLE){
+			return new TableBlocks(sequencer.getNextId(), fileComponent, type, storageClass, locationClass);
+		} else if (type == CrailNodeType.KEYVALUE){
+			return new KeyValueBlocks(sequencer.getNextId(), fileComponent, type, storageClass, locationClass);
+		} else if (type == CrailNodeType.DATAFILE){
+			return new FileBlocks(sequencer.getNextId(), fileComponent, type, storageClass, locationClass);
 		} else {
-			return new FileBlocks(sequencer.getNextId(), fileComponent, CrailNodeType.DATAFILE, storageClass, locationClass);
+			throw new IOException("File type unkown: " + type);
 		}
 	}	
 	

@@ -24,9 +24,11 @@ package com.ibm.crail.core;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import com.ibm.crail.CrailBlockLocation;
+import com.ibm.crail.CrailKeyValue;
 import com.ibm.crail.CrailMultiFile;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailNodeType;
+import com.ibm.crail.CrailTable;
 import com.ibm.crail.metadata.FileInfo;
 
 public class CoreNode implements CrailNode {
@@ -89,11 +91,23 @@ public class CoreNode implements CrailNode {
 		throw new Exception("Type of file unclear");
 	}
 	
+	public CoreDirectory asContainer() throws Exception {
+		throw new Exception("Type of file unclear");
+	}	
+	
 	public CoreDirectory asDirectory() throws Exception {
 		throw new Exception("Type of file unclear");
 	}	
 	
 	public CrailMultiFile asMultiFile() throws Exception {
+		throw new Exception("Type of file unclear");
+	}
+	
+	public CrailTable asTable() throws Exception {
+		throw new Exception("Type of file unclear");
+	}	
+	
+	public CrailKeyValue asKeyValue() throws Exception {
 		throw new Exception("Type of file unclear");
 	}	
 	

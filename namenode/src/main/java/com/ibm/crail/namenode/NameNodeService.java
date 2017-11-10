@@ -119,9 +119,15 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 		}
 		
 		AbstractNode fileInfo = fileTree.createNode(fileHash.getFileComponent(), type, storageClass, locationClass);
-		if (!parentInfo.addChild(fileInfo)){
+		try {
+			AbstractNode oldNode = parentInfo.putChild(fileInfo);
+			if (oldNode != null && oldNode.getFd() != fileInfo.getFd()){
+				appendToDeleteQueue(oldNode);				
+			}		
+		} catch(Exception e){
 			return RpcErrors.ERR_FILE_EXISTS;
 		}
+		fileTable.put(fileInfo.getFd(), fileInfo);
 		
 		NameNodeBlockInfo fileBlock = blockStore.getBlock(fileInfo.getStorageClass(), fileInfo.getLocationClass());
 		if (fileBlock == null){
@@ -131,24 +137,26 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 			return RpcErrors.ERR_ADD_BLOCK_FAILED;
 		}
 		
-		int index = CrailUtils.computeIndex(fileInfo.getDirOffset());
-		NameNodeBlockInfo parentBlock = parentInfo.getBlock(index);
-		if (parentBlock == null){
-			parentBlock = blockStore.getBlock(parentInfo.getStorageClass(), parentInfo.getLocationClass());
+		NameNodeBlockInfo parentBlock = null;
+		if (fileInfo.getDirOffset() >= 0){
+			int index = CrailUtils.computeIndex(fileInfo.getDirOffset());
+			parentBlock = parentInfo.getBlock(index);
 			if (parentBlock == null){
-				return RpcErrors.ERR_NO_FREE_BLOCKS;
-			}			
-			if (!parentInfo.addBlock(index, parentBlock)){
-				blockStore.addBlock(parentBlock);
-				parentBlock = parentInfo.getBlock(index);
+				parentBlock = blockStore.getBlock(parentInfo.getStorageClass(), parentInfo.getLocationClass());
 				if (parentBlock == null){
-					blockStore.addBlock(fileBlock);
-					return RpcErrors.ERR_CREATE_FILE_FAILED;
+					return RpcErrors.ERR_NO_FREE_BLOCKS;
+				}			
+				if (!parentInfo.addBlock(index, parentBlock)){
+					blockStore.addBlock(parentBlock);
+					parentBlock = parentInfo.getBlock(index);
+					if (parentBlock == null){
+						blockStore.addBlock(fileBlock);
+						return RpcErrors.ERR_CREATE_FILE_FAILED;
+					}
 				}
 			}
+			parentInfo.incCapacity(CrailConstants.DIRECTORY_RECORD);
 		}
-		parentInfo.incCapacity(CrailConstants.DIRECTORY_RECORD);
-		fileTable.put(fileInfo.getFd(), fileInfo);
 		
 		if (writeable) {
 			fileInfo.updateToken();
@@ -228,10 +236,9 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 			return RpcErrors.ERR_FILE_NOT_OPEN;			
 		}
 		
-		if (!storedFile.getType().isDirectory() && storedFile.getToken() > 0 && storedFile.getToken() == fileInfo.getToken()){
+		if (storedFile.getToken() > 0 && storedFile.getToken() == fileInfo.getToken()){
 			storedFile.setCapacity(fileInfo.getCapacity());	
-		}
-		
+		}		
 		if (close){
 			storedFile.resetToken();
 		}
@@ -273,12 +280,11 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 		response.setParentInfo(parentInfo);
 		response.setFileInfo(fileInfo);
 		
-		fileInfo = parentInfo.removeChild(fileInfo);
+		fileInfo = parentInfo.removeChild(fileInfo.getComponent());
 		if (fileInfo == null){
 			return RpcErrors.ERR_GET_FILE_FAILED;
 		}
 		
-		fileTable.remove(fileInfo.getFd());
 		appendToDeleteQueue(fileInfo);
 		
 		if (CrailConstants.DEBUG){
@@ -344,15 +350,19 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 			dstParent = dstFile;
 		} 
 		
-		srcFile = srcParent.removeChild(srcFile);
+		srcFile = srcParent.removeChild(srcFile.getComponent());
 		if (srcFile == null){
 			return RpcErrors.ERR_SRC_FILE_NOT_FOUND;
 		}
 		srcFile.rename(dstFileHash.getFileComponent());
-		if (!dstParent.addChild(srcFile)){
-			return RpcErrors.ERR_FILE_EXISTS;
-		} else {
+		try {
+			AbstractNode oldNode = dstParent.putChild(srcFile);
+			if (oldNode != null && oldNode.getFd() != srcFile.getFd()){
+				appendToDeleteQueue(oldNode);				
+			}				
 			dstFile = srcFile;
+		} catch(Exception e){
+			return RpcErrors.ERR_FILE_EXISTS;
 		}
 		
 		//directory block
@@ -576,6 +586,7 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 	
 	void freeFile(AbstractNode fileInfo) throws Exception {
 		if (fileInfo != null) {
+			fileTable.remove(fileInfo.getFd());
 			fileInfo.freeBlocks(blockStore);
 		}
 	}

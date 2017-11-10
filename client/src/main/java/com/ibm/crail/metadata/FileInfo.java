@@ -46,7 +46,7 @@ public class FileInfo {
 	protected FileInfo(long fd, CrailNodeType type){
 		this.fd = fd;
 		this.type = type;
-		this.dirOffset = 0;
+		this.dirOffset = -1;
 		this.capacity = new AtomicLong(0);
 		this.token = 0;
 		this.modificationTime = 0;

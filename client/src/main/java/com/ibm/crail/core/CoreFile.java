@@ -24,17 +24,20 @@ package com.ibm.crail.core;
 import java.util.concurrent.Semaphore;
 
 import com.ibm.crail.CrailBlockLocation;
+import com.ibm.crail.CrailContainer;
 import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailFS;
 import com.ibm.crail.CrailFile;
 import com.ibm.crail.CrailInputStream;
+import com.ibm.crail.CrailKeyValue;
 import com.ibm.crail.CrailMultiFile;
 import com.ibm.crail.CrailNode;
 import com.ibm.crail.CrailNodeType;
 import com.ibm.crail.CrailOutputStream;
+import com.ibm.crail.CrailTable;
 import com.ibm.crail.metadata.FileInfo;
 
-public class CoreFile extends CoreNode implements CrailFile {
+public class CoreFile extends CoreNode implements CrailFile, CrailKeyValue {
 	private Semaphore outputStreams;
 	
 	public CoreFile(CoreFileSystem fs, FileInfo fileInfo, String path){
@@ -72,8 +75,18 @@ public class CoreFile extends CoreNode implements CrailFile {
 	}
 
 	public CoreFile asFile() throws Exception {
+		if (!getType().isDataFile()){
+			throw new Exception("file type mismatch, type " + getType());
+		}
 		return this;
 	}
+	
+	public CoreFile asKeyValue() throws Exception {
+		if (!getType().isKeyValue()){
+			throw new Exception("file type mismatch, type " + getType());
+		}		
+		return this;
+	}	
 
 	void closeOutputStream(CoreOutputStream stream) throws Exception {
 		super.closeOutputStream(stream);
@@ -81,7 +94,7 @@ public class CoreFile extends CoreNode implements CrailFile {
 	}
 }
 
-class CoreEarlyFile implements CrailFile {
+class CoreEarlyFile implements CrailFile, CrailKeyValue {
 	private CoreFileSystem fs;
 	private String path;
 	private CrailNodeType type;
@@ -115,6 +128,10 @@ class CoreEarlyFile implements CrailFile {
 	public CrailFile asFile() throws Exception {
 		return this;
 	}
+	
+	public CrailKeyValue asKeyValue() throws Exception {
+		return this;
+	}	
 
 	@Override
 	public CrailFS getFileSystem() {
@@ -145,6 +162,11 @@ class CoreEarlyFile implements CrailFile {
 	public CrailNodeType getType() {
 		return type;
 	}
+	
+	@Override
+	public CrailContainer asContainer() throws Exception {
+		throw new Exception("this is not a container");
+	}	
 
 	@Override
 	public CrailDirectory asDirectory() throws Exception {
@@ -155,6 +177,11 @@ class CoreEarlyFile implements CrailFile {
 	public CrailMultiFile asMultiFile() throws Exception {
 		throw new Exception("this is not a multifile");
 	}
+	
+	@Override
+	public CrailTable asTable() throws Exception {
+		throw new Exception("this is not a table");
+	}	
 
 	@Override
 	public long getFd() {

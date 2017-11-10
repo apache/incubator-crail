@@ -197,26 +197,23 @@ public class CoreFileSystem extends CrailFS {
 
 		blockCache.remove(fileInfo.getFd());
 		nextBlockCache.remove(fileInfo.getFd());
+		CoreNode node = CoreNode.create(this, fileInfo, path);
 		
 		BlockInfo fileBlock = fileRes.getFileBlock();
 		getBlockCache(fileInfo.getFd()).put(CoreSubOperation.createKey(fileInfo.getFd(), 0), fileBlock);
-		BlockInfo dirBlock = fileRes.getDirBlock();
-		getBlockCache(dirInfo.getFd()).put(CoreSubOperation.createKey(dirInfo.getFd(), fileInfo.getDirOffset()), dirBlock);
-		
-		long adjustedCapacity = fileInfo.getDirOffset()*CrailConstants.DIRECTORY_RECORD + CrailConstants.DIRECTORY_RECORD;
-		dirInfo.setCapacity(Math.max(dirInfo.getCapacity(), adjustedCapacity));
-		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path));
-		DirectoryOutputStream stream = dirFile.getDirectoryOutputStream();
-		DirectoryRecord record = new DirectoryRecord(true, path);
-		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());
-		CoreSyncOperation syncOperation = new CoreSyncOperation(stream, future);
+
+		//write directory record is a directory slot has been assigned to the file
+		if (fileInfo.getDirOffset() >= 0){
+			BlockInfo dirBlock = fileRes.getDirBlock();
+			getBlockCache(dirInfo.getFd()).put(CoreSubOperation.createKey(dirInfo.getFd(), fileInfo.getDirOffset()), dirBlock);
+			CoreSyncOperation syncOperation = getSyncOperation(dirInfo, fileInfo, path);
+			node.addSyncOperation(syncOperation);
+		}
 		
 		if (CrailConstants.DEBUG){
 			LOG.info("createFile: name " + path + ", success, fd " + fileInfo.getFd() + ", token " + fileInfo.getToken());
 		}
 		
-		CoreNode node = CoreNode.create(this, fileInfo, path);
-		node.addSyncOperation(syncOperation);
 		return node;
 	}	
 	
@@ -299,19 +296,8 @@ public class CoreFileSystem extends CrailFS {
 		BlockInfo dirBlock = renameRes.getDstBlock();
 		getBlockCache(dstDir.getFd()).put(CoreSubOperation.createKey(dstDir.getFd(), dstFile.getDirOffset()), dirBlock);		
 		
-		CoreDirectory dirSrc = new CoreDirectory(this, srcParent, CrailUtils.getParent(src));
-		DirectoryOutputStream streamSrc = dirSrc.getDirectoryOutputStream();
-		DirectoryRecord recordSrc = new DirectoryRecord(false, src);
-		Future<CrailResult> futureSrc = streamSrc.writeRecord(recordSrc, srcFile.getDirOffset());	
-		CoreSyncOperation syncOperationSrc = new CoreSyncOperation(streamSrc, futureSrc);
-		
-		long adjustedCapacity = dstFile.getDirOffset()*CrailConstants.DIRECTORY_RECORD + CrailConstants.DIRECTORY_RECORD;
-		dstDir.setCapacity(Math.max(dstDir.getCapacity(), adjustedCapacity));
-		CoreDirectory dirDst = new CoreDirectory(this, dstDir, CrailUtils.getParent(dst));
-		DirectoryOutputStream streamDst = dirDst.getDirectoryOutputStream();
-		DirectoryRecord recordDst = new DirectoryRecord(true, dst);
-		Future<CrailResult> futureDst = streamDst.writeRecord(recordDst, dstFile.getDirOffset());			
-		CoreSyncOperation syncOperationDst = new CoreSyncOperation(streamDst, futureDst);
+		CoreSyncOperation syncOperationSrc = getSyncOperation(srcParent, srcFile, src);
+		CoreSyncOperation syncOperationDst = getSyncOperation(dstDir, dstFile, dst);
 		
 		blockCache.remove(srcFile.getFd());
 		
@@ -349,11 +335,7 @@ public class CoreFileSystem extends CrailFS {
 		FileInfo fileInfo = fileRes.getFile();
 		FileInfo dirInfo = fileRes.getParent();
 		
-		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path));
-		DirectoryOutputStream stream = dirFile.getDirectoryOutputStream();
-		DirectoryRecord record = new DirectoryRecord(false, path);
-		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());	
-		CoreSyncOperation syncOperation = new CoreSyncOperation(stream, future);
+		CoreSyncOperation syncOperation = getSyncOperation(dirInfo, fileInfo, path);
 		
 		blockCache.remove(fileInfo.getFd());
 		
@@ -657,5 +639,16 @@ public class CoreFileSystem extends CrailFS {
 	String getMappedLocation(String hostname){
 		String mappedValue = locationMap.get(hostname);
 		return mappedValue != null ? mappedValue : hostname;
+	}
+	
+	CoreSyncOperation getSyncOperation(FileInfo dirInfo, FileInfo fileInfo, String path) throws Exception{
+		long adjustedCapacity = fileInfo.getDirOffset()*CrailConstants.DIRECTORY_RECORD + CrailConstants.DIRECTORY_RECORD;
+		dirInfo.setCapacity(Math.max(dirInfo.getCapacity(), adjustedCapacity));
+		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path));
+		DirectoryOutputStream stream = dirFile.getDirectoryOutputStream();
+		DirectoryRecord record = new DirectoryRecord(true, path);
+		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());
+		CoreSyncOperation syncOperation = new CoreSyncOperation(stream, future);		
+		return syncOperation;
 	}
 }

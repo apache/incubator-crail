@@ -22,7 +22,7 @@
 package com.ibm.crail;
 
 public enum CrailNodeType {
-	DATAFILE(0), DIRECTORY(1), MULTIFILE(2), STREAMFILE(3);
+	DATAFILE(0), DIRECTORY(1), MULTIFILE(2), STREAMFILE(3), TABLE(4), KEYVALUE(5);
 	
 	private int label;
 	
@@ -50,8 +50,16 @@ public enum CrailNodeType {
 		return this == STREAMFILE;
 	}
 	
+	public boolean isTable() {
+		return this == TABLE;
+	}
+
+	public boolean isKeyValue() {
+		return this == KEYVALUE;
+	}	
+	
 	public boolean isContainer(){
-		return this == DIRECTORY || this == MULTIFILE;
+		return this == DIRECTORY || this == MULTIFILE || this == TABLE;
 	}	
 	
 	public static CrailNodeType parse(int label) {
@@ -61,5 +69,6 @@ public enum CrailNodeType {
 			}
 		}
 		throw new IllegalArgumentException();
-	}	
+	}
+
 }

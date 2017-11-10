@@ -23,7 +23,7 @@ package com.ibm.crail;
 
 import java.util.Iterator;
 
-public interface CrailDirectory extends CrailNode {
+public interface CrailDirectory extends CrailContainer {
 	public abstract int files();
 	public abstract Iterator<String> listEntries() throws Exception;
 }

@@ -23,12 +23,14 @@ package com.ibm.crail.core;
 
 import java.util.Iterator;
 
+import com.ibm.crail.CrailContainer;
 import com.ibm.crail.CrailDirectory;
 import com.ibm.crail.CrailMultiFile;
+import com.ibm.crail.CrailTable;
 import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.FileInfo;
 
-class CoreDirectory extends CoreNode implements CrailDirectory, CrailMultiFile {
+class CoreDirectory extends CoreNode implements CrailContainer, CrailDirectory, CrailMultiFile, CrailTable {
 	
 	public CoreDirectory(CoreFileSystem fs, FileInfo fileInfo, String path){
 		super(fs, fileInfo, path);
@@ -56,12 +58,28 @@ class CoreDirectory extends CoreNode implements CrailDirectory, CrailMultiFile {
 	}
 	
 	@Override
+	public CoreDirectory asContainer() throws Exception {
+		if (!getType().isContainer()){
+			throw new Exception("file type mismatch, type " + getType());
+		}
+		return this;
+	}	
+	
+	@Override
 	public CrailMultiFile asMultiFile() throws Exception {
 		if (!getType().isMultiFile()){
 			throw new Exception("file type mismatch, type " + getType());
 		}
 		return this;
 	}	
+	
+	@Override
+	public CrailTable asTable() throws Exception {
+		if (!getType().isTable()){
+			throw new Exception("file type mismatch, type " + getType());
+		}
+		return this;
+	}
 	
 	DirectoryOutputStream getDirectoryOutputStream() throws Exception {
 		CoreOutputStream outputStream = super.getOutputStream(0);

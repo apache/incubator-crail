@@ -21,9 +21,9 @@
 
 package com.ibm.crail.namenode;
 
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Queue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -76,7 +76,7 @@ public class FileBlocks extends AbstractNode {
 	}
 
 	@Override
-	public void freeBlocks(BlockStore blockStore) throws UnknownHostException {
+	public void freeBlocks(BlockStore blockStore) throws Exception {
 		readLock.lock();
 		try {
 			Iterator<NameNodeBlockInfo> iter = blocks.iterator();
@@ -89,4 +89,23 @@ public class FileBlocks extends AbstractNode {
 		}
 	}
 
+	@Override
+	public AbstractNode putChild(AbstractNode child) throws Exception {
+		throw new Exception("Attempt to add a child to a non-container type");
+	}
+
+	@Override
+	public AbstractNode getChild(int component) throws Exception {
+		throw new Exception("Attempto to retrieve child from non-container type");
+	}
+
+	@Override
+	public AbstractNode removeChild(int component) throws Exception {
+		throw new Exception("Attempt to remove child from non-container type");
+	}
+
+	@Override
+	public void clearChildren(Queue<AbstractNode> queue) throws Exception {
+		throw new Exception("Attempt collect children from non-container type");
+	}
 }

@@ -44,10 +44,10 @@ public class RpcResponseMessage {
 			return RpcProtocol.RES_VOID;
 		}
 		
-		public void update(ByteBuffer arg0) {
+		public void update(ByteBuffer buffer) {
 		}
 
-		public int write(ByteBuffer arg0) {
+		public int write(ByteBuffer buffer) {
 			return 0;
 		}
 		
@@ -116,7 +116,6 @@ public class RpcResponseMessage {
 		public void setFileInfo(FileInfo fileInfo) {
 			if (fileInfo != null){
 				this.fileInfo.setFileInfo(fileInfo);
-//				this.shipToken = false;
 			}
 		}
 		
@@ -135,7 +134,9 @@ public class RpcResponseMessage {
 		}
 		
 		public void setFileBlock(BlockInfo blockInfo){
-			this.fileBlock.setBlockInfo(blockInfo);
+			if (blockInfo != null){
+				this.fileBlock.setBlockInfo(blockInfo);
+			}
 		}
 		
 		public BlockInfo getDirBlock(){
@@ -143,7 +144,9 @@ public class RpcResponseMessage {
 		}
 		
 		public void setDirBlock(BlockInfo blockInfo){
-			this.dirBlock.setBlockInfo(blockInfo);
+			if (blockInfo != null){
+				this.dirBlock.setBlockInfo(blockInfo);
+			}
 		}		
 		
 		public void shipToken(boolean value){

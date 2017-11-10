@@ -21,24 +21,37 @@
 
 package com.ibm.crail.namenode;
 
-import java.net.UnknownHostException;
-import java.util.Iterator;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Queue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+
 import com.ibm.crail.CrailNodeType;
-import com.ibm.crail.conf.CrailConstants;
 import com.ibm.crail.metadata.FileInfo;
 
 public abstract class AbstractNode extends FileInfo implements Delayed {
-//	private static AtomicLong fdcount = new AtomicLong(0);
 	private int fileComponent;
-	private AtomicLong dirOffsetCounter;
-	private ConcurrentHashMap<Integer, AbstractNode> children;
 	private long delay;
 	private int storageClass;
 	private int locationClass;
+	
+	//children manipulation
+	//adds or replaces a child, returns previous value or null if there was no mapping
+	public abstract AbstractNode putChild(AbstractNode child) throws Exception;
+	//get the child with the given component name, returns null if there is no mapping
+	public abstract AbstractNode getChild(int component) throws Exception;
+	//remove a child, returns previous value of existing or null otherwise
+	public abstract AbstractNode removeChild(int component) throws Exception;
+	//clear all the children (used by GC)
+	public abstract void clearChildren(Queue<AbstractNode> queue) throws Exception;
+//	public abstract AbstractNode updateParent() throws Exception;
+	
+	//block manipulation
+	//adds a new block at a given index, returns true if succesful, false otherwise
+	public abstract boolean addBlock(int index, NameNodeBlockInfo block) throws Exception;
+	//get block at the given index, returns a valid block or null otherwise
+	public abstract NameNodeBlockInfo getBlock(int index) throws Exception;
+	//clear all the blocks (used by GC)
+	public abstract void freeBlocks(BlockStore blockStore) throws Exception;	
 	
 	public AbstractNode(long fd, int fileComponent, CrailNodeType type, int storageClass, int locationAffinity){
 		super(fd, type);
@@ -46,63 +59,26 @@ public abstract class AbstractNode extends FileInfo implements Delayed {
 		this.fileComponent = fileComponent;
 		this.storageClass = storageClass;
 		this.locationClass = locationAffinity;
-		this.children = new ConcurrentHashMap<Integer, AbstractNode>();
 		this.delay = System.currentTimeMillis();
-		this.dirOffsetCounter = new AtomicLong(0);
 		this.setModificationTime(System.currentTimeMillis());
-	}
-	
-	boolean addChild(AbstractNode child) throws Exception {
-		if (!this.getType().isContainer()){
-			return false;
-		} 
-		
-		AbstractNode old = children.putIfAbsent(child.getComponent(), child);
-		if (old == null){
-			child.setDirOffset(dirOffsetCounter.getAndAdd(CrailConstants.DIRECTORY_RECORD));
-			return true;
-		} else {
-			return false;
-		}
-	}	
-
-	AbstractNode removeChild(AbstractNode child) {
-		child = children.remove(child.getComponent());
-		return child;
 	}
 	
 	void rename(int newFileComponent) throws Exception {
 		this.fileComponent = newFileComponent;
 	}	
 
-	public abstract NameNodeBlockInfo getBlock(int index);
-
-	public abstract boolean addBlock(int index, NameNodeBlockInfo block);
-	
-	public abstract void freeBlocks(BlockStore blockStore) throws UnknownHostException;
-	
-	public AbstractNode getChild(int component) {
-		return children.get(component);
-	}
-
 	public int getComponent() {
 		return this.fileComponent;
 	}
 	
-	public Iterator<AbstractNode> childIterator(){
-		return children.values().iterator();
-	}
-	
-	boolean hasChildren(){
-		return children.size() > 0;
-	}
-	
 	public void dump(){
 		System.out.println(this.toString());
-		for (AbstractNode child : children.values()){
-			child.dump();
-		}		
 	}
+	
+	@Override
+	protected void setDirOffset(long dirOffset) {
+		super.setDirOffset(dirOffset);
+	}	
 	
 	@Override
 	public String toString() {
