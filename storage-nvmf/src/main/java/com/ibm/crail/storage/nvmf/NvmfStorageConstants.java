@@ -44,23 +44,20 @@ public class NvmfStorageConstants {
 
 	private final static String PREFIX = "crail.storage.nvmf";
 
-	public static final String IP_ADDR_KEY = "bindip";
+	public static final String IP_ADDR_KEY = "ip";
 	public static InetAddress IP_ADDR;
 
 	public static final String PORT_KEY = "port";
 	public static int PORT = 50025;
 
-	public static final String PCIE_ADDR_KEY = "pcieaddr";
-	public static String PCIE_ADDR;
+	public static final String NQN_KEY = "nqn";
+	public static String NQN = "nqn.2016-06.io.spdk:cnode1";
 
 	public static final String NAMESPACE_KEY = "namespace";
 	public static int NAMESPACE = 1;
 
 	public static final String ALLOCATION_SIZE_KEY = "allocationsize";
 	public static long ALLOCATION_SIZE = 1073741824; /* 1GB */
-
-	public static final String HUGEDIR_KEY = "hugedir";
-	public static String HUGEDIR  = null;
 
 	public static final String SERVER_MEMPOOL_KEY = "servermempool";
 	public static long SERVER_MEMPOOL = 256;
@@ -80,12 +77,7 @@ public class NvmfStorageConstants {
 	}
 
 	public static void updateConstants(CrailConfiguration conf) throws UnknownHostException {
-		String arg = get(conf, PCIE_ADDR_KEY);
-		if (arg != null) {
-			PCIE_ADDR = arg;
-		}
-
-		arg = get(conf, NAMESPACE_KEY);
+		String arg = get(conf, NAMESPACE_KEY);
 		if (arg != null) {
 			NAMESPACE = Integer.parseInt(arg);
 		}
@@ -100,14 +92,14 @@ public class NvmfStorageConstants {
 			PORT = Integer.parseInt(arg);
 		}
 
+		arg = get(conf, NQN_KEY);
+		if (arg != null) {
+			NQN = arg;
+		}
+
 		arg = get(conf, ALLOCATION_SIZE_KEY);
 		if (arg != null) {
 			ALLOCATION_SIZE = Long.parseLong(arg);
-		}
-
-		arg = get(conf, HUGEDIR_KEY);
-		if (arg != null) {
-			HUGEDIR = arg.length() == 0 ? null : arg;
 		}
 
 		arg = get(conf, SERVER_MEMPOOL_KEY);
@@ -135,30 +127,33 @@ public class NvmfStorageConstants {
 			logger.info(fullKey(IP_ADDR_KEY) + " " + IP_ADDR.getHostAddress());
 		}
 		logger.info(fullKey(PORT_KEY) + " " + PORT);
-		logger.info(fullKey(PCIE_ADDR_KEY) + " " + PCIE_ADDR);
+		logger.info(fullKey(NQN_KEY) + " " + NQN);
 		logger.info(fullKey(NAMESPACE_KEY) + " " + NAMESPACE);
 		logger.info(fullKey(ALLOCATION_SIZE_KEY) + " " + ALLOCATION_SIZE);
-		logger.info(fullKey(HUGEDIR_KEY) + " " + HUGEDIR);
 		logger.info(fullKey(SERVER_MEMPOOL_KEY) + " " + SERVER_MEMPOOL);
 		logger.info(fullKey(CLIENT_MEMPOOL_KEY) + " " + CLIENT_MEMPOOL);
 	}
 	
-	public static void init(CrailConfiguration crailConfiguration, String[] args) throws IOException {
+	public static void parseCmdLine(CrailConfiguration crailConfiguration, String[] args) throws IOException {
 		NvmfStorageConstants.updateConstants(crailConfiguration);
 
 		if (args != null) {
 			Options options = new Options();
-			Option bindIp = Option.builder("a").desc("ip address to bind to").hasArg().build();
-			Option port = Option.builder("p").desc("port to bind to").hasArg().type(Number.class).build();
-			Option pcieAddress = Option.builder("s").desc("PCIe address of NVMe device").hasArg().build();
+
+			Option bindIp = Option.builder("a").desc("target ip address").hasArg().build();
+			if (IP_ADDR == null) {
+				bindIp.setRequired(true);
+			}
+			Option port = Option.builder("p").desc("target port").hasArg().type(Number.class).build();
+			Option nqn = Option.builder("nqn").desc("target subsystem NQN").hasArg().build();
 			options.addOption(bindIp);
 			options.addOption(port);
-			options.addOption(pcieAddress);
+			options.addOption(nqn);
 			CommandLineParser parser = new DefaultParser();
 			HelpFormatter formatter = new HelpFormatter();
 			CommandLine line = null;
 			try {
-				line = parser.parse(options, Arrays.copyOfRange(args, 0, args.length));
+				line = parser.parse(options, args);
 				if (line.hasOption(port.getOpt())) {
 					NvmfStorageConstants.PORT = ((Number) line.getParsedOptionValue(port.getOpt())).intValue();
 				}
@@ -170,8 +165,8 @@ public class NvmfStorageConstants {
 			if (line.hasOption(bindIp.getOpt())) {
 				NvmfStorageConstants.IP_ADDR = InetAddress.getByName(line.getOptionValue(bindIp.getOpt()));
 			}
-			if (line.hasOption(pcieAddress.getOpt())) {
-				NvmfStorageConstants.PCIE_ADDR = line.getOptionValue(pcieAddress.getOpt());
+			if (line.hasOption(nqn.getOpt())) {
+				NvmfStorageConstants.NQN = line.getOptionValue(nqn.getOpt());
 			}
 		}
 
