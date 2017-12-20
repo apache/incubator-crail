@@ -206,7 +206,7 @@ public class CoreFileSystem extends CrailFS {
 		if (fileInfo.getDirOffset() >= 0){
 			BlockInfo dirBlock = fileRes.getDirBlock();
 			getBlockCache(dirInfo.getFd()).put(CoreSubOperation.createKey(dirInfo.getFd(), fileInfo.getDirOffset()), dirBlock);
-			CoreSyncOperation syncOperation = getSyncOperation(dirInfo, fileInfo, path);
+			CoreSyncOperation syncOperation = getSyncOperation(dirInfo, fileInfo, path, true);
 			node.addSyncOperation(syncOperation);
 		}
 		
@@ -296,8 +296,8 @@ public class CoreFileSystem extends CrailFS {
 		BlockInfo dirBlock = renameRes.getDstBlock();
 		getBlockCache(dstDir.getFd()).put(CoreSubOperation.createKey(dstDir.getFd(), dstFile.getDirOffset()), dirBlock);		
 		
-		CoreSyncOperation syncOperationSrc = getSyncOperation(srcParent, srcFile, src);
-		CoreSyncOperation syncOperationDst = getSyncOperation(dstDir, dstFile, dst);
+		CoreSyncOperation syncOperationSrc = getSyncOperation(srcParent, srcFile, src, false);
+		CoreSyncOperation syncOperationDst = getSyncOperation(dstDir, dstFile, dst, true);
 		
 		blockCache.remove(srcFile.getFd());
 		
@@ -335,7 +335,7 @@ public class CoreFileSystem extends CrailFS {
 		FileInfo fileInfo = fileRes.getFile();
 		FileInfo dirInfo = fileRes.getParent();
 		
-		CoreSyncOperation syncOperation = getSyncOperation(dirInfo, fileInfo, path);
+		CoreSyncOperation syncOperation = getSyncOperation(dirInfo, fileInfo, path, false);
 		
 		blockCache.remove(fileInfo.getFd());
 		
@@ -641,12 +641,12 @@ public class CoreFileSystem extends CrailFS {
 		return mappedValue != null ? mappedValue : hostname;
 	}
 	
-	CoreSyncOperation getSyncOperation(FileInfo dirInfo, FileInfo fileInfo, String path) throws Exception{
+	CoreSyncOperation getSyncOperation(FileInfo dirInfo, FileInfo fileInfo, String path, boolean valid) throws Exception{
 		long adjustedCapacity = fileInfo.getDirOffset()*CrailConstants.DIRECTORY_RECORD + CrailConstants.DIRECTORY_RECORD;
 		dirInfo.setCapacity(Math.max(dirInfo.getCapacity(), adjustedCapacity));
 		CoreDirectory dirFile = new CoreDirectory(this, dirInfo, CrailUtils.getParent(path));
 		DirectoryOutputStream stream = dirFile.getDirectoryOutputStream();
-		DirectoryRecord record = new DirectoryRecord(true, path);
+		DirectoryRecord record = new DirectoryRecord(valid, path);
 		Future<CrailResult> future = stream.writeRecord(record, fileInfo.getDirOffset());
 		CoreSyncOperation syncOperation = new CoreSyncOperation(stream, future);		
 		return syncOperation;
