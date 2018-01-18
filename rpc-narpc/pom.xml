@@ -3,13 +3,13 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.ibm.crail</groupId>
+    <groupId>org.apache.crail</groupId>
     <artifactId>crail-parent</artifactId>
     <version>1.0</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <groupId>com.ibm.crail</groupId>
+  <groupId>org.apache.crail</groupId>
   <artifactId>crail-rpc-narpc</artifactId>
   <packaging>jar</packaging>
   <version>1.0</version>
@@ -30,12 +30,12 @@
       <artifactId>log4j</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.ibm.crail</groupId>
+      <groupId>org.apache.crail</groupId>
       <artifactId>crail-client</artifactId>
       <version>1.0</version>
     </dependency>
     <dependency>
-      <groupId>com.ibm.crail</groupId>
+      <groupId>org.apache.crail</groupId>
       <artifactId>crail-rpc</artifactId>
       <version>1.0</version>
     </dependency>

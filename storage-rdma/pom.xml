@@ -3,13 +3,13 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.ibm.crail</groupId>
+    <groupId>org.apache.crail</groupId>
     <artifactId>crail-parent</artifactId>
     <version>1.0</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <groupId>com.ibm.crail</groupId>
+  <groupId>org.apache.crail</groupId>
   <artifactId>crail-storage-rdma</artifactId>
   <packaging>jar</packaging>
   <version>1.0</version>
@@ -34,7 +34,7 @@
       <artifactId>commons-cli</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.ibm.crail</groupId>
+      <groupId>org.apache.crail</groupId>
       <artifactId>crail-storage</artifactId>
       <version>1.0</version>
     </dependency>
