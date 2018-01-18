@@ -1,0 +1,38 @@
+/*
+ * Crail: A Multi-tiered Distributed Direct Access File System
+ *
+ * Author:
+ * Jonas Pfefferle <jpf@zurich.ibm.com>
+ *
+ * Copyright (C) 2016, IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+package org.apache.crail.storage.nvmf;
+
+import org.apache.crail.storage.StorageServer;
+import org.apache.crail.storage.StorageTier;
+import org.apache.crail.utils.CrailUtils;
+import org.slf4j.Logger;
+
+public class NvmfStorageTier extends NvmfStorageClient implements StorageTier {
+	private static final Logger LOG = CrailUtils.getLogger();
+	
+	public StorageServer launchServer() throws Exception {
+		LOG.info("initalizing NVMf datanode");
+		NvmfStorageServer storageServer = new NvmfStorageServer();
+		return storageServer;
+	}
+}
