@@ -30,7 +30,7 @@ import org.apache.crail.metadata.FileInfo;
 
 class CoreDirectory extends CoreNode implements CrailContainer, CrailDirectory, CrailMultiFile, CrailTable {
 	
-	public CoreDirectory(CoreFileSystem fs, FileInfo fileInfo, String path){
+	public CoreDirectory(CoreDataStore fs, FileInfo fileInfo, String path){
 		super(fs, fileInfo, path);
 		this.fs = fs;
 		this.fileInfo = fileInfo;

@@ -37,7 +37,7 @@ public class DirectoryInputStream implements Iterator<String> {
 	
 	private CoreInputStream stream;
 	private CrailBuffer internalBuf;	
-	private CoreFileSystem fs;
+	private CoreDataStore fs;
 	private String parent;
 	private String currentFile;
 	private int consumedRecords;

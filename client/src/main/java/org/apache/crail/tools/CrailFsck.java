@@ -41,7 +41,7 @@ import org.apache.crail.CrailNodeType;
 import org.apache.crail.CrailStorageClass;
 import org.apache.crail.conf.CrailConfiguration;
 import org.apache.crail.conf.CrailConstants;
-import org.apache.crail.core.CoreFileSystem;
+import org.apache.crail.core.CoreDataStore;
 import org.apache.crail.core.DirectoryInputStream;
 import org.apache.crail.core.DirectoryRecord;
 import org.apache.crail.metadata.FileName;
@@ -98,7 +98,7 @@ public class CrailFsck {
 
 	public void namenodeDump()  throws Exception {
 		CrailConfiguration conf = new CrailConfiguration();
-		CoreFileSystem fs = new CoreFileSystem(conf);
+		CoreDataStore fs = new CoreDataStore(conf);
 		fs.dumpNameNode();
 		fs.close();
 	}
@@ -106,7 +106,7 @@ public class CrailFsck {
 	public void directoryDump(String filename, boolean randomize) throws Exception {
 		CrailConfiguration conf = new CrailConfiguration();
 		CrailConstants.updateConstants(conf);
-		CoreFileSystem fs = new CoreFileSystem(conf);		
+		CoreDataStore fs = new CoreDataStore(conf);		
 		DirectoryInputStream iter = fs._listEntries(filename, randomize);
 		System.out.println("#hash   \t\tname\t\tfilecomponent");
 		int i = 0;
@@ -124,7 +124,7 @@ public class CrailFsck {
 	public void ping() throws Exception {
 		CrailConfiguration conf = new CrailConfiguration();
 		CrailConstants.updateConstants(conf);
-		CoreFileSystem fs = new CoreFileSystem(conf);
+		CoreDataStore fs = new CoreDataStore(conf);
 		fs.ping();
 		fs.closeFileSystem();		
 	}

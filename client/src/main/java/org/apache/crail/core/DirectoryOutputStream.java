@@ -28,7 +28,7 @@ import org.apache.crail.CrailResult;
 public class DirectoryOutputStream {
 	private CoreOutputStream stream;
 	private CrailBuffer internalBuf;	
-	private CoreFileSystem fs;
+	private CoreDataStore fs;
 	private boolean open;
 
 	public DirectoryOutputStream(CoreOutputStream stream)

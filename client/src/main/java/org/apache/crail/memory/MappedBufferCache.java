@@ -44,28 +44,30 @@ public class MappedBufferCache extends BufferCache {
 	public MappedBufferCache() throws IOException {
 		super();
 		
-		id = "" + System.currentTimeMillis();
-		directory = CrailUtils.getCacheDirectory(id);
-		dir = new File(directory);
-		if (!dir.exists()){
-			dir.mkdirs();
-		}
-		for (File child : dir.listFiles()) {
-			child.delete();
-		}
-		
 		this.allocationCount = CrailConstants.CACHE_LIMIT / CrailConstants.REGION_SIZE;
 		long _bufferSize = (long) CrailConstants.BUFFER_SIZE;
 		this.bufferCount = CrailConstants.REGION_SIZE / _bufferSize;
 		this.currentRegion = 0;
 		LOG.info("buffer cache, allocationCount " + allocationCount + ", bufferCount " + bufferCount);
+		
+		if (allocationCount > 0){
+			id = "" + System.currentTimeMillis();
+			directory = CrailUtils.getCacheDirectory(id);
+			dir = new File(directory);
+			if (!dir.exists()){
+				dir.mkdirs();
+			}
+			for (File child : dir.listFiles()) {
+				child.delete();
+			}
+		}
 	}
 	
 	@Override
 	public void close() {
 		super.close();
 		
-		if (dir.exists()){
+		if (allocationCount > 0 && dir.exists()){
 			for (File child : dir.listFiles()) {
 				child.delete();
 			}

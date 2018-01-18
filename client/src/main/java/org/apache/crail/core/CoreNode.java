@@ -30,12 +30,12 @@ import org.apache.crail.CrailTable;
 import org.apache.crail.metadata.FileInfo;
 
 public class CoreNode implements CrailNode {
-	protected CoreFileSystem fs;
+	protected CoreDataStore fs;
 	protected FileInfo fileInfo;
 	protected String path;
 	private LinkedBlockingQueue<CoreSyncOperation> syncOperations;
 	
-	public static CoreNode create(CoreFileSystem fs, FileInfo fileInfo, String path) {
+	public static CoreNode create(CoreDataStore fs, FileInfo fileInfo, String path) {
 		if (fileInfo.getType().isContainer()){
 			return new CoreDirectory(fs, fileInfo, path);		
 		} else {
@@ -43,7 +43,7 @@ public class CoreNode implements CrailNode {
 		}
 	}	
 	
-	protected CoreNode(CoreFileSystem fs, FileInfo fileInfo, String path){
+	protected CoreNode(CoreDataStore fs, FileInfo fileInfo, String path){
 		this.fs = fs;
 		this.fileInfo = fileInfo;
 		this.path = path;
@@ -51,7 +51,7 @@ public class CoreNode implements CrailNode {
 	}	
 
 	@Override
-	public CoreFileSystem getFileSystem() {
+	public CoreDataStore getFileSystem() {
 		return fs;
 	}
 

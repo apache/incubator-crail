@@ -146,11 +146,11 @@ public abstract class CoreMetaDataOperation<R,T> implements Upcoming<T> {
 }
 
 class CreateNodeFuture extends CoreMetaDataOperation<RpcCreateFile, CrailNode> {
-	private CoreFileSystem fs;
+	private CoreDataStore fs;
 	private String path;
 	private CrailNodeType type;
 
-	public CreateNodeFuture(CoreFileSystem fs, String path, CrailNodeType type, Future<RpcCreateFile> fileRes) {
+	public CreateNodeFuture(CoreDataStore fs, String path, CrailNodeType type, Future<RpcCreateFile> fileRes) {
 		super(fileRes);
 		this.fs = fs;
 		this.path = path;
@@ -179,9 +179,9 @@ class CreateNodeFuture extends CoreMetaDataOperation<RpcCreateFile, CrailNode> {
 
 class LookupNodeFuture extends CoreMetaDataOperation<RpcGetFile, CrailNode> {
 	private String path;
-	private CoreFileSystem fs;	
+	private CoreDataStore fs;	
 
-	public LookupNodeFuture(CoreFileSystem fs, String path, Future<RpcGetFile> fileRes) {
+	public LookupNodeFuture(CoreDataStore fs, String path, Future<RpcGetFile> fileRes) {
 		super(fileRes);
 		this.fs = fs;
 		this.path = path;
@@ -197,9 +197,9 @@ class LookupNodeFuture extends CoreMetaDataOperation<RpcGetFile, CrailNode> {
 class DeleteNodeFuture extends CoreMetaDataOperation<RpcDeleteFile, CrailNode> {
 	private String path;
 	private boolean recursive;
-	private CoreFileSystem fs;
+	private CoreDataStore fs;
 
-	public DeleteNodeFuture(CoreFileSystem fs, String path, boolean recursive, Future<RpcDeleteFile> fileRes) {
+	public DeleteNodeFuture(CoreDataStore fs, String path, boolean recursive, Future<RpcDeleteFile> fileRes) {
 		super(fileRes);
 		this.fs = fs;
 		this.path = path;
@@ -215,9 +215,9 @@ class DeleteNodeFuture extends CoreMetaDataOperation<RpcDeleteFile, CrailNode> {
 class RenameNodeFuture extends CoreMetaDataOperation<RpcRenameFile, CrailNode> {
 	private String src;
 	private String dst;
-	private CoreFileSystem fs;
+	private CoreDataStore fs;
 
-	public RenameNodeFuture(CoreFileSystem fs, String src, String dst, Future<RpcRenameFile> fileRes) {
+	public RenameNodeFuture(CoreDataStore fs, String src, String dst, Future<RpcRenameFile> fileRes) {
 		super(fileRes);
 		this.fs = fs;
 		this.src = src;

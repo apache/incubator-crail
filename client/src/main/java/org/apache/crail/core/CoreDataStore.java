@@ -71,7 +71,7 @@ import org.apache.crail.utils.BlockCache.FileBlockCache;
 import org.apache.crail.utils.NextBlockCache.FileNextBlockCache;
 import org.slf4j.Logger;
 
-public class CoreFileSystem extends CrailStore {
+public class CoreDataStore extends CrailStore {
 	private static final Logger LOG = CrailUtils.getLogger();
 	private static AtomicInteger fsCount = new AtomicInteger(0);
 	
@@ -101,7 +101,7 @@ public class CoreFileSystem extends CrailStore {
 	private CoreStreamStatistics streamStats;
 	private CrailStatistics statistics;
 	
-	public CoreFileSystem(CrailConfiguration conf) throws Exception {
+	public CoreDataStore(CrailConfiguration conf) throws Exception {
 		CrailConstants.updateConstants(conf);
 		CrailConstants.printConf();
 		CrailConstants.verify();	

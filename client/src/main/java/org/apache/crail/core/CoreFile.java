@@ -38,7 +38,7 @@ import org.apache.crail.metadata.FileInfo;
 public class CoreFile extends CoreNode implements CrailFile, CrailKeyValue {
 	private Semaphore outputStreams;
 	
-	public CoreFile(CoreFileSystem fs, FileInfo fileInfo, String path){
+	public CoreFile(CoreDataStore fs, FileInfo fileInfo, String path){
 		super(fs, fileInfo, path);
 		this.outputStreams = new Semaphore(1);
 	}
@@ -93,13 +93,13 @@ public class CoreFile extends CoreNode implements CrailFile, CrailKeyValue {
 }
 
 class CoreEarlyFile implements CrailFile, CrailKeyValue {
-	private CoreFileSystem fs;
+	private CoreDataStore fs;
 	private String path;
 	private CrailNodeType type;
 	private CreateNodeFuture future;
 	private CrailFile file;
 	
-	public CoreEarlyFile(CoreFileSystem fs, String path, CrailNodeType type, CreateNodeFuture future) {
+	public CoreEarlyFile(CoreDataStore fs, String path, CrailNodeType type, CreateNodeFuture future) {
 		this.fs = fs;
 		this.path = path;
 		this.type = type;

@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.crail.conf.CrailConfiguration;
 import org.apache.crail.conf.CrailConstants;
-import org.apache.crail.core.CoreFileSystem;
+import org.apache.crail.core.CoreDataStore;
 import org.apache.crail.utils.CrailUtils;
 import org.slf4j.Logger;
 
@@ -75,7 +75,7 @@ public abstract class CrailStore {
 				referenceCounter.incrementAndGet();
 				if (instance == null) {
 					LOG.info("creating singleton crail file system");
-					instance = new CoreFileSystem(conf);
+					instance = new CoreDataStore(conf);
 					return instance;
 				} else {
 					LOG.info("returning singleton crail file system");
@@ -83,7 +83,7 @@ public abstract class CrailStore {
 				}
 			} else {
 				LOG.info("creating non-singleton crail file system");				
-				return new CoreFileSystem(conf);
+				return new CoreDataStore(conf);
 			}
 		}
 	}	
