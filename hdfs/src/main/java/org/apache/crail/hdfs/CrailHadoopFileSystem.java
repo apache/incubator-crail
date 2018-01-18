@@ -1,22 +1,20 @@
 /*
- * Crail: A Multi-tiered Distributed Direct Access File System
+ * Copyright (C) 2015-2018, IBM Corporation
  *
- * Author: Patrick Stuedi <stu@zurich.ibm.com>
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- * Copyright (C) 2016, IBM Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.apache.crail.hdfs;
@@ -32,7 +30,7 @@ import org.apache.crail.CrailBlockLocation;
 import org.apache.crail.CrailBufferedInputStream;
 import org.apache.crail.CrailBufferedOutputStream;
 import org.apache.crail.CrailDirectory;
-import org.apache.crail.CrailFS;
+import org.apache.crail.CrailStore;
 import org.apache.crail.CrailFile;
 import org.apache.crail.CrailLocationClass;
 import org.apache.crail.CrailNode;
@@ -55,7 +53,7 @@ import org.apache.hadoop.util.Progressable;
 
 public class CrailHadoopFileSystem extends FileSystem {
 	private static final Logger LOG = CrailUtils.getLogger();
-	private CrailFS dfs;
+	private CrailStore dfs;
 	private Path workingDir;
 	private URI uri;
 	
@@ -71,7 +69,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 		
 		try {
 			CrailConfiguration crailConf = new CrailConfiguration();
-			this.dfs = CrailFS.newInstance(crailConf);
+			this.dfs = CrailStore.newInstance(crailConf);
 			Path _workingDir = new Path("/user/" + CrailConstants.USER);
 			this.workingDir = new Path("/user/" + CrailConstants.USER).makeQualified(uri, _workingDir);	
 			this.uri = URI.create(CrailConstants.NAMENODE_ADDRESS);

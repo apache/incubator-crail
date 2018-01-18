@@ -49,19 +49,19 @@ case $COMMAND in
 esac
 
 if [ "$COMMAND" = "namenode" ] ; then
-  CLASS='com.ibm.crail.namenode.NameNode'
+  CLASS='org.apache.crail.namenode.NameNode'
 elif [ "$COMMAND" = "datanode" ] ; then
-  CLASS='com.ibm.crail.storage.StorageServer'
+  CLASS='org.apache.crail.storage.StorageServer'
 elif [ "$COMMAND" = "fsck" ] ; then
-  CLASS='com.ibm.crail.tools.CrailFsck'
+  CLASS='org.apache.crail.tools.CrailFsck'
 elif [ "$COMMAND" = "fs" ] ; then
   CLASS=org.apache.hadoop.fs.FsShell
 elif [ "$COMMAND" = "getconf" ] ; then
-  CLASS=com.ibm.crail.hdfs.GetConf
+  CLASS=org.apache.crail.hdfs.GetConf
 elif [ "$COMMAND" = "iobench" ] ; then
-  CLASS=com.ibm.crail.tools.CrailBenchmark  
+  CLASS=org.apache.crail.tools.CrailBenchmark  
 elif [ "$COMMAND" = "hdfsbench" ] ; then
-  CLASS=com.ibm.crail.hdfs.tools.HdfsIOBenchmark    
+  CLASS=org.apache.crail.hdfs.tools.HdfsIOBenchmark    
 fi
 
 export CLASSPATH="$bin"/../jars/*:"$bin"/../conf:.

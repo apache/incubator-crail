@@ -19,7 +19,7 @@
 <configuration>
   <property>
    <name>fs.crail.impl</name>
-   <value>com.ibm.crail.hdfs.CrailHadoopFileSystem</value>
+   <value>org.apache.crail.hdfs.CrailHadoopFileSystem</value>
   </property>
   <property>
     <name>fs.defaultFS</name>
@@ -27,7 +27,7 @@
   </property>
   <property>
     <name>fs.AbstractFileSystem.crail.impl</name>
-    <value>com.ibm.crail.hdfs.CrailHDFS</value>
+    <value>org.apache.crail.hdfs.CrailHDFS</value>
   </property>
   <property>
     <name>io.file.buffer.size</name>

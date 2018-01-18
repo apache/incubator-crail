@@ -1,22 +1,20 @@
 /*
- * Crail: A Multi-tiered Distributed Direct Access File System
+ * Copyright (C) 2015-2018, IBM Corporation
  *
- * Author: Patrick Stuedi <stu@zurich.ibm.com>
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- * Copyright (C) 2016, IBM Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.apache.crail.tools;
@@ -34,7 +32,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.crail.CrailBlockLocation;
 import org.apache.crail.CrailDirectory;
-import org.apache.crail.CrailFS;
+import org.apache.crail.CrailStore;
 import org.apache.crail.CrailFile;
 import org.apache.crail.CrailLocationClass;
 import org.apache.crail.CrailMultiFile;
@@ -58,7 +56,7 @@ public class CrailFsck {
 	public void getLocations(String filename, long offset, long length) throws Exception {
 		System.out.println("getLocations, filename " + filename + ", offset " + offset + ", len " + length);
 		CrailConfiguration conf = new CrailConfiguration();
-		CrailFS fs = CrailFS.newInstance(conf);
+		CrailStore fs = CrailStore.newInstance(conf);
 		
 		CrailBlockLocation locations[] = fs.lookup(filename).get().getBlockLocations(offset, length);
 		for (int i = 0; i < locations.length; i++){
@@ -70,7 +68,7 @@ public class CrailFsck {
 	public void blockStatistics(String filename) throws Exception {
 		HashMap<String, AtomicInteger> stats = new HashMap<String, AtomicInteger>();
 		CrailConfiguration conf = new CrailConfiguration();
-		CrailFS fs = CrailFS.newInstance(conf);
+		CrailStore fs = CrailStore.newInstance(conf);
 		CrailNode node = fs.lookup(filename).get();
 		
 		if (node.getType() == CrailNodeType.DIRECTORY){
@@ -134,7 +132,7 @@ public class CrailFsck {
 	public void createDirectory(String filename, int storageClass, int locationClass) throws Exception {
 		System.out.println("createDirectory, filename " + filename + ", storageClass " + storageClass + ", locationClass " + locationClass);
 		CrailConfiguration conf = new CrailConfiguration();
-		CrailFS fs = CrailFS.newInstance(conf);
+		CrailStore fs = CrailStore.newInstance(conf);
 		fs.create(filename, CrailNodeType.DIRECTORY, CrailStorageClass.get(storageClass), CrailLocationClass.get(locationClass)).get().syncDir();
 		fs.close();
 	}	
@@ -152,7 +150,7 @@ public class CrailFsck {
 		}
 	}
 
-	private void walkBlocks(HashMap<String, AtomicInteger> stats, CrailFS fs, String filePath, long offset, long len) throws Exception {
+	private void walkBlocks(HashMap<String, AtomicInteger> stats, CrailStore fs, String filePath, long offset, long len) throws Exception {
 //		System.out.println("printing locations for path " + filePath);
 		CrailBlockLocation locations[] = fs.lookup(filePath).get().asFile().getBlockLocations(offset, len);
 		for (int i = 0; i < locations.length; i++){

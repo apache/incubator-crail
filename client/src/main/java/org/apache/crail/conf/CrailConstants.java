@@ -1,22 +1,20 @@
 /*
- * Crail: A Multi-tiered Distributed Direct Access File System
+ * Copyright (C) 2015-2018, IBM Corporation
  *
- * Author: Patrick Stuedi <stu@zurich.ibm.com>
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- * Copyright (C) 2016, IBM Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.apache.crail.conf;
@@ -84,7 +82,7 @@ public class CrailConstants {
 	public static boolean DIRECTORY_RANDOMIZE = true;
 	
 	public static final String CACHE_IMPL_KEY = "crail.cacheimpl";
-	public static String CACHE_IMPL = "com.ibm.crail.memory.MappedBufferCache";
+	public static String CACHE_IMPL = "org.apache.crail.memory.MappedBufferCache";
 	
 	public static final String LOCATION_MAP_KEY = "crail.locationmap";
 	public static String LOCATION_MAP = "";		
@@ -100,17 +98,17 @@ public class CrailConstants {
 	public static String NAMENODE_BLOCKSELECTION = "roundrobin";	
 	
 	public static final String NAMENODE_RPC_TYPE_KEY = "crail.namenode.rpctype";
-	public static String NAMENODE_RPC_TYPE = "com.ibm.crail.namenode.rpc.darpc.DaRPCNameNode";
+	public static String NAMENODE_RPC_TYPE = "org.apache.crail.namenode.rpc.tcp.TcpNameNode";
 	
 	public static final String NAMENODE_RPC_SERVICE_KEY = "crail.namenode.rpcservice";
-	public static String NAMENODE_RPC_SERVICE = "com.ibm.crail.namenode.NameNodeService";	
+	public static String NAMENODE_RPC_SERVICE = "org.apache.crail.namenode.NameNodeService";	
 	
 	public static final String NAMENODE_LOG_KEY = "crail.namenode.log";
 	public static String NAMENODE_LOG = "";		
 	
 	//storage interface
 	public static final String STORAGE_TYPES_KEY = "crail.storage.types";
-	public static String STORAGE_TYPES = "com.ibm.crail.storage.rdma.RdmaStorageTier";		
+	public static String STORAGE_TYPES = "org.apache.crail.storage.tcp.TcpStorageTier";		
 	
 	public static final String STORAGE_CLASSES_KEY = "crail.storage.classes";
 	public static int STORAGE_CLASSES = 1;	

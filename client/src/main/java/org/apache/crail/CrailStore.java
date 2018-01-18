@@ -1,22 +1,20 @@
 /*
- * Crail: A Multi-tiered Distributed Direct Access File System
+ * Copyright (C) 2015-2018, IBM Corporation
  *
- * Author: Patrick Stuedi <stu@zurich.ibm.com>
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- * Copyright (C) 2016, IBM Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.apache.crail;
@@ -30,10 +28,10 @@ import org.apache.crail.core.CoreFileSystem;
 import org.apache.crail.utils.CrailUtils;
 import org.slf4j.Logger;
 
-public abstract class CrailFS {
+public abstract class CrailStore {
 	private static final Logger LOG = CrailUtils.getLogger();
 	private static AtomicLong referenceCounter = new AtomicLong(0);
-	private static CrailFS instance = null;
+	private static CrailStore instance = null;
 	
 	public abstract Upcoming<CrailNode> create(String path, CrailNodeType type, CrailStorageClass storageClass, CrailLocationClass locationClass) throws Exception;
 	public abstract Upcoming<CrailNode> lookup(String path) throws Exception;
@@ -70,7 +68,7 @@ public abstract class CrailFS {
 		}
 	}
 	
-	public static CrailFS newInstance(CrailConfiguration conf) throws Exception {
+	public static CrailStore newInstance(CrailConfiguration conf) throws Exception {
 		synchronized(referenceCounter){
 			boolean isSingleton = conf.getBoolean(CrailConstants.SINGLETON_KEY, false);
 			if (isSingleton) {
