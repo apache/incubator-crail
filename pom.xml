@@ -44,12 +44,12 @@
       <dependency>
         <groupId>com.ibm.disni</groupId>
         <artifactId>disni</artifactId>
-        <version>1.3</version>
+        <version>1.4</version>
       </dependency>
       <dependency>
         <groupId>com.ibm.darpc</groupId>
         <artifactId>darpc</artifactId>
-        <version>1.3</version>
+        <version>1.4</version>
       </dependency>
       <dependency>
         <groupId>com.ibm.narpc</groupId>
