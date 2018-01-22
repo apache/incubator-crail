@@ -1,6 +1,6 @@
 # Crail
 
-Crail is a fast multi-tiered distributed storage system designed from ground up for high-performance network and storage hardware. It marks the backbone of the Crail I/O architecture, which is described in more detail on [www.crail.io](http://www.crail.io). The unique features of Crail include:
+Crail is a fast multi-tiered distributed storage system designed from ground up for high-performance network and storage hardware. It marks the backbone of the Crail I/O architecture, which is described in more detail on [crail.incubator.apache.org](http://crail.incubator.apache.org). The unique features of Crail include:
 
 * Zero-copy network access from userspace 
 * Integration of multiple storage tiers such DRAM, flash and disaggregated shared storage
@@ -16,17 +16,15 @@ Crail is implemented in Java offering a Java API which integrates directly with 
 
 * Java 8 or higher
 * RDMA-based network, e.g., Infiniband, iWARP, RoCE. There are two options to run Crail without RDMA networking hardware: (a) use SoftiWARP, (b) us the TCP/DRAM storage tier
+* Libdisni.so, available as part of [DiSNI](https://github.com/zrlio/disni)
 
 ## Building 
 
-Building the source requires [Apache Maven](http://maven.apache.org/) and Java version 8 or higher.
-To build Crail execute the following steps:
+To build Crail from source using [Apache Maven](http://maven.apache.org/) execute the following steps:
 
-1. Obtain a copy of [Crail](https://github.com/zrlio/crail) from Github
-2. Make sure your local maven repo contains [DiSNI](https://github.com/zrlio/disni), if not build DiSNI from Github
-3. Make sure your local maven repo contains [DaRPC](https://github.com/zrlio/darpc), if not build DaRPC from Github
-4. Run: mvn -DskipTests install
-5. Copy tarball to the cluster and unpack it using tar xvfz crail-1.0-bin.tar.gz
+1. Obtain a copy of [Crail](https://github.com/apache/incubator-crail) from Github
+2. Run: mvn -DskipTests install
+3. Copy tarball to the cluster and unpack it using tar xvfz crail-1.0-bin.tar.gz
 
 Note: later, when deploying Crail, make sure libdisni.so is part of your LD_LIBRARY_PATH. The easiest way to make it work is to copy libdisni.so into crail-1.0/lib 
 
@@ -40,8 +38,8 @@ To configure Crail use crail-site.conf.template as a basis and modify it to matc
 There are a general file system properties and specific properties for the different storage tiers. A typical configuration for the general file system section may look as follows:
 
     crail.namenode.address                crail://namenode:9060
-    crail.storage.types                   com.ibm.crail.storage.rdma.RdmaStorageTier
-    crail.cachepath                       /memory/cache
+    crail.storage.types                   org.apache.crail.storage.rdma.RdmaStorageTier
+    crail.cachepath                       /dev/hugepages/cache
     crail.cachelimit                      12884901888
     crail.blocksize                       1048576
     crail.buffersize                      1048576
@@ -72,7 +70,7 @@ Crail supports optimized local operations via memcpy (instead of RDMA) in case a
 
 Crail is a multi-tiered storage system. Additinoal tiers can be enabled by adding them to the configuration as follows.
 
-    crail.storage.types                  com.ibm.crail.storage.rdma.RdmaStorageTier,com.ibm.crail.storage.nvmf.NvmfStorageTier
+    crail.storage.types                  org.apache.crail.storage.rdma.RdmaStorageTier,org.apache.crail.storage.nvmf.NvmfStorageTier
 
 For the NVMf storage tier we need to configure the server IP that is used when listening for new connections. We also need to configure the PCI address of the flash device we want to use, as well as the huge page mount point to be used for allocating memory. 
 
@@ -100,7 +98,7 @@ To start a datanode run the following command on a host in the cluster (ideally 
 
 Now you should have a small deployment up with just one datanode. In this case the datanode is of type RDMA/DRAM, which is the default datnode. If you want to start a different storage tier you can do so by passing a specific datanode class as follows:
 
-    ./bin/crail datanode -t com.ibm.crail.storage.nvmf.NvmfStorageTier
+    ./bin/crail datanode -t org.apache.crail.storage.nvmf.NvmfStorageTier
 
 This would start the shared storage datanode. Note that configuration in crail-site.conf needs to have the specific properties set of this type of datanode, in order for this to work. 
 
@@ -117,7 +115,7 @@ Similarly, Crail can be stopped by using
 For this to work include the list of machines to start datanodes in conf/slaves. You can start multiple datanode of different types on the same host as follows:
 
     host02-ib
-    host02-ib -t com.ibm.crail.storage.nvmf.NvmfStorageTier
+    host02-ib -t org.apache.crail.storage.nvmf.NvmfStorageTier
     host03-ib
 
 In this example, we are configuring a Crail cluster with 2 physical hosts but 3 datanodes and two different storage tiers.
@@ -140,7 +138,7 @@ For the Crail shell to work properly, the HDFS configuration in crail-1.0/conf/c
     <configuration>
       <property>
        <name>fs.crail.impl</name>
-       <value>com.ibm.crail.hdfs.CrailHadoopFileSystem</value>
+       <value>org.apache.crail.hdfs.CrailHadoopFileSystem</value>
       </property>
       <property>
         <name>fs.defaultFS</name>
@@ -148,7 +146,7 @@ For the Crail shell to work properly, the HDFS configuration in crail-1.0/conf/c
       </property>
       <property>
         <name>fs.AbstractFileSystem.crail.impl</name>
-        <value>com.ibm.crail.hdfs.CrailHDFS</value>
+        <value>org.apache.crail.hdfs.CrailHDFS</value>
       </property>
      </configuration>
 
@@ -159,21 +157,21 @@ Note that the Crail HDFS interface currently cannot provide the full performance
 The best way to program against Crail is to use Maven. Make sure you have the Crail dependency specified in your application pom.xml file:
 
     <dependency>
-      <groupId>com.ibm.crail</groupId>
+      <groupId>org.apache.crail</groupId>
       <artifactId>crail-client</artifactId>
       <version>1.0</version>
     </dependency>
 
-Then, create a Crail file system instance as follows:
+Then, create a Crail client as follows:
 
     CrailConfiguration conf = new CrailConfiguration();
-    CrailFS fs = CrailFS.newInstance(conf);
+    CrailStore store = CrailStore.newInstance(conf);
 
 Make sure the crail-1.0/conf directory is part of the classpath. 
 
-The simplest way to create a file in Crail is as follows:
+Crail supports different file types. The simplest way to create a file in Crail is as follows:
 
-    CrailFile file = fs.create(filename, CrailNodeType.DATAFILE, CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT).get().syncDir();
+    CrailFile file = store.create(filename, CrailNodeType.DATAFILE, CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT).get().syncDir();
 
 Aside from the actual filename, the 'create()' call takes as input the storage and location classes which are preferences for the storage tier and physical location that this file should be created in. Crail tries to satisfy these preferences later when the file is written. In the example we do not request any particular storage or location affinity.
 
@@ -191,19 +189,22 @@ In both cases, we pass a write hint (1024 in the example) that indicates to Crai
 
 Once the stream has been obtained, there exist various ways to write a file. The code snippet below shows the use of the asynchronous interface:
 
-    ByteBuffer dataBuf = fs.allocateBuffer();
+    CrailBuffer dataBuf = fs.allocateBuffer();
     Future<DataResult> future = outputStream.write(dataBuf);
     ...
     future.get();
 
-Reading files works very similar to writing. There exist various examples in com.ibm.crail.tools.CrailBenchmark.
+Reading files works very similar to writing. There exist various examples in org.apache.crail.tools.CrailBenchmark.
 
-## Storage Tiers
+## TCP Storage Tiers and RPC binding
 
-Crail ships with the RDMA/DRAM storage tier. Currently there are two additional storage tiers available in separate repos:
+Crail is designed for user-level networking and storage. It does, however, also provide plain TCP-based storage backends for storage and RPC and, thus, can be run easily on any machine without requiring spspecial hardware support. The TCP storage backend can be enabled as follows:
 
-* [Crail-Blkdev](https://github.com/zrlio/crail-blkdev)  is a storage tier integrating shared volume block devices such as disaggregated flash. 
-* [Crail-Netty](https://github.com/zrlio/crail-netty) is a DRAM storage tier for Crail that uses TCP, you can use it to run Crail on non-RDMA hardware. Follow the instructions in these repos to build, deploy and use these storage tiers in your Crail environmnet. 
+    crail.storage.types		org.apache.crail.storage.tcp.TcpStorageTier
+
+The TCP RPC binding can be enabled as follows:
+
+    crail.namenode.rpctype	org.apache.crail.namenode.rpc.tcp.TcpNameNode
 
 ## Benchmarks
 
@@ -236,8 +237,6 @@ you propose, and let us know.
 
 ## Contact 
 
-If you have questions or suggestions, feel free to post at:
+Please join the Crail developer mailing list for discussions and notifications. The list is at: 
 
-https://groups.google.com/forum/#!forum/zrlio-users
-
-or email: zrlio-users@googlegroups.com
+dev@crail.incubator.apache.org.
