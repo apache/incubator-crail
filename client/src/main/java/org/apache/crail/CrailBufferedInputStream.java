@@ -249,7 +249,7 @@ public abstract class CrailBufferedInputStream extends InputStream {
 		}
 	}
 	
-	public final double readLong() throws Exception {
+	public final long readLong() throws Exception {
 		CrailBuffer slice = getSlice(true);
 		if (slice == null){
 			throw new EOFException();
@@ -268,7 +268,7 @@ public abstract class CrailBufferedInputStream extends InputStream {
 		}
 	}
 	
-	public final double readShort() throws Exception {
+	public final short readShort() throws Exception {
 		CrailBuffer slice = getSlice(true);
 		if (slice == null){
 			throw new EOFException();
