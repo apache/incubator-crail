@@ -232,8 +232,7 @@ Crail is used by [Crail-Spark-IO](https://github.com/zrlio/crail-spark-io), a hi
 
 ## Contributions
 
-PRs are always welcome. Please fork, and make necessary modifications 
-you propose, and let us know. 
+For any potential changes/proposals we recommend that you open a JIRA ticket to have a disucssion. After making necessary code changes, please open a pull request at Github, and update the JIRA. See here for more resources: http://crail.incubator.apache.org/community/
 
 ## Contact 
 
