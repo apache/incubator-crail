@@ -10,7 +10,7 @@
 
   <properties>
     <build.copyDependenciesPhase>package</build.copyDependenciesPhase>
-    <hadoop.version>2.6.0</hadoop.version>
+    <hadoop.version>2.7.3</hadoop.version>
   </properties>
 
   <profiles>
