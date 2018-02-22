@@ -59,7 +59,7 @@ public class TcpStorageServer implements Runnable, StorageServer, NaRPCService<T
 	
 	@Override
 	public void init(CrailConfiguration conf, String[] args) throws Exception {
-		TcpStorageConstants.updateConstants(conf);
+		TcpStorageConstants.init(conf, args);
 		
 		this.serverGroup = new NaRPCServerGroup<TcpStorageRequest, TcpStorageResponse>(this, TcpStorageConstants.STORAGE_TCP_QUEUE_DEPTH, (int) CrailConstants.BLOCK_SIZE*2, false);
 		this.serverEndpoint = serverGroup.createServerEndpoint();
