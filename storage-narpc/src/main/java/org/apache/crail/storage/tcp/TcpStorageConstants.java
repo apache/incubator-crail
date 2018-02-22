@@ -19,11 +19,22 @@
 
 package org.apache.crail.storage.tcp;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.crail.conf.CrailConfiguration;
 import org.apache.crail.conf.CrailConstants;
+import org.apache.crail.utils.CrailUtils;
 import org.slf4j.Logger;
+import java.util.Arrays;
 
 public class TcpStorageConstants {
+	private static final Logger LOG = CrailUtils.getLogger();
+	
 	public static final String STORAGE_TCP_INTERFACE_KEY = "crail.storage.tcp.interface";
 	public static String STORAGE_TCP_INTERFACE = "eth0";
 	
@@ -41,6 +52,30 @@ public class TcpStorageConstants {
 	
 	public static final String STORAGE_TCP_QUEUE_DEPTH_KEY = "crail.storage.tcp.queuedepth";
 	public static int STORAGE_TCP_QUEUE_DEPTH = 16;	
+	
+    public static void init(CrailConfiguration conf, String[] args) throws Exception {
+        if (args != null) {
+                Option portOption = Option.builder("p").desc("port to start server on").hasArg().build();
+                Options options = new Options();
+                options.addOption(portOption);
+                CommandLineParser parser = new DefaultParser();
+
+                try {
+                        CommandLine line = parser.parse(options, Arrays.copyOfRange(args, 0, args.length));
+                        if (line.hasOption(portOption.getOpt())) {
+                                String port = line.getOptionValue(portOption.getOpt());
+                                LOG.info("using custom port " + port);
+                                conf.set(TcpStorageConstants.STORAGE_TCP_PORT_KEY, port);
+                        }
+                } catch (ParseException e) {
+                        HelpFormatter formatter = new HelpFormatter();
+                        formatter.printHelp("RDMA storage tier", options);
+                        System.exit(-1);
+                }
+        }
+
+        TcpStorageConstants.updateConstants(conf);
+    }
 	
 	public static void updateConstants(CrailConfiguration conf){
 		if (conf.get(STORAGE_TCP_INTERFACE_KEY) != null) {

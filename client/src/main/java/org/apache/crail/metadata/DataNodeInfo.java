@@ -67,6 +67,7 @@ public class DataNodeInfo {
 			this.ipAddress[i] = info.getIpAddress()[i];
 		}		
 		this.port = info.getPort();
+		this.key = 0;
 	}
 
 	public int write(ByteBuffer buffer){
@@ -84,6 +85,7 @@ public class DataNodeInfo {
 		this.locationClass = buffer.getInt();
 		buffer.get(ipAddress);
 		this.port = buffer.getInt();
+		this.key = 0;
 	}	
 	
 	public byte[] getIpAddress() {
@@ -119,6 +121,6 @@ public class DataNodeInfo {
 		return "DataNodeInfo [storageType=" + storageType + ", storageClass="
 				+ storageClass + ", locationClass=" + locationClass
 				+ ", ipAddress=" + Arrays.toString(ipAddress) + ", port="
-				+ port + ", key=" + key + "]";
+				+ port + ", key=" + key() + "]";
 	}
 }
