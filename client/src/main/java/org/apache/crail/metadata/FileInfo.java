@@ -30,6 +30,9 @@ import org.apache.crail.conf.CrailConstants;
 public class FileInfo {
 	public static final int CSIZE = 44;
 	
+	public static final long ENUMERABLE = -1;
+	public static final long NOT_ENUMERABLE = -2;
+	
 	private long fd;
 	protected AtomicLong capacity;
 	private CrailNodeType type;
@@ -38,13 +41,13 @@ public class FileInfo {
 	private long modificationTime;
 	
 	public FileInfo(){
-		this(-1, CrailNodeType.DATAFILE);
+		this(-1, CrailNodeType.DATAFILE, true);
 	}
 	
-	protected FileInfo(long fd, CrailNodeType type){
+	protected FileInfo(long fd, CrailNodeType type, boolean enumerable){
 		this.fd = fd;
 		this.type = type;
-		this.dirOffset = -1;
+		this.dirOffset = enumerable ? ENUMERABLE : NOT_ENUMERABLE;
 		this.capacity = new AtomicLong(0);
 		this.token = 0;
 		this.modificationTime = 0;
@@ -155,5 +158,9 @@ public class FileInfo {
 
 	public void setToken(long value) {
 		this.token = value;
+	}
+	
+	public boolean isEnumerable() {
+		return dirOffset > -2;
 	}
 }

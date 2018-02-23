@@ -162,14 +162,14 @@ public class CoreDataStore extends CrailStore {
 		statistics.addProvider(datanodeEndpointCache);
 	}
 	
-	public Upcoming<CrailNode> create(String path, CrailNodeType type, CrailStorageClass storageClass, CrailLocationClass locationClass) throws Exception {
+	public Upcoming<CrailNode> create(String path, CrailNodeType type, CrailStorageClass storageClass, CrailLocationClass locationClass, boolean enumerable) throws Exception {
 		FileName name = new FileName(path);
 		
 		if (CrailConstants.DEBUG){
 			LOG.info("createNode: name " + path + ", type " + type + ", storageAffinity " + storageClass + ", locationAffinity " + locationClass);
 		}
 
-		RpcFuture<RpcCreateFile> fileRes = rpcConnection.createFile(name, type, storageClass.value(), locationClass.value());
+		RpcFuture<RpcCreateFile> fileRes = rpcConnection.createFile(name, type, storageClass.value(), locationClass.value(), enumerable);
 		return new CreateNodeFuture(this, path, type, fileRes);
 	}	
 	

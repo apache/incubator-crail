@@ -33,7 +33,7 @@ public abstract class CrailStore {
 	private static AtomicLong referenceCounter = new AtomicLong(0);
 	private static CrailStore instance = null;
 	
-	public abstract Upcoming<CrailNode> create(String path, CrailNodeType type, CrailStorageClass storageClass, CrailLocationClass locationClass) throws Exception;
+	public abstract Upcoming<CrailNode> create(String path, CrailNodeType type, CrailStorageClass storageClass, CrailLocationClass locationClass, boolean enumerable) throws Exception;
 	public abstract Upcoming<CrailNode> lookup(String path) throws Exception;
 	public abstract Upcoming<CrailNode> rename(String srcPath, String dstPath) throws Exception;
 	public abstract Upcoming<CrailNode> delete(String path, boolean recursive) throws Exception;
