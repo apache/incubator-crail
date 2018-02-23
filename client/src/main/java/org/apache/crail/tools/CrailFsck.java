@@ -133,7 +133,7 @@ public class CrailFsck {
 		System.out.println("createDirectory, filename " + filename + ", storageClass " + storageClass + ", locationClass " + locationClass);
 		CrailConfiguration conf = new CrailConfiguration();
 		CrailStore fs = CrailStore.newInstance(conf);
-		fs.create(filename, CrailNodeType.DIRECTORY, CrailStorageClass.get(storageClass), CrailLocationClass.get(locationClass)).get().syncDir();
+		fs.create(filename, CrailNodeType.DIRECTORY, CrailStorageClass.get(storageClass), CrailLocationClass.get(locationClass), true).get().syncDir();
 		fs.close();
 	}	
 	

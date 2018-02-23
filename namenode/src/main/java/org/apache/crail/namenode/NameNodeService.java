@@ -90,6 +90,7 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 		boolean writeable = type.isDirectory() ? false : true; 
 		int storageClass = request.getStorageClass();
 		int locationClass = request.getLocationClass();
+		boolean enumerable = request.isEnumerable();
 		
 		//check params
 		if (type.isContainer() && locationClass > 0){
@@ -115,7 +116,7 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 			locationClass = parentInfo.getLocationClass();
 		}
 		
-		AbstractNode fileInfo = fileTree.createNode(fileHash.getFileComponent(), type, storageClass, locationClass);
+		AbstractNode fileInfo = fileTree.createNode(fileHash.getFileComponent(), type, storageClass, locationClass, enumerable);
 		try {
 			AbstractNode oldNode = parentInfo.putChild(fileInfo);
 			if (oldNode != null && oldNode.getFd() != fileInfo.getFd()){

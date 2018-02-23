@@ -30,25 +30,28 @@ import org.apache.crail.metadata.FileName;
 
 public class RpcRequestMessage {
 	public static class CreateFileReq implements RpcProtocol.NameNodeRpcMessage {
-		public static int CSIZE = FileName.CSIZE + 12;
+		public static int CSIZE = FileName.CSIZE + 16;
 		
 		protected FileName filename;
 		protected CrailNodeType type;
 		protected int storageClass;
 		protected int locationClass;
+		protected boolean enumerable;
 		
 		public CreateFileReq(){
 			this.filename = new FileName();
 			this.type = CrailNodeType.DATAFILE;
 			this.storageClass = 0;
 			this.locationClass = 0;
+			this.enumerable = true;
 		}
 		
-		public CreateFileReq(FileName filename, CrailNodeType type, int storageClass, int locationClass) {
+		public CreateFileReq(FileName filename, CrailNodeType type, int storageClass, int locationClass, boolean enumerable) {
 			this.filename = filename;
 			this.type = type;
 			this.storageClass = storageClass;
 			this.locationClass = locationClass;
+			this.enumerable = enumerable;
 		}
 
 		public FileName getFileName() {
@@ -67,7 +70,10 @@ public class RpcRequestMessage {
 			return locationClass;
 		}
 		
-		
+		public boolean isEnumerable() {
+			return enumerable;
+		}
+
 		public int size() {
 			return CSIZE;
 		}
@@ -77,28 +83,30 @@ public class RpcRequestMessage {
 		}		
 		
 		public int write(ByteBuffer buffer) {
-			int written = filename.write(buffer);
+			filename.write(buffer);
 			buffer.putInt(type.getLabel());
 			buffer.putInt(storageClass);
 			buffer.putInt(locationClass);
-			written += 12;
+			buffer.putInt(enumerable ? 1 : 0);
 			
-			return written;
+			return CSIZE;
 		}		
 
 		public void update(ByteBuffer buffer) {
 			filename.update(buffer);
-			int tmp = buffer.getInt();
-			type = CrailNodeType.parse(tmp);
+			int _type = buffer.getInt();
+			type = CrailNodeType.parse(_type);
 			storageClass = buffer.getInt();
 			locationClass = buffer.getInt();
+			int _enumerable = buffer.getInt();
+			enumerable = (_enumerable == 1) ? true : false;			
 		}
 
 		@Override
 		public String toString() {
 			return "CreateFileReq [filename=" + filename + ", type=" + type
 					+ ", storageClass=" + storageClass + ", locationClass="
-					+ locationClass + "]";
+					+ locationClass + ", enumerable=" + enumerable + "]";
 		}
 	}
 	
@@ -136,10 +144,9 @@ public class RpcRequestMessage {
 		}		
 		
 		public int write(ByteBuffer buffer) {
-			int written = filename.write(buffer);
+			filename.write(buffer);
 			buffer.putInt(writeable ? 1 : 0);
-			written += 4;
-			return written;
+			return CSIZE;
 		}		
 
 		public void update(ByteBuffer buffer) {
@@ -182,10 +189,9 @@ public class RpcRequestMessage {
 		}		
 		
 		public int write(ByteBuffer buffer) {
-			int written = fileInfo.write(buffer, true);
+			fileInfo.write(buffer, true);
 			buffer.putInt(close ? 1 : 0);
-			written += 4;
-			return written;
+			return CSIZE;
 		}		
 	
 		public void update(ByteBuffer buffer) {
@@ -239,10 +245,9 @@ public class RpcRequestMessage {
 		}		
 		
 		public int write(ByteBuffer buffer) {
-			int written = filename.write(buffer);
+			filename.write(buffer);
 			buffer.putInt(recursive ? 1 : 0);
-			written += 4;
-			return written;
+			return CSIZE;
 		}		
 
 		public void update(ByteBuffer buffer) {

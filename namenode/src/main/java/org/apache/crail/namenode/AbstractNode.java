@@ -51,8 +51,8 @@ public abstract class AbstractNode extends FileInfo implements Delayed {
 	//clear all the blocks (used by GC)
 	public abstract void freeBlocks(BlockStore blockStore) throws Exception;	
 	
-	public AbstractNode(long fd, int fileComponent, CrailNodeType type, int storageClass, int locationAffinity){
-		super(fd, type);
+	public AbstractNode(long fd, int fileComponent, CrailNodeType type, int storageClass, int locationAffinity, boolean enumerable){
+		super(fd, type, enumerable);
 		
 		this.fileComponent = fileComponent;
 		this.storageClass = storageClass;

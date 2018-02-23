@@ -29,7 +29,7 @@ import org.apache.crail.metadata.FileName;
 
 public interface RpcConnection {
 	public abstract RpcFuture<RpcCreateFile> createFile(
-			FileName filename, CrailNodeType type, int storageClass, int locationClass) throws IOException;
+			FileName filename, CrailNodeType type, int storageClass, int locationClass, boolean enumerable) throws IOException;
 
 	public abstract RpcFuture<RpcGetFile> getFile(FileName filename,
 			boolean writeable) throws IOException;

@@ -33,20 +33,20 @@ public class FileStore {
 	
 	public FileStore(Sequencer sequencer) throws IOException { 
 		this.sequencer = sequencer;
-		this.root = createNode(new FileName("/").getFileComponent(), CrailNodeType.DIRECTORY, CrailConstants.STORAGE_ROOTCLASS, 0);
+		this.root = createNode(new FileName("/").getFileComponent(), CrailNodeType.DIRECTORY, CrailConstants.STORAGE_ROOTCLASS, 0, false);
 	}
 	
-	public AbstractNode createNode(int fileComponent, CrailNodeType type, int storageClass, int locationClass) throws IOException {
+	public AbstractNode createNode(int fileComponent, CrailNodeType type, int storageClass, int locationClass, boolean enumerable) throws IOException {
 		if (type == CrailNodeType.DIRECTORY){
-			return new DirectoryBlocks(sequencer.getNextId(), fileComponent, type, storageClass, locationClass);
+			return new DirectoryBlocks(sequencer.getNextId(), fileComponent, type, storageClass, locationClass, enumerable);
 		} else if (type == CrailNodeType.MULTIFILE){
-			return new MultiFileBlocks(sequencer.getNextId(), fileComponent, type, storageClass, locationClass);
+			return new MultiFileBlocks(sequencer.getNextId(), fileComponent, type, storageClass, locationClass, enumerable);
 		} else if (type == CrailNodeType.TABLE){
-			return new TableBlocks(sequencer.getNextId(), fileComponent, type, storageClass, locationClass);
+			return new TableBlocks(sequencer.getNextId(), fileComponent, type, storageClass, locationClass, enumerable);
 		} else if (type == CrailNodeType.KEYVALUE){
-			return new KeyValueBlocks(sequencer.getNextId(), fileComponent, type, storageClass, locationClass);
+			return new KeyValueBlocks(sequencer.getNextId(), fileComponent, type, storageClass, locationClass, enumerable);
 		} else if (type == CrailNodeType.DATAFILE){
-			return new FileBlocks(sequencer.getNextId(), fileComponent, type, storageClass, locationClass);
+			return new FileBlocks(sequencer.getNextId(), fileComponent, type, storageClass, locationClass, enumerable);
 		} else {
 			throw new IOException("File type unkown: " + type);
 		}
