@@ -34,12 +34,18 @@ public class TcpRpcConstants {
 	public static final String NAMENODE_TCP_MESSAGESIZE_KEY = "crail.namenode.tcp.messageSize";
 	public static int NAMENODE_TCP_MESSAGESIZE = 512;	
 	
+	public static final String NAMENODE_TCP_CORES_KEY = "crail.namenode.tcp.cores";
+	public static int NAMENODE_TCP_CORES = 1;	
+	
 	public static void updateConstants(CrailConfiguration conf){
 		if (conf.get(NAMENODE_TCP_QUEUEDEPTH_KEY) != null) {
 			NAMENODE_TCP_QUEUEDEPTH = Integer.parseInt(conf.get(NAMENODE_TCP_QUEUEDEPTH_KEY));
 		}
 		if (conf.get(NAMENODE_TCP_MESSAGESIZE_KEY) != null) {
 			NAMENODE_TCP_MESSAGESIZE = Integer.parseInt(conf.get(NAMENODE_TCP_MESSAGESIZE_KEY));
+		}		
+		if (conf.get(NAMENODE_TCP_CORES_KEY) != null) {
+			NAMENODE_TCP_CORES = Integer.parseInt(conf.get(NAMENODE_TCP_CORES_KEY));
 		}		
 	}
 	
@@ -49,5 +55,6 @@ public class TcpRpcConstants {
 	public static void printConf(Logger logger) {
 		LOG.info(NAMENODE_TCP_QUEUEDEPTH_KEY + " " + NAMENODE_TCP_QUEUEDEPTH);
 		LOG.info(NAMENODE_TCP_MESSAGESIZE_KEY + " " + NAMENODE_TCP_MESSAGESIZE);
+		LOG.info(NAMENODE_TCP_CORES_KEY + " " + NAMENODE_TCP_CORES);
 	}	
 }
