@@ -53,11 +53,16 @@ public class TcpStorageConstants {
 	public static final String STORAGE_TCP_QUEUE_DEPTH_KEY = "crail.storage.tcp.queuedepth";
 	public static int STORAGE_TCP_QUEUE_DEPTH = 16;	
 	
+	public static final String STORAGE_TCP_CORES_KEY = "crail.storage.tcp.cores";
+	public static int STORAGE_TCP_CORES = 1;		
+	
     public static void init(CrailConfiguration conf, String[] args) throws Exception {
         if (args != null) {
                 Option portOption = Option.builder("p").desc("port to start server on").hasArg().build();
+                Option coresOption = Option.builder("c").desc("number of cores to use").hasArg().build();
                 Options options = new Options();
                 options.addOption(portOption);
+                options.addOption(coresOption);
                 CommandLineParser parser = new DefaultParser();
 
                 try {
@@ -67,6 +72,12 @@ public class TcpStorageConstants {
                                 LOG.info("using custom port " + port);
                                 conf.set(TcpStorageConstants.STORAGE_TCP_PORT_KEY, port);
                         }
+                        if (line.hasOption(coresOption.getOpt())) {
+                            String cores = line.getOptionValue(coresOption.getOpt());
+                            LOG.info("number of cores used is " + cores);
+                            conf.set(TcpStorageConstants.STORAGE_TCP_CORES_KEY, cores);
+                        }                        
+                        
                 } catch (ParseException e) {
                         HelpFormatter formatter = new HelpFormatter();
                         formatter.printHelp("RDMA storage tier", options);
@@ -95,6 +106,9 @@ public class TcpStorageConstants {
 		}	
 		if (conf.get(STORAGE_TCP_QUEUE_DEPTH_KEY) != null) {
 			STORAGE_TCP_QUEUE_DEPTH = Integer.parseInt(conf.get(STORAGE_TCP_QUEUE_DEPTH_KEY));
+		}
+		if (conf.get(STORAGE_TCP_CORES_KEY) != null) {
+			STORAGE_TCP_CORES = Integer.parseInt(conf.get(STORAGE_TCP_CORES_KEY));
 		}		
 	}	
 	
@@ -105,6 +119,7 @@ public class TcpStorageConstants {
 		logger.info(STORAGE_TCP_ALLOCATION_SIZE_KEY + " " + STORAGE_TCP_ALLOCATION_SIZE);
 		logger.info(STORAGE_TCP_DATA_PATH_KEY + " " + STORAGE_TCP_DATA_PATH);
 		logger.info(STORAGE_TCP_QUEUE_DEPTH_KEY + " " + STORAGE_TCP_QUEUE_DEPTH);
+		logger.info(STORAGE_TCP_CORES_KEY + " " + STORAGE_TCP_CORES);
 	}	
 
 }

@@ -49,7 +49,7 @@ public class TcpNameNodeServer extends RpcServer {
 		TcpRpcConstants.verify();
 		this.serverGroup = new NaRPCServerGroup<TcpNameNodeRequest, TcpNameNodeResponse>(
 				dispatcher, TcpRpcConstants.NAMENODE_TCP_QUEUEDEPTH,
-				TcpRpcConstants.NAMENODE_TCP_MESSAGESIZE, true);
+				TcpRpcConstants.NAMENODE_TCP_MESSAGESIZE, true, TcpRpcConstants.NAMENODE_TCP_CORES);
 		this.serverEndpoint = serverGroup.createServerEndpoint();
 		InetSocketAddress inetSocketAddress = CrailUtils.getNameNodeAddress();
 		serverEndpoint.bind(inetSocketAddress);
