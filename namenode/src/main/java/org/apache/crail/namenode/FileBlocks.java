@@ -34,8 +34,8 @@ public class FileBlocks extends AbstractNode {
 	private final Lock readLock;
 	private final Lock writeLock;
 	
-	public FileBlocks(long fd, int fileComponent, CrailNodeType type, int storageClass, int locationClass) {
-		super(fd, fileComponent, type, storageClass, locationClass);
+	public FileBlocks(long fd, int fileComponent, CrailNodeType type, int storageClass, int locationClass, boolean enumerable) {
+		super(fd, fileComponent, type, storageClass, locationClass, enumerable);
 		this.blocks = new ArrayList<NameNodeBlockInfo>(CrailConstants.NAMENODE_FILEBLOCKS);
 		this.lock = new ReentrantReadWriteLock();
 		this.readLock = lock.readLock();

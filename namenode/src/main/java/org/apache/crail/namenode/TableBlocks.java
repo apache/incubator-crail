@@ -20,12 +20,13 @@
 package org.apache.crail.namenode;
 
 import org.apache.crail.CrailNodeType;
+import org.apache.crail.conf.CrailConstants;
 
 public class TableBlocks extends DirectoryBlocks {
 
 	TableBlocks(long fd, int fileComponent, CrailNodeType type,
-			int storageClass, int locationClass) {
-		super(fd, fileComponent, type, storageClass, locationClass);
+			int storageClass, int locationClass, boolean enumerable) {
+		super(fd, fileComponent, type, storageClass, locationClass, enumerable);
 	}
 
 	@Override
@@ -34,6 +35,10 @@ public class TableBlocks extends DirectoryBlocks {
 			throw new Exception("Attempt to create key/value pair in container other than a table");
 		}
 		
-		return children.put(child.getComponent(), child);
+		AbstractNode oldNode = children.put(child.getComponent(), child);
+		if (child.isEnumerable()) {
+			child.setDirOffset(dirOffsetCounter.getAndAdd(CrailConstants.DIRECTORY_RECORD));
+		}		
+		return oldNode;
 	}
 }

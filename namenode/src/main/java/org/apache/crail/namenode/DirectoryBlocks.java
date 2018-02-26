@@ -29,12 +29,12 @@ import org.apache.crail.conf.CrailConstants;
 import org.apache.crail.metadata.BlockInfo;
 
 public class DirectoryBlocks extends AbstractNode {
-	private AtomicLong dirOffsetCounter;
+	protected AtomicLong dirOffsetCounter;
 	protected ConcurrentHashMap<Integer, AbstractNode> children;	
 	private ConcurrentHashMap<Integer, NameNodeBlockInfo> blocks;
 	
-	DirectoryBlocks(long fd, int fileComponent, CrailNodeType type, int storageClass, int locationClass) {
-		super(fd, fileComponent, type, storageClass, locationClass);
+	DirectoryBlocks(long fd, int fileComponent, CrailNodeType type, int storageClass, int locationClass, boolean enumerable) {
+		super(fd, fileComponent, type, storageClass, locationClass, enumerable);
 		this.children = new ConcurrentHashMap<Integer, AbstractNode>();
 		this.dirOffsetCounter = new AtomicLong(0);
 		this.blocks = new ConcurrentHashMap<Integer, NameNodeBlockInfo>();
@@ -45,7 +45,9 @@ public class DirectoryBlocks extends AbstractNode {
 		if (old != null){
 			throw new Exception("File exists");
 		}
-		child.setDirOffset(dirOffsetCounter.getAndAdd(CrailConstants.DIRECTORY_RECORD));
+		if (child.isEnumerable()) {
+			child.setDirOffset(dirOffsetCounter.getAndAdd(CrailConstants.DIRECTORY_RECORD));
+		}
 		return old;
 	}	
 	
