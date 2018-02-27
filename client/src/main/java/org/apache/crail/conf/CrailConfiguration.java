@@ -19,56 +19,52 @@
 
 package org.apache.crail.conf;
 
+import org.apache.crail.utils.CrailUtils;
+import org.slf4j.Logger;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.apache.crail.utils.CrailUtils;
-import org.slf4j.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CrailConfiguration {
 	private static final Logger LOG = CrailUtils.getLogger();
 	private ConcurrentHashMap<String, String> conf;
-	
-	
-	public CrailConfiguration() throws IOException{
+
+	public CrailConfiguration() throws IOException {
 		conf = new ConcurrentHashMap<>();
 		Properties properties = loadProperties("crail-site.conf");
 		mergeProperties(properties);
 	}
 
-	public String get(String key) {
-		return conf.get(key);
+	private static String expandEnvVars(String input) throws IOException {
+		if (null == input) {
+			return null;
+		}
+		// match ${ENV_VAR_NAME} or $ENV_VAR_NAME
+		Pattern p = Pattern.compile("\\$\\{(\\w+)\\}|\\$(\\w+)");
+		Matcher m = p.matcher(input);
+		StringBuffer output = new StringBuffer();
+		while (m.find()) {
+			String envVar;
+			if (m.group(1) != null) {
+				envVar = m.group(1);
+			} else {
+				envVar = m.group(2);
+			}
+			String envVal = System.getenv(envVar);
+			if (envVal == null) {
+				throw new IOException("Could not expand environment variable $" + envVar);
+			}
+			m.appendReplacement(output, envVal);
+		}
+		m.appendTail(output);
+		return output.toString();
 	}
 
-	public void set(String key, String value) {
-		conf.put(key, value);
-	}
-	
-	public boolean getBoolean(String key, boolean fallback) {
-		if (conf.containsKey(key)){
-			return Boolean.parseBoolean(conf.get(key));
-		} else {
-			return fallback;
-		}
-	}
-
-	public void setInt(String key, int level) {
-		String value = Integer.toString(level);
-		conf.put(key, value);
-	}
-	
-	private void mergeProperties(Properties properties) {
-		if (properties == null){
-			return;
-		}
-		for (String key : properties.stringPropertyNames()) {
-			conf.put(key.trim(), properties.getProperty(key).trim());
-		}
-	}
-	
 	private static Properties loadProperties(String resourceName) throws IOException {
 		Properties properties = new Properties();
 
@@ -80,6 +76,40 @@ public class CrailConfiguration {
 		} finally {
 			inputStream.close();
 		}
+		for (String key : properties.stringPropertyNames()) {
+			String val = properties.getProperty(key);
+			properties.setProperty(key, expandEnvVars(val));
+		}
 		return properties;
+	}
+
+	public String get(String key) {
+		return conf.get(key);
+	}
+
+	public void set(String key, String value) {
+		conf.put(key, value);
+	}
+
+	public boolean getBoolean(String key, boolean fallback) {
+		if (conf.containsKey(key)) {
+			return Boolean.parseBoolean(conf.get(key));
+		} else {
+			return fallback;
+		}
+	}
+
+	public void setInt(String key, int level) {
+		String value = Integer.toString(level);
+		conf.put(key, value);
+	}
+
+	private void mergeProperties(Properties properties) {
+		if (properties == null) {
+			return;
+		}
+		for (String key : properties.stringPropertyNames()) {
+			conf.put(key.trim(), properties.getProperty(key).trim());
+		}
 	}
 }
