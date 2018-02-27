@@ -26,6 +26,12 @@
         <hadoop.version>2.7.3</hadoop.version>
       </properties>
     </profile>
+    <profile>
+      <id>hadoop-2.8</id>
+      <properties>
+        <hadoop.version>2.8.3</hadoop.version>
+      </properties>
+    </profile>
   </profiles>
 
   <dependencyManagement>
@@ -86,6 +92,7 @@
     <module>storage-rdma</module>
     <module>storage-nvmf</module>
     <module>storage-narpc</module>
+    <module>storage-object</module>
     <module>rpc</module>
     <module>rpc-darpc</module>
     <module>rpc-narpc</module>
