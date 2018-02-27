@@ -40,7 +40,7 @@ public class CrailConfiguration {
 		mergeProperties(properties);
 	}
 
-	private static String expandEnvVars(String input) {
+	private static String expandEnvVars(String input) throws IOException {
 		if (null == input) {
 			return null;
 		}
@@ -50,14 +50,14 @@ public class CrailConfiguration {
 		StringBuffer output = new StringBuffer();
 		while (m.find()) {
 			String envVar;
-			if (m.group(1) != null)
+			if (m.group(1) != null) {
 				envVar = m.group(1);
-			else
+			} else {
 				envVar = m.group(2);
+			}
 			String envVal = System.getenv(envVar);
 			if (envVal == null) {
-				LOG.warn("Could not expand environment variable ${}", envVar);
-				envVal = "";
+				throw new IOException("Could not expand environment variable $" + envVar);
 			}
 			m.appendReplacement(output, envVal);
 		}
