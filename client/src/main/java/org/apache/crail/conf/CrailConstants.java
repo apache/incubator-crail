@@ -28,7 +28,7 @@ public class CrailConstants {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	public static final String VERSION_KEY = "crail.version";
-	public static int VERSION = 3003;
+	public static int VERSION = 3004;
 	
 	public static final String DIRECTORY_DEPTH_KEY = "crail.directorydepth";
 	public static int DIRECTORY_DEPTH = 16;
