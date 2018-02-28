@@ -61,11 +61,10 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 		this.address = datanodeAddr;
 		this.bufferMap = new ConcurrentHashMap<Long, CrailBuffer>();
 		this.unsafe = getUnsafe();
-		long lba = 0;
 		for (File dataFile : dataDir.listFiles()) {
-			MappedByteBuffer mappedBuffer = mmap(dataFile);
-			bufferMap.put(lba, OffHeapBuffer.wrap(mappedBuffer));
-			lba += mappedBuffer.capacity();
+			long lba = Long.parseLong(dataFile.getName());
+			OffHeapBuffer offHeapBuffer = OffHeapBuffer.wrap(mmap(dataFile));
+			bufferMap.put(lba, offHeapBuffer);
 		}				
 	}
 
@@ -134,7 +133,7 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 	}
 	
 	private static long getAlignedLba(long remoteLba){
-		return (remoteLba / RdmaConstants.STORAGE_RDMA_ALLOCATION_SIZE) * RdmaConstants.STORAGE_RDMA_ALLOCATION_SIZE;
+		return remoteLba / RdmaConstants.STORAGE_RDMA_ALLOCATION_SIZE;
 	}
 	
 	private static long getLbaOffset(long remoteLba){
