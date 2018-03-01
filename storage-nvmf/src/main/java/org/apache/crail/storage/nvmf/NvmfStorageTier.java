@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018, IBM Corporation
+ * Copyright (C) 2018, IBM Corporation
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -26,9 +26,9 @@ import org.slf4j.Logger;
 
 public class NvmfStorageTier extends NvmfStorageClient implements StorageTier {
 	private static final Logger LOG = CrailUtils.getLogger();
-	
+
 	public StorageServer launchServer() throws Exception {
-		LOG.info("initalizing NVMf datanode");
+		LOG.info("initalizing NVMf storage tier");
 		NvmfStorageServer storageServer = new NvmfStorageServer();
 		return storageServer;
 	}
