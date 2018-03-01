@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018, IBM Corporation
+ * Copyright (C) 2018, IBM Corporation
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -19,13 +19,9 @@
 
 package org.apache.crail.storage.nvmf;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import com.ibm.jnvmf.NamespaceIdentifier;
+import com.ibm.jnvmf.NvmeQualifiedName;
+import org.apache.commons.cli.*;
 import org.apache.crail.conf.CrailConfiguration;
 import org.apache.crail.conf.CrailConstants;
 import org.slf4j.Logger;
@@ -33,7 +29,6 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.concurrent.TimeUnit;
 
 public class NvmfStorageConstants {
 
@@ -46,22 +41,19 @@ public class NvmfStorageConstants {
 	public static int PORT = 50025;
 
 	public static final String NQN_KEY = "nqn";
-	public static String NQN = "nqn.2016-06.io.spdk:cnode1";
+	public static NvmeQualifiedName NQN = new NvmeQualifiedName("nqn.2017-06.io.crail:cnode");
 
-	public static final String NAMESPACE_KEY = "namespace";
-	public static int NAMESPACE = 1;
+	/* this is a server property, the client will get the nsid from the namenode */
+	public static NamespaceIdentifier NAMESPACE = new NamespaceIdentifier(1);
 
 	public static final String ALLOCATION_SIZE_KEY = "allocationsize";
 	public static long ALLOCATION_SIZE = 1073741824; /* 1GB */
 
-	public static final String SERVER_MEMPOOL_KEY = "servermempool";
-	public static long SERVER_MEMPOOL = 256;
+	public static final String QUEUE_SIZE_KEY = "queueSize";
+	public static int QUEUE_SIZE = 64;
 
-	public static final String CLIENT_MEMPOOL_KEY = "clientmempool";
-	public static long CLIENT_MEMPOOL = 256;
-
-	public static final TimeUnit TIME_UNIT = TimeUnit.MINUTES;
-	public static final long TIME_OUT = 15;
+	public static final String STAGING_CACHE_SIZE_KEY = "stagingcachesize";
+	public static int STAGING_CACHE_SIZE = 262144;
 
 	private static String fullKey(String key) {
 		return PREFIX + "." + key;
@@ -72,12 +64,7 @@ public class NvmfStorageConstants {
 	}
 
 	public static void updateConstants(CrailConfiguration conf) throws UnknownHostException {
-		String arg = get(conf, NAMESPACE_KEY);
-		if (arg != null) {
-			NAMESPACE = Integer.parseInt(arg);
-		}
-
-		arg = get(conf, IP_ADDR_KEY);
+		String arg = get(conf, IP_ADDR_KEY);
 		if (arg != null) {
 			IP_ADDR = InetAddress.getByName(arg);
 		}
@@ -89,7 +76,7 @@ public class NvmfStorageConstants {
 
 		arg = get(conf, NQN_KEY);
 		if (arg != null) {
-			NQN = arg;
+			NQN = new NvmeQualifiedName(arg);
 		}
 
 		arg = get(conf, ALLOCATION_SIZE_KEY);
@@ -97,23 +84,23 @@ public class NvmfStorageConstants {
 			ALLOCATION_SIZE = Long.parseLong(arg);
 		}
 
-		arg = get(conf, SERVER_MEMPOOL_KEY);
+		arg = get(conf, QUEUE_SIZE_KEY);
 		if (arg != null) {
-			SERVER_MEMPOOL = Long.parseLong(arg);
+			QUEUE_SIZE = Integer.parseInt(arg);
 		}
 
-		arg = get(conf, CLIENT_MEMPOOL_KEY);
+		arg = get(conf, STAGING_CACHE_SIZE_KEY);
 		if (arg != null) {
-			CLIENT_MEMPOOL = Long.parseLong(arg);
+			STAGING_CACHE_SIZE = Integer.parseInt(arg);
 		}
 	}
 
-	public static void verify() throws IOException {
-		if (NAMESPACE <= 0){
-			throw new IOException("Namespace must be > 0");
-		}
+	public static void verify() {
 		if (ALLOCATION_SIZE % CrailConstants.BLOCK_SIZE != 0){
-			throw new IOException("allocationsize must be multiple of crail.blocksize");
+			throw new IllegalArgumentException("allocationsize must be multiple of crail.blocksize");
+		}
+		if (QUEUE_SIZE < 0) {
+			throw new IllegalArgumentException("Queue size negative");
 		}
 	}
 
@@ -123,12 +110,10 @@ public class NvmfStorageConstants {
 		}
 		logger.info(fullKey(PORT_KEY) + " " + PORT);
 		logger.info(fullKey(NQN_KEY) + " " + NQN);
-		logger.info(fullKey(NAMESPACE_KEY) + " " + NAMESPACE);
 		logger.info(fullKey(ALLOCATION_SIZE_KEY) + " " + ALLOCATION_SIZE);
-		logger.info(fullKey(SERVER_MEMPOOL_KEY) + " " + SERVER_MEMPOOL);
-		logger.info(fullKey(CLIENT_MEMPOOL_KEY) + " " + CLIENT_MEMPOOL);
+		logger.info(fullKey(QUEUE_SIZE_KEY) + " " + QUEUE_SIZE);
 	}
-	
+
 	public static void parseCmdLine(CrailConfiguration crailConfiguration, String[] args) throws IOException {
 		NvmfStorageConstants.updateConstants(crailConfiguration);
 
@@ -140,10 +125,12 @@ public class NvmfStorageConstants {
 				bindIp.setRequired(true);
 			}
 			Option port = Option.builder("p").desc("target port").hasArg().type(Number.class).build();
+			Option namespace = Option.builder("n").desc("namespace id").hasArg().type(Number.class).build();
 			Option nqn = Option.builder("nqn").desc("target subsystem NQN").hasArg().build();
 			options.addOption(bindIp);
 			options.addOption(port);
 			options.addOption(nqn);
+			options.addOption(namespace);
 			CommandLineParser parser = new DefaultParser();
 			HelpFormatter formatter = new HelpFormatter();
 			CommandLine line = null;
@@ -151,6 +138,10 @@ public class NvmfStorageConstants {
 				line = parser.parse(options, args);
 				if (line.hasOption(port.getOpt())) {
 					NvmfStorageConstants.PORT = ((Number) line.getParsedOptionValue(port.getOpt())).intValue();
+				}
+				if (line.hasOption(namespace.getOpt())) {
+					NvmfStorageConstants.NAMESPACE = new
+							NamespaceIdentifier(((Number) line.getParsedOptionValue(namespace.getOpt())).intValue());
 				}
 			} catch (ParseException e) {
 				System.err.println(e.getMessage());
@@ -161,10 +152,10 @@ public class NvmfStorageConstants {
 				NvmfStorageConstants.IP_ADDR = InetAddress.getByName(line.getOptionValue(bindIp.getOpt()));
 			}
 			if (line.hasOption(nqn.getOpt())) {
-				NvmfStorageConstants.NQN = line.getOptionValue(nqn.getOpt());
+				NvmfStorageConstants.NQN = new NvmeQualifiedName(line.getOptionValue(nqn.getOpt()));
 			}
 		}
 
 		NvmfStorageConstants.verify();
-	}	
+	}
 }
