@@ -61,6 +61,8 @@ public class ObjectStoreConstants {
 	public static String S3_ENDPOINT = null;
 	private static final String S3_PROTOCOL_KEY = "s3protocol";
 	public static String S3_PROTOCOL = "HTTP";
+	private static final String S3_SIGNER_KEY = "s3signer";
+	public static String S3_SIGNER = null; //other possible values "AWS3SignerType", "AWS4SignerType", "NoOpSignerType"
 
 	public static void parseCmdLine(CrailConfiguration crailConfiguration, String[] args) throws IOException {
 		ObjectStoreConstants.updateConstants(crailConfiguration);
@@ -95,62 +97,54 @@ public class ObjectStoreConstants {
 		if (arg != null) {
 			S3_ACCESS = arg;
 		}
-
 		arg = get(conf, S3_SECRET_KEY);
 		if (arg != null) {
 			S3_SECRET = arg;
 		}
-
 		arg = get(conf, S3_REGION_NAME_KEY);
 		if (arg != null) {
 			S3_REGION_NAME = arg;
 		}
-
 		arg = get(conf, S3_BUCKET_NAME_KEY);
 		if (arg != null) {
 			S3_BUCKET_NAME = arg;
 		}
-
 		arg = get(conf, S3_ENDPOINT_KEY);
 		if (arg != null) {
 			S3_ENDPOINT = arg;
 		}
-
 		arg = get(conf, S3_PROTOCOL_KEY);
 		if (arg != null) {
 			S3_PROTOCOL = arg.toUpperCase();
 		}
-
+		arg = get(conf, S3_SIGNER_KEY);
+		if (arg != null) {
+			S3_SIGNER = arg;
+		}
 		arg = get(conf, OBJECT_PREFIX_KEY);
 		if (arg != null) {
 			OBJECT_PREFIX = arg;
 		}
-
 		arg = get(conf, CLEANUP_ON_EXIT_KEY);
 		if (arg != null) {
 			CLEANUP_ON_EXIT = Boolean.valueOf(arg);
 		}
-
 		arg = get(conf, STORAGE_LIMIT_KEY);
 		if (arg != null) {
 			STORAGE_LIMIT = Long.parseLong(arg);
 		}
-
 		arg = get(conf, ALLOCATION_SIZE_KEY);
 		if (arg != null) {
 			ALLOCATION_SIZE = Long.parseLong(arg);
 		}
-
 		arg = get(conf, DATANODE_KEY);
 		if (arg != null) {
 			DATANODE = arg;
 		}
-
 		arg = get(conf, DATANODE_PORT_KEY);
 		if (arg != null) {
 			DATANODE_PORT = Integer.parseInt(arg);
 		}
-
 		arg = get(conf, PROFILE_KEY);
 		if (arg != null) {
 			PROFILE = Boolean.valueOf(arg);
@@ -193,7 +187,7 @@ public class ObjectStoreConstants {
 		}
 	}
 
-	public static void importS3EnvConf() {
+	private static void importS3EnvConf() {
 		String envVal;
 		envVal = System.getenv("S3_ACCESS_KEY");
 		if (envVal != null) {
@@ -228,6 +222,12 @@ public class ObjectStoreConstants {
 			LOG.debug("Setting {} from {} to {} environemnt value",
 					fullKey(ObjectStoreConstants.S3_PROTOCOL_KEY), ObjectStoreConstants.S3_PROTOCOL, envVal);
 			ObjectStoreConstants.S3_PROTOCOL = envVal;
+		}
+		envVal = System.getenv("S3_SIGNER");
+		if (envVal != null) {
+			LOG.debug("Setting {} from {} to {} environemnt value",
+					fullKey(ObjectStoreConstants.S3_SECRET_KEY), ObjectStoreConstants.S3_SIGNER, envVal);
+			ObjectStoreConstants.S3_SIGNER = envVal;
 		}
 	}
 }

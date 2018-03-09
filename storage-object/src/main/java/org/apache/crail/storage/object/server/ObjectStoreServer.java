@@ -25,7 +25,7 @@ import org.apache.crail.storage.StorageResource;
 import org.apache.crail.storage.StorageServer;
 import org.apache.crail.storage.object.ObjectStoreConstants;
 import org.apache.crail.storage.object.ObjectStoreUtils;
-import org.apache.crail.storage.object.object.S3ObjectStoreClient;
+import org.apache.crail.storage.object.client.S3ObjectStoreClient;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -36,48 +36,101 @@ public class ObjectStoreServer implements StorageServer {
 
 	private InetSocketAddress datanodeAddr;
 	private long blockID = 0;
-	private S3ObjectStoreClient objectStoreClient = null;
 	private boolean isAlive = false;
 	private long allocated = 0;
 	private long alignedSize;
 	private int currentStag = 1;
 	private boolean initialized;
+	private boolean alive;
 	private long offset;
+	private S3ObjectStoreClient objectStoreClient = null;
+	private ObjectStoreMetadataServer metadataServer = null;
 
 	public ObjectStoreServer() {
+		super();
 	}
 
-	public void init(CrailConfiguration crailConfiguration, String[] args) throws Exception {
+	@Override
+	public void init(CrailConfiguration crailConfiguration, String[] args) throws IOException {
 		if (initialized) {
-			throw new IOException("NvmfStorageTier already initialized");
+			throw new IOException("ObjectStorageServer already initialized");
 		}
 		initialized = true;
+		if (args != null) {
+			for (int i = 0; i < args.length; i++) {
+				char flag;
+				try {
+					if (args[i].charAt(0) == '-') {
+						flag = args[i].charAt(1);
+					} else {
+						LOG.warn("Invalid flag {}", args[i]);
+						continue;
+					}
+					switch (flag) {
+						case 't':
+							break;
+						case 'o':
+							String opt;
+							if (args[i].length() > 2) {
+								opt = args[i].substring(2);
+							} else {
+								i++;
+								opt = args[i];
+							}
+							String[] split = opt.split("=");
+							String key = split[0];
+							String val = split[1];
+							crailConfiguration.set(key, val);
+							LOG.info("Set custom option {} = {} ", key, val);
+							break;
+						default:
+							LOG.warn("Unknown flag {}", flag);
+							break;
+					}
+				} catch (Exception e) {
+					LOG.warn("Error processing input {}", args[i]);
+				}
+			}
+		}
+		ObjectStoreConstants.updateConstants(crailConfiguration);
+		ObjectStoreConstants.verify();
 		ObjectStoreConstants.parseCmdLine(crailConfiguration, args);
+
 		this.alignedSize = ObjectStoreConstants.STORAGE_LIMIT -
 				(ObjectStoreConstants.STORAGE_LIMIT % ObjectStoreConstants.ALLOCATION_SIZE);
-		/*
-		NvmeEndpointGroup group = new NvmeEndpointGroup(new NvmeTransportType[]{NvmeTransportType.RDMA}, NvmfStorageConstants.SERVER_MEMPOOL);
-		endpoint = group.createEndpoint();
 
-		URI uri = new URI("nvmef://" + NvmfStorageConstants.IP_ADDR.getHostAddress() + ":" + NvmfStorageConstants.PORT +
-				"/0/" + NvmfStorageConstants.NAMESPACE + "?subsystem=" + NvmfStorageConstants.NQN);
-		endpoint.connect(uri);
-
-		long namespaceSize = endpoint.getNamespaceSize();
-		alignedSize = namespaceSize - (namespaceSize % NvmfStorageConstants.ALLOCATION_SIZE);
-		offset = 0;
-		*/
-
-		isAlive = true;
+		this.alive = false;
 	}
 
 	@Override
-	public void printConf(Logger log) {
-		log.info("TODO: dump all configuration");
+	public void printConf(Logger logger) {
+		ObjectStoreConstants.printConf(logger);
+	}
+
+	public void close() throws Exception {
+		this.isAlive = false;
+		if (metadataServer != null && metadataServer.isAlive()) {
+			// stop ObjectStore metadata service
+			LOG.debug("Closing metadata server");
+			metadataServer.close();
+		}
+		if (objectStoreClient != null) {
+			//objectStoreClient.deleteBucket(ObjectStoreConstants.S3_BUCKET_NAME);;
+		}
 	}
 
 	@Override
-	public StorageResource allocateResource() throws Exception {
+	protected void finalize() {
+		LOG.info("Datanode finalize");
+		try {
+			close();
+		} catch (Exception e) {
+			LOG.error("Could not close ObjectStoreDataNode. Reason: {}", e);
+		}
+	}
+
+	@Override
+	public StorageResource allocateResource() {
 		StorageResource res = null;
 		LOG.info("Allocating object store blocks");
 		if (allocated < alignedSize) {
@@ -85,7 +138,6 @@ public class ObjectStoreServer implements StorageServer {
 			allocated += ObjectStoreConstants.ALLOCATION_SIZE;
 			res = StorageResource.createResource(addr, (int) ObjectStoreConstants.ALLOCATION_SIZE, currentStag);
 			blockID += ObjectStoreConstants.ALLOCATION_SIZE / CrailConstants.BLOCK_SIZE;
-			double sizeGBs = ObjectStoreConstants.ALLOCATION_SIZE / (1024. * 1024. * 1024.);
 			double perc = (allocated * 100.) / alignedSize;
 			currentStag++;
 			LOG.info("Allocation done : " + perc + "% , allocated " + allocated + " / " + alignedSize);
@@ -104,6 +156,16 @@ public class ObjectStoreServer implements StorageServer {
 	}
 
 	public void run() {
+		isAlive = true;
+		try {
+			setup();
+		} catch (Exception e) {
+			LOG.error("Could not set up S3 bucket", e);
+			return;
+		}
+		metadataServer = new ObjectStoreMetadataServer();
+		metadataServer.start();
+
 		LOG.info("ObjectStorageServer started at " + getAddress());
 		while (isAlive) {
 			try {
@@ -114,42 +176,24 @@ public class ObjectStoreServer implements StorageServer {
 				isAlive = false;
 			}
 		}
-	}
-
-	protected void finalize() {
-		LOG.info("Datanode finalize");
 		try {
-			close();
+			cleanup();
 		} catch (Exception e) {
-			LOG.error("Could not close ObjectStoreDataNode. Reason: {}", e);
+			LOG.error("Could not clean up Crail S3 objects", e);
 		}
 	}
 
-	/*
-	@Override
-	public void run() {
-		this.isAlive = true;
-		try {
-			int prevBlockCount = 0;
-			//noinspection InfiniteLoopStatement
-			while (this.isAlive) {
-				if (rpcClient != null) {
-					DataNodeStatistics statistics = rpcClient.getDataNode();
-					int curBlockCount = statistics.getFreeBlockCount();
-					if (prevBlockCount != curBlockCount) {
-						LOG.info("Datanode statistics: freeBlocks = " + curBlockCount);
-					}
-					prevBlockCount = curBlockCount;
-				}
-				Thread.sleep(2000);
-			}
-		} catch(Exception e){
-			e.printStackTrace();
+	private void setup() throws Exception {
+		objectStoreClient = new S3ObjectStoreClient();
+		if (!objectStoreClient.createBucket(ObjectStoreConstants.S3_BUCKET_NAME)) {
+			LOG.warn("Could not create or confirm existence of bucket {}", ObjectStoreConstants.S3_BUCKET_NAME);
 		}
-		this.isAlive = false;
 	}
-*/
-	public void close() throws Exception {
-		this.isAlive = false;
+
+	private void cleanup() {
+		if (ObjectStoreConstants.CLEANUP_ON_EXIT) {
+			objectStoreClient.deleteObjectsWithPrefix(ObjectStoreConstants.OBJECT_PREFIX);
+			// TODO: delete also bucket? Makes sense if we created the bucket or if the bucket is empty at the end
+		}
 	}
 }

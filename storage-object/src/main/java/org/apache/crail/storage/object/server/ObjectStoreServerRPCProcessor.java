@@ -37,7 +37,6 @@ class ObjectStoreServerRPCProcessor extends SimpleChannelInboundHandler<RPCCall>
 
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, RPCCall rpc) throws Exception {
-		short error;
 		try {
 			switch (rpc.getCmd()) {
 				case ObjectStoreRPC.TranslateBlockCmd:

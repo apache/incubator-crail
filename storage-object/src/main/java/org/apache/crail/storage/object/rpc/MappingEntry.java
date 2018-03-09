@@ -18,15 +18,15 @@
  */
 package org.apache.crail.storage.object.rpc;
 
-import static java.lang.Math.max;
-
 import java.util.Comparator;
 
+import static java.lang.Math.max;
+
 public class MappingEntry implements Comparable<MappingEntry>, Comparator<MappingEntry> {
-	private final String key; // object key, cannot be modifies
+	private final String key; // object key (cannot be modified)
 	private long blockOffset;// the blockOffset in the Crail address space
-	private long length; // the length of the object
-	private long objectOffset; // the offset in the original object
+	private long length; // the object length
+	private long objectOffset; // the object offset (parts of an object can be invalidated by newer writes)
 
 	public MappingEntry(String key, long startOffset, long length) {
 		assert length > 0;

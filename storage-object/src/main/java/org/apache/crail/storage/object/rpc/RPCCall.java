@@ -48,12 +48,6 @@ public abstract class RPCCall {
 		deserializeRequest(buffer);
 	}
 
-	public void deserializeRequest(ByteBuf buffer) {
-		setRequestSize(buffer.readShort());
-		cmd = buffer.readShort();
-		cookie = buffer.readLong();
-	}
-
 	public static boolean isMessageComplete(ByteBuf buf) {
 		int readableBytes = buf.readableBytes();
 		if (readableBytes < 2) {
@@ -93,6 +87,12 @@ public abstract class RPCCall {
 
 	public static void setMessageSize(ByteBuf buffer, int size) {
 		buffer.setInt(0, size);
+	}
+
+	public void deserializeRequest(ByteBuf buffer) {
+		setRequestSize(buffer.readShort());
+		cmd = buffer.readShort();
+		cookie = buffer.readLong();
 	}
 
 	public int serializeRequest(ByteBuf buffer) {

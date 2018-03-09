@@ -90,7 +90,9 @@ public class ObjectStoreRPC {
 				buffer.skipBytes(keySize);
 			} else
 				tx_key = null;
-		}		@Override
+		}
+
+		@Override
 		public int serializeRequest(ByteBuf buffer) {
 			super.serializeRequest(buffer);
 			buffer.writeLong(this.tx_addr); // 8
@@ -121,7 +123,6 @@ public class ObjectStoreRPC {
 		public String getObjectKey() {
 			return tx_key;
 		}
-
 
 
 		@Override
@@ -161,7 +162,9 @@ public class ObjectStoreRPC {
 		public void setRequest(long addr, int length) {
 			this.tx_addr = addr;
 			this.tx_length = length;
-		}		@Override
+		}
+
+		@Override
 		public int serializeRequest(ByteBuf buffer) {
 			super.serializeRequest(buffer);
 			buffer.writeLong(this.tx_addr); // 8
@@ -179,7 +182,9 @@ public class ObjectStoreRPC {
 
 		public long getAddr() {
 			return tx_addr;
-		}		@Override
+		}
+
+		@Override
 		public void deserializeRequest(ByteBuf buffer) {
 			super.deserializeRequest(buffer);
 			tx_addr = buffer.readLong(); // 8
@@ -206,9 +211,6 @@ public class ObjectStoreRPC {
 		}
 
 
-
-
-
 		@Override
 		public short getRequestSize() {
 			return requestSize;
@@ -222,7 +224,7 @@ public class ObjectStoreRPC {
 
 
 	public static class UnmapBlock extends RPCCall {
-		protected static final int requestSize = RPC_REQ_HEADER_SIZE + 8 + 8;
+		private static final int requestSize = RPC_REQ_HEADER_SIZE + 8 + 8;
 
 		private long tx_addr; // 8
 		private long tx_length; // 8
@@ -240,7 +242,9 @@ public class ObjectStoreRPC {
 		public void setRequest(long addr, int length) {
 			this.tx_addr = addr;
 			this.tx_length = length;
-		}		@Override
+		}
+
+		@Override
 		public int serializeRequest(ByteBuf buffer) {
 			super.serializeRequest(buffer);
 			buffer.writeLong(tx_addr);
@@ -251,7 +255,9 @@ public class ObjectStoreRPC {
 
 		public long getAddr() {
 			return tx_addr;
-		}		@Override
+		}
+
+		@Override
 		public void deserializeRequest(ByteBuf buffer) {
 			super.deserializeRequest(buffer);
 			this.tx_addr = buffer.readLong();
@@ -263,9 +269,6 @@ public class ObjectStoreRPC {
 		}
 
 
-
-
-
 		@Override
 		public short getRequestSize() {
 			return requestSize; // request size is static, no need to modify it
@@ -274,8 +277,8 @@ public class ObjectStoreRPC {
 
 
 	public static class TranslateBlock extends RPCCall {
-		protected static final short requestSize = RPC_REQ_HEADER_SIZE + 8 + 8;
-		protected short responseSize;
+		private static final short requestSize = RPC_REQ_HEADER_SIZE + 8 + 8;
+		private short responseSize;
 
 		private long tx_addr; // 8
 		private long tx_length; // 8
@@ -297,7 +300,9 @@ public class ObjectStoreRPC {
 		public void setRequest(long addr, int length) {
 			this.tx_addr = addr;
 			this.tx_length = length;
-		}		@Override
+		}
+
+		@Override
 		public int serializeRequest(ByteBuf buffer) {
 			super.serializeRequest(buffer);
 			buffer.writeLong(tx_addr); // 8
@@ -309,7 +314,9 @@ public class ObjectStoreRPC {
 
 		public long getAddr() {
 			return tx_addr;
-		}		@Override
+		}
+
+		@Override
 		public void deserializeRequest(ByteBuf buffer) {
 			super.deserializeRequest(buffer);
 			tx_addr = buffer.readLong();
@@ -318,7 +325,9 @@ public class ObjectStoreRPC {
 
 		public long getLength() {
 			return tx_length;
-		}		@Override
+		}
+
+		@Override
 		public int serializeResponse(ByteBuf buffer) {
 			int start = buffer.writerIndex();
 			int msgSize = super.serializeResponse(buffer);
@@ -344,12 +353,19 @@ public class ObjectStoreRPC {
 
 		public List<MappingEntry> getResponse() {
 			return rx_mapping;
-		}		@Override
+		}
+
+		public void setResponse(List<MappingEntry> mapping) {
+			this.rx_mapping = mapping;
+			setResponseStatus(SUCCESS);
+		}
+
+		@Override
 		public void deserializeResponse(ByteBuf buffer) {
 			super.deserializeResponse(buffer);
 			if (getStatus() == SUCCESS) {
 				int ranges = buffer.readInt();
-				this.rx_mapping = new ArrayList<MappingEntry>();
+				this.rx_mapping = new ArrayList<>();
 				for (int i = 0; i < ranges; i++) {
 					int keySize = buffer.readInt();
 					String key = buffer.toString(buffer.readerIndex(), keySize, Charset.defaultCharset());
@@ -360,15 +376,6 @@ public class ObjectStoreRPC {
 				}
 			}
 		}
-
-		public void setResponse(List<MappingEntry> mapping) {
-			this.rx_mapping = mapping;
-			setResponseStatus(SUCCESS);
-		}
-
-
-
-
 
 		@Override
 		public short getRequestSize() {
@@ -384,8 +391,6 @@ public class ObjectStoreRPC {
 		public void setResponseSize(short size) {
 			responseSize = size;
 		}
-
-
 
 
 	}

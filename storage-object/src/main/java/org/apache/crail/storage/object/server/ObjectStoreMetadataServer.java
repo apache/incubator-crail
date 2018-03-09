@@ -30,11 +30,10 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.apache.crail.conf.CrailConstants;
 import org.apache.crail.storage.object.ObjectStoreConstants;
 import org.apache.crail.storage.object.ObjectStoreUtils;
-import org.apache.crail.storage.object.object.S3ObjectStoreClient;
+import org.apache.crail.storage.object.client.S3ObjectStoreClient;
 import org.apache.crail.storage.object.rpc.*;
 import org.slf4j.Logger;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -96,7 +95,7 @@ public class ObjectStoreMetadataServer extends Thread {
 					ch.pipeline().addLast("RPCResponseEncoder", new RPCResponseEncoder());
 				}
 			});
-			/* general optimization settings */
+			/* optimizing general settings */
 			boot.option(ChannelOption.SO_BACKLOG, 1024);
 			boot.childOption(ChannelOption.SO_KEEPALIVE, true);
 			boot.option(ChannelOption.SO_KEEPALIVE, true);
@@ -106,7 +105,7 @@ public class ObjectStoreMetadataServer extends Thread {
 			boot.option(ChannelOption.SO_SNDBUF, 1048576);
 			boot.option(ChannelOption.SO_LINGER, 1);
 
-			/* now we bind the server and start */
+			/* bind the server and start */
 			ChannelFuture f = boot.bind(address).sync();
 			f.channel().closeFuture().sync();
 		} catch (InterruptedException e) {
@@ -127,12 +126,7 @@ public class ObjectStoreMetadataServer extends Thread {
 		if (ObjectStoreConstants.CLEANUP_ON_EXIT) {
 			// create new connection to the ObjectStore
 			S3ObjectStoreClient objectStoreClient;
-			try {
-				objectStoreClient = new S3ObjectStoreClient();
-			} catch (IOException e) {
-				LOG.warn("While creating object store client, got exception {}", e);
-				return;
-			}
+			objectStoreClient = new S3ObjectStoreClient();
 			if (objectStoreClient.deleteBucket(ObjectStoreConstants.S3_BUCKET_NAME))
 				return;
 			// Could not delete bucket. Try to delete all mapped objects
@@ -198,7 +192,6 @@ public class ObjectStoreMetadataServer extends Thread {
 			rpc.setResponseStatus(RPCCall.SUCCESS);
 			return;
 		}
-
 		// insert new entry at appropriate location (entries are ordered by start address and do not overlap)
 		int insertPos = binarySearch(mapping, newEntry);
 		if (insertPos < 0)
@@ -211,7 +204,6 @@ public class ObjectStoreMetadataServer extends Thread {
 			}
 		}
 		mapping.add(insertPos, newEntry);
-
 		// Update/remove overlapping entries to the left. Only a single overlapping entry can exist
 		if (insertPos > 0) {
 			MappingEntry cur = mapping.get(insertPos - 1);
@@ -221,7 +213,6 @@ public class ObjectStoreMetadataServer extends Thread {
 					mapping.remove(insertPos - 1);
 			}
 		}
-
 		// Update/remove overlapping entries to the right. Only a single overlapping entry can exist
 		for (int i = insertPos + 1; i < mapping.size(); i++) {
 			MappingEntry cur = mapping.get(i);
@@ -235,7 +226,6 @@ public class ObjectStoreMetadataServer extends Thread {
 				break;
 			}
 		}
-
 		rpc.setResponseStatus(RPCCall.SUCCESS);
 		//validateMapping(mapping);
 	}

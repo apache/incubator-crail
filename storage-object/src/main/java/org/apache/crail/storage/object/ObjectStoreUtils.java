@@ -41,8 +41,7 @@ public class ObjectStoreUtils {
 		return LOG;
 	}
 
-	public static int readStreamIntoHeapByteBuffer(InputStream src, ByteBuffer dst)
-			throws IOException {
+	public static int readStreamIntoHeapByteBuffer(InputStream src, ByteBuffer dst)	throws IOException {
 		int readBytes = 0, writtenBytes = 0;
 		int startPos = dst.position();
 		int endPos = dst.limit();
@@ -57,6 +56,7 @@ public class ObjectStoreUtils {
 			LOG.error("Buffer start = {}, pos = {}, capacity = {}, written bytes = {}, read bytes = {}",
 					startPos, dst.position(), dst.capacity(), writtenBytes, readBytes);
 			LOG.error("Read truncated to {} bytes", writtenBytes);
+			throw e;
 		}
 
 		LOG.debug("Written {} bytes to ByteBuffer range ({} - {})", writtenBytes, startPos, dst.position());
@@ -82,15 +82,13 @@ public class ObjectStoreUtils {
 				LOG.error("Read truncated to {} bytes", writtenBytes);
 				break;
 			}
-//			if (ObjectStoreConstants.PROFILE) {
-//				t2 = System.nanoTime();
-//				LOG.info("Copied {} bytes into output ByteBuffer, Latency={} (us)", readBytes, (t2 - t1) / 1000.);
-//				t1 = t2;
-//			}
+			if (ObjectStoreConstants.PROFILE) {
+				t2 = System.nanoTime();
+				LOG.debug("Read {} bytes into output ByteBuffer, Latency={} (us)", readBytes, (t2 - t1) / 1000.);
+				t1 = t2;
+			}
 			writtenBytes += readBytes;
 		}
-		//dst.limit(writtenBytes);
-		//dst.position(writtenBytes);
 		LOG.debug("Written {} bytes to ByteBuffer range ({} - {})", writtenBytes, startPos, dst.position());
 		return writtenBytes;
 	}
@@ -103,14 +101,13 @@ public class ObjectStoreUtils {
 	}
 
 	public static void showByteBufferContent(ByteBuffer buf, int offset, int bytes) {
-		/* this dump the content of first bytes from the payload */
+		// dump the content of first bytes from the payload
 		if (buf != null) {
-			LOG.info("DUMP: TID:" + Thread.currentThread().getId() + " NioByteBuffer : " + buf);
+			LOG.debug("DUMP: TID:" + Thread.currentThread().getId() + " NioByteBuffer : " + buf);
 			int min = (buf.limit() - offset);
 			if (min > bytes)
 				min = bytes;
 			String str = "DUMP: TID:" + Thread.currentThread().getId() + " DUMP (" + offset + " ,+" + min + ") : ";
-			//for loop update it to the end limit
 			min += offset;
 			for (int i = offset; i < min; i++) {
 				//str += Character.toHexString();
@@ -118,22 +115,21 @@ public class ObjectStoreUtils {
 				if (i % 32 == 0)
 					str += "\n";
 			}
-			LOG.info(str);
+			LOG.debug(str);
 		} else {
-			LOG.info("DUMP : payload content is NULL");
+			LOG.debug("DUMP : payload content is NULL");
 		}
 	}
 
 	public static void showByteBufContent(ByteBuf buf, int offset, int bytes) {
-		/* this dump the content of first bytes from the payload */
+		// dump the content of first bytes from the payload
 		if (buf != null) {
 			int ori_rindex = buf.readerIndex();
-			LOG.info("DUMP: TID:" + Thread.currentThread().getId() + " NettyByteBuf : " + buf);
+			LOG.debug("DUMP: TID:" + Thread.currentThread().getId() + " NettyByteBuf : " + buf);
 			int min = (buf.capacity() - offset);
 			if (min > bytes)
 				min = bytes;
 			String str = "DUMP: TID:" + Thread.currentThread().getId() + " DUMP (" + offset + " ,+" + min + ") : ";
-			//for loop update it to the end limit
 			min += offset;
 			for (int i = offset; i < min; i++) {
 				//str += Character.toHexString();
@@ -141,10 +137,10 @@ public class ObjectStoreUtils {
 				if (i % 32 == 0)
 					str += "\n";
 			}
-			LOG.info(str);
+			LOG.debug(str);
 			buf.readerIndex(ori_rindex);
 		} else {
-			LOG.info("DUMP : payload content is NULL");
+			LOG.debug("DUMP : payload content is NULL");
 		}
 	}
 
@@ -159,7 +155,7 @@ public class ObjectStoreUtils {
 		}
 
 		@Override
-		public int read() throws IOException {
+		public int read() {
 			byte[] tmppbuf = new byte[1];
 			if (!buf.hasRemaining()) {
 				return -1;
@@ -169,7 +165,7 @@ public class ObjectStoreUtils {
 		}
 
 		@Override
-		public int read(byte[] bytes) throws IOException {
+		public int read(byte[] bytes) {
 			if (!buf.hasRemaining()) {
 				return -1;
 			}
@@ -177,18 +173,16 @@ public class ObjectStoreUtils {
 			buf.get(bytes);
 			int finalPos = buf.position();
 			int len = finalPos - initialPos;
-			//LOG.debug("Read " + len + " chars");
 			return len;
 		}
 
 		@Override
-		public int read(byte[] bytes, int off, int len) throws IOException {
+		public int read(byte[] bytes, int off, int len) {
 			if (!buf.hasRemaining()) {
 				return -1;
 			}
 			len = Math.min(len, buf.remaining());
 			buf.get(bytes, off, len);
-			//LOG.debug("Read " + len + " chars");
 			return len;
 		}
 
@@ -196,35 +190,29 @@ public class ObjectStoreUtils {
 		public long skip(long n) {
 			int step = Math.min((int) n, buf.remaining());
 			this.buf.position(buf.position() + step);
-			//LOG.debug("Skipped " + step + "chars");
 			return step;
 		}
 
 		@Override
 		public int available() {
-			int length = buf.remaining();
-			//LOG.debug("Available chars: " + length);
-			return length;
+			return buf.remaining();
 		}
 
 		@Override
 		public void mark(int readlimit) {
 			//this.mark = this.buf.position();
 			//this.readlimit = readlimit;
-			//LOG.debug("Mark at " + buf.position());
 			//buf.mark();
 		}
 
 		@Override
 		public void reset() {
 			//buf.position(this.mark);
-			//LOG.debug("Buffer reset");
 			//buf.reset();
 		}
 
 		@Override
 		public boolean markSupported() {
-			//LOG.debug("Mark support ");
 			return true;
 		}
 	}

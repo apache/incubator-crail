@@ -26,7 +26,6 @@ import org.apache.crail.storage.StorageEndpoint;
 import org.apache.crail.storage.StorageFuture;
 import org.apache.crail.storage.object.ObjectStoreConstants;
 import org.apache.crail.storage.object.ObjectStoreUtils;
-import org.apache.crail.storage.object.object.S3ObjectStoreClient;
 import org.apache.crail.storage.object.rpc.MappingEntry;
 import org.apache.crail.storage.object.rpc.ObjectStoreRPC;
 import org.apache.crail.storage.object.rpc.RPCCall;

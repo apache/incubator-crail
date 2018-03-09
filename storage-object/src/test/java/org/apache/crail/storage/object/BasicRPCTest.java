@@ -39,12 +39,11 @@ import static org.junit.Assert.assertEquals;
 
 public class BasicRPCTest {
 	private static final org.slf4j.Logger LOG = ObjectStoreUtils.getLogger();
-
+	private final long addr = 1234;
+	private final int length = 1000000;
 	private ObjectStoreMetadataClientGroup clientGroup;
 	private ObjectStoreMetadataClient client;
 	private ObjectStoreMetadataServer server;
-	private final long addr = 1234;
-	private final int length = 1000000;
 
 	@BeforeClass
 	public static void setUp() {

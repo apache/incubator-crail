@@ -178,14 +178,14 @@ public class ObjectStoreMetadataTest {
 		assertEquals(newBlock.getStatus(), RPCCall.SUCCESS);
 		mdServer.translateBlock(translateBlock);
 		validateMapping(Arrays.asList(new MappingEntry(key, 0, length)),
-		                translateBlock.getResponse());
+				translateBlock.getResponse());
 		mdServer.writeBlockRange(write1);
 		assertEquals(write1.getStatus(), RPCCall.SUCCESS);
 		validateMapping(Arrays.asList(
 				new MappingEntry(key, 0, 100),
 				new MappingEntry(k1, 100, 100),
 				new MappingEntry(key, 200, length - 200)),
-		                translateBlock.getResponse());
+				translateBlock.getResponse());
 		mdServer.writeBlockRange(write2);
 		assertEquals(write2.getStatus(), RPCCall.SUCCESS);
 		validateMapping(Arrays.asList(
@@ -194,7 +194,7 @@ public class ObjectStoreMetadataTest {
 				new MappingEntry(key, 200, 100),
 				new MappingEntry(k2, 300, 100),
 				new MappingEntry(key, 400, length - 400)),
-		                translateBlock.getResponse());
+				translateBlock.getResponse());
 		mdServer.writeBlockRange(write3);
 		assertEquals(write3.getStatus(), RPCCall.SUCCESS);
 		mdServer.translateBlock(translateBlock);
@@ -207,7 +207,7 @@ public class ObjectStoreMetadataTest {
 				new MappingEntry(key, 400, 100),
 				new MappingEntry(k3, 500, 100),
 				new MappingEntry(key, 600, length - 600)),
-		                translateBlock.getResponse());
+				translateBlock.getResponse());
 		mdServer.unmapBlock(delBlock);
 		assertEquals(delBlock.getStatus(), RPCCall.SUCCESS);
 		mdServer.unmapBlock(delBlock);
@@ -248,12 +248,12 @@ public class ObjectStoreMetadataTest {
 				new MappingEntry(key + "3", sector * 4, sector * 2),
 				new MappingEntry(key + "2", sector * 6, sector * 2),
 				new MappingEntry(key + "1", sector * 8, sector * 2)),
-		                translateBlock.getResponse());
+				translateBlock.getResponse());
 
 		mdServer.writeBlock(newBlock);
 		assertEquals(newBlock.getStatus(), RPCCall.SUCCESS);
 		mdServer.translateBlock(translateBlock);
 		validateMapping(Arrays.asList(new MappingEntry(key, 0, length)),
-		                translateBlock.getResponse());
+				translateBlock.getResponse());
 	}
 }

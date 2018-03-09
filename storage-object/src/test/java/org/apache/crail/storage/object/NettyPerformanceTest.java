@@ -38,12 +38,11 @@ import static org.junit.Assert.assertEquals;
 
 public class NettyPerformanceTest {
 	private static final org.slf4j.Logger LOG = ObjectStoreUtils.getLogger();
-
+	private final long addr = 0;
+	private final int threadNr = 8;
 	private ObjectStoreMetadataClientGroup clientGroup;
 	private ObjectStoreMetadataClient client;
 	private ObjectStoreMetadataServer server;
-	private final long addr = 0;
-	private final int threadNr = 8;
 
 	@BeforeClass
 	public static void setUp() {

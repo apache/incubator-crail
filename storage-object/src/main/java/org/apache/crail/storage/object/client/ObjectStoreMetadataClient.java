@@ -19,8 +19,8 @@
 
 package org.apache.crail.storage.object.client;
 
-import org.apache.crail.metadata.BlockInfo;
 import io.netty.channel.Channel;
+import org.apache.crail.metadata.BlockInfo;
 import org.apache.crail.storage.object.ObjectStoreUtils;
 import org.apache.crail.storage.object.rpc.ObjectStoreRPC;
 import org.apache.crail.storage.object.rpc.RPCCall;

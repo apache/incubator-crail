@@ -49,28 +49,6 @@ public class S3Test {
 	private static String endpoint;
 	private static String protocol;
 
-	AmazonS3Client get_new_connection() {
-		LOG.debug("Creating S3 connection using AccessKey=" + accessKey + " SecretKey=" + secretKey);
-
-		AWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
-		ClientConfiguration clientConf = new ClientConfiguration();
-		clientConf.setProtocol(Protocol.valueOf(protocol));
-		//clientConf.withSignerOverride(null);
-		//clientConf.setSignerOverride(null);
-		//clientConf.withSignerOverride("S3SignerType");
-		//clientConf.withSignerOverride("NoOpSignerType");
-		clientConf.setSocketBufferSizeHints(64 * 1024, 64 * 1024);
-		clientConf.withUseExpectContinue(true);
-		clientConf.withThrottledRetries(false);
-		clientConf.setSocketTimeout(3000000);
-		clientConf.setConnectionTimeout(3000000);
-		ApacheHttpClientConfig httpConf = clientConf.getApacheHttpClientConfig();
-		AmazonS3Client connection = new AmazonS3Client(credentials, clientConf);
-		connection.setEndpoint(endpoint);
-		return connection;
-	}
-
-
 	@BeforeClass
 	public static void setup() throws Exception {
 		Random rand = new Random();
@@ -91,6 +69,26 @@ public class S3Test {
 		//BasicConfigurator.configure();
 	}
 
+	AmazonS3Client get_new_connection() {
+		LOG.debug("Creating S3 connection using AccessKey=" + accessKey + " SecretKey=" + secretKey);
+
+		AWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
+		ClientConfiguration clientConf = new ClientConfiguration();
+		clientConf.setProtocol(Protocol.valueOf(protocol));
+		//clientConf.withSignerOverride(null);
+		//clientConf.setSignerOverride(null);
+		//clientConf.withSignerOverride("S3SignerType");
+		//clientConf.withSignerOverride("NoOpSignerType");
+		clientConf.setSocketBufferSizeHints(64 * 1024, 64 * 1024);
+		clientConf.withUseExpectContinue(true);
+		clientConf.withThrottledRetries(false);
+		clientConf.setSocketTimeout(3000000);
+		clientConf.setConnectionTimeout(3000000);
+		ApacheHttpClientConfig httpConf = clientConf.getApacheHttpClientConfig();
+		AmazonS3Client connection = new AmazonS3Client(credentials, clientConf);
+		connection.setEndpoint(endpoint);
+		return connection;
+	}
 
 	@Test
 	public void t1S3ListBuckets() throws Exception {
@@ -131,7 +129,7 @@ public class S3Test {
 		assertTrue("Create bucket successful", true);
 	}
 
-	
+
 	@Test
 	public void t3S3ListObjects() throws Exception {
 		// List bucket contents
@@ -282,8 +280,6 @@ public class S3Test {
 	@Test
 	public void t6S3DeleteBucket() throws Exception {
 		AmazonS3Client conn = get_new_connection();
-		String prefix = "TestObject-#";
-		int objects = 10;
 
 		// Delete bucket
 		LOG.info("--------------------------------------------------------------------------------------------------");

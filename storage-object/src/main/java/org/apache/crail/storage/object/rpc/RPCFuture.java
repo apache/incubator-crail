@@ -68,29 +68,25 @@ public class RPCFuture<T> extends ObjectStoreCommonFuture implements Future<T> {
 	}
 
 	public T get() throws InterruptedException, ExecutionException {
-		/* otherwise we wait */
 		synchronized (this) {
 			if (!isDone()) {
-				// then we have to block until finished is marked set
 				this.wait();
 			}
 		}
 		if (!isDone())
-			throw new InterruptedException("RPC was interrupted of kind : " + debug);
+			throw new InterruptedException("RPC interrupted: " + debug);
 
 		return result;
 	}
 
 	public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-		/* otherwise we wait */
 		synchronized (this) {
 			if (!isDone()) {
-				// then we have to block until finished is marked set
 				this.wait(unit.toMillis(timeout));
 			}
 		}
 		if (!isDone())
-			throw new TimeoutException("RPC timeout happened for " + debug);
+			throw new TimeoutException("RPC timeout: " + debug);
 
 		return result;
 	}
