@@ -19,15 +19,6 @@
 
 package org.apache.crail;
 
-import org.apache.crail.CrailBuffer;
-import org.apache.crail.CrailStore;
-import org.apache.crail.CrailFile;
-import org.apache.crail.CrailInputStream;
-import org.apache.crail.CrailLocationClass;
-import org.apache.crail.CrailNodeType;
-import org.apache.crail.CrailOutputStream;
-import org.apache.crail.CrailResult;
-import org.apache.crail.CrailStorageClass;
 import org.apache.crail.conf.CrailConfiguration;
 import org.apache.crail.conf.CrailConstants;
 import org.apache.crail.memory.OffHeapBuffer;
@@ -36,14 +27,17 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.Assert;
 
-import java.util.Random;
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class ClientTest {
 
 	CrailStore fs;
 	final String basePath = "/test";
-	Random rand = new Random();
+	ThreadLocalRandom random = ThreadLocalRandom.current();
 
 	@Before
 	public void init() throws Exception {
@@ -59,14 +53,14 @@ public class ClientTest {
 
 	@Test
 	public void testCreateFile() throws Exception {
-		String filename = basePath + "/fooCreate"; 
+		String filename = basePath + "/fooCreate";
 		fs.create(filename,  CrailNodeType.DATAFILE, CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT, true).get();
 		fs.lookup(filename).get().asFile();
 	}
 
 	@Test
 	public void testDeleteFile() throws Exception {
-		String filename = basePath + "/fooDelete"; 
+		String filename = basePath + "/fooDelete";
 		fs.create(filename, CrailNodeType.DATAFILE, CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT, true).get();
 		fs.delete(filename, false).get();
 		Assert.assertNull(fs.lookup(filename).get());
@@ -94,10 +88,10 @@ public class ClientTest {
 		fs.lookup(filename).get().asDirectory();
 	}
 
-	void fillRandom(CrailBuffer buffer) {
+	void fillRandom(ByteBuffer buffer) {
 		int position = buffer.position();
 		byte[] byteBuffer = new byte[buffer.remaining()];
-		rand.nextBytes(byteBuffer);
+		random.nextBytes(byteBuffer);
 		buffer.put(byteBuffer);
 		buffer.position(position);
 	}
@@ -108,7 +102,7 @@ public class ClientTest {
 		if (toWrite != 0) {
 			CrailBuffer outputBuffer = OffHeapBuffer.wrap(ByteBuffer.allocateDirect(toWrite));
 			outputBuffer.limit(toWrite);
-			fillRandom(outputBuffer);
+			fillRandom(outputBuffer.getByteBuffer());
 			CrailResult result = outputStream.write(outputBuffer).get();
 			Assert.assertEquals(toWrite, result.getLen());
 			Assert.assertEquals(0, outputBuffer.remaining());
@@ -132,7 +126,7 @@ public class ClientTest {
 
 		outputBuffer.position(position);
 		outputBuffer.limit(outputBuffer.position() + length);
-		fillRandom(outputBuffer);
+		fillRandom(outputBuffer.getByteBuffer());
 		CrailResult result = outputStream.write(outputBuffer).get();
 		Assert.assertEquals(length, result.getLen());
 		Assert.assertEquals(0, outputBuffer.remaining());
@@ -146,7 +140,7 @@ public class ClientTest {
 
 		inputBuffer.position(position);
 		inputBuffer.limit(inputBuffer.position() + length);
-		fillRandom(inputBuffer);
+		fillRandom(inputBuffer.getByteBuffer());
 		result = inputStream.read(inputBuffer).get();
 		Assert.assertEquals(length, result.getLen());
 		Assert.assertEquals(0, inputBuffer.remaining());
@@ -180,17 +174,17 @@ public class ClientTest {
 		int lengths[] = {
 				(int)CrailConstants.BLOCK_SIZE, 							// full block write
 				(int)CrailConstants.BLOCK_SIZE*8, 							// multiple block write
-				rand.nextInt((int)CrailConstants.BLOCK_SIZE - 1) + 1, 		// Unaligned block write
-				rand.nextInt((int)CrailConstants.BLOCK_SIZE*8 - 1) + 1		// Unaligned multiple block write
+				random.nextInt((int)CrailConstants.BLOCK_SIZE - 1) + 1, 		// Unaligned block write
+				random.nextInt((int)CrailConstants.BLOCK_SIZE*8 - 1) + 1		// Unaligned multiple block write
 		};
 		int positions[] = {
 				0,
-				rand.nextInt((int)CrailConstants.BLOCK_SIZE - 1) + 1 		// Unaligned block offset
+				random.nextInt((int)CrailConstants.BLOCK_SIZE - 1) + 1 		// Unaligned block offset
 		};
 		int remoteOffsets[] = {
 				0,
-				rand.nextInt((int)CrailConstants.BLOCK_SIZE - 1) + 1,
-				rand.nextInt((int)CrailConstants.BLOCK_SIZE) + (int)CrailConstants.BLOCK_SIZE + 1
+				random.nextInt((int)CrailConstants.BLOCK_SIZE - 1) + 1,
+				random.nextInt((int)CrailConstants.BLOCK_SIZE) + (int)CrailConstants.BLOCK_SIZE + 1
 		};
 
 		for (int length : lengths) {
@@ -200,5 +194,129 @@ public class ClientTest {
 				}
 			}
 		}
+	}
+
+	@Test
+	public void unalignedBufferStreamSimple() throws Exception {
+		System.err.println("BufferedStream unaligned write after purge");
+
+		String filename = basePath + "/fooOutputStream";
+		CrailFile file = fs.create(filename,CrailNodeType.DATAFILE,  CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT, true).get().asFile();
+
+		int totalBytesWritten = 0;
+		int iterations = 4;
+		ByteBuffer buffers[] = new ByteBuffer[iterations];
+		buffers[0] = StandardCharsets.UTF_8.encode("Hello");
+		buffers[1] = StandardCharsets.UTF_8.encode("World");
+		buffers[2] = StandardCharsets.UTF_8.encode("Problem");
+		buffers[3] = StandardCharsets.UTF_8.encode("Solved");
+		for (int i = 0; i < iterations; i++) {
+			totalBytesWritten += buffers[i].capacity();
+			CrailBufferedOutputStream outputStream = file.getBufferedOutputStream(0);
+			outputStream.write(buffers[i]);
+			outputStream.purge().get();
+			outputStream.close();
+		}
+
+		CrailBufferedInputStream inputStream = file.getBufferedInputStream(0);
+		ByteBuffer buffer = ByteBuffer.allocateDirect(totalBytesWritten);
+		int read = inputStream.read(buffer);
+		Assert.assertEquals(totalBytesWritten, read);
+		buffer.clear();
+		Assert.assertEquals("HelloWorldProblemSolved", StandardCharsets.UTF_8.decode(buffer).toString());
+	}
+
+	@Test
+	public void unalignedBufferStream() throws Exception {
+		System.err.println("BufferedStream unaligned write after purge");
+
+		String filename = basePath + "/fooOutputStream2";
+		CrailFile file = fs.create(filename,CrailNodeType.DATAFILE,  CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT, true).get().asFile();
+
+		int totalBytesWritten = 0;
+		int iterations = 10;
+		ByteBuffer buffers[] = new ByteBuffer[iterations];
+		for (int i = 0; i < iterations; i++) {
+			int unalignedSize;
+			do {
+				unalignedSize = random.nextInt(1,CrailConstants.BUFFER_SIZE);
+			} while (unalignedSize % CrailConstants.SLICE_SIZE == 0);
+			buffers[i] = ByteBuffer.allocateDirect(unalignedSize);
+			fillRandom(buffers[i]);
+			totalBytesWritten += buffers[i].capacity();
+			buffers[i].clear();
+			CrailBufferedOutputStream outputStream = file.getBufferedOutputStream(0);
+			outputStream.write(buffers[i]);
+			outputStream.purge().get();
+			outputStream.close();
+		}
+
+		CrailBufferedInputStream inputStream = file.getBufferedInputStream(0);
+		ByteBuffer buffer = ByteBuffer.allocateDirect(totalBytesWritten);
+		int read = inputStream.read(buffer);
+		Assert.assertEquals(totalBytesWritten, read);
+		buffer.clear();
+		for (ByteBuffer b : buffers) {
+			b.clear();
+			buffer.limit(buffer.position() + b.capacity());
+			System.err.println("orgBuffer.capacity() = " + b.capacity());
+			for(int i = 0; buffer.remaining() > 0; i++) {
+				int x = buffer.get();
+				int y = b.get();
+				if (x != y) {
+					System.err.println("buffer[" + (buffer.position() - 1) + "] = " + Integer.toHexString(x) + " != " +
+							"orgBuffer[" + i + "] = " + Integer.toHexString(y));
+					Assert.assertTrue(false);
+				}
+			}
+		}
+	}
+
+	@Test
+	public void alignBufferStreamPosition() throws Exception {
+		System.err.println("BufferedStream test align position");
+
+		String filename = basePath + "/fooOutputStream3";
+		CrailFile file = fs.create(filename,CrailNodeType.DATAFILE,  CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT, true).get().asFile();
+		fs.getStatistics().reset();
+		CrailBufferedOutputStream outputStream = file.getBufferedOutputStream(0);
+		ByteBuffer beginBuffer = ByteBuffer.allocateDirect(random.nextInt(1, CrailConstants.SLICE_SIZE));
+		fillRandom(beginBuffer);
+		outputStream.write(beginBuffer);
+		Assert.assertEquals(0, outputStream.outputStream().position());
+		outputStream.purge().get();
+		Assert.assertEquals(beginBuffer.capacity(), outputStream.outputStream().position());
+		outputStream.close();
+
+		ByteBuffer middleBuffer = ByteBuffer.allocateDirect(CrailConstants.SLICE_SIZE);
+		fillRandom(middleBuffer);
+		outputStream = file.getBufferedOutputStream(0);
+		outputStream.write(middleBuffer);
+		Assert.assertEquals(CrailConstants.SLICE_SIZE, outputStream.outputStream().position());
+
+		ByteBuffer endBuffer = ByteBuffer.allocateDirect(CrailConstants.SLICE_SIZE);
+		fillRandom(endBuffer);
+		outputStream.write(endBuffer);
+		Assert.assertEquals(CrailConstants.SLICE_SIZE * 2, outputStream.outputStream().position());
+		outputStream.purge().get();
+		int totalSize = beginBuffer.capacity() + middleBuffer.capacity() + endBuffer.capacity();
+		Assert.assertEquals(totalSize, outputStream.outputStream().position());
+		outputStream.close();
+
+		CrailBufferedInputStream inputStream = file.getBufferedInputStream(0);
+		ByteBuffer buffer = ByteBuffer.allocateDirect(totalSize);
+		inputStream.read(buffer);
+		buffer.position(0);
+		buffer.limit(beginBuffer.capacity());
+		beginBuffer.clear();
+		Assert.assertEquals(beginBuffer, buffer);
+		buffer.position(buffer.limit());
+		buffer.limit(buffer.position() + middleBuffer.capacity());
+		middleBuffer.clear();
+		Assert.assertEquals(middleBuffer, buffer);
+		buffer.position(buffer.limit());
+		buffer.limit(buffer.position() + endBuffer.capacity());
+		endBuffer.clear();
+		Assert.assertEquals(endBuffer, buffer);
 	}
 }
