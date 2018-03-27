@@ -34,7 +34,7 @@ import org.slf4j.Logger;
 
 public class CrailBufferedOutputStream extends OutputStream {
 	public static final Logger LOG = CrailUtils.getLogger();
-	
+
 	private CrailStore crailFS;
 	private CrailFile file;
 	private long writeHint;
@@ -50,23 +50,23 @@ public class CrailBufferedOutputStream extends OutputStream {
 
 	private CrailImmediateOperation noOp;
 	private ByteBuffer tmpBoundaryBuffer;
-	private byte[] tmpByteBuf; 
-	
+	private byte[] tmpByteBuf;
+
 	CrailBufferedOutputStream(CrailFile file, long writeHint) throws Exception {
 		this.crailFS = file.getFileSystem();
 		this.file = file;
 		this.writeHint = writeHint;
 		this.outputStream = null;
 		this.statistics = new CrailBufferedStatistics("buffered/out");
-		
+
 		int allocationSize = Math.max(CrailConstants.BUFFER_SIZE, CrailConstants.SLICE_SIZE);
 		this.actualSliceSize = Math.min(CrailConstants.BUFFER_SIZE, CrailConstants.SLICE_SIZE);
-		int sliceCount = allocationSize / actualSliceSize;		
-		this.originalBuffers = new LinkedList<CrailBuffer>();
-		this.readySlices = new RingBuffer<CrailBuffer>(sliceCount);
-		this.pendingSlices = new RingBuffer<CrailBuffer>(sliceCount);
-		this.pendingFutures = new RingBuffer<Future<CrailResult>>(sliceCount);
-		
+		int sliceCount = allocationSize / actualSliceSize;
+		this.originalBuffers = new LinkedList<>();
+		this.readySlices = new RingBuffer<>(sliceCount);
+		this.pendingSlices = new RingBuffer<>(sliceCount);
+		this.pendingFutures = new RingBuffer<>(sliceCount);
+
 		for (int currentSize = 0; currentSize < allocationSize; currentSize += CrailConstants.BUFFER_SIZE){
 			CrailBuffer buffer = crailFS.allocateBuffer();
 			originalBuffers.add(buffer);
@@ -77,24 +77,29 @@ public class CrailBufferedOutputStream extends OutputStream {
 				CrailBuffer slice = buffer.slice();
 				slice.clear();
 				readySlices.add(slice);
-				
+
 				int newpos = buffer.position() + actualSliceSize;
 				buffer.clear();
 				buffer.position(newpos);
 			}
 		}
+		/* adjust first slice remaining to align position to slice size */
+		CrailBuffer firstSlice = readySlices.peek();
+		long streamPosition = outputStream().position();
+		firstSlice.limit(firstSlice.remaining() - (int)(streamPosition % firstSlice.remaining()));
+
 		this.tmpByteBuf = new byte[1];
 		this.tmpBoundaryBuffer = ByteBuffer.allocate(8);
 		this.noOp = new CrailImmediateOperation(0);
 		this.position = 0;
 		this.open = true;
 	}
-	
+
 	public final void write(int dataBuf) throws IOException {
 		tmpByteBuf[0] = (byte) dataBuf;
 		this.write(tmpByteBuf);
 	}
-	
+
 	public final void write(byte[] dataBuf) throws IOException {
 		this.write(dataBuf, 0, dataBuf.length);
 	}
@@ -110,7 +115,7 @@ public class CrailBufferedOutputStream extends OutputStream {
 			} else if (len == 0) {
 				return;
 			}
-			
+
 			while (len > 0){
 				CrailBuffer slice = getSlice();
 				int bufferRemaining = Math.min(len, slice.remaining());
@@ -123,8 +128,8 @@ public class CrailBufferedOutputStream extends OutputStream {
 		} catch (Exception e) {
 			throw new IOException(e);
 		}
-	}	
-	
+	}
+
 	public final void write(ByteBuffer dataBuf) throws IOException {
 		try {
 			if (dataBuf == null) {
@@ -133,8 +138,8 @@ public class CrailBufferedOutputStream extends OutputStream {
 				throw new IOException("stream closed");
 			} else if (dataBuf.remaining() == 0) {
 				return;
-			}			
-			
+			}
+
 			int len = dataBuf.remaining();
 			while (len > 0) {
 				CrailBuffer slice = getSlice();
@@ -151,7 +156,7 @@ public class CrailBufferedOutputStream extends OutputStream {
 			throw new IOException(e);
 		}
 	}
-	
+
 	public final void writeDouble(double value) throws Exception {
 		CrailBuffer slice = getSlice();
 		if (slice.remaining() >= Double.BYTES){
@@ -179,7 +184,7 @@ public class CrailBufferedOutputStream extends OutputStream {
 			write(tmpBoundaryBuffer);
 		}
 	}
-	
+
 	public final void writeInt(int value) throws Exception {
 		CrailBuffer slice = getSlice();
 		if (slice.remaining() >= Integer.BYTES){
@@ -191,9 +196,9 @@ public class CrailBufferedOutputStream extends OutputStream {
 			tmpBoundaryBuffer.putInt(value);
 			tmpBoundaryBuffer.flip();
 			write(tmpBoundaryBuffer);
-		}		
+		}
 	}
-	
+
 	public final void writeLong(long value) throws Exception {
 		CrailBuffer slice = getSlice();
 		if (slice.remaining() >= Long.BYTES){
@@ -205,9 +210,9 @@ public class CrailBufferedOutputStream extends OutputStream {
 			tmpBoundaryBuffer.putLong(value);
 			tmpBoundaryBuffer.flip();
 			write(tmpBoundaryBuffer);
-		}			
+		}
 	}
-	
+
 	public final void writeShort(short value) throws Exception {
 		CrailBuffer slice = getSlice();
 		if (slice.remaining() >= Short.BYTES){
@@ -219,14 +224,14 @@ public class CrailBufferedOutputStream extends OutputStream {
 			tmpBoundaryBuffer.putShort(value);
 			tmpBoundaryBuffer.flip();
 			write(tmpBoundaryBuffer);
-		}			
-	}		
-	
+		}
+	}
+
 	public Future<CrailResult> purge() throws IOException {
 		if (!open) {
 			throw new IOException("stream closed");
-		} 
-		
+		}
+
 		try {
 			while(!readySlices.isEmpty()){
 				CrailBuffer slice = readySlices.poll();
@@ -234,10 +239,10 @@ public class CrailBufferedOutputStream extends OutputStream {
 					slice.flip();
 					Future<CrailResult> future = outputStream().write(slice);
 					pendingSlices.add(slice);
-					pendingFutures.add(future);					
+					pendingFutures.add(future);
 				}
 			}
-	
+
 			if (pendingFutures.isEmpty()){
 				return noOp;
 			} else {
@@ -245,12 +250,12 @@ public class CrailBufferedOutputStream extends OutputStream {
 				while(!pendingFutures.isEmpty()){
 					Future<CrailResult> future = pendingFutures.poll();
 					purgeOp.add(future);
-				}		
+				}
 				return purgeOp;
 			}
 		} catch (Exception e) {
 			throw new IOException(e);
-		} 
+		}
 	}
 
 	public Future<Void> sync() throws IOException {
@@ -263,33 +268,33 @@ public class CrailBufferedOutputStream extends OutputStream {
 			if (!open){
 				return;
 			}
-			
+
 			while(!readySlices.isEmpty()){
 				CrailBuffer slice = readySlices.poll();
 				if (slice.position() > 0){
 					slice.flip();
 					Future<CrailResult> future = outputStream().write(slice);
 					pendingSlices.add(slice);
-					pendingFutures.add(future);					
+					pendingFutures.add(future);
 				}
 			}
-			
+
 			while(!pendingFutures.isEmpty()){
 				Future<CrailResult> future = pendingFutures.poll();
 				future.get();
 			}
-			
+
 			while(!originalBuffers.isEmpty()){
 				CrailBuffer buffer = originalBuffers.remove();
 				crailFS.freeBuffer(buffer);
 			}
-			
+
 			outputStream().close();
 			this.crailFS.getStatistics().addProvider(statistics);
 			open = false;
 		} catch (Exception e) {
 			throw new IOException(e);
-		} 
+		}
 	}
 
 	public long position() {
@@ -300,10 +305,10 @@ public class CrailBufferedOutputStream extends OutputStream {
 	public void flush() throws IOException {
 		//flush should not be called, use purge instead!
 	}
-	
+
 	public CrailNode getFile() throws IOException {
 		return outputStream().getFile();
-	}	
+	}
 
 	private CrailBuffer getSlice() throws Exception {
 		CrailBuffer slice = readySlices.peek();
@@ -319,10 +324,10 @@ public class CrailBufferedOutputStream extends OutputStream {
 			slice = pendingSlices.poll();
 			slice.clear();
 			readySlices.add(slice);
-		} 
+		}
 		return slice;
 	}
-	
+
 	private void syncSlice() throws Exception {
 		CrailBuffer slice = readySlices.peek();
 		if (slice != null && slice.remaining() == 0){
@@ -333,8 +338,8 @@ public class CrailBufferedOutputStream extends OutputStream {
 			pendingFutures.add(future);
 		}
 	}
-	
-	private final CrailOutputStream outputStream() throws IOException {
+
+	final CrailOutputStream outputStream() throws IOException {
 		if (outputStream == null){
 			try {
 				outputStream = file.getDirectOutputStream(writeHint);
@@ -343,6 +348,6 @@ public class CrailBufferedOutputStream extends OutputStream {
 			}
 		}
 		return outputStream;
-	}	
+	}
 
 }
