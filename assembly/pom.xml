@@ -43,6 +43,12 @@
     </dependency>
     <dependency>
       <groupId>org.apache.crail</groupId>
+      <artifactId>crail-client</artifactId>
+      <version>1.0</version>
+      <type>test-jar</type>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.crail</groupId>
       <artifactId>crail-namenode</artifactId>
       <version>1.0</version>
     </dependency>
@@ -60,6 +66,12 @@
       <groupId>org.apache.crail</groupId>
       <artifactId>crail-storage-nvmf</artifactId>
       <version>1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.crail</groupId>
+      <artifactId>crail-storage-nvmf</artifactId>
+      <version>1.0</version>
+      <type>test-jar</type>
     </dependency>
     <dependency>
       <groupId>org.apache.crail</groupId>
@@ -102,7 +114,7 @@
 
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
-        <executions>       
+        <executions>
           <execution>
             <id>dist</id>
             <phase>package</phase>

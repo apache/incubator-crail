@@ -30,6 +30,7 @@ function print_usage(){
   echo "  fsck                 run a Crail file check command"
   echo "  fs                   run a Crail shell command"
   echo "  iobench              run a Crail benchmark/test"
+  echo "  test                 run a Crail unit test"
 }
 
 if [ $# = 0 ]; then
@@ -59,9 +60,11 @@ elif [ "$COMMAND" = "fs" ] ; then
 elif [ "$COMMAND" = "getconf" ] ; then
   CLASS=org.apache.crail.hdfs.GetConf
 elif [ "$COMMAND" = "iobench" ] ; then
-  CLASS=org.apache.crail.tools.CrailBenchmark  
+  CLASS=org.apache.crail.tools.CrailBenchmark
 elif [ "$COMMAND" = "hdfsbench" ] ; then
-  CLASS=org.apache.crail.hdfs.tools.HdfsIOBenchmark    
+  CLASS=org.apache.crail.hdfs.tools.HdfsIOBenchmark
+elif [ "$COMMAND" = "test" ] ; then
+  CLASS=org.junit.runner.JUnitCore
 fi
 
 export CLASSPATH="$bin"/../jars/*:"$bin"/../conf:.
