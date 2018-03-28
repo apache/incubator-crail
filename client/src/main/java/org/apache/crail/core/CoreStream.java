@@ -44,10 +44,10 @@ import org.slf4j.Logger;
 
 public abstract class CoreStream {
 	private static final Logger LOG = CrailUtils.getLogger();
-	
+
 	protected CoreDataStore fs;
 	protected CoreNode node;
-	
+
 	private EndpointCache endpointCache;
 	private RpcConnection namenodeClientRpc;
 	private FileBlockCache blockCache;
@@ -60,10 +60,10 @@ public abstract class CoreStream {
 	private CoreIOStatistics ioStats;
 	private HashMap<Integer, CoreSubOperation> blockMap;
 	private LinkedList<RpcFuture<RpcGetBlock>> pendingBlocks;
-	
+
 	abstract StorageFuture trigger(StorageEndpoint endpoint, CoreSubOperation opDesc, CrailBuffer buffer, BlockInfo block) throws Exception;
-	abstract void update(long newCapacity);	
-	
+	abstract void update(long newCapacity);
+
 	CoreStream(CoreNode node, long streamId, long fileOffset) throws Exception {
 		this.node = node;
 		this.fs = node.getFileSystem();
@@ -73,29 +73,29 @@ public abstract class CoreStream {
 		this.blockCache = fs.getBlockCache(fileInfo.getFd());
 		this.nextBlockCache = fs.getNextBlockCache(fileInfo.getFd());
 		this.bufferCheckpoint = fs.getBufferCheckpoint();
-		
+
 		this.position = fileOffset;
 		this.syncedCapacity = fileInfo.getCapacity();
 		this.streamId = streamId;
 		this.ioStats = new CoreIOStatistics("core");
-		
+
 		this.blockMap = new HashMap<Integer, CoreSubOperation>();
 		this.pendingBlocks = new LinkedList<RpcFuture<RpcGetBlock>>();
-	}	
-	
+	}
+
 	final CoreDataOperation dataOperation(CrailBuffer dataBuf) throws Exception {
 		blockMap.clear();
 		pendingBlocks.clear();
 		CoreDataOperation multiOperation = new CoreDataOperation(this, dataBuf);
-		
+
 		//compute off, len for the fragments, start transfer or start RPC if block info is missing
 		while(multiOperation.remaining() > 0){
 			long blockRemaining = blockRemaining();
-			int opLen = CrailUtils.minFileBuf(blockRemaining, multiOperation.remaining());	
+			int opLen = CrailUtils.minFileBuf(blockRemaining, multiOperation.remaining());
 			CoreSubOperation subOperation = new CoreSubOperation(fileInfo.getFd(), position, multiOperation.getCurrentBufferPosition(), opLen);
 //			LOG.info("OpDesc: " + opDesc.toString());
 			ioStats.incTotalOps((long) opLen);
-			
+
 			if (blockCache.containsKey(subOperation.key())){
 				BlockInfo block = blockCache.get(subOperation.key());
 				StorageFuture subFuture = this.prepareAndTrigger(subOperation, dataBuf, block);
@@ -111,25 +111,25 @@ public abstract class CoreStream {
 				blockMap.put(rpcFuture.getTicket(), subOperation);
 				pendingBlocks.add(rpcFuture);
 			}
-			
+
 			position += opLen;
 			multiOperation.incProcessedLen(opLen);
 		}
-		
+
 		//wait for RPC results and start reads for those blocks as well
 		for (RpcFuture<RpcGetBlock> rpcFuture = pendingBlocks.poll(); rpcFuture != null; rpcFuture = pendingBlocks.poll()){
 			if (!rpcFuture.isDone()){
 				this.ioStats.incBlockingOps();
 				if (rpcFuture.isPrefetched()){
 					this.ioStats.incPrefetchedBlockingOps();
-				} 
+				}
 			} else {
 				this.ioStats.incNonblockingOps();
 				if (rpcFuture.isPrefetched()){
 					this.ioStats.incPrefetchedNonblockingOps();
-				} 				
+				}
 			}
-			
+
 			RpcGetBlock getBlockRes = rpcFuture.get(CrailConstants.RPC_TIMEOUT, TimeUnit.MILLISECONDS);
 			if (!rpcFuture.isDone()){
 				throw new IOException("rpc timeout ");
@@ -137,23 +137,23 @@ public abstract class CoreStream {
 			if (getBlockRes.getError() != RpcErrors.ERR_OK) {
 				LOG.info("inputStream: " + RpcErrors.messages[getBlockRes.getError()]);
 				throw new IOException(RpcErrors.messages[getBlockRes.getError()]);
-			}				
+			}
 			BlockInfo block = getBlockRes.getBlockInfo();
 			CoreSubOperation subOperation = blockMap.get(rpcFuture.getTicket());
 			StorageFuture subFuture = prepareAndTrigger(subOperation, dataBuf, block);
 			multiOperation.add(subFuture);
 			blockCache.put(subOperation.key(), block);
 		}
-		
+
 		if (!multiOperation.isProcessed()){
 			throw new IOException("Internal error, processed data != operation length");
 		}
-		
+
 		dataBuf.limit(multiOperation.getBufferLimit());
 		dataBuf.position(multiOperation.getCurrentBufferPosition());
 		return multiOperation;
 	}
-	
+
 	final void prefetchMetadata() throws Exception {
 		long key = CoreSubOperation.createKey(fileInfo.getFd(), position);
 		if (blockCache.containsKey(key)){
@@ -168,7 +168,7 @@ public abstract class CoreStream {
 		nextBlockCache.put(key, nextBlock);
 		this.ioStats.incPrefetchedOps();
 	}
-	
+
 	void seek(long pos) throws IOException {
 		long newOffset = Math.min(fileInfo.getCapacity(), Math.max(0, pos));
 		if (newOffset == pos){
@@ -176,56 +176,56 @@ public abstract class CoreStream {
 		} else {
 			throw new IOException("seek position out of range, pos " + pos + ", fileCapacity " + fileInfo.getCapacity());
 		}
-	}	
-	
+	}
+
 	Future<Void> sync() throws IOException {
 		Future<Void> future = null;
 		if (fileInfo.getToken() > 0 && syncedCapacity < fileInfo.getCapacity()){
 			syncedCapacity = fileInfo.getCapacity();
-			future = new SyncNodeFuture(namenodeClientRpc.setFile(fileInfo, false));	
+			future = new SyncNodeFuture(namenodeClientRpc.setFile(fileInfo, false));
 		} else {
 			future = new NoOperation();
 		}
-		
+
 		return future;
 	}
-	
+
 	void updateIOStats() {
 		ioStats.setCapacity(fileInfo.getCapacity());
 	}
-	
+
 	long getStreamId() {
 		return streamId;
 	}
-	
+
 	public long position() {
 		return position;
-	}	
-	
+	}
+
 	CoreIOStatistics getCoreStatistics(){
 		return ioStats;
 	}
-	
+
 	public CoreNode getFile(){
 		return node;
 	}
-	
+
 	BufferCheckpoint getBufferCheckpoint(){
 		return bufferCheckpoint;
-	}	
-	
+	}
+
 	//-----------------
-	
+
 	void setCapacity(long currentCapacity) {
 		fileInfo.setCapacity(currentCapacity);
-	}	
-	
+	}
+
 	private long blockRemaining(){
 		long blockOffset = position % CrailConstants.BLOCK_SIZE;
 		long blockRemaining = CrailConstants.BLOCK_SIZE - blockOffset;
 		return blockRemaining;
 	}
-	
+
 	private StorageFuture prepareAndTrigger(CoreSubOperation opDesc, CrailBuffer dataBuf, BlockInfo block) throws Exception {
 		try {
 			StorageEndpoint endpoint = endpointCache.getDataEndpoint(block.getDnInfo());
@@ -255,6 +255,6 @@ public abstract class CoreStream {
 					ioStats.incRemoteDirOps();
 				}
 			}
-		}		
+		}
 	}
 }

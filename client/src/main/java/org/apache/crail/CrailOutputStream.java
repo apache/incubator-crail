@@ -23,10 +23,10 @@ import java.io.IOException;
 import java.util.concurrent.Future;
 
 public interface CrailOutputStream {
-	public CrailNode getFile();
-	public Future<CrailResult> write(CrailBuffer dataBuf) throws Exception;
-	public Future<Void> sync() throws IOException;
-	public long position();
-	public long getWriteHint();
-	public void close() throws Exception;
+	CrailNode getFile();
+	Future<CrailResult> write(CrailBuffer dataBuf) throws Exception;
+	Future<Void> sync() throws IOException;
+	long position();
+	long getWriteHint();
+	void close() throws Exception;
 }
