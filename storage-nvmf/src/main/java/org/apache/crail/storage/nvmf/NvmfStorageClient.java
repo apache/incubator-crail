@@ -21,6 +21,8 @@ package org.apache.crail.storage.nvmf;
 
 import java.io.IOException;
 
+import org.apache.crail.CrailBufferCache;
+import org.apache.crail.CrailStatistics;
 import org.apache.crail.conf.CrailConfiguration;
 import org.apache.crail.metadata.DataNodeInfo;
 import org.apache.crail.storage.StorageClient;
@@ -37,12 +39,13 @@ public class NvmfStorageClient implements StorageClient {
 	private static NvmeEndpointGroup clientGroup;
 	private boolean initialized = false;
 
-	public void init(CrailConfiguration crailConfiguration, String[] args) throws IOException {
+	public void init(CrailStatistics statistics, CrailBufferCache bufferCache, CrailConfiguration crailConfiguration,
+					 String[] args) throws IOException {
 		if (initialized) {
 			throw new IOException("NvmfStorageTier already initialized");
 		}
 		initialized = true;
-		
+
 		NvmfStorageConstants.parseCmdLine(crailConfiguration, args);
 	}
 
@@ -61,8 +64,8 @@ public class NvmfStorageClient implements StorageClient {
 	public synchronized StorageEndpoint createEndpoint(DataNodeInfo info) throws IOException {
 		return new NvmfStorageEndpoint(getEndpointGroup(), CrailUtils.datanodeInfo2SocketAddr(info));
 	}
-	
+
 	public void close() throws Exception {
-	}	
+	}
 
 }
