@@ -479,11 +479,11 @@ public class CoreDataStore extends CrailStore {
 	}
 
 	public CrailBuffer allocateBuffer() throws IOException {
-		return this.bufferCache.getBuffer();
+		return this.bufferCache.allocateBuffer();
 	}
 
 	public void freeBuffer(CrailBuffer buffer) throws IOException {
-		this.bufferCache.putBuffer(buffer);
+		this.bufferCache.freeBuffer(buffer);
 	}
 
 	public int getFsId() {

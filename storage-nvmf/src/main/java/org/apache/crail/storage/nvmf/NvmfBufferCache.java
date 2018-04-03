@@ -52,7 +52,7 @@ public class NvmfBufferCache extends BufferCache {
 	}
 
 	@Override
-	public CrailBuffer allocateBuffer() throws IOException {
+	public CrailBuffer allocateRegion() throws IOException {
 		ByteBuffer buffer = endpointGroup.allocateBuffer(CrailConstants.BUFFER_SIZE, ALIGNMENT);
 		bufferPool.add(buffer);
 		return OffHeapBuffer.wrap(buffer);

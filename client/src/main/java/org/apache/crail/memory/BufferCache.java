@@ -30,32 +30,34 @@ import org.apache.crail.conf.CrailConstants;
 import org.apache.crail.utils.CrailUtils;
 import org.slf4j.Logger;
 
-public abstract class BufferCache implements CrailStatistics.StatisticsProvider {
+public abstract class BufferCache implements CrailStatistics.StatisticsProvider, CrailBufferCache {
 	private static final Logger LOG = CrailUtils.getLogger();
 	private LinkedBlockingQueue<CrailBuffer> cache;
-	
+
 	private AtomicLong cacheGet;
 	private AtomicLong cachePut;
 	private AtomicLong cacheMisses;
 	private AtomicLong cacheOut;
 	private AtomicLong cacheMax;
-	
+
 	private AtomicLong cacheMissesMap;
-	private AtomicLong cacheMissesHeap;		
-	
-	public BufferCache() throws IOException{
+	private AtomicLong cacheMissesHeap;
+
+	public abstract CrailBuffer allocateRegion() throws IOException;
+
+	public BufferCache() throws IOException {
 		this.cache = new LinkedBlockingQueue<CrailBuffer>();
-		
+
 		this.cacheGet = new AtomicLong(0);
 		this.cachePut = new AtomicLong(0);
 		this.cacheMisses = new AtomicLong(0);
 		this.cacheOut = new AtomicLong(0);
 		this.cacheMax = new AtomicLong(0);
-		
+
 		this.cacheMissesMap = new AtomicLong(0);
-		this.cacheMissesHeap = new AtomicLong(0);			
+		this.cacheMissesHeap = new AtomicLong(0);
 	}
-	
+
 	@Override
 	public String providerName() {
 		return "cache/buffer";
@@ -65,7 +67,7 @@ public abstract class BufferCache implements CrailStatistics.StatisticsProvider 
 	public String printStatistics() {
 		return "cacheGet " + cacheGet.get() + ", cachePut " + cachePut.get() + ", cacheMiss " + cacheMisses.get() + ", cacheSize " + cache.size() +  ", cacheMax " + cacheMax.get() + ", mapMiss " + cacheMissesMap.get() + ", mapHeap " + cacheMissesHeap.get();
 	}
-	
+
 	public void resetStatistics(){
 		this.cacheGet.set(0);
 		this.cachePut.set(0);
@@ -74,24 +76,24 @@ public abstract class BufferCache implements CrailStatistics.StatisticsProvider 
 		this.cacheMax.set(0);
 		this.cacheMissesMap.set(0);
 		this.cacheMissesHeap.set(0);
-	}	
-	
-	public void mergeStatistics(StatisticsProvider provider){
-		
 	}
-	
-	public CrailBuffer getBuffer() throws IOException {
+
+	public void mergeStatistics(StatisticsProvider provider){
+
+	}
+
+	public CrailBuffer allocateBuffer() throws IOException {
 		cacheGet.incrementAndGet();
 		cacheOut.incrementAndGet();
 		cacheMax.updateAndGet(x -> Math.max(x, cacheOut.get()));
-		
+
 		CrailBuffer buffer = cache.poll();
 		if (buffer == null){
 			synchronized(this){
 				buffer = cache.poll();
 				if (buffer == null){
 					cacheMisses.incrementAndGet();
-					buffer = allocateBuffer();
+					buffer = allocateRegion();
 					if (buffer == null){
 						buffer = OffHeapBuffer.wrap(ByteBuffer.allocateDirect(CrailConstants.BUFFER_SIZE));
 						cacheMissesHeap.incrementAndGet();
@@ -100,29 +102,27 @@ public abstract class BufferCache implements CrailStatistics.StatisticsProvider 
 					}
 				}
 			}
-		} 
-		
+		}
+
 		buffer.clear();
 		return buffer;
 	}
-	
-	public void putBuffer(CrailBuffer buffer) throws IOException{
+
+	public void freeBuffer(CrailBuffer buffer) throws IOException{
 		if (buffer != null){
 			cachePut.incrementAndGet();
 			cacheOut.decrementAndGet();
 			putBufferInternal(buffer);
 		}
 	}
-	
+
 	public void putBufferInternal(CrailBuffer buffer) throws IOException{
 		cache.add(buffer);
-	}	
-	
+	}
+
 	public void close(){
 		cache.clear();
 	}
-	
-	public abstract CrailBuffer allocateBuffer() throws IOException;
 
 	@SuppressWarnings("unchecked")
 	public static BufferCache createInstance(String name) throws Exception {
@@ -134,7 +134,7 @@ public abstract class BufferCache implements CrailStatistics.StatisticsProvider 
 		} else {
 			throw new Exception("Cannot instantiate storage client of type " + name);
 		}
-		
-	}		
+
+	}
 }
 
