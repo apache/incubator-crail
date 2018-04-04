@@ -32,7 +32,7 @@ public abstract class CrailStore {
 	private static final Logger LOG = CrailUtils.getLogger();
 	private static AtomicLong referenceCounter = new AtomicLong(0);
 	private static CrailStore instance = null;
-	
+
 	public abstract Upcoming<CrailNode> create(String path, CrailNodeType type, CrailStorageClass storageClass, CrailLocationClass locationClass, boolean enumerable) throws Exception;
 	public abstract Upcoming<CrailNode> lookup(String path) throws Exception;
 	public abstract Upcoming<CrailNode> rename(String srcPath, String dstPath) throws Exception;
@@ -42,7 +42,7 @@ public abstract class CrailStore {
 	public abstract CrailStatistics getStatistics();
 	public abstract CrailLocationClass getLocationClass();
 	protected abstract void closeFileSystem() throws Exception;
-	
+
 	public void close() throws Exception {
 		synchronized(referenceCounter){
 			if (CrailConstants.SINGLETON){
@@ -62,12 +62,12 @@ public abstract class CrailStore {
 					closeFileSystem();
 				} catch (Exception e){
 					throw new IOException(e);
-				}				
+				}
 			}
-			
+
 		}
 	}
-	
+
 	public static CrailStore newInstance(CrailConfiguration conf) throws Exception {
 		synchronized(referenceCounter){
 			boolean isSingleton = conf.getBoolean(CrailConstants.SINGLETON_KEY, false);
@@ -82,10 +82,10 @@ public abstract class CrailStore {
 					return instance;
 				}
 			} else {
-				LOG.info("creating non-singleton crail file system");				
+				LOG.info("creating non-singleton crail file system");
 				return new CoreDataStore(conf);
 			}
 		}
-	}	
+	}
 }
 

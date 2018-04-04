@@ -21,6 +21,8 @@ package org.apache.crail.storage.rdma;
 
 import java.io.IOException;
 
+import org.apache.crail.CrailBufferCache;
+import org.apache.crail.CrailStatistics;
 import org.apache.crail.conf.CrailConfiguration;
 import org.apache.crail.metadata.DataNodeInfo;
 import org.apache.crail.storage.StorageClient;
@@ -34,23 +36,24 @@ import org.slf4j.Logger;
 
 public class RdmaStorageClient implements StorageClient {
 	private static final Logger LOG = CrailUtils.getLogger();
-	
+
 	private MrCache clientMrCache = null;
 	private RdmaStorageGroup clientGroup = null;
-	
+
 	public RdmaStorageClient(){
 		this.clientGroup = null;
 		this.clientMrCache = null;
 	}
-	
-	public void init(CrailConfiguration conf, String[] args) throws Exception {
+
+	public void init(CrailStatistics statistics, CrailBufferCache bufferCache, CrailConfiguration conf, String[] args)
+			throws IOException {
 		RdmaConstants.init(conf, args);
 	}
-	
+
 	public void printConf(Logger logger){
 		RdmaConstants.printConf(logger);
-	}	
-	
+	}
+
 	@Override
 	public StorageEndpoint createEndpoint(DataNodeInfo info) throws IOException {
 		if (clientMrCache == null){
@@ -73,11 +76,11 @@ public class RdmaStorageClient implements StorageClient {
 						RdmaStorageActiveGroup _endpointGroup = new RdmaStorageActiveGroup(100, false, RdmaConstants.STORAGE_RDMA_QUEUESIZE, 4, RdmaConstants.STORAGE_RDMA_QUEUESIZE*2, clientMrCache);
 						_endpointGroup.init(new RdmaStorageActiveEndpointFactory(_endpointGroup));
 						this.clientGroup = _endpointGroup;
-					}		
+					}
 				}
 			}
 		}
-		
+
 		return clientGroup.createEndpoint(info);
 	}
 
@@ -86,5 +89,5 @@ public class RdmaStorageClient implements StorageClient {
 		if (clientGroup != null){
 			this.clientGroup.close();
 		}
-	}	
+	}
 }

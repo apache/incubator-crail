@@ -33,23 +33,23 @@ import org.slf4j.Logger;
 
 public class MappedBufferCache extends BufferCache {
 	private static final Logger LOG = CrailUtils.getLogger();
-	
+
 	private String id;
 	private String directory;
 	private File dir;
 	private long allocationCount;
 	private long bufferCount;
-	private long currentRegion;	
-	
+	private long currentRegion;
+
 	public MappedBufferCache() throws IOException {
 		super();
-		
+
 		this.allocationCount = CrailConstants.CACHE_LIMIT / CrailConstants.REGION_SIZE;
 		long _bufferSize = (long) CrailConstants.BUFFER_SIZE;
 		this.bufferCount = CrailConstants.REGION_SIZE / _bufferSize;
 		this.currentRegion = 0;
 		LOG.info("buffer cache, allocationCount " + allocationCount + ", bufferCount " + bufferCount);
-		
+
 		if (allocationCount > 0){
 			id = "" + System.currentTimeMillis();
 			directory = CrailUtils.getCacheDirectory(id);
@@ -62,11 +62,11 @@ public class MappedBufferCache extends BufferCache {
 			}
 		}
 	}
-	
+
 	@Override
 	public void close() {
 		super.close();
-		
+
 		if (allocationCount > 0 && dir.exists()){
 			for (File child : dir.listFiles()) {
 				child.delete();
@@ -75,16 +75,12 @@ public class MappedBufferCache extends BufferCache {
 		}
 		LOG.info("mapped client cache closed");
 	}
-	
-	public CrailBuffer allocateBuffer() throws IOException{
-		return allocateRegion();
-	}
 
-	private CrailBuffer allocateRegion() throws IOException {
+	public CrailBuffer allocateRegion() throws IOException {
 		if (currentRegion >= allocationCount){
 			return null;
 		}
-		
+
 		String path = directory + "/" + currentRegion++;
 		RandomAccessFile randomFile = new RandomAccessFile(path, "rw");
 		randomFile.setLength(CrailConstants.REGION_SIZE);
@@ -96,23 +92,23 @@ public class MappedBufferCache extends BufferCache {
 		channel.close();
 
 		CrailBuffer firstBuffer = slice(mappedBuffer, 0);
-		
+
 		for (int j = 1; j < bufferCount; j++) {
 			int position = j * CrailConstants.BUFFER_SIZE;
 			CrailBuffer sliceBuffer = slice(mappedBuffer, position);
 			this.putBufferInternal(sliceBuffer);
 		}
 		mappedBuffer.clear();
-		
+
 		return firstBuffer;
 	}
-	
+
 	private CrailBuffer slice(CrailBuffer mappedBuffer, int position){
 		int limit = position + CrailConstants.BUFFER_SIZE;
 		mappedBuffer.clear();
 		mappedBuffer.position(position);
 		mappedBuffer.limit(limit);
-		CrailBuffer buffer = mappedBuffer.slice();			
+		CrailBuffer buffer = mappedBuffer.slice();
 		return buffer;
 	}
 }

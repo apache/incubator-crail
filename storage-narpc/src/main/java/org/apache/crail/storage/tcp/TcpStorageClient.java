@@ -21,6 +21,8 @@ package org.apache.crail.storage.tcp;
 
 import java.io.IOException;
 
+import org.apache.crail.CrailBufferCache;
+import org.apache.crail.CrailStatistics;
 import org.apache.crail.conf.CrailConfiguration;
 import org.apache.crail.conf.CrailConstants;
 import org.apache.crail.metadata.DataNodeInfo;
@@ -36,9 +38,10 @@ public class TcpStorageClient implements StorageClient {
 	private NaRPCClientGroup<TcpStorageRequest, TcpStorageResponse> clientGroup;
 
 	@Override
-	public void init(CrailConfiguration conf, String[] args) throws Exception {
+	public void init(CrailStatistics statistics, CrailBufferCache bufferCache, CrailConfiguration conf, String[] args)
+			throws IOException {
 		TcpStorageConstants.updateConstants(conf);
-		
+
 		this.clientGroup = new NaRPCClientGroup<TcpStorageRequest, TcpStorageResponse>(TcpStorageConstants.STORAGE_TCP_QUEUE_DEPTH, (int) CrailConstants.BLOCK_SIZE*2, false);
 	}
 
@@ -62,5 +65,5 @@ public class TcpStorageClient implements StorageClient {
 			throw new IOException(e);
 		}
 	}
-	
+
 }

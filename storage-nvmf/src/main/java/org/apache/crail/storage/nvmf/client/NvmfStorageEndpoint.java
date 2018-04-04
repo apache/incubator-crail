@@ -41,7 +41,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.concurrent.*;
 
-public class NvmfStorageEndpoint implements StorageEndpoint { 
+public class NvmfStorageEndpoint implements StorageEndpoint {
 	private static final Logger LOG = CrailUtils.getLogger();
 
 	private final InetSocketAddress inetSocketAddress;
@@ -150,7 +150,7 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 //			LOG.info("unaligned");
 			long alignedLength = NvmfStorageUtils.alignLength(sectorSize, remoteOffset, length);
 
-			CrailBuffer stagingBuffer = cache.getBuffer();
+			CrailBuffer stagingBuffer = cache.allocateBuffer();
 			stagingBuffer.limit((int)alignedLength);
 			try {
 				switch(op) {
@@ -213,7 +213,7 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 	}
 
 	void putBuffer(CrailBuffer buffer) throws IOException {
-		cache.putBuffer(buffer);
+		cache.freeBuffer(buffer);
 	}
 
 	public void close() throws IOException, InterruptedException {

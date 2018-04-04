@@ -21,13 +21,21 @@ package org.apache.crail.storage;
 
 import java.io.IOException;
 
+import org.apache.crail.CrailBufferCache;
+import org.apache.crail.CrailStatistics;
 import org.apache.crail.conf.Configurable;
+import org.apache.crail.conf.CrailConfiguration;
 import org.apache.crail.metadata.DataNodeInfo;
+import org.slf4j.Logger;
 
-public interface StorageClient extends Configurable {
-	public abstract StorageEndpoint createEndpoint(DataNodeInfo info) throws IOException;	
-	public abstract void close() throws Exception;
-	
+public interface StorageClient {
+	StorageEndpoint createEndpoint(DataNodeInfo info) throws IOException;
+	void close() throws Exception;
+	void init(CrailStatistics statistics, CrailBufferCache bufferCache, CrailConfiguration configuration,
+			  String[] args) throws IOException;
+	void printConf(Logger log);
+
+
 	@SuppressWarnings("unchecked")
 	public static StorageClient createInstance(String name) throws Exception {
 		Class<?> nodeClass = Class.forName(name);
@@ -38,6 +46,6 @@ public interface StorageClient extends Configurable {
 		} else {
 			throw new Exception("Cannot instantiate storage client of type " + name);
 		}
-		
-	}	
+
+	}
 }
