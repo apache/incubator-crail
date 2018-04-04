@@ -70,8 +70,8 @@ public class NvmfStorageServer implements StorageServer {
 					" at controller " + transportId.toString());
 		}
 		IdentifyNamespaceData namespaceData = namespace.getIdentifyNamespaceData();
-		LBAFormat lbaFormat = namespaceData.getFormattedLBASize();
-		int dataSize = lbaFormat.getLBADataSize().toInt();
+		LbaFormat lbaFormat = namespaceData.getFormattedLbaSize();
+		int dataSize = lbaFormat.getLbaDataSize().toInt();
 		long namespaceSize = dataSize * namespaceData.getNamespaceCapacity();
 		alignedSize = namespaceSize - (namespaceSize % NvmfStorageConstants.ALLOCATION_SIZE);
 		address = 0;

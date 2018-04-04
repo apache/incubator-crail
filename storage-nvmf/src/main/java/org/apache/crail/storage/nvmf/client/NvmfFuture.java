@@ -29,7 +29,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class NvmfFuture<Command extends NvmIOCommand<? extends NvmIOCommandCapsule>> implements StorageFuture, OperationCallback {
+public class NvmfFuture<Command extends NvmIoCommand<? extends NvmIoCommandCapsule>> implements StorageFuture, OperationCallback {
 	private final NvmfStorageEndpoint endpoint;
 	private final Command command;
 	private final Queue<Command> operations;
