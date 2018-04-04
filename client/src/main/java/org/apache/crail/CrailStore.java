@@ -28,7 +28,7 @@ import org.apache.crail.core.CoreDataStore;
 import org.apache.crail.utils.CrailUtils;
 import org.slf4j.Logger;
 
-public abstract class CrailStore implements CrailBufferCache {
+public abstract class CrailStore {
 	private static final Logger LOG = CrailUtils.getLogger();
 	private static AtomicLong referenceCounter = new AtomicLong(0);
 	private static CrailStore instance = null;
@@ -37,6 +37,8 @@ public abstract class CrailStore implements CrailBufferCache {
 	public abstract Upcoming<CrailNode> lookup(String path) throws Exception;
 	public abstract Upcoming<CrailNode> rename(String srcPath, String dstPath) throws Exception;
 	public abstract Upcoming<CrailNode> delete(String path, boolean recursive) throws Exception;
+	public abstract CrailBuffer allocateBuffer() throws Exception;
+	public abstract void freeBuffer(CrailBuffer buffer) throws Exception;
 	public abstract CrailStatistics getStatistics();
 	public abstract CrailLocationClass getLocationClass();
 	protected abstract void closeFileSystem() throws Exception;

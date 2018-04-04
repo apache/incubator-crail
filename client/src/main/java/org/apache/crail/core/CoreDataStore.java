@@ -106,13 +106,16 @@ public class CoreDataStore extends CrailStore {
 		CrailConstants.printConf();
 		CrailConstants.verify();
 
+		this.bufferCache = BufferCache.createInstance(CrailConstants.CACHE_IMPL);
+		this.statistics = new CrailStatistics();
+
 		//Datanodes
 		StringTokenizer tokenizer = new StringTokenizer(CrailConstants.STORAGE_TYPES, ",");
 		LinkedList<StorageClient> dataNodeClients = new LinkedList<StorageClient>();
 		while (tokenizer.hasMoreTokens()){
 			String name = tokenizer.nextToken();
 			StorageClient dataNode = StorageClient.createInstance(name);
-			dataNode.init(getStatistics(), this, conf, null);
+			dataNode.init(statistics, bufferCache, conf, null);
 			dataNode.printConf(LOG);
 			dataNodeClients.add(dataNode);
 		}
@@ -140,7 +143,6 @@ public class CoreDataStore extends CrailStore {
 		//Client
 		this.fsId = fsCount.getAndIncrement();
 		this.localClass = CrailUtils.getLocationClass();
-		this.bufferCache = BufferCache.createInstance(CrailConstants.CACHE_IMPL);
 		this.blockCache = new BlockCache();
 		this.nextBlockCache = new NextBlockCache();
 		this.openInputStreams = new ConcurrentHashMap<Long, CoreInputStream>();
@@ -151,7 +153,6 @@ public class CoreDataStore extends CrailStore {
 		this.locationMap = new ConcurrentHashMap<String, String>();
 		CrailUtils.parseMap(CrailConstants.LOCATION_MAP, locationMap);
 
-		this.statistics = new CrailStatistics();
 		this.ioStatsIn = new CoreIOStatistics("core/input");
 		statistics.addProvider(ioStatsIn);
 		this.ioStatsOut = new CoreIOStatistics("core/output");
