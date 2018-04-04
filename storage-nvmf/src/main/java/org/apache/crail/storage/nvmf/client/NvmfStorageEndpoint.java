@@ -45,7 +45,7 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 	private static final Logger LOG = CrailUtils.getLogger();
 
 	private final Controller controller;
-	private final IOQueuePair queuePair;
+	private final IoQueuePair queuePair;
 	private final int lbaDataSize;
 	private final long namespaceCapacity;
 	private final NvmfRegisteredBufferCache registeredBufferCache;
@@ -93,13 +93,13 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 					" at controller " + transportId.toString());
 		}
 		IdentifyNamespaceData identifyNamespaceData = namespace.getIdentifyNamespaceData();
-		lbaDataSize = identifyNamespaceData.getFormattedLBASize().getLBADataSize().toInt();
+		lbaDataSize = identifyNamespaceData.getFormattedLbaSize().getLbaDataSize().toInt();
 		if (CrailConstants.SLICE_SIZE % lbaDataSize != 0) {
 			throw new IllegalArgumentException(CrailConstants.SLICE_SIZE_KEY +
 					" is not a multiple of LBA data size (" + lbaDataSize + ")");
 		}
 		namespaceCapacity = identifyNamespaceData.getNamespaceCapacity() * lbaDataSize;
-		this.queuePair = controller.createIOQueuePair(NvmfStorageConstants.QUEUE_SIZE, 0, 0,
+		this.queuePair = controller.createIoQueuePair(NvmfStorageConstants.QUEUE_SIZE, 0, 0,
 				SubmissionQueueEntry.SIZE);
 
 		this.writeCommands = new ArrayBlockingQueue<>(NvmfStorageConstants.QUEUE_SIZE);
@@ -179,7 +179,7 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 			} while (!tryGetOperation());
 		}
 
-		NvmIOCommand<? extends NvmIOCommandCapsule> command;
+		NvmIoCommand<? extends NvmIoCommandCapsule> command;
 		NvmfFuture<?> future;
 		Response<NvmResponseCapsule> response;
 		if (op == Operation.READ) {
@@ -196,16 +196,16 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 		command.setCallback(future);
 		response.setCallback(future);
 
-		NvmIOCommandSQE sqe = command.getCommandCapsule().getSubmissionQueueEntry();
+		NvmIoCommandSqe sqe = command.getCommandCapsule().getSubmissionQueueEntry();
 		long startingLBA = startingAddress / getLBADataSize();
-		sqe.setStartingLBA(startingLBA);
+		sqe.setStartingLba(startingLBA);
 		/* TODO: on read this potentially overwrites data beyond the set limit */
 		short numLogicalBlocks = (short)(getNumLogicalBlocks(buffer) - 1);
 		sqe.setNumberOfLogicalBlocks(numLogicalBlocks);
 		KeyedNativeBuffer registeredBuffer = registeredBufferCache.get(buffer);
 		registeredBuffer.position(buffer.position());
 		registeredBuffer.limit(registeredBuffer.position() + (numLogicalBlocks + 1) * getLBADataSize());
-		command.getCommandCapsule().setSGLDescriptor(registeredBuffer);
+		command.getCommandCapsule().setSglDescriptor(registeredBuffer);
 
 		command.execute(response);
 
