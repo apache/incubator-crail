@@ -80,7 +80,8 @@ public class NvmfStagingBufferCache {
 		if (buffer.capacity() < lbaDataSize) {
 			throw new IllegalArgumentException("Slice size smaller LBA data size");
 		}
-		while (buffer.remaining() >= lbaDataSize && buffersLeft > 0) {
+		int numStagingBuffers = buffer.remaining() / lbaDataSize;
+		while (numStagingBuffers-- > 0 && buffersLeft > 0) {
 			buffer.limit(buffer.position() + lbaDataSize);
 			freeBuffers.add(buffer.slice());
 			buffer.position(buffer.limit());
