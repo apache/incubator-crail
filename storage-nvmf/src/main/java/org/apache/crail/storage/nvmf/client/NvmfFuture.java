@@ -28,16 +28,17 @@ import java.util.Queue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class NvmfFuture<Command extends NvmIoCommand<? extends NvmIoCommandCapsule>> implements StorageFuture, OperationCallback {
 	private final NvmfStorageEndpoint endpoint;
 	private final Command command;
 	private final Queue<Command> operations;
-	private boolean done;
+	private volatile boolean done;
 	private RdmaException exception;
 	private final StorageResult storageResult;
 	private final Response<NvmResponseCapsule> response;
-	private int completed;
+	private final AtomicInteger completed;
 
 	NvmfFuture(NvmfStorageEndpoint endpoint, Command command, Response<NvmResponseCapsule> response,
 			   Queue<Command> operations, int length) {
@@ -47,7 +48,7 @@ public class NvmfFuture<Command extends NvmIoCommand<? extends NvmIoCommandCapsu
 		this.done = false;
 		this.storageResult = () -> length;
 		this.response = response;
-		this.completed = 0;
+		this.completed = new AtomicInteger(0);
 	}
 
 	@Override
@@ -129,8 +130,8 @@ public class NvmfFuture<Command extends NvmIoCommand<? extends NvmIoCommandCapsu
 	@Override
 	public void onComplete() {
 		assert !done;
-		assert completed < 2;
-		if (++completed == 2) {
+		assert completed.get() < 2;
+		if (completed.incrementAndGet() == 2) {
 			/* we need to complete command and response */
 			operations.add(command);
 			this.done = true;
