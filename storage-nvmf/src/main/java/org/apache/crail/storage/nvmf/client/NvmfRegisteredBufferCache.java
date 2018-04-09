@@ -21,7 +21,6 @@ package org.apache.crail.storage.nvmf.client;
 
 import com.ibm.jnvmf.Freeable;
 import com.ibm.jnvmf.KeyedNativeBuffer;
-import com.ibm.jnvmf.NativeByteBuffer;
 import com.ibm.jnvmf.QueuePair;
 import org.apache.crail.CrailBuffer;
 
@@ -31,68 +30,36 @@ import java.util.concurrent.ConcurrentHashMap;
 
 class NvmfRegisteredBufferCache implements Freeable {
 	private final QueuePair queuePair;
-	private final Map<CrailBuffer, KeyedNativeBuffer> bufferMap;
 	private final Map<Long, KeyedNativeBuffer> regionMap;
 	private boolean valid;
 
 	public NvmfRegisteredBufferCache(QueuePair queuePair) {
 		this.queuePair = queuePair;
-		this.bufferMap = new ConcurrentHashMap<>();
 		this.regionMap = new ConcurrentHashMap<>();
 		this.valid = true;
 	}
 
-	static class Buffer extends NativeByteBuffer implements KeyedNativeBuffer {
-		private final KeyedNativeBuffer registeredRegionBuffer;
-
-		Buffer(CrailBuffer buffer, KeyedNativeBuffer registeredRegionBuffer) {
-			super(buffer.getByteBuffer());
-			this.registeredRegionBuffer = registeredRegionBuffer;
-		}
-
-		@Override
-		public int getRemoteKey() {
-			return registeredRegionBuffer.getRemoteKey();
-		}
-
-		@Override
-		public int getLocalKey() {
-			return registeredRegionBuffer.getLocalKey();
-		}
-	}
-
-	KeyedNativeBuffer get(CrailBuffer buffer) throws IOException {
-		KeyedNativeBuffer keyedNativeBuffer = bufferMap.get(buffer);
+	int getRemoteKey(CrailBuffer buffer) throws IOException {
+		CrailBuffer regionBuffer = buffer.getRegion();
+		KeyedNativeBuffer keyedNativeBuffer = regionMap.get(regionBuffer.address());
 		if (keyedNativeBuffer == null) {
-			CrailBuffer regionBuffer = buffer.getRegion();
-			keyedNativeBuffer = regionMap.get(regionBuffer.address());
-			if (keyedNativeBuffer == null) {
-				/* region has not been registered yet */
-				keyedNativeBuffer = queuePair.registerMemory(regionBuffer.getByteBuffer());
-				KeyedNativeBuffer prevKeyedNativeBuffer =
-						regionMap.putIfAbsent(keyedNativeBuffer.getAddress(), keyedNativeBuffer);
-				if (prevKeyedNativeBuffer != null) {
-					/* someone registered the same region in parallel */
-					keyedNativeBuffer.free();
-					keyedNativeBuffer = prevKeyedNativeBuffer;
-				}
-			}
-			keyedNativeBuffer = new Buffer(buffer, keyedNativeBuffer);
+			/* region has not been registered yet */
+			keyedNativeBuffer = queuePair.registerMemory(regionBuffer.getByteBuffer());
 			KeyedNativeBuffer prevKeyedNativeBuffer =
-					bufferMap.putIfAbsent(buffer, keyedNativeBuffer);
+					regionMap.putIfAbsent(keyedNativeBuffer.getAddress(), keyedNativeBuffer);
 			if (prevKeyedNativeBuffer != null) {
-				/* someone added the same buffer parallel */
+				/* someone registered the same region in parallel */
 				keyedNativeBuffer.free();
 				keyedNativeBuffer = prevKeyedNativeBuffer;
 			}
 		}
-		return keyedNativeBuffer;
+		return keyedNativeBuffer.getRemoteKey();
 	}
 
 
 	@Override
 	public void free() throws IOException {
-		for (KeyedNativeBuffer buffer : bufferMap.values()) {
+		for (KeyedNativeBuffer buffer : regionMap.values()) {
 			buffer.free();
 		}
 		valid = false;

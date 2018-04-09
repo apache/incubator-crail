@@ -206,10 +206,11 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 		/* TODO: on read this potentially overwrites data beyond the set limit */
 		short numLogicalBlocks = (short)(getNumLogicalBlocks(buffer) - 1);
 		sqe.setNumberOfLogicalBlocks(numLogicalBlocks);
-		KeyedNativeBuffer registeredBuffer = registeredBufferCache.get(buffer);
-		registeredBuffer.position(buffer.position());
-		registeredBuffer.limit(registeredBuffer.position() + (numLogicalBlocks + 1) * getLBADataSize());
-		command.getCommandCapsule().setSglDescriptor(registeredBuffer);
+		int remoteKey = registeredBufferCache.getRemoteKey(buffer);
+		KeyedSglDataBlockDescriptor dataBlockDescriptor = sqe.getKeyedSglDataBlockDescriptor();
+		dataBlockDescriptor.setAddress(buffer.address() + buffer.position());
+		dataBlockDescriptor.setLength(buffer.remaining());
+		dataBlockDescriptor.setKey(remoteKey);
 
 		command.execute(response);
 
