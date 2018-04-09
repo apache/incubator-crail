@@ -34,18 +34,44 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 
 public class NvmfStorageClient implements StorageClient {
 	private static final Logger LOG = CrailUtils.getLogger();
 	private static Nvme nvme;
 	private boolean initialized;
-	private List<StorageEndpoint> endpoints;
+	private volatile boolean closing;
+	private final Thread keepAliveThread;
+	private List<NvmfStorageEndpoint> endpoints;
 	private CrailStatistics statistics;
 	private CrailBufferCache bufferCache;
 
 	public NvmfStorageClient() {
 		this.initialized = false;
 		this.endpoints = new CopyOnWriteArrayList<>();
+		this.closing = false;
+		this.keepAliveThread = new Thread(() -> {
+			while (!closing) {
+				for (NvmfStorageEndpoint endpoint : endpoints) {
+					try {
+						endpoint.keepAlive();
+					} catch (IOException e) {
+						e.printStackTrace();
+						return;
+					}
+				}
+				/* We use the default keep alive timer of 120s in jNVMf */
+				try {
+					Thread.sleep(TimeUnit.MILLISECONDS.convert(110, TimeUnit.SECONDS));
+				} catch (InterruptedException e) {
+					return;
+				}
+			}
+		});
+	}
+
+	boolean isValid() {
+		return keepAliveThread.isAlive();
 	}
 
 	public void init(CrailStatistics statistics, CrailBufferCache bufferCache, CrailConfiguration crailConfiguration,
@@ -58,6 +84,7 @@ public class NvmfStorageClient implements StorageClient {
 		this.bufferCache = bufferCache;
 		LOG.info("Initialize Nvmf storage client");
 		NvmfStorageConstants.parseCmdLine(crailConfiguration, args);
+		keepAliveThread.start();
 	}
 
 	public void printConf(Logger logger) {
@@ -72,14 +99,22 @@ public class NvmfStorageClient implements StorageClient {
 	}
 
 	public synchronized StorageEndpoint createEndpoint(DataNodeInfo info) throws IOException {
-		StorageEndpoint endpoint = new NvmfStorageEndpoint(getEndpointGroup(), info, statistics, bufferCache);
+		if (!isValid()) {
+			throw new IOException("Storage client state not valid");
+		}
+		NvmfStorageEndpoint endpoint = new NvmfStorageEndpoint(getEndpointGroup(), info, statistics, bufferCache);
 		endpoints.add(endpoint);
 		return endpoint;
 	}
 
 	public void close() throws Exception {
-		for (StorageEndpoint endpoint : endpoints) {
-			endpoint.close();
+		if (!closing) {
+			closing = true;
+			keepAliveThread.interrupt();
+			keepAliveThread.join();
+			for (StorageEndpoint endpoint : endpoints) {
+				endpoint.close();
+			}
 		}
 	}
 
