@@ -121,6 +121,10 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 		this.statistics = statistics;
 	}
 
+	public void keepAlive() throws IOException {
+		controller.keepAlive();
+	}
+
 	public int getLBADataSize() {
 		return lbaDataSize;
 	}
