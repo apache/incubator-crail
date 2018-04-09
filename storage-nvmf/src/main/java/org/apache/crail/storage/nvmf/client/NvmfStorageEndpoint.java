@@ -144,7 +144,7 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 
 	private boolean tryGetOperation() {
 		int outstandingOperationsOld = outstandingOperations.get();
-		if (outstandingOperationsOld != NvmfStorageConstants.QUEUE_SIZE) {
+		if (outstandingOperationsOld < NvmfStorageConstants.QUEUE_SIZE) {
 			return outstandingOperations.compareAndSet(outstandingOperationsOld, outstandingOperationsOld + 1);
 		}
 		return false;
