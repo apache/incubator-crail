@@ -89,7 +89,7 @@ public class NvmfStorageClient implements StorageClient {
 		NvmfStorageConstants.printConf(logger);
 	}
 
-	public static Nvme getEndpointGroup() throws UnknownHostException {
+	private static Nvme getEndpointGroup() throws UnknownHostException {
 		if (nvme == null) {
 			nvme = new Nvme();
 		}
