@@ -105,7 +105,7 @@ public class NvmfStorageServer implements StorageServer {
 			LOG.info("new block, length " + NvmfStorageConstants.ALLOCATION_SIZE);
 			LOG.debug("block stag 0, address " + address + ", length " + NvmfStorageConstants.ALLOCATION_SIZE);
 			alignedSize -= NvmfStorageConstants.ALLOCATION_SIZE;
-			resource = StorageResource.createResource(address, (int)NvmfStorageConstants.ALLOCATION_SIZE, 0);
+			resource = StorageResource.createResource(address, NvmfStorageConstants.ALLOCATION_SIZE, 0);
 			address += NvmfStorageConstants.ALLOCATION_SIZE;
 		}
 
