@@ -43,10 +43,10 @@ public class NvmfStagingBufferCache {
 
 	NvmfStagingBufferCache(CrailBufferCache bufferCache, int maxEntries, int lbaDataSize) {
 		if (maxEntries <= 0) {
-			throw new IllegalArgumentException("maximum entries <= 0");
+			throw new IllegalArgumentException("maximum entries (" + maxEntries + ") <= 0");
 		}
 		if (lbaDataSize <= 0) {
-			throw new IllegalArgumentException("LBA data size <= 0");
+			throw new IllegalArgumentException("LBA data size (" + lbaDataSize + ") <= 0");
 		}
 		this.remoteAddressMap = new ConcurrentHashMap<>(maxEntries);
 		this.freeBuffers = new ArrayBlockingQueue<>(maxEntries);
@@ -78,7 +78,8 @@ public class NvmfStagingBufferCache {
 			throw new OutOfMemoryError();
 		}
 		if (buffer.capacity() < lbaDataSize) {
-			throw new IllegalArgumentException("Slice size smaller LBA data size");
+			throw new IllegalArgumentException("Slice size (" + buffer.capacity() + ") smaller LBA data size (" +
+					lbaDataSize + ")");
 		}
 		int numStagingBuffers = buffer.remaining() / lbaDataSize;
 		while (numStagingBuffers-- > 0 && buffersLeft > 0) {
