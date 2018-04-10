@@ -204,7 +204,7 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 		long startingLBA = startingAddress / getLBADataSize();
 		sqe.setStartingLba(startingLBA);
 		/* TODO: on read this potentially overwrites data beyond the set limit */
-		short numLogicalBlocks = (short)getNumLogicalBlocks(buffer);
+		int numLogicalBlocks = getNumLogicalBlocks(buffer);
 		buffer.limit(buffer.position() + numLogicalBlocks * getLBADataSize());
 		sqe.setNumberOfLogicalBlocks(numLogicalBlocks);
 		int remoteKey = registeredBufferCache.getRemoteKey(buffer);
