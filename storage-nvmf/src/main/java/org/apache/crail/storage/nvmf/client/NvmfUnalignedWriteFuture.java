@@ -43,7 +43,11 @@ public class NvmfUnalignedWriteFuture implements StorageFuture {
 	}
 
 	private final long floorToSectorSize(long address) {
-		return address - (address % endpoint.getLBADataSize());
+		return address - offsetInSector(address);
+	}
+
+	private final int floorToSectorSize(int length) {
+		return length - offsetInSector(length);
 	}
 
 	private final int leftInSector(long address) {
@@ -91,7 +95,7 @@ public class NvmfUnalignedWriteFuture implements StorageFuture {
 		/* middle */
 		if (isSectorAligned(nextRemoteOffset) && buffer.remaining() >= endpoint.getLBADataSize()) {
 			int oldLimit = buffer.limit();
-			buffer.limit(buffer.position() + (int)floorToSectorSize(buffer.remaining()));
+			buffer.limit(buffer.position() + floorToSectorSize(buffer.remaining()));
 			int toWrite = buffer.remaining();
 			middleFuture = endpoint.write(buffer, blockInfo, nextRemoteOffset);
 			nextRemoteOffset += toWrite;
