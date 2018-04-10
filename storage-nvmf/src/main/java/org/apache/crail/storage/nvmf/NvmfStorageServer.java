@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018, IBM Corporation
+ * Copyright (C) 2018, IBM Corporation
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -19,10 +19,7 @@
 
 package org.apache.crail.storage.nvmf;
 
-import com.ibm.disni.nvmef.NvmeEndpoint;
-import com.ibm.disni.nvmef.NvmeEndpointGroup;
-import com.ibm.disni.nvmef.spdk.NvmeTransportType;
-
+import com.ibm.jnvmf.*;
 import org.apache.crail.conf.CrailConfiguration;
 import org.apache.crail.storage.StorageResource;
 import org.apache.crail.storage.StorageServer;
@@ -31,19 +28,19 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.URI;
+import java.util.List;
 
 public class NvmfStorageServer implements StorageServer {
 	private static final Logger LOG = CrailUtils.getLogger();
 
 	private boolean isAlive;
 	private long alignedSize;
-	private long offset;
+	private long address;
 	private boolean initialized = false;
-	private NvmeEndpoint endpoint;
+	private Controller controller;
 
 	public NvmfStorageServer() {}
-	
+
 	public void init(CrailConfiguration crailConfiguration, String[] args) throws Exception {
 		if (initialized) {
 			throw new IOException("NvmfStorageTier already initialized");
@@ -51,31 +48,48 @@ public class NvmfStorageServer implements StorageServer {
 		initialized = true;
 		NvmfStorageConstants.parseCmdLine(crailConfiguration, args);
 
-		NvmeEndpointGroup group = new NvmeEndpointGroup(new NvmeTransportType[]{NvmeTransportType.RDMA}, NvmfStorageConstants.SERVER_MEMPOOL);
-		endpoint = group.createEndpoint();
+		Nvme nvme = new Nvme();
+		NvmfTransportId transportId = new NvmfTransportId(
+				new InetSocketAddress(NvmfStorageConstants.IP_ADDR, NvmfStorageConstants.PORT),
+				NvmfStorageConstants.NQN);
+		controller = nvme.connect(transportId);
+		controller.getControllerConfiguration().setEnable(true);
+		controller.syncConfiguration();
+		controller.waitUntilReady();
 
-		URI uri = new URI("nvmef://" + NvmfStorageConstants.IP_ADDR.getHostAddress() + ":" + NvmfStorageConstants.PORT +
-					"/0/" + NvmfStorageConstants.NAMESPACE + "?subsystem=" + NvmfStorageConstants.NQN);
-		endpoint.connect(uri);
-
-		long namespaceSize = endpoint.getNamespaceSize();
+		List<Namespace> namespaces = controller.getActiveNamespaces();
+		Namespace namespace = null;
+		for (Namespace n : namespaces) {
+			if (n.getIdentifier().equals(NvmfStorageConstants.NAMESPACE)) {
+				namespace = n;
+				break;
+			}
+		}
+		if (namespace == null) {
+			throw new IllegalArgumentException("No namespace with id " + NvmfStorageConstants.NAMESPACE +
+					" at controller " + transportId.toString());
+		}
+		IdentifyNamespaceData namespaceData = namespace.getIdentifyNamespaceData();
+		LbaFormat lbaFormat = namespaceData.getFormattedLbaSize();
+		int dataSize = lbaFormat.getLbaDataSize().toInt();
+		long namespaceSize = dataSize * namespaceData.getNamespaceCapacity();
 		alignedSize = namespaceSize - (namespaceSize % NvmfStorageConstants.ALLOCATION_SIZE);
-		offset = 0;
+		address = 0;
 
 		isAlive = true;
-	}	
+	}
 
 	@Override
 	public void printConf(Logger log) {
-		NvmfStorageConstants.printConf(log);		
+		NvmfStorageConstants.printConf(log);
 	}
 
 	public void run() {
 		LOG.info("NnvmfStorageServer started with NVMf target " + getAddress());
 		while (isAlive) {
 			try {
-				Thread.sleep(1000 /* ms */);
-				endpoint.keepAlive();
+				Thread.sleep(NvmfStorageConstants.KEEP_ALIVE_INTERVAL_MS);
+				controller.keepAlive();
 			} catch (Exception e) {
 				e.printStackTrace();
 				isAlive = false;
@@ -86,15 +100,15 @@ public class NvmfStorageServer implements StorageServer {
 	@Override
 	public StorageResource allocateResource() throws Exception {
 		StorageResource resource = null;
-		
+
 		if (alignedSize > 0){
 			LOG.info("new block, length " + NvmfStorageConstants.ALLOCATION_SIZE);
-			LOG.debug("block stag 0, offset " + offset + ", length " + NvmfStorageConstants.ALLOCATION_SIZE);
+			LOG.debug("block stag 0, address " + address + ", length " + NvmfStorageConstants.ALLOCATION_SIZE);
 			alignedSize -= NvmfStorageConstants.ALLOCATION_SIZE;
-			resource = StorageResource.createResource(offset, (int)NvmfStorageConstants.ALLOCATION_SIZE, 0);
-			offset += NvmfStorageConstants.ALLOCATION_SIZE;
+			resource = StorageResource.createResource(address, NvmfStorageConstants.ALLOCATION_SIZE, 0);
+			address += NvmfStorageConstants.ALLOCATION_SIZE;
 		}
-		
+
 		return resource;
 	}
 

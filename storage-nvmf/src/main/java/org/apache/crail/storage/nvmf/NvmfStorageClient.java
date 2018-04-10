@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018, IBM Corporation
+ * Copyright (C) 2018, IBM Corporation
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -19,8 +19,7 @@
 
 package org.apache.crail.storage.nvmf;
 
-import java.io.IOException;
-
+import com.ibm.jnvmf.Nvme;
 import org.apache.crail.CrailBufferCache;
 import org.apache.crail.CrailStatistics;
 import org.apache.crail.conf.CrailConfiguration;
@@ -31,13 +30,47 @@ import org.apache.crail.storage.nvmf.client.NvmfStorageEndpoint;
 import org.apache.crail.utils.CrailUtils;
 import org.slf4j.Logger;
 
-import com.ibm.disni.nvmef.NvmeEndpointGroup;
-import com.ibm.disni.nvmef.spdk.NvmeTransportType;
+import java.io.IOException;
+import java.net.UnknownHostException;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class NvmfStorageClient implements StorageClient {
 	private static final Logger LOG = CrailUtils.getLogger();
-	private static NvmeEndpointGroup clientGroup;
-	private boolean initialized = false;
+	private static Nvme nvme;
+	private boolean initialized;
+	private volatile boolean closing;
+	private final Thread keepAliveThread;
+	private List<NvmfStorageEndpoint> endpoints;
+	private CrailStatistics statistics;
+	private CrailBufferCache bufferCache;
+
+	public NvmfStorageClient() {
+		this.initialized = false;
+		this.endpoints = new CopyOnWriteArrayList<>();
+		this.closing = false;
+		this.keepAliveThread = new Thread(() -> {
+			while (!closing) {
+				for (NvmfStorageEndpoint endpoint : endpoints) {
+					try {
+						endpoint.keepAlive();
+					} catch (IOException e) {
+						e.printStackTrace();
+						return;
+					}
+				}
+				try {
+					Thread.sleep(NvmfStorageConstants.KEEP_ALIVE_INTERVAL_MS);
+				} catch (InterruptedException e) {
+					return;
+				}
+			}
+		});
+	}
+
+	boolean isAlive() {
+		return keepAliveThread.isAlive();
+	}
 
 	public void init(CrailStatistics statistics, CrailBufferCache bufferCache, CrailConfiguration crailConfiguration,
 					 String[] args) throws IOException {
@@ -45,27 +78,42 @@ public class NvmfStorageClient implements StorageClient {
 			throw new IOException("NvmfStorageTier already initialized");
 		}
 		initialized = true;
-
+		this.statistics = statistics;
+		this.bufferCache = bufferCache;
+		LOG.info("Initialize Nvmf storage client");
 		NvmfStorageConstants.parseCmdLine(crailConfiguration, args);
+		keepAliveThread.start();
 	}
 
 	public void printConf(Logger logger) {
 		NvmfStorageConstants.printConf(logger);
 	}
 
-	public static NvmeEndpointGroup getEndpointGroup() {
-		if (clientGroup == null) {
-			clientGroup = new NvmeEndpointGroup(new NvmeTransportType[]{NvmeTransportType.RDMA},
-					NvmfStorageConstants.CLIENT_MEMPOOL);
+	private static Nvme getEndpointGroup() throws UnknownHostException {
+		if (nvme == null) {
+			nvme = new Nvme();
 		}
-		return clientGroup;
+		return nvme;
 	}
 
 	public synchronized StorageEndpoint createEndpoint(DataNodeInfo info) throws IOException {
-		return new NvmfStorageEndpoint(getEndpointGroup(), CrailUtils.datanodeInfo2SocketAddr(info));
+		if (!isAlive()) {
+			throw new IOException("Storage client is not alive");
+		}
+		NvmfStorageEndpoint endpoint = new NvmfStorageEndpoint(getEndpointGroup(), info, statistics, bufferCache);
+		endpoints.add(endpoint);
+		return endpoint;
 	}
 
 	public void close() throws Exception {
+		if (!closing) {
+			closing = true;
+			keepAliveThread.interrupt();
+			keepAliveThread.join();
+			for (StorageEndpoint endpoint : endpoints) {
+				endpoint.close();
+			}
+		}
 	}
 
 }
