@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
 
 public class NvmfStorageClient implements StorageClient {
 	private static final Logger LOG = CrailUtils.getLogger();
@@ -60,9 +59,8 @@ public class NvmfStorageClient implements StorageClient {
 						return;
 					}
 				}
-				/* We use the default keep alive timer of 120s in jNVMf */
 				try {
-					Thread.sleep(TimeUnit.MILLISECONDS.convert(110, TimeUnit.SECONDS));
+					Thread.sleep(NvmfStorageConstants.KEEP_ALIVE_INTERVAL_MS);
 				} catch (InterruptedException e) {
 					return;
 				}

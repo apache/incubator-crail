@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.concurrent.TimeUnit;
 
 public class NvmfStorageConstants {
 
@@ -54,6 +55,9 @@ public class NvmfStorageConstants {
 
 	public static final String STAGING_CACHE_SIZE_KEY = "stagingcachesize";
 	public static int STAGING_CACHE_SIZE = 262144;
+
+	/* We use the default keep alive timer of 120s in jNVMf */
+	public static long KEEP_ALIVE_INTERVAL_MS = TimeUnit.MILLISECONDS.convert(110, TimeUnit.SECONDS);
 
 	private static String fullKey(String key) {
 		return PREFIX + "." + key;
