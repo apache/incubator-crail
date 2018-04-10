@@ -88,7 +88,7 @@ public class NvmfStorageServer implements StorageServer {
 		LOG.info("NnvmfStorageServer started with NVMf target " + getAddress());
 		while (isAlive) {
 			try {
-				Thread.sleep(1000 /* ms */);
+				Thread.sleep(NvmfStorageConstants.KEEP_ALIVE_INTERVAL_MS);
 				controller.keepAlive();
 			} catch (Exception e) {
 				e.printStackTrace();
