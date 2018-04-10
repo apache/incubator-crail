@@ -68,7 +68,7 @@ public class NvmfStorageClient implements StorageClient {
 		});
 	}
 
-	boolean isValid() {
+	boolean isAlive() {
 		return keepAliveThread.isAlive();
 	}
 
@@ -97,8 +97,8 @@ public class NvmfStorageClient implements StorageClient {
 	}
 
 	public synchronized StorageEndpoint createEndpoint(DataNodeInfo info) throws IOException {
-		if (!isValid()) {
-			throw new IOException("Storage client state not valid");
+		if (!isAlive()) {
+			throw new IOException("Storage client is not alive");
 		}
 		NvmfStorageEndpoint endpoint = new NvmfStorageEndpoint(getEndpointGroup(), info, statistics, bufferCache);
 		endpoints.add(endpoint);
