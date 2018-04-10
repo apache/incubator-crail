@@ -68,18 +68,15 @@ Crail supports optimized local operations via memcpy (instead of RDMA) in case a
     
 ### NVMf/Flash Storage    
 
-Crail is a multi-tiered storage system. Additinoal tiers can be enabled by adding them to the configuration as follows.
+Crail is a multi-tiered storage system. Additional tiers can be enabled by adding them to the configuration as follows.
 
     crail.storage.types                  org.apache.crail.storage.rdma.RdmaStorageTier,org.apache.crail.storage.nvmf.NvmfStorageTier
 
-For the NVMf storage tier we need to configure the server IP that is used when listening for new connections. We also need to configure the PCI address of the flash device we want to use, as well as the huge page mount point to be used for allocating memory. 
+For the NVMf storage tier we need to configure the target's IP, port and subsystem NVMe qualified name.  
 
-    crail.storage.nvmf.bindip           10.40.0.XX
-    crail.storage.nvmf.pcieaddr         0000:11:00.0
-    crail.storage.nvmf.hugedir          /dev/hugepages
-    crail.storage.nvmf.servermempool    512
-    crail.storage.nvmf.clientmempool    512
-
+    crail.storage.nvmf.ip               10.40.0.XX
+    crail.storage.nvmf.port             50025
+    crail.storage.nvmf.nqn              nqn.2017-06.io.crail:cnode
 
 ## Deploying
 
