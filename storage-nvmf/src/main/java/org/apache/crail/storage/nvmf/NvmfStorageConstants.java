@@ -48,7 +48,7 @@ public class NvmfStorageConstants {
 	public static NamespaceIdentifier NAMESPACE = new NamespaceIdentifier(1);
 
 	public static final String ALLOCATION_SIZE_KEY = "allocationsize";
-	public static long ALLOCATION_SIZE = 1073741824; /* 1GB */
+	public static int ALLOCATION_SIZE = 1073741824; /* 1GB */
 
 	public static final String QUEUE_SIZE_KEY = "queueSize";
 	public static int QUEUE_SIZE = 64;
@@ -85,7 +85,7 @@ public class NvmfStorageConstants {
 
 		arg = get(conf, ALLOCATION_SIZE_KEY);
 		if (arg != null) {
-			ALLOCATION_SIZE = Long.parseLong(arg);
+			ALLOCATION_SIZE = Integer.parseInt(arg);
 		}
 
 		arg = get(conf, QUEUE_SIZE_KEY);
@@ -101,7 +101,8 @@ public class NvmfStorageConstants {
 
 	public static void verify() {
 		if (ALLOCATION_SIZE % CrailConstants.BLOCK_SIZE != 0){
-			throw new IllegalArgumentException("allocationsize must be multiple of crail.blocksize");
+			throw new IllegalArgumentException(fullKey(ALLOCATION_SIZE_KEY) + " (" + ALLOCATION_SIZE +
+					") must be multiple of crail.blocksize (" + CrailConstants.BLOCK_SIZE + ")");
 		}
 		if (QUEUE_SIZE < 0) {
 			throw new IllegalArgumentException("Queue size negative");
