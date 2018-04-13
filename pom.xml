@@ -97,6 +97,28 @@
     </dependencies>
   </dependencyManagement>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+        <version>0.12</version>
+        <configuration>
+            <licenses>
+                <license implementation="org.apache.rat.analysis.license.SimplePatternBasedLicense">
+                    <licenseFamilyCategory>AL20</licenseFamilyCategory>
+                    <licenseFamilyName>Apache License, 2.0</licenseFamilyName>
+                </license>
+            </licenses>
+            <excludes>
+                <exclude>conf/**/*</exclude>
+                <exclude>**/*.md</exclude>
+            </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
   <modules>
     <module>client</module>
     <module>namenode</module>
