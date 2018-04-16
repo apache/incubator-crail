@@ -111,7 +111,6 @@
             </licenses>
             <excludes>
                 <exclude>conf/**/*</exclude>
-                <exclude>**/*.md</exclude>
             </excludes>
         </configuration>
       </plugin>
