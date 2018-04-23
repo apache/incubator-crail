@@ -41,7 +41,9 @@ Crail is implemented in Java offering a Java API which integrates directly with 
 
 To build Crail from source using [Apache Maven](http://maven.apache.org/) execute the following steps:
 
-1. Clone Crail from [Github](https://github.com/apache/incubator-crail) or download and unpack the latest source release from [here](https://dist.apache.org/repos/dist/release/incubator/crail/)
+1. (a) Clone from Apache [git](http://git-wip-us.apache.org/repos/asf/incubator-crail.git) or<br/>
+   (b) Clone from [Github](https://github.com/apache/incubator-crail) or<br/>
+   (c) Download and unpack the latest source release from [here](https://dist.apache.org/repos/dist/release/incubator/crail/)
 2. Run: mvn -DskipTests install
 3. Copy tarball to the cluster and unpack it using tar xvfz crail-1.0-bin.tar.gz
 
