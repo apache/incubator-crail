@@ -145,7 +145,12 @@ public class NvmfStagingBufferCache {
 		BufferCacheEntry entry = new BufferCacheEntry(buffer);
 		BufferCacheEntry prevEntry = remoteAddressMap.putIfAbsent(alignedRemoteAddress, entry);
 		if (prevEntry != null) {
-			throw new IllegalStateException();
+			if (prevEntry.tryFree()) {
+				freeBuffers.add(prevEntry.getBuffer());
+			} else {
+				/* we can't have two writes to the same location */
+				throw new IllegalStateException();
+			}
 		}
 		return entry;
 	}
