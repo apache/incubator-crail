@@ -141,6 +141,7 @@ public class NvmfStagingBufferCache {
 				allocateFreeBuffers();
 			}
 		} while (buffer == null);
+		buffer.clear();
 
 		BufferCacheEntry entry = new BufferCacheEntry(buffer);
 		BufferCacheEntry prevEntry = remoteAddressMap.putIfAbsent(alignedRemoteAddress, entry);
