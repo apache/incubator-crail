@@ -148,10 +148,9 @@ public class NvmfStagingBufferCache {
 		if (prevEntry != null) {
 			if (prevEntry.tryFree()) {
 				freeBuffers.add(prevEntry.getBuffer());
-			} else {
-				/* we can't have two writes to the same location */
-				throw new IllegalStateException();
-			}
+			} /*else {
+				we lost the race with allocateFreeBuffers which freed the buffer
+			}*/
 		}
 		return entry;
 	}
