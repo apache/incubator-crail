@@ -17,7 +17,7 @@ limitations under the License.
 {% endcomment %}
 -->
 
-## [1.0](https://github.com/apache/incubator-crail/tree/v1.0) - 27.04.2018
+## [1.0](https://github.com/apache/incubator-crail/tree/v1.0) - 23.05.2018
 
 This is our first Apache incubator release. Below are new features and bug fixes since the import to Apache.
 
