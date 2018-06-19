@@ -167,7 +167,7 @@ public class TcpStorageServer implements Runnable, StorageServer, NaRPCService<T
 		
 		NetworkInterface netif = NetworkInterface.getByName(ifname);
 		if (netif == null){
-			return null;
+			throw new IOException("Cannot find network interface with name " + TcpStorageConstants.STORAGE_TCP_INTERFACE);
 		}
 		List<InterfaceAddress> addresses = netif.getInterfaceAddresses();
 		InetAddress addr = null;
@@ -176,13 +176,19 @@ public class TcpStorageServer implements Runnable, StorageServer, NaRPCService<T
 				InetAddress _addr = address.getAddress();
 				addr = _addr;
 			}
-		}		
+		}
+
+		if (addr == null){
+			throw new IOException("Cannot find valid network interface with name " + TcpStorageConstants.STORAGE_TCP_INTERFACE);
+		}
 		InetSocketAddress inetAddr = new InetSocketAddress(addr, port);
 		return inetAddr;
 	}	
 	
-	public static String getDatanodeDirectory(InetSocketAddress inetAddress){
-		String address = inetAddress.getAddress().toString();
-		return TcpStorageConstants.STORAGE_TCP_DATA_PATH + address + "-"  + inetAddress.getPort();
+	public static String getDatanodeDirectory(InetSocketAddress address) throws IllegalArgumentException {
+		if (address == null) {
+			throw new IllegalArgumentException("Address paramater cannot be null!");
+		}
+		return TcpStorageConstants.STORAGE_TCP_DATA_PATH + address.getAddress() + "-"  + address.getPort();
 	}	
 }

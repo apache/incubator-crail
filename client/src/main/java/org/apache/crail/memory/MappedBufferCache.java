@@ -54,7 +54,9 @@ public class MappedBufferCache extends BufferCache {
 			directory = CrailUtils.getCacheDirectory(id);
 			dir = new File(directory);
 			if (!dir.exists()){
-				dir.mkdirs();
+				if (!dir.mkdirs()) {
+					throw new IOException("Cannot create cache directory [crail.cachepath] set to path " + directory + ", check if crail.cachepath exists and has write permissions");
+				}
 			}
 			for (File child : dir.listFiles()) {
 				child.delete();

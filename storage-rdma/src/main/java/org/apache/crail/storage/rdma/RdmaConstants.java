@@ -49,7 +49,7 @@ public class RdmaConstants {
 	public static long STORAGE_RDMA_ALLOCATION_SIZE = CrailConstants.REGION_SIZE;
 
 	public static final String STORAGE_RDMA_DATA_PATH_KEY = "crail.storage.rdma.datapath";
-	public static String STORAGE_RDMA_DATA_PATH = "/home/stu/craildata/data";
+	public static String STORAGE_RDMA_DATA_PATH = "/dev/hugepages/data";
 
 	public static final String STORAGE_RDMA_LOCAL_MAP_KEY = "crail.storage.rdma.localmap";
 	public static boolean STORAGE_RDMA_LOCAL_MAP = true;

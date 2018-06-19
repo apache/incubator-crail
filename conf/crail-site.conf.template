@@ -1,14 +1,7 @@
-crail.blocksize				1048576
-crail.buffersize			1048576
-crail.slicesize				524288
-crail.regionsize			1073741824
-crail.cachelimit			1073741824
-crail.cachepath				/dev/hugepages/cache	
-crail.singleton				true
-crail.statistics 			true
-crail.namenode.address			crail://localhost:9060
-crail.namenode.blockselection		roundrobin
-crail.namenode.darpc.queuesize		64
-crail.namenode.darpc.polling		false
-crail.storage.types 			org.apache.crail.storage.tcp.TcpStorageTier
+crail.namenode.address            crail://localhost:9060
+crail.cachepath                   /dev/hugepages/cache
+crail.cachelimit                  1073741824
+crail.storage.tcp.interface       eth0
+crail.storage.tcp.datapath        /dev/hugepages/data
+crail.storage.tcp.storagelimit    1073741824
 

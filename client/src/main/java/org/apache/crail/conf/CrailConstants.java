@@ -36,16 +36,16 @@ public class CrailConstants {
 	public static long TOKEN_EXPIRATION = 10;
 
 	public static final String BLOCK_SIZE_KEY = "crail.blocksize";
-	public static long BLOCK_SIZE = 67108864;
+	public static long BLOCK_SIZE = 1048576;
 
 	public static final String CACHE_LIMIT_KEY = "crail.cachelimit";
 	public static long CACHE_LIMIT = 1073741824;
 
 	public static final String CACHE_PATH_KEY = "crail.cachepath";
-	public static String CACHE_PATH = "/home/stu/craildata/cache";
+	public static String CACHE_PATH = "/dev/hugepages/cache";
 
 	public static final String USER_KEY = "crail.user";
-	public static String USER = "stu";
+	public static String USER = "crail";
 
 	public static final String SHADOW_REPLICATION_KEY = "crail.shadowreplication";
 	public static int SHADOW_REPLICATION = 1;
@@ -69,7 +69,7 @@ public class CrailConstants {
 	public static int SLICE_SIZE = 524288;
 
 	public static final String SINGLETON_KEY = "crail.singleton";
-	public static boolean SINGLETON = false;
+	public static boolean SINGLETON = true;
 
 	public static final String REGION_SIZE_KEY = "crail.regionsize";
 	public static long REGION_SIZE = 1073741824;
@@ -88,7 +88,7 @@ public class CrailConstants {
 
 	//namenode interface
 	public static final String NAMENODE_ADDRESS_KEY = "crail.namenode.address";
-	public static String NAMENODE_ADDRESS = "";
+	public static String NAMENODE_ADDRESS = "crail://localhost:9060";
 
 	public static final String NAMENODE_FILEBLOCKS_KEY = "crail.namenode.fileblocks";
 	public static int NAMENODE_FILEBLOCKS = 16;

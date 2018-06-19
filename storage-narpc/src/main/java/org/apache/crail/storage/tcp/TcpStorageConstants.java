@@ -47,7 +47,7 @@ public class TcpStorageConstants {
 	public static long STORAGE_TCP_ALLOCATION_SIZE = CrailConstants.REGION_SIZE;	
 	
 	public static final String STORAGE_TCP_DATA_PATH_KEY = "crail.storage.tcp.datapath";
-	public static String STORAGE_TCP_DATA_PATH = "/home/stu/craildata/data";
+	public static String STORAGE_TCP_DATA_PATH = "/dev/hugepages/data";
 	
 	public static final String STORAGE_TCP_QUEUE_DEPTH_KEY = "crail.storage.tcp.queuedepth";
 	public static int STORAGE_TCP_QUEUE_DEPTH = 16;	

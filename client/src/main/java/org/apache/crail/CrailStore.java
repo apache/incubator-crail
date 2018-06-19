@@ -69,7 +69,7 @@ public abstract class CrailStore {
 
 	public static CrailStore newInstance(CrailConfiguration conf) throws Exception {
 		synchronized(referenceCounter){
-			boolean isSingleton = conf.getBoolean(CrailConstants.SINGLETON_KEY, false);
+			boolean isSingleton = conf.getBoolean(CrailConstants.SINGLETON_KEY, CrailConstants.SINGLETON);
 			if (isSingleton) {
 				referenceCounter.incrementAndGet();
 				if (instance == null) {
