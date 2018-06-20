@@ -50,11 +50,11 @@ case $COMMAND in
 esac
 
 if [ "$COMMAND" = "namenode" ] ; then
-  CLASS='org.apache.crail.namenode.NameNode'
+  CLASS=org.apache.crail.namenode.NameNode
 elif [ "$COMMAND" = "datanode" ] ; then
-  CLASS='org.apache.crail.storage.StorageServer'
+  CLASS=org.apache.crail.storage.StorageServer
 elif [ "$COMMAND" = "fsck" ] ; then
-  CLASS='org.apache.crail.tools.CrailFsck'
+  CLASS=org.apache.crail.tools.CrailFsck
 elif [ "$COMMAND" = "fs" ] ; then
   CLASS=org.apache.hadoop.fs.FsShell
 elif [ "$COMMAND" = "getconf" ] ; then
@@ -70,4 +70,4 @@ fi
 export CLASSPATH="$bin"/../jars/*:"$bin"/../conf:.
 export LD_LIBRARY_PATH="$bin/../lib:$LD_LIBRARY_PATH"
 
-exec "$JAVA" -Dproc_$COMMAND -XX:MaxDirectMemorySize=64G -Dsun.nio.PageAlignDirectMemory=true -Xmn16G $CLASS "$@"
+exec "$JAVA" -Dproc_$COMMAND -Dsun.nio.PageAlignDirectMemory=true $CLASS "$@"
