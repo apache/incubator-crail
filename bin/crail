@@ -67,7 +67,15 @@ elif [ "$COMMAND" = "test" ] ; then
   CLASS=org.junit.runner.JUnitCore
 fi
 
-export CLASSPATH="$bin"/../jars/*:"$bin"/../conf:.
+CONF_PATH="$bin"/../conf
+export CLASSPATH="$bin"/../jars/*:${CONF_PATH}:.
 export LD_LIBRARY_PATH="$bin/../lib:$LD_LIBRARY_PATH"
 
-exec "$JAVA" -Dproc_$COMMAND -Dsun.nio.PageAlignDirectMemory=true $CLASS "$@"
+if [ -f "${CONF_PATH}/crail-env.sh" ]; then
+  # Promote all variable declarations to environment (exported) variables
+  set -a
+  . "${CONF_PATH}/crail-env.sh"
+  set +a
+fi
+
+exec "$JAVA" -Dproc_$COMMAND -Dsun.nio.PageAlignDirectMemory=true $CRAIL_EXTRA_JAVA_OPTIONS $CLASS "$@"
