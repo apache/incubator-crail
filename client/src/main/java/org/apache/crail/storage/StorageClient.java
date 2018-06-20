@@ -22,7 +22,6 @@ import java.io.IOException;
 
 import org.apache.crail.CrailBufferCache;
 import org.apache.crail.CrailStatistics;
-import org.apache.crail.conf.Configurable;
 import org.apache.crail.conf.CrailConfiguration;
 import org.apache.crail.metadata.DataNodeInfo;
 import org.slf4j.Logger;

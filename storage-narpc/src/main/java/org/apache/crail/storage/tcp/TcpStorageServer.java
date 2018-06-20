@@ -19,23 +19,19 @@
 package org.apache.crail.storage.tcp;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.InterfaceAddress;
-import java.net.NetworkInterface;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.crail.conf.CrailConfiguration;
 import org.apache.crail.conf.CrailConstants;
 import org.apache.crail.storage.StorageResource;
 import org.apache.crail.storage.StorageServer;
+import org.apache.crail.storage.StorageUtils;
 import org.apache.crail.utils.CrailUtils;
 import org.slf4j.Logger;
 
@@ -62,7 +58,7 @@ public class TcpStorageServer implements Runnable, StorageServer, NaRPCService<T
 		
 		this.serverGroup = new NaRPCServerGroup<TcpStorageRequest, TcpStorageResponse>(this, TcpStorageConstants.STORAGE_TCP_QUEUE_DEPTH, (int) CrailConstants.BLOCK_SIZE*2, false, TcpStorageConstants.STORAGE_TCP_CORES);
 		this.serverEndpoint = serverGroup.createServerEndpoint();
-		this.address = getDataNodeAddress();
+		this.address = StorageUtils.getDataNodeAddress(TcpStorageConstants.STORAGE_TCP_INTERFACE, TcpStorageConstants.STORAGE_TCP_PORT);
 		serverEndpoint.bind(address);
 		this.alive = false;
 		this.regions = TcpStorageConstants.STORAGE_TCP_STORAGE_LIMIT/TcpStorageConstants.STORAGE_TCP_ALLOCATION_SIZE;
@@ -91,7 +87,6 @@ public class TcpStorageServer implements Runnable, StorageServer, NaRPCService<T
 			dataChannel.close();			
 			long address = CrailUtils.getAddress(buffer);
 			resource = StorageResource.createResource(address, buffer.capacity(), fileId);
-//			LOG.info("allocating resource, key " + resource.getKey() + ", address " + resource.getAddress() + ", length " + resource.getLength());
 		}
 		return resource;
 	}
@@ -159,30 +154,6 @@ public class TcpStorageServer implements Runnable, StorageServer, NaRPCService<T
 		for (File child : dataDir.listFiles()) {
 			child.delete();
 		}
-	}	
-	
-	public static InetSocketAddress getDataNodeAddress() throws IOException {
-		String ifname = TcpStorageConstants.STORAGE_TCP_INTERFACE;
-		int port = TcpStorageConstants.STORAGE_TCP_PORT;
-		
-		NetworkInterface netif = NetworkInterface.getByName(ifname);
-		if (netif == null){
-			throw new IOException("Cannot find network interface with name " + TcpStorageConstants.STORAGE_TCP_INTERFACE);
-		}
-		List<InterfaceAddress> addresses = netif.getInterfaceAddresses();
-		InetAddress addr = null;
-		for (InterfaceAddress address: addresses){
-			if (address.getBroadcast() != null){
-				InetAddress _addr = address.getAddress();
-				addr = _addr;
-			}
-		}
-
-		if (addr == null){
-			throw new IOException("Cannot find valid network interface with name " + TcpStorageConstants.STORAGE_TCP_INTERFACE);
-		}
-		InetSocketAddress inetAddr = new InetSocketAddress(addr, port);
-		return inetAddr;
 	}	
 	
 	public static String getDatanodeDirectory(InetSocketAddress address) throws IllegalArgumentException {

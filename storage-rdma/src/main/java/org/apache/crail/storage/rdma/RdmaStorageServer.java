@@ -19,22 +19,18 @@
 package org.apache.crail.storage.rdma;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.InterfaceAddress;
-import java.net.NetworkInterface;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.crail.conf.CrailConfiguration;
 import org.apache.crail.storage.StorageResource;
 import org.apache.crail.storage.StorageServer;
+import org.apache.crail.storage.StorageUtils;
 import org.apache.crail.utils.CrailUtils;
 import org.slf4j.Logger;
 
@@ -65,7 +61,7 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 	public void init(CrailConfiguration conf, String[] args) throws Exception {
 		RdmaConstants.init(conf, args);
 
-		this.serverAddr = getDataNodeAddress();
+		this.serverAddr = StorageUtils.getDataNodeAddress(RdmaConstants.STORAGE_RDMA_INTERFACE, RdmaConstants.STORAGE_RDMA_PORT);
 		if (serverAddr == null){
 			LOG.info("Configured network interface " + RdmaConstants.STORAGE_RDMA_INTERFACE + " cannot be found..exiting!!!");
 			return;
@@ -156,27 +152,6 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 		} else {
 			return RdmaConstants.STORAGE_RDMA_DATA_PATH + address + "-"  + inetAddress.getPort();
 		}
-	}
-	
-	public static InetSocketAddress getDataNodeAddress() throws IOException {
-		String ifname = RdmaConstants.STORAGE_RDMA_INTERFACE;
-		int port = RdmaConstants.STORAGE_RDMA_PORT;
-		
-		NetworkInterface netif = NetworkInterface.getByName(ifname);
-		if (netif == null){
-			return null;
-		}
-		List<InterfaceAddress> addresses = netif.getInterfaceAddresses();
-		InetAddress addr = null;
-		for (InterfaceAddress address: addresses){
-//			LOG.info("address* " + address.toString() + ", _addr " + _addr.toString() + ", isSiteLocal " + _addr.isSiteLocalAddress() + ", tmp " + tmp + ", size " + tmp.length + ", broadcast " + address.getBroadcast());
-			if (address.getBroadcast() != null){
-				InetAddress _addr = address.getAddress();
-				addr = _addr;
-			}
-		}		
-		InetSocketAddress inetAddr = new InetSocketAddress(addr, port);
-		return inetAddr;
 	}
 	
 	@Override

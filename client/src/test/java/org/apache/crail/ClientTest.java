@@ -26,10 +26,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.Assert;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class ClientTest {
