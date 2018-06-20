@@ -15,6 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+function trim() {
+	s="$@"
+	echo ${s//[[:blank:]]/}
+}
 
 usage="Usage: crail-daemon.sh [--config <conf-dir>] [--hosts hostlistfile] [--script script] (start|stop) <hadoop-command> <args...>"
 
@@ -92,13 +96,14 @@ if [ "$HADOOP_PID_DIR" = "" ]; then
   HADOOP_PID_DIR=/tmp
 fi
 
+ARGS=$(trim "$@")
 # some variables
-export HADOOP_LOGFILE=crail-$HADOOP_IDENT_STRING-$command-$HOSTNAME.log
+export HADOOP_LOGFILE=crail-$HADOOP_IDENT_STRING-$command-$ARGS-$HOSTNAME.log
 export HADOOP_ROOT_LOGGER=${HADOOP_ROOT_LOGGER:-"INFO,RFA"}
 export HADOOP_SECURITY_LOGGER=${HADOOP_SECURITY_LOGGER:-"INFO,RFAS"}
 export HDFS_AUDIT_LOGGER=${HDFS_AUDIT_LOGGER:-"INFO,NullAppender"}
-log=$HADOOP_LOG_DIR/crail-$HADOOP_IDENT_STRING-$command-$HOSTNAME.out
-pid=$HADOOP_PID_DIR/crail-$HADOOP_IDENT_STRING-$command.pid
+log=$HADOOP_LOG_DIR/crail-$HADOOP_IDENT_STRING-$command-$ARGS-$HOSTNAME.out
+pid=$HADOOP_PID_DIR/crail-$HADOOP_IDENT_STRING-$command-$ARGS.pid
 HADOOP_STOP_TIMEOUT=${HADOOP_STOP_TIMEOUT:-5}
 
 # Set default scheduling priority
