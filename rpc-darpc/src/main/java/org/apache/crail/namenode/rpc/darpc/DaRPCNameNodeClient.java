@@ -19,8 +19,6 @@
 package org.apache.crail.namenode.rpc.darpc;
 
 import java.net.InetSocketAddress;
-import java.net.URI;
-
 import org.apache.crail.conf.CrailConfiguration;
 import org.apache.crail.rpc.RpcClient;
 import org.apache.crail.rpc.RpcConnection;
@@ -56,9 +54,7 @@ public class DaRPCNameNodeClient implements RpcClient {
 	@Override
 	public RpcConnection connect(InetSocketAddress address) throws Exception {
 		DaRPCClientEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> namenodeEndopoint = namenodeClientGroup.createEndpoint();
-//		LOG.info("connecting to namenode at " + address);
-		URI uri = URI.create("rdma://" + address.getAddress().getHostAddress() + ":" + address.getPort());
-		namenodeEndopoint.connect(uri);
+		namenodeEndopoint.connect(address, 1000);
 		DaRPCNameNodeConnection connection = new DaRPCNameNodeConnection(namenodeEndopoint);
 		return connection;
 		

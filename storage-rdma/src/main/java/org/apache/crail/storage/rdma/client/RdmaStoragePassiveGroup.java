@@ -20,7 +20,6 @@ package org.apache.crail.storage.rdma.client;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.URI;
 import java.util.HashMap;
 
 import org.apache.crail.metadata.DataNodeInfo;
@@ -66,8 +65,7 @@ public class RdmaStoragePassiveGroup extends RdmaPassiveEndpointGroup<RdmaStorag
 		} 
 		
 		RdmaStoragePassiveEndpoint endpoint = super.createEndpoint();
-		URI uri = URI.create("rdma://" + inetAddress.getAddress().getHostAddress() + ":" + inetAddress.getPort());
-		endpoint.connect(uri);
+		endpoint.connect(inetAddress, 1000);
 		return endpoint;
 	}
 	

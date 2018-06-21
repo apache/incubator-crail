@@ -19,8 +19,6 @@
 package org.apache.crail.namenode.rpc.darpc;
 
 import java.net.InetSocketAddress;
-import java.net.URI;
-
 import org.apache.crail.conf.CrailConfiguration;
 import org.apache.crail.rpc.RpcNameNodeService;
 import org.apache.crail.rpc.RpcServer;
@@ -68,8 +66,7 @@ public class DaRPCNameNodeServer extends RpcServer {
 	public void run() {
 		try {
 			InetSocketAddress addr = CrailUtils.getNameNodeAddress();
-			URI uri = URI.create("rdma://" + addr.getAddress().getHostAddress() + ":" + addr.getPort());
-			namenodeServerEp.bind(uri);
+			namenodeServerEp.bind(addr, 100);
 			LOG.info("opened server at " + addr);
 			while (true) {
 				DaRPCServerEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> clientEndpoint = namenodeServerEp.accept();

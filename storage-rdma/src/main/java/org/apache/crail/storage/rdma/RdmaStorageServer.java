@@ -21,7 +21,6 @@ package org.apache.crail.storage.rdma;
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
-import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
@@ -66,11 +65,10 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 			LOG.info("Configured network interface " + RdmaConstants.STORAGE_RDMA_INTERFACE + " cannot be found..exiting!!!");
 			return;
 		}
-		URI uri = URI.create("rdma://" + serverAddr.getAddress().getHostAddress() + ":" + serverAddr.getPort());
 		this.datanodeGroup = new RdmaPassiveEndpointGroup<RdmaStorageServerEndpoint>(-1, RdmaConstants.STORAGE_RDMA_QUEUESIZE, 4, RdmaConstants.STORAGE_RDMA_QUEUESIZE*100);
 		this.datanodeServerEndpoint = datanodeGroup.createServerEndpoint();		
 		datanodeGroup.init(new RdmaStorageEndpointFactory(datanodeGroup, this));
-		datanodeServerEndpoint.bind(uri);
+		datanodeServerEndpoint.bind(serverAddr, 100);
 		
 		this.dataDirPath = getDatanodeDirectory(serverAddr);
 		LOG.info("dataPath " + dataDirPath);
