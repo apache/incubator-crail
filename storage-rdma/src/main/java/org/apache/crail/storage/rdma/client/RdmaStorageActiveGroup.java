@@ -65,7 +65,7 @@ public class RdmaStorageActiveGroup extends RdmaActiveEndpointGroup<RdmaStorageA
 		}
 		
 		RdmaStorageActiveEndpoint endpoint = super.createEndpoint();
-		endpoint.connect(inetAddress, 1000);
+		endpoint.connect(inetAddress, RdmaConstants.STORAGE_RDMA_CONNECTTIMEOUT);
 		return endpoint;
 	}
 

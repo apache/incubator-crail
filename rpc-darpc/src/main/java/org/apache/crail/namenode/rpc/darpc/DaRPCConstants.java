@@ -51,6 +51,12 @@ public class DaRPCConstants {
 	public static final String NAMENODE_DARPC_CLUSTERSIZE_KEY = "crail.namenode.darpc.clustersize";
 	public static int NAMENODE_DARPC_CLUSTERSIZE = 128;	
 	
+	public static final String NAMENODE_DARPC_BACKLOG_KEY = "crail.namenode.darpc.backlog";
+	public static int NAMENODE_DARPC_BACKLOG = 100;	
+	
+	public static final String NAMENODE_DARPC_CONNECTTIMEOUT_KEY = "crail.namenode.darpc.connecttimeout";
+	public static int NAMENODE_DARPC_CONNECTTIMEOUT = 1000;		
+	
 	public static void updateConstants(CrailConfiguration conf){
 		if (conf.get(NAMENODE_DARPC_POLLING_KEY) != null) {
 			NAMENODE_DARPC_POLLING = conf.getBoolean(NAMENODE_DARPC_POLLING_KEY, false);
@@ -75,7 +81,13 @@ public class DaRPCConstants {
 		}	
 		if (conf.get(NAMENODE_DARPC_CLUSTERSIZE_KEY) != null) {
 			NAMENODE_DARPC_CLUSTERSIZE = Integer.parseInt(conf.get(NAMENODE_DARPC_CLUSTERSIZE_KEY));
-		}					
+		}	
+		if (conf.get(NAMENODE_DARPC_BACKLOG_KEY) != null) {
+			NAMENODE_DARPC_BACKLOG = Integer.parseInt(conf.get(NAMENODE_DARPC_BACKLOG_KEY));
+		}	
+		if (conf.get(NAMENODE_DARPC_CONNECTTIMEOUT_KEY) != null) {
+			NAMENODE_DARPC_CONNECTTIMEOUT = Integer.parseInt(conf.get(NAMENODE_DARPC_CONNECTTIMEOUT_KEY));
+		}			
 	}
 	
 	public static void verify() throws IOException {
@@ -93,5 +105,7 @@ public class DaRPCConstants {
 		LOG.info(NAMENODE_DARPC_SENDQUEUE_KEY + " " + NAMENODE_DARPC_SENDQUEUE);
 		LOG.info(NAMENODE_DARPC_POLLSIZE_KEY + " " + NAMENODE_DARPC_POLLSIZE);
 		LOG.info(NAMENODE_DARPC_CLUSTERSIZE_KEY + " " + NAMENODE_DARPC_CLUSTERSIZE);
+		LOG.info(NAMENODE_DARPC_BACKLOG_KEY + " " + NAMENODE_DARPC_BACKLOG);
+		LOG.info(NAMENODE_DARPC_CONNECTTIMEOUT_KEY + " " + NAMENODE_DARPC_CONNECTTIMEOUT);
 	}	
 }

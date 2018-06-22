@@ -54,7 +54,7 @@ public class DaRPCNameNodeClient implements RpcClient {
 	@Override
 	public RpcConnection connect(InetSocketAddress address) throws Exception {
 		DaRPCClientEndpoint<DaRPCNameNodeRequest, DaRPCNameNodeResponse> namenodeEndopoint = namenodeClientGroup.createEndpoint();
-		namenodeEndopoint.connect(address, 1000);
+		namenodeEndopoint.connect(address, DaRPCConstants.NAMENODE_DARPC_CONNECTTIMEOUT);
 		DaRPCNameNodeConnection connection = new DaRPCNameNodeConnection(namenodeEndopoint);
 		return connection;
 		

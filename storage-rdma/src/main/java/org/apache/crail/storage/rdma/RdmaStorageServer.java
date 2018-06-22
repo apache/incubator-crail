@@ -68,7 +68,7 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 		this.datanodeGroup = new RdmaPassiveEndpointGroup<RdmaStorageServerEndpoint>(-1, RdmaConstants.STORAGE_RDMA_QUEUESIZE, 4, RdmaConstants.STORAGE_RDMA_QUEUESIZE*100);
 		this.datanodeServerEndpoint = datanodeGroup.createServerEndpoint();		
 		datanodeGroup.init(new RdmaStorageEndpointFactory(datanodeGroup, this));
-		datanodeServerEndpoint.bind(serverAddr, 100);
+		datanodeServerEndpoint.bind(serverAddr, RdmaConstants.STORAGE_RDMA_BACKLOG);
 		
 		this.dataDirPath = getDatanodeDirectory(serverAddr);
 		LOG.info("dataPath " + dataDirPath);

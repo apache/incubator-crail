@@ -62,6 +62,12 @@ public class RdmaConstants {
 
 	public static final String STORAGE_RDMA_PERSISTENT_KEY = "crail.storage.rdma.persistent";
 	public static boolean STORAGE_RDMA_PERSISTENT = false;
+	
+	public static final String STORAGE_RDMA_BACKLOG_KEY = "crail.storage.rdma.backlog";
+	public static int STORAGE_RDMA_BACKLOG = 100;	
+	
+	public static final String STORAGE_RDMA_CONNECTTIMEOUT_KEY = "crail.storage.rdma.connecttimeout";
+	public static int STORAGE_RDMA_CONNECTTIMEOUT = 1000;		
 
 	public static void updateConstants(CrailConfiguration conf){
 		if (conf.get(STORAGE_RDMA_INTERFACE_KEY) != null) {
@@ -91,6 +97,12 @@ public class RdmaConstants {
 		if (conf.get(STORAGE_RDMA_PERSISTENT_KEY) != null) {
 			STORAGE_RDMA_PERSISTENT = conf.getBoolean(STORAGE_RDMA_PERSISTENT_KEY, false);
 		}
+		if (conf.get(STORAGE_RDMA_BACKLOG_KEY) != null) {
+			STORAGE_RDMA_BACKLOG = Integer.parseInt(conf.get(STORAGE_RDMA_BACKLOG_KEY));
+		}	
+		if (conf.get(STORAGE_RDMA_CONNECTTIMEOUT_KEY) != null) {
+			STORAGE_RDMA_CONNECTTIMEOUT = Integer.parseInt(conf.get(STORAGE_RDMA_CONNECTTIMEOUT_KEY));
+		}			
 	}
 
 	public static void verify() throws IOException {
@@ -114,6 +126,8 @@ public class RdmaConstants {
 		logger.info(STORAGE_RDMA_LOCAL_MAP_KEY + " " + STORAGE_RDMA_LOCAL_MAP);
 		logger.info(STORAGE_RDMA_QUEUESIZE_KEY + " " + STORAGE_RDMA_QUEUESIZE);
 		logger.info(STORAGE_RDMA_TYPE_KEY + " " + STORAGE_RDMA_TYPE);
+		logger.info(STORAGE_RDMA_BACKLOG_KEY + " " + STORAGE_RDMA_BACKLOG);
+		logger.info(STORAGE_RDMA_CONNECTTIMEOUT_KEY + " " + STORAGE_RDMA_CONNECTTIMEOUT);		
 	}
 
 	public static void init(CrailConfiguration conf, String[] args) throws IOException {

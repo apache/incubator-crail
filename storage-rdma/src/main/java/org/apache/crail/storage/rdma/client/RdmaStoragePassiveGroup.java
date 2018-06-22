@@ -65,7 +65,7 @@ public class RdmaStoragePassiveGroup extends RdmaPassiveEndpointGroup<RdmaStorag
 		} 
 		
 		RdmaStoragePassiveEndpoint endpoint = super.createEndpoint();
-		endpoint.connect(inetAddress, 1000);
+		endpoint.connect(inetAddress, RdmaConstants.STORAGE_RDMA_CONNECTTIMEOUT);
 		return endpoint;
 	}
 	
