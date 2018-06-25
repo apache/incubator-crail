@@ -28,6 +28,7 @@ import org.apache.hadoop.fs.ByteBufferReadable;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.PositionedReadable;
 import org.apache.hadoop.fs.Seekable;
+import org.apache.hadoop.fs.FileSystem.Statistics;
 import org.slf4j.Logger;
 
 
@@ -36,9 +37,10 @@ public class CrailHDFSInputStream extends FSDataInputStream {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	private CrailBufferedInputStream inputStream;
+	private Statistics stats;
 	
-	public CrailHDFSInputStream(CrailBufferedInputStream stream) {
-		super(new CrailSeekable(stream));
+	public CrailHDFSInputStream(CrailBufferedInputStream stream, Statistics stats) {
+		super(new CrailSeekable(stream, stats));
 		LOG.info("new HDFS stream");
 		this.inputStream = stream;
 	}
@@ -50,13 +52,17 @@ public class CrailHDFSInputStream extends FSDataInputStream {
 
 	@Override
 	public int read(ByteBuffer buf) throws IOException {
-		return inputStream.read(buf);
+		int res = inputStream.read(buf);
+		updateStats(res);
+		return res;
 	}
 
 	@Override
 	public int read(long position, byte[] buffer, int offset, int length)
 			throws IOException {
-		return inputStream.read(position, buffer, offset, length);
+		int res = inputStream.read(position, buffer, offset, length);
+		updateStats(res);
+		return res;
 	}
 	
 	@Override
@@ -84,7 +90,9 @@ public class CrailHDFSInputStream extends FSDataInputStream {
 
 	@Override
 	public int read() throws IOException {
-		return inputStream.read();
+		int res = inputStream.read();
+		updateStats(Integer.BYTES);
+		return res;
 	}
 
 	@Override
@@ -92,26 +100,40 @@ public class CrailHDFSInputStream extends FSDataInputStream {
 		return inputStream.available();
 	}
 	
+	private void updateStats(long len) {
+		if (stats != null && len > 0) {
+			stats.incrementBytesRead(len);
+		}
+	}
+	
 	public static class CrailSeekable extends InputStream implements Seekable, PositionedReadable, ByteBufferReadable {
 		private CrailBufferedInputStream inputStream;
+		private Statistics stats;
 		
-		public CrailSeekable(CrailBufferedInputStream inputStream) {
+		public CrailSeekable(CrailBufferedInputStream inputStream, Statistics stats) {
 			this.inputStream = inputStream;
+			this.stats = stats;
 		}
 
 		@Override
 		public int read() throws IOException {
-			return inputStream.read();
+			int value = inputStream.read();
+			updateStats(Integer.BYTES);
+			return value;
 		}
 
 		@Override
 		public int read(byte[] b) throws IOException {
-			return inputStream.read(b);
+			int res = inputStream.read(b);
+			updateStats(Integer.BYTES);
+			return res;
 		}
 
 		@Override
 		public int read(byte[] b, int off, int len) throws IOException {
-			return inputStream.read(b, off, len);
+			int res = inputStream.read(b, off, len);
+			updateStats(Integer.BYTES);
+			return res;
 		}
 
 		@Override
@@ -146,13 +168,17 @@ public class CrailHDFSInputStream extends FSDataInputStream {
 
 		@Override
 		public int read(ByteBuffer dataBuf) throws IOException {
-			return inputStream.read(dataBuf);
+			int res = inputStream.read(dataBuf);
+			updateStats(Integer.BYTES);
+			return res;
 		}
 
 		@Override
 		public int read(long position, byte[] buffer, int offset, int length)
 				throws IOException {
-			return inputStream.read(position, buffer, offset, length);
+			int res = inputStream.read(position, buffer, offset, length);
+			updateStats(Integer.BYTES);
+			return res;
 		}
 
 		@Override
@@ -186,6 +212,12 @@ public class CrailHDFSInputStream extends FSDataInputStream {
 		@Override
 		public boolean seekToNewSource(long targetPos) throws IOException {
 			return false;
+		}
+		
+		private void updateStats(long len) {
+			if (stats != null && len > 0) {
+				stats.incrementBytesRead(len);
+			}
 		}		
 	}
 	

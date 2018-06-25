@@ -92,7 +92,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 		try {
 			fileInfo = dfs.lookup(path.toUri().getRawPath()).get().asFile();
 			CrailBufferedInputStream inputStream = fileInfo.getBufferedInputStream(fileInfo.getCapacity());
-			return new CrailHDFSInputStream(inputStream);
+			return new CrailHDFSInputStream(inputStream, statistics);
 		} catch (Exception e) {
 			throw new IOException(e);
 		}
