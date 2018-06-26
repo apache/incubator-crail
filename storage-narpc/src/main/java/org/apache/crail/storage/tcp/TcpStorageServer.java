@@ -18,7 +18,6 @@
 
 package org.apache.crail.storage.tcp;
 
-import java.io.File;
 import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -64,8 +63,8 @@ public class TcpStorageServer implements Runnable, StorageServer, NaRPCService<T
 		this.regions = TcpStorageConstants.STORAGE_TCP_STORAGE_LIMIT/TcpStorageConstants.STORAGE_TCP_ALLOCATION_SIZE;
 		this.keys = 0;
 		this.dataBuffers = new ConcurrentHashMap<Integer, ByteBuffer>();
-		this.dataDirPath = getDatanodeDirectory(address);
-		clean();
+		this.dataDirPath = StorageUtils.getDatanodeDirectory(TcpStorageConstants.STORAGE_TCP_DATA_PATH, address);
+		StorageUtils.clean(TcpStorageConstants.STORAGE_TCP_DATA_PATH, dataDirPath);
 	}
 
 	@Override
@@ -145,21 +144,4 @@ public class TcpStorageServer implements Runnable, StorageServer, NaRPCService<T
 			return new TcpStorageResponse(TcpStorageProtocol.RET_RPC_UNKNOWN);
 		}
 	}
-	
-	private void clean(){
-		File dataDir = new File(dataDirPath);
-		if (!dataDir.exists()){
-			dataDir.mkdirs();
-		}
-		for (File child : dataDir.listFiles()) {
-			child.delete();
-		}
-	}	
-	
-	public static String getDatanodeDirectory(InetSocketAddress address) throws IllegalArgumentException {
-		if (address == null) {
-			throw new IllegalArgumentException("Address paramater cannot be null!");
-		}
-		return TcpStorageConstants.STORAGE_TCP_DATA_PATH + address.getAddress() + "-"  + address.getPort();
-	}	
 }

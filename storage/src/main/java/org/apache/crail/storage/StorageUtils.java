@@ -18,6 +18,7 @@
 
 package org.apache.crail.storage;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -45,5 +46,28 @@ public class StorageUtils {
 		}
 		InetSocketAddress inetAddr = new InetSocketAddress(addr, port);
 		return inetAddr;
+	}
+	
+	public static void clean(String base, String path) throws IOException {
+		try {
+			File dataDir = new File(path);
+			if (!dataDir.exists()){
+				if (!dataDir.mkdirs()) {
+					throw new IOException("crail.datapath " + base + " either does not exist or has no write permissions");
+				}
+			}
+			for (File child : dataDir.listFiles()) {
+				child.delete();
+			}
+		} catch(SecurityException e) {
+			throw new IOException("Error when trying to access " + base, e);
+		}
+	}
+	
+	public static String getDatanodeDirectory(String datapath, InetSocketAddress address) throws IllegalArgumentException {
+		if (address == null) {
+			throw new IllegalArgumentException("Address paramater cannot be null!");
+		}
+		return datapath + address.getAddress() + "-"  + address.getPort();
 	}	
 }

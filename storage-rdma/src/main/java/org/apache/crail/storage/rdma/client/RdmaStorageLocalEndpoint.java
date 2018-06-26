@@ -35,8 +35,8 @@ import org.apache.crail.memory.OffHeapBuffer;
 import org.apache.crail.metadata.BlockInfo;
 import org.apache.crail.storage.StorageEndpoint;
 import org.apache.crail.storage.StorageFuture;
+import org.apache.crail.storage.StorageUtils;
 import org.apache.crail.storage.rdma.RdmaConstants;
-import org.apache.crail.storage.rdma.RdmaStorageServer;
 import org.apache.crail.utils.CrailUtils;
 import org.slf4j.Logger;
 
@@ -52,7 +52,7 @@ public class RdmaStorageLocalEndpoint implements StorageEndpoint {
 	
 	public RdmaStorageLocalEndpoint(InetSocketAddress datanodeAddr) throws Exception {
 		LOG.info("new local endpoint for address " + datanodeAddr);
-		String dataPath = RdmaStorageServer.getDatanodeDirectory(datanodeAddr);
+		String dataPath = StorageUtils.getDatanodeDirectory(RdmaConstants.STORAGE_RDMA_DATA_PATH, datanodeAddr);
 		File dataDir = new File(dataPath);
 		if (!dataDir.exists()){
 			throw new Exception("Local RDMA data path missing");

@@ -18,7 +18,6 @@
 
 package org.apache.crail.storage.rdma;
 
-import java.io.File;
 import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -70,12 +69,11 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 		datanodeGroup.init(new RdmaStorageEndpointFactory(datanodeGroup, this));
 		datanodeServerEndpoint.bind(serverAddr, RdmaConstants.STORAGE_RDMA_BACKLOG);
 		
-		this.dataDirPath = getDatanodeDirectory(serverAddr);
-		LOG.info("dataPath " + dataDirPath);
 		this.allocatedSize = 0;
 		this.fileCount = 0;
+		this.dataDirPath = StorageUtils.getDatanodeDirectory(RdmaConstants.STORAGE_RDMA_DATA_PATH, serverAddr);
 		if (!RdmaConstants.STORAGE_RDMA_PERSISTENT){
-			clean();		
+			StorageUtils.clean(RdmaConstants.STORAGE_RDMA_DATA_PATH, dataDirPath);		
 		} 
 	}
 	
@@ -141,29 +139,8 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 		return serverAddr;
 	}	
 	
-	//--------------------
-	
-	public static String getDatanodeDirectory(InetSocketAddress inetAddress){
-		String address = inetAddress.getAddress().toString();
-		if (address.startsWith("/")){
-			return RdmaConstants.STORAGE_RDMA_DATA_PATH + address + "-"  + inetAddress.getPort();
-		} else {
-			return RdmaConstants.STORAGE_RDMA_DATA_PATH + address + "-"  + inetAddress.getPort();
-		}
-	}
-	
 	@Override
 	public boolean isAlive() {
 		return isAlive;
-	}
-
-	private void clean(){
-		File dataDir = new File(dataDirPath);
-		if (!dataDir.exists()){
-			dataDir.mkdirs();
-		}
-		for (File child : dataDir.listFiles()) {
-			child.delete();
-		}
 	}
 }
