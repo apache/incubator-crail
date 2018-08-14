@@ -20,11 +20,16 @@ Apache Crail incubating
 
 .. toctree::
    :maxdepth: 1
-   :caption: Getting started
+   :caption: Applications
+
+   shell
+   iobench
+   fsck
+   spark
 
 .. toctree::
    :maxdepth: 1
-   :caption: API
+   :caption: Development
 
 .. toctree::
    :maxdepth: 1
