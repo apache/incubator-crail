@@ -33,7 +33,47 @@ from the original data in HDFS.
 Spark-IO
 --------
 
+Crail-Spark-IO contains various I/O accleration plugins for Spark tailored to
+high-performance network and storage hardware (RDMA, NVMef, etc.).
+Spark-IO is not provided with the default Crail deployment but can be
+obtained `here <https://github.com/zrlio/crail-spark-io>`_.
+Spark-IO currently contains two IO plugins: a shuffle engine and a broadcast module.
+Both plugins inherit all the benefits of Crail such as very high performance
+(throughput and latency) and multi-tiering (e.g., DRAM and flash).
 
+Requirements
+~~~~~~~~~~~~
+
+* Spark >= 2.0
+* Java 8
+* Maven
+* Crail >= 1.0
+
+Building
+~~~~~~~~
+
+To build Crail execute the following steps:
+
+1. Obtain a copy of Crail-Spark-IO from `Github <https://github.com/zrlio/crail-spark-io>`_
+2. Make sure your local maven repository contains Crail, if not build Crail
+   from :ref:`source <Building from source>`
+3. Run: :code:`mvn -DskipTests install`
+
+
+Configure Spark
+~~~~~~~~~~~~~~~
+To configure the crail shuffle plugin add the following lines to spark-defaults.conf
+
+.. code-block:: bash
+
+    spark.shuffle.manager           org.apache.spark.shuffle.crail.CrailShuffleManager
+
+    spark.driver.extraClassPath     $CRAIL_HOME/jars/*:<path>/crail-spark-X.Y.jar:.
+    spark.executor.extraClassPath   $CRAIL_HOME/jars/*:<path>/crail-spark-X.Y.jar:.
+
+
+Since Spark version 2.0.0, broadcast is no longer an exchangeable plugin, unfortunately.
+To use the Crail broadcast plugin in Spark it has to be manually added to Spark's BroadcastManager.scala.
 
 Crail-TeraSort
 --------------
