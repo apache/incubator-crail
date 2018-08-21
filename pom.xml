@@ -21,9 +21,16 @@
   <groupId>org.apache.crail</groupId>
   <artifactId>crail-parent</artifactId>
   <packaging>pom</packaging>
-  <version>1.0</version>
+  <version>1.1-SNAPSHOT</version>
   <name>Crail Project Parent POM</name>
   <url>http://maven.apache.org</url>
+
+  <scm>
+    <connection>scm:git:git://git.apache.org/incubator-crail.git</connection>
+    <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-crail.git</developerConnection>
+    <url>https://git-wip-us.apache.org/repos/asf?p=incubator-crail.git</url>
+    <tag>HEAD</tag>
+  </scm>
 
   <properties>
     <build.copyDependenciesPhase>package</build.copyDependenciesPhase>
@@ -42,6 +49,25 @@
       <properties>
         <hadoop.version>2.7.3</hadoop.version>
       </properties>
+    </profile>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <executions>
+              <execution>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
 
@@ -113,6 +139,23 @@
                 <exclude>conf/**/*</exclude>
             </excludes>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.5.3</version>
+        <configuration>
+          <useReleaseProfile>false</useReleaseProfile>
+          <releaseProfiles>release</releaseProfiles>
+          <autoVersionSubmodules>true</autoVersionSubmodules>
+          <goals>deploy</goals>
+          <tagNameFormat>@{project.artifactId}-@{project.version}-incubating</tagNameFormat>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.0.1</version>
       </plugin>
     </plugins>
   </build>
