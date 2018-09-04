@@ -20,7 +20,6 @@
 # -- Project information -----------------------------------------------------
 
 project = u'Apache Crail incubating'
-html_logo = '../logo/crail_logo.png'
 copyright = u'2018, Apache Software Foundation'
 author = u'_'
 
