@@ -61,12 +61,12 @@
       <dependency>
         <groupId>com.ibm.disni</groupId>
         <artifactId>disni</artifactId>
-        <version>1.6</version>
+        <version>1.7</version>
       </dependency>
       <dependency>
         <groupId>com.ibm.darpc</groupId>
         <artifactId>darpc</artifactId>
-        <version>1.6</version>
+        <version>1.7</version>
       </dependency>
       <dependency>
         <groupId>com.ibm.narpc</groupId>
