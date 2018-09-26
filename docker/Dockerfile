@@ -24,7 +24,8 @@ RUN echo "Crail-$LOG_COMMIT install openjdk8, git and envsubst" && \
     apt-get update && apt-get install --no-install-recommends -y \
     openjdk-8-jdk-headless \
     git \
-    gettext-base
+    gettext-base \
+    libxml2-utils
 ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 ENV PATH=${PATH}:${JAVA_HOME}/bin
 
@@ -38,7 +39,13 @@ RUN echo "Crail-$LOG_COMMIT clone & build Crail repo" && \
     cd incubator-crail && \
     git checkout ${GIT_COMMIT} && \
     mvn -DskipTests package
-ENV CRAIL_HOME /incubator-crail/assembly/target/crail-1.0-bin
+
+RUN echo "Move crail to /crail" && \
+    rm -rf /crail && \
+    v=`xmllint --xpath "string(/*[local-name()='project']/*[local-name()='version'])" /incubator-crail/pom.xml` && \
+    mv /incubator-crail/assembly/target/crail-${v}-bin /crail
+
+ENV CRAIL_HOME /crail
 ENV PATH=${PATH}:${CRAIL_HOME}/bin
 
 
@@ -52,7 +59,7 @@ ENV CACHELIMIT=0
 
 COPY ./start-crail-docker.sh $CRAIL_HOME/bin
 COPY ./crail-env.sh $CRAIL_HOME/conf
-COPY ./core-site.xml $CRAIL_HOME/conf
+COPY ./core-site.xml.env $CRAIL_HOME/conf
 COPY ./crail-site.conf $CRAIL_HOME/conf
 
 ENTRYPOINT ["start-crail-docker.sh"]
