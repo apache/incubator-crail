@@ -17,6 +17,37 @@ limitations under the License.
 {% endcomment %}
 -->
 
+## [1.1](https://github.com/apache/incubator-crail/tree/v1.1) - 18.10.2018
+
+#### New features / improvements
+
+* [[CRAIL-5](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-5)] How to I contribute to Crail?
+* [[CRAIL-15](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-15)] Better default configuration
+* [[CRAIL-19](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-19)] Add checkstyle plugin
+* [[CRAIL-20](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-20)] Statistics for storage and rpc client
+* [[CRAIL-24](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-24)] New documentation using readthedocs
+* [[CRAIL-27](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-27)] HDFS adapter implementation improvement
+* [[CRAIL-34](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-34)] Use Apache parent pom
+* [[CRAIL-36](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-36)] Add incubation disclaimer to README
+* [[CRAIL-39](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-39)] Add download page to website
+* [[CRAIL-41](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-41)] Use DiSNI/DaRPC v1.6
+* [[CRAIL-49](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-49)] Add Docker container
+* [[CRAIL-50](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-50)] Use DiSNI/DaRPC v1.7
+* [[CRAIL-53](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-53)] Add missing license headers and exclude configuration files from rat check
+* [[CRAIL-54](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-54)] Tar source files / scm tag is now HEAD
+* [[CRAIL-55](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-55)] Add programming documentation
+
+
+#### Bug fixes
+
+* [[CRAIL-26](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-26)] HDFS statistics
+* [[CRAIL-29](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-29)] Fix starting multiple datanodes on same host
+* [[CRAIL-40](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-40)] Fix startup script memory requirement
+* [[CRAIL-45](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-45)] Fix Nullpointer exception when datapath is not accessible
+* [[CRAIL-46](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-46)] Clarify incubating status on website
+* [[CRAIL-51](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-51)] Fix subsitution of core-site.xml in Docker container
+* [[CRAIL-52](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-52)] Fix CRAIL_HOME in Docker container
+
 ## [1.0](https://github.com/apache/incubator-crail/tree/v1.0) - 23.05.2018
 
 This is our first Apache incubator release. Below are new features and bug fixes since the import to Apache.
