@@ -31,6 +31,8 @@ Apache Crail incubating
    :maxdepth: 1
    :caption: Development
 
+   develop
+
 .. toctree::
    :maxdepth: 1
    :caption: Help
