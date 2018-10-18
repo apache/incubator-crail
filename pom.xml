@@ -40,6 +40,7 @@
   <properties>
     <build.copyDependenciesPhase>package</build.copyDependenciesPhase>
     <hadoop.version>2.7.3</hadoop.version>
+    <sourceReleaseAssemblyDescriptor>source-release-tar</sourceReleaseAssemblyDescriptor>
   </properties>
 
   <profiles>
