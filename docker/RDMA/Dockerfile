@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.)
 
-FROM crail:latest
+# TODO: automate update version
+FROM apache/incubator-crail:1.1
 MAINTAINER Apache Crail <dev@crail.apache.org>
 
 # TODO: automate update version
-ARG DISNI_COMMIT="v1.5"
+ARG DISNI_COMMIT="v1.7"
 
 RUN echo "Crail-$LOG_COMMIT install rdma libraries and autotools" && \
     apt-get install -y --no-install-recommends \
