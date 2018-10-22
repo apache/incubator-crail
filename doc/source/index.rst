@@ -37,5 +37,6 @@ Apache Crail incubating
    :maxdepth: 1
    :caption: Help
 
+   release
    contribute
    contact
