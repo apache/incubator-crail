@@ -19,6 +19,6 @@ To build Crail from source using `Apache Maven <http://maven.apache.org>`_ execu
    (b) Clone from Github: :code:`git clone https://github.com/apache/incubator-crail` or
    (c) Download and unpack the latest source release from `here <http://crail.apache.org/download>`_
 2. Run: :code:`mvn -DskipTests install`
-3. Copy tarball to the cluster and unpack it using :code:`tar xvfz crail-XX-bin.tar.gz`
+3. Copy tarball from :code:`assembly/target` to the cluster and unpack it using :code:`tar xvfz crail-X.Y-incubating-bin.tar.gz`
 
 **Note:** *later, when deploying Crail, make sure libdisni.so is part of your LD_LIBRARY_PATH. The easiest way to make it work is to copy libdisni.so into crail-1.0/lib*
