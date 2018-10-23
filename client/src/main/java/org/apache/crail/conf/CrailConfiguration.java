@@ -68,6 +68,9 @@ public class CrailConfiguration {
 		Properties properties = new Properties();
 
 		String base = System.getenv("CRAIL_HOME");
+		if (base == null || base.isEmpty()) {
+			throw new IllegalArgumentException("CRAIL_HOME environment variable is not set or empty");
+		}
 		FileInputStream inputStream = new FileInputStream(new File(base + "/conf/" + resourceName));
 
 		try {
