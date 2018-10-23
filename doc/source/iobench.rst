@@ -10,14 +10,14 @@ Synchronously write 1MB 1024 times to get a 1GB file:
 
 .. code-block:: bash
 
-   $CRAIL_HOME/crail iobench -t write -f /filename -s $((1024*1024)) -k 1024
+   $CRAIL_HOME/bin/crail iobench -t write -f /filename -s $((1024*1024)) -k 1024
 
 Read 1024 1MB buffers asynchronously with a batch size of 4:
 
 
 .. code-block:: bash
 
-   $CRAIL_HOME/crail iobench -t readSequentialAsync -f /filename -s $((1024*1024)) -k 1024 -b 4
+   $CRAIL_HOME/bin/crail iobench -t readSequentialAsync -f /filename -s $((1024*1024)) -k 1024 -b 4
 
 Command Reference
 -----------------

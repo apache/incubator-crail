@@ -7,15 +7,15 @@ properly.
 
 .. code-block:: bash
 
-   $CRAIL_HOME/crail fs
+   $CRAIL_HOME/bin/crail fs
 
 Not all shell commands are support but the following operations have been tested to work:
 
 .. code-block:: bash
 
-   $CRAIL_HOME/crail fs -ls <crail_path>
-   $CRAIL_HOME/crail fs -mkdir <crail_path>
-   $CRAIL_HOME/crail fs -copyFromLocal <local_path> <crail_path>
-   $CRAIL_HOME/crail fs -copyToLocal <crail_path> <local_path>
-   $CRAIL_HOME/crail fs -cat <crail_path>
+   $CRAIL_HOME/bin/crail fs -ls <crail_path>
+   $CRAIL_HOME/bin/crail fs -mkdir <crail_path>
+   $CRAIL_HOME/bin/crail fs -copyFromLocal <local_path> <crail_path>
+   $CRAIL_HOME/bin/crail fs -copyToLocal <crail_path> <local_path>
+   $CRAIL_HOME/bin/crail fs -cat <crail_path>
 

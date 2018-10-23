@@ -12,14 +12,14 @@ To start the namenode execute the following command on the host that is configur
 
 .. code-block:: bash
 
-   $CRAIL_HOME/crail namenode
+   $CRAIL_HOME/bin/crail namenode
 
 To start a datanode run the following command on a host in the cluster
 (ideally this is a different physical machine than the one running the namenode):
 
 .. code-block:: bash
 
-   $CRAIL_HOME/crail datanode
+   $CRAIL_HOME/bin/crail datanode
 
 Now you should have a small deployment up with just one datanode.
 In this case the datanode is of type TCP/DRAM, which is the default datnode.
@@ -29,7 +29,7 @@ You can find a list of supported storage tiers :ref:`here <Storage Tiers>`. For 
 
 .. code-block:: bash
 
-   $CRAIL_HOME/crail datanode -t org.apache.crail.storage.nvmf.NvmfStorageTier
+   $CRAIL_HOME/bin/crail datanode -t org.apache.crail.storage.nvmf.NvmfStorageTier
 
 starts the NVMf datanode. Note that configuration in :ref:`crail-site.conf` needs
 to have the specific properties set of this type of datanode, in order for this to work.
@@ -38,7 +38,7 @@ properties on the command line which can be appended after :code:`--` to the com
 
 .. code-block:: bash
 
-   $CRAIL_HOME/crail datanode -t org.apache.crail.storage.nvmf.NvmfStorageTier -- -a 192.168.0.2
+   $CRAIL_HOME/bin/crail datanode -t org.apache.crail.storage.nvmf.NvmfStorageTier -- -a 192.168.0.2
 
 Each storage tier instance can only belong to one storage class however the same
 storage tier type can belong to multiple storage classes. Refer to :ref:`Storage Tiers`
@@ -50,7 +50,7 @@ in a specific storage class, e.g.:
 
 .. code-block:: bash
 
-   $CRAIL_HOME/crail datanode -t org.apache.crail.storage.nvmf.NvmfStorageTier -c 1
+   $CRAIL_HOME/bin/crail datanode -t org.apache.crail.storage.nvmf.NvmfStorageTier -c 1
 
 starts a NVMf storage tier in storage class 1 (storage classes start from 0).
 
