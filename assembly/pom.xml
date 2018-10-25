@@ -124,7 +124,7 @@
               <goal>single</goal>
             </goals>
             <configuration>
-              <finalName>crail-${project.version}</finalName>
+              <finalName>apache-crail-${project.version}</finalName>
               <descriptors>
                 <descriptor>src/main/assembly/assembly.xml</descriptor>
               </descriptors>
