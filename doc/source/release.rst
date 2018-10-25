@@ -185,12 +185,12 @@ at ``target/crail-parent-${RELEASE_VERSION}-incubating-src-release.tar.gz``.
 
    # copy files from the crail build location to the SVN staging directory (SSD)
    # binary file
-   cp assembly/target/crail-${RELEASE_VERSION}-incubating-bin.tar.gz ${SSD}/apache-crail-${RELEASE_VERSION}-incubating-bin.tar.gz
+   cp assembly/target/apache-crail-${RELEASE_VERSION}-incubating-bin.tar.gz ${SSD}/
    # source file
-   cp target/crail-parent-${RELEASE_VERSION}-incubating-src-release.tar.gz ${SSD}/apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz
+   cp target/apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz ${SSD}/
    # copy signature files
-   cp assembly/target/crail-${RELEASE_VERSION}-incubating-bin.tar.gz.asc ${SSD}/apache-crail-${RELEASE_VERSION}-incubating-bin.tar.gz.asc
-   cp target/crail-parent-${RELEASE_VERSION}-incubating-src-release.tar.gz.asc ${SRD}/apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz.asc
+   cp assembly/target/apache-crail-${RELEASE_VERSION}-incubating-bin.tar.gz.asc ${SSD}/
+   cp target/apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz.asc ${SRD}/
    # step in the SVN staging directory
    cd ${SSD}
 
@@ -202,7 +202,7 @@ at ``target/crail-parent-${RELEASE_VERSION}-incubating-src-release.tar.gz``.
   sha512sum apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz > apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz.sha512
   sha512sum apache-crail-${RELEASE_VERSION}-incubating-bin.tar.gz > apache-crail-${RELEASE_VERSION}-incubating-bin.tar.gz.sha512
 
-**NOTE:** step 6 and 7 will be automated once the [JIRA-56](https://issues.apache.org/jira/projects/CRAIL/issues/CRAIL-56) is fixed.
+**NOTE:** step 7 will be automated once the [JIRA-56](https://issues.apache.org/jira/projects/CRAIL/issues/CRAIL-56) is fixed.
 
 
 8. Verify the checksums for source and binary files
