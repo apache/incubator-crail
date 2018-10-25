@@ -118,7 +118,7 @@
         <artifactId>maven-assembly-plugin</artifactId>
         <executions>
           <execution>
-            <id>dist</id>
+            <id>binary-release-assembly-crail</id>
             <phase>package</phase>
             <goals>
               <goal>single</goal>
@@ -130,11 +130,23 @@
               </descriptors>
             </configuration>
           </execution>
+          <execution>
+            <id>source-release-assembly-crail</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <appendAssemblyId>false</appendAssemblyId>
+              <descriptors>
+                <descriptor>src/main/assembly/source-assembly.xml</descriptor>
+              </descriptors>
+              <finalName>apache-crail-${project.version}-src</finalName>
+              <tarLongFileMode>gnu</tarLongFileMode>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
-
-
-
     </plugins>
   </build>
 </project>

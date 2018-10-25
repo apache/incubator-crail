@@ -40,7 +40,6 @@
   <properties>
     <build.copyDependenciesPhase>package</build.copyDependenciesPhase>
     <hadoop.version>2.7.3</hadoop.version>
-    <sourceReleaseAssemblyDescriptor>source-release-tar</sourceReleaseAssemblyDescriptor>
   </properties>
 
   <profiles>
@@ -154,15 +153,7 @@
         <executions>
           <execution>
             <id>source-release-assembly</id>
-            <phase>package</phase>
-            <configuration combine.self="override">
-              <runOnlyAtExecutionRoot>true</runOnlyAtExecutionRoot>
-              <finalName>apache-crail-${project.version}</finalName>
-              <tarLongFileMode>posix</tarLongFileMode>
-              <descriptorRefs>
-                <descriptorRef>src</descriptorRef>
-              </descriptorRefs>
-            </configuration>
+            <phase>none</phase>
           </execution>
         </executions>
       </plugin>
