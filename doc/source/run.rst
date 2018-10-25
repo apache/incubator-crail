@@ -1,3 +1,15 @@
+.. Licensed under the Apache License, Version 2.0 (the "License"); you may not
+.. use this file except in compliance with the License. You may obtain a copy of
+.. the License at
+..
+..   http://www.apache.org/licenses/LICENSE-2.0
+..
+.. Unless required by applicable law or agreed to in writing, software
+.. distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+.. WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+.. License for the specific language governing permissions and limitations under
+.. the License.
+
 Run
 ===
 
@@ -33,7 +45,7 @@ You can find a list of supported storage tiers :ref:`here <Storage Tiers>`. For 
 
 starts the NVMf datanode. Note that configuration in :ref:`crail-site.conf` needs
 to have the specific properties set of this type of datanode, in order for this to work.
-Some storage tiers allow to set :ref:`configuration <Storage Tier Command Line>` 
+Some storage tiers allow to set :ref:`configuration <Storage Tier Command Line>`
 properties on the command line which can be appended after :code:`--` to the command line, e.g.:
 
 .. code-block:: bash

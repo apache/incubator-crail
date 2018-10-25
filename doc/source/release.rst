@@ -1,22 +1,34 @@
+.. Licensed under the Apache License, Version 2.0 (the "License"); you may not
+.. use this file except in compliance with the License. You may obtain a copy of
+.. the License at
+..
+..   http://www.apache.org/licenses/LICENSE-2.0
+..
+.. Unless required by applicable law or agreed to in writing, software
+.. distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+.. WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+.. License for the specific language governing permissions and limitations under
+.. the License.
+
 How to release
 ==============
 
-This guide explains how to prepare for a source and binary release of Apache Crail (Incubating) project for 
-a release number of ``x.y`` (indicated as ``${RELEASE_VERSION}``) and release candidate number ``X`` as ``rcX`` 
+This guide explains how to prepare for a source and binary release of Apache Crail (Incubating) project for
+a release number of ``x.y`` (indicated as ``${RELEASE_VERSION}``) and release candidate number ``X`` as ``rcX``
 (indicated as ``${RELEASE_CANDIDATE}``).
 
 .. contents:: Table of Contents
 
 
-1. Configure your environment for a release 
+1. Configure your environment for a release
 -------------------------------------------
-Before we do a release, lets start by setting up the release environment (and cross check some of the other 
-settings). 
+Before we do a release, lets start by setting up the release environment (and cross check some of the other
+settings).
 
-1.1 Setup git username 
+1.1 Setup git username
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Make sure ``git`` is configured properly. 
+Make sure ``git`` is configured properly.
 
 .. code-block:: bash
 
@@ -24,43 +36,43 @@ Make sure ``git`` is configured properly.
    git config user.name "your_name"
 
 
-1.2 Setup keys 
+1.2 Setup keys
 ^^^^^^^^^^^^^^
 
 1. Generate a code signing key, https://www.apache.org/dev/openpgp.html#generate-key
 
 .. code-block:: bash
 
-   gpg --gen-key 
+   gpg --gen-key
 
 
 2. Check the preference for SHA-1 for your key, https://www.apache.org/dev/openpgp.html#key-gen-avoid-sha1
 
 .. code-block:: bash
 
-   gpg --edit-key your_key_id 
+   gpg --edit-key your_key_id
 
 
-3. Upload/publish the key: https://www.apache.org/dev/release-signing.html#keyserver-upload 
+3. Upload/publish the key: https://www.apache.org/dev/release-signing.html#keyserver-upload
 
 .. code-block:: bash
 
    gpg --keyserver pgp.mit.edu --send-keys <key id>
 
-4. Add your KEY in the KEYS file: 
+4. Add your KEY in the KEYS file:
 
 .. code-block:: bash
 
    svn co https://dist.apache.org/repos/dist/release/incubator/crail/
    cd crail
    (gpg --list-sigs <key id> && gpg --armor --export <key id>) >> KEYS
-   svn commit KEYS -m "your_name (id@apache.org) keys"  
+   svn commit KEYS -m "your_name (id@apache.org) keys"
 
 
-6. Update your profile https://id.apache.org/ with the fingerprint of the key. Find your fingerprint at 
+6. Update your profile https://id.apache.org/ with the fingerprint of the key. Find your fingerprint at
 
 .. code-block:: bash
-   
+
    gpg --fingerprint
 
 
@@ -87,17 +99,17 @@ Prior to performing an Apache Crail release, you must have an entry such as this
        </server>
      </servers>
   </settings>
- 
 
-How to put encrypted password https://maven.apache.org/guides/mini/guide-encryption.html 
 
-2. Preparing for a release 
+How to put encrypted password https://maven.apache.org/guides/mini/guide-encryption.html
+
+2. Preparing for a release
 --------------------------
 
-A release consists of a doing a (i) source release; (b) binary release; (iii) uploading maven artifacts; (iv) updating documentation. To do a version release of ``x.y`` (which is referred to as ``${RELEASE_VERSION}``), follow these steps: 
+A release consists of a doing a (i) source release; (b) binary release; (iii) uploading maven artifacts; (iv) updating documentation. To do a version release of ``x.y`` (which is referred to as ``${RELEASE_VERSION}``), follow these steps:
 
 
-1. Go through the closed JIRAs and merge requests, and update the HISTORY.md file about what is new in the new release version. 
+1. Go through the closed JIRAs and merge requests, and update the HISTORY.md file about what is new in the new release version.
 
 
 2. Perform ``mvn apache-rat:check`` and make sure it is a SUCCESS.
@@ -105,17 +117,17 @@ A release consists of a doing a (i) source release; (b) binary release; (iii) up
 
 3. Perform ``mvn checkstyle:check``. For now it will fail, but make sure that it runs. We need to gradually fix it. [JIRA-59](https://issues.apache.org/jira/browse/CRAIL-59)
 
-4. Perform maven prepare release in the interactive mode. 
+4. Perform maven prepare release in the interactive mode.
 
 
 .. code-block:: bash
-   
+
    mvn release:prepare -P apache-release -Darguments="-DskipTests"  -DinteractiveMode=true -Dresume=false
 
 
-The interactive mode allows us to explicitly name the current release version, release candidate, and next version. The convention here is to follow ``apache-crail-${RELEASE_VERSION}-incubating-${RELEASE_CANDIDATE}`` naming, starting from release candidate 0. So, for a ${RELEASE_VERSION} of 2.12 and release candidate 10, the name would be ``apache-crail-2.12-incubating-rc10``. For ``rc0``, we let the command increment the pom version. Here is an example run of this command for the release for ``1.2-incubating``. As you can see, the first time you run the command (for ``rc0``, the version are picked automatically). For subsequent RCs, you have to make sure that version is not incremented unless a RC is successfully voted on. Between RCs, we expect everything to remain the same except the ``SCM release tag`` that you must keep in sync with the release candidate. 
+The interactive mode allows us to explicitly name the current release version, release candidate, and next version. The convention here is to follow ``apache-crail-${RELEASE_VERSION}-incubating-${RELEASE_CANDIDATE}`` naming, starting from release candidate 0. So, for a ${RELEASE_VERSION} of 2.12 and release candidate 10, the name would be ``apache-crail-2.12-incubating-rc10``. For ``rc0``, we let the command increment the pom version. Here is an example run of this command for the release for ``1.2-incubating``. As you can see, the first time you run the command (for ``rc0``, the version are picked automatically). For subsequent RCs, you have to make sure that version is not incremented unless a RC is successfully voted on. Between RCs, we expect everything to remain the same except the ``SCM release tag`` that you must keep in sync with the release candidate.
 
-**NOTE:** the SCM tag does not have ``incubating`` in its name, and uses a ``v`` prefix. 
+**NOTE:** the SCM tag does not have ``incubating`` in its name, and uses a ``v`` prefix.
 
 .. code-block:: bash
 
@@ -152,36 +164,36 @@ The interactive mode allows us to explicitly name the current release version, r
 In case, if you are not sure about some setting, try `-DdryRun=true`.  If something goes wrong then ``mvn release:rollback``.
 
 
-**NOTE:** the binary file and associated signature (asc) and sha512 files are generated 
-at ``assembly/target/crail-${RELEASE_VERSION}-incubating-bin.tar.gz``.  The source file and associated signature (asc) and sha512 files are 
-at ``target/crail-parent-${RELEASE_VERSION}-incubating-src-release.tar.gz``. 
+**NOTE:** the binary file and associated signature (asc) and sha512 files are generated
+at ``assembly/target/crail-${RELEASE_VERSION}-incubating-bin.tar.gz``.  The source file and associated signature (asc) and sha512 files are
+at ``target/crail-parent-${RELEASE_VERSION}-incubating-src-release.tar.gz``.
 
-5. We need to upload the generated artifacts to the "Stage" SVN at https://dist.apache.org/repos/dist/dev/incubator/crail/. So lets prepare that in a SVN staging directory (SSD) 
+5. We need to upload the generated artifacts to the "Stage" SVN at https://dist.apache.org/repos/dist/dev/incubator/crail/. So lets prepare that in a SVN staging directory (SSD)
 
 .. code-block:: bash
-  
+
    svn co https://dist.apache.org/repos/dist/dev/incubator/crail/
-   cd crail 
-   mkdir ${RELEASE_VERSION}-${RELEASE_CANDIDATE} 
-   # lets call the created directory the svn staging directory (SSD) 
-   SSD=`pwd`/${RELEASE_VERSION}-${RELEASE_CANDIDATE} 
+   cd crail
+   mkdir ${RELEASE_VERSION}-${RELEASE_CANDIDATE}
+   # lets call the created directory the svn staging directory (SSD)
+   SSD=`pwd`/${RELEASE_VERSION}-${RELEASE_CANDIDATE}
 
 
 6. Now we need to rename the artifacts to follow the naming convention. We collect all releasable artifact in the SVN staging directory (SSD)
 
 .. code-block:: bash
-   
-   # copy files from the crail build location to the SVN staging directory (SSD) 
-   # binary file 
+
+   # copy files from the crail build location to the SVN staging directory (SSD)
+   # binary file
    cp assembly/target/crail-${RELEASE_VERSION}-incubating-bin.tar.gz ${SSD}/apache-crail-${RELEASE_VERSION}-incubating-bin.tar.gz
-   # source file 
+   # source file
    cp target/crail-parent-${RELEASE_VERSION}-incubating-src-release.tar.gz ${SSD}/apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz
-   # copy signature files 
+   # copy signature files
    cp assembly/target/crail-${RELEASE_VERSION}-incubating-bin.tar.gz.asc ${SSD}/apache-crail-${RELEASE_VERSION}-incubating-bin.tar.gz.asc
    cp target/crail-parent-${RELEASE_VERSION}-incubating-src-release.tar.gz.asc ${SRD}/apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz.asc
-   # step in the SVN staging directory 
+   # step in the SVN staging directory
    cd ${SSD}
-  
+
 
 7. Generate checksum files (with the checksum and the file name) for source and binary files
 
@@ -192,16 +204,16 @@ at ``target/crail-parent-${RELEASE_VERSION}-incubating-src-release.tar.gz``.
 
 **NOTE:** step 6 and 7 will be automated once the [JIRA-56](https://issues.apache.org/jira/projects/CRAIL/issues/CRAIL-56) is fixed.
 
-  
-8. Verify the checksums for source and binary files 
+
+8. Verify the checksums for source and binary files
 
 .. code-block:: bash
 
   sha512sum -c apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz.sha512
   sha512sum -c apache-crail-${RELEASE_VERSION}-incubating-bin.tar.gz.sha512
 
-  
-9. Verify the signatures for source and binary files 
+
+9. Verify the signatures for source and binary files
 
 .. code-block:: bash
 
@@ -210,46 +222,46 @@ at ``target/crail-parent-${RELEASE_VERSION}-incubating-src-release.tar.gz``.
 
 
 
-10. Commit the files after verification in the SVN staging directory 
+10. Commit the files after verification in the SVN staging directory
 
 .. code-block:: bash
-  
-   svn add ${RELEASE_VERSION}-${RELEASE_CANDIDATE} 
-   svn commit ${RELEASE_VERSION}-${RELEASE_CANDIDATE} -m "${RELEASE_VERSION}-${RELEASE_CANDIDATE} release files"  
-  
 
-11. Upload the artifacts to the Nexus https://repository.apache.org/index.html#welcome (login using your Apache ID) by calling 
+   svn add ${RELEASE_VERSION}-${RELEASE_CANDIDATE}
+   svn commit ${RELEASE_VERSION}-${RELEASE_CANDIDATE} -m "${RELEASE_VERSION}-${RELEASE_CANDIDATE} release files"
+
+
+11. Upload the artifacts to the Nexus https://repository.apache.org/index.html#welcome (login using your Apache ID) by calling
 
 .. code-block:: bash
-  
+
    mvn release:perform -P apache-release  -Darguments="-DskipTests"
 
-12. After upload you need to 
- 
-    1. Close the staging repository at https://repository.apache.org
-  
-    2. Login to https://repository.apache.org.
-   
-    3. Go to “Staging Repos”.
-  
-    4. Find the “orgapachecrail” repo with the Crail release. Be sure to expand the contents of the repo to confirm that it contains the correct Crail artifacts.
-  
-    5. Click on the “Close” button at top, and enter a brief description, such as “Apache Crail (Incubating) ${RELEASE_VERSION} release”.
-  
-    6. Copy the staging URL like ``https://repository.apache.org/content/repositories/orgapachecrail-1000/``
-  
+12. After upload you need to
 
-13. [Optionally] Check if docker images have been created successfully https://hub.docker.com/r/apache/incubator-crail/ and 
-https://hub.docker.com/r/apache/incubator-crail-rdma/. Make sure that the docker configuration file at 
-https://github.com/apache/incubator-crail/blob/v${RELEASE_VERSION}-${RELEASE_CANDIDATE}/docker/RDMA/Dockerfile contains the right 
-tag version for ``FROM crail:[RELEASE_TAG]`` and the right DiSNI version (which matches the pom file for this release) 
+    1. Close the staging repository at https://repository.apache.org
+
+    2. Login to https://repository.apache.org.
+
+    3. Go to “Staging Repos”.
+
+    4. Find the “orgapachecrail” repo with the Crail release. Be sure to expand the contents of the repo to confirm that it contains the correct Crail artifacts.
+
+    5. Click on the “Close” button at top, and enter a brief description, such as “Apache Crail (Incubating) ${RELEASE_VERSION} release”.
+
+    6. Copy the staging URL like ``https://repository.apache.org/content/repositories/orgapachecrail-1000/``
+
+
+13. [Optionally] Check if docker images have been created successfully https://hub.docker.com/r/apache/incubator-crail/ and
+https://hub.docker.com/r/apache/incubator-crail-rdma/. Make sure that the docker configuration file at
+https://github.com/apache/incubator-crail/blob/v${RELEASE_VERSION}-${RELEASE_CANDIDATE}/docker/RDMA/Dockerfile contains the right
+tag version for ``FROM crail:[RELEASE_TAG]`` and the right DiSNI version (which matches the pom file for this release)
 at ``ARG DISNI_COMMIT="[DISNI_VERSION_FROM_CRAIL_POM]"``.
 
 
-3. Voting on an RC 
+3. Voting on an RC
 ------------------
 
-The voting is a 2 step process. 
+The voting is a 2 step process.
 
 3.1 PPMC voting
 ^^^^^^^^^^^^^^^
@@ -280,25 +292,25 @@ First, we need to gather 3 binding votes (PPMC members) on the crail mailing lis
   or https://github.com/apache/incubator-crail/blob/v${RELEASE_VERSION}-${RELEASE_CANDIDATE}/HISTORY.md
 
   Please vote on releasing this package as Apache Crail ${RELEASE_VERSION}-incubating
-  
+
   The vote will be open for 72 hours.
 
   [ ] +1 Release this package as Apache Crail ${RELEASE_VERSION}-incubating
   [ ] +0 no opinion
   [ ] -1 Do not release this package because ...
-  
-  
+
+
   Thanks,
   [YOUR_NAME]
 
 
-Make sure that you modify (i) ${RELEASE_VERSION} in the subject and body; (ii) ${RELEASE_CANDIDATE} tags; (iii) ${RELEASE_HASH}; (iv) [STAGE_ID]; (iv) YOUR_NAME 
+Make sure that you modify (i) ${RELEASE_VERSION} in the subject and body; (ii) ${RELEASE_CANDIDATE} tags; (iii) ${RELEASE_HASH}; (iv) [STAGE_ID]; (iv) YOUR_NAME
 
 After a successful vote, announce the result on the Crail mailing list::
 
   Subject: [RESULT][VOTE] Crail v${RELEASE_VERSION}-${RELEASE_CANDIDATE} release
   ==============================================
-  
+
   Hi all,
 
   Thanks for all who voted. I'm closing the vote since the 72 hours have passed. Here are the results:
@@ -332,7 +344,7 @@ After a succesfull PPMC vote, we need to call for the IPMC vote on the ``general
 
   https://www.mail-archive.com/dev@crail.apache.org/???.html
 
-  Commit hash: ${RELEASE_HASH} 
+  Commit hash: ${RELEASE_HASH}
 
   https://git1-us-west.apache.org/repos/asf?p=incubator-crail.git;a=commit;h=${RELEASE_HASH}
 
@@ -347,7 +359,7 @@ After a succesfull PPMC vote, we need to call for the IPMC vote on the ``general
 
   [ ] +1 Release this package as Apache Crail 1.0-incubating
   [ ] -1 Do not release this package because ...
-  
+
   Thanks,
   [YOUR_NAME]
 
@@ -379,48 +391,48 @@ Obviosuly not all calls to vote can succeed. In case of a failed vote, announce 
 
   Subject:[CANCEL][VOTE] Release of Apache Crail ${RELEASE_VERSION}-incubating (${RELEASE_CANDIDATE})
   ===================================================================
- 
+
   Hi all,
   I'm canceling the vote for Apache Crail ${RELEASE_VERSION}-incubating (${RELEASE_CANDIDATE}), due to found/discussed issues.
- 
+
   I will prepare a new release candidate.
-  
+
   Thanks,
   [YOUR_NAME]
 
 
-4. After acceptance 
+4. After acceptance
 -------------------
 
-1. Tag the commit (on which the vote happened) with the release version without ``-${RELEASE_CANDIDATE}``. So, for example, after a successful vote on ``v1.2-rc5``, the hash will be tagged again with ``v1.2`` only. 
+1. Tag the commit (on which the vote happened) with the release version without ``-${RELEASE_CANDIDATE}``. So, for example, after a successful vote on ``v1.2-rc5``, the hash will be tagged again with ``v1.2`` only.
 
 2. Upload to the "release" (this is different from the "staging" SVN that we used before) SVN https://dist.apache.org/repos/dist/release/incubator
 
 .. code-block:: bash
 
    svn co https://dist.apache.org/repos/dist/release/incubator
-   cd incubator/crail 
+   cd incubator/crail
    mkdir ${RELEASE_VERSION}-incubating
    cd ${RELEASE_VERSION}-incubating
-   # copy the tar.gz. asc. and sha512 files for the src and binary releases 
+   # copy the tar.gz. asc. and sha512 files for the src and binary releases
 
-    
-3. Release nexus artifacts. Follow the step 12 in the release process but this time press the ``release`` button. 
 
-4. Write an announement email. You have to make announcement at two places, the general Apache announcement as well to crail mailing list. 
+3. Release nexus artifacts. Follow the step 12 in the release process but this time press the ``release`` button.
+
+4. Write an announement email. You have to make announcement at two places, the general Apache announcement as well to crail mailing list.
 You can use this template to make the announcement::
 
   Subject: [ANNOUNCE] Apache Crail ${RELEASE_VERSION}-incubating released
   ========================================================
 
-  The Apache Crail community is pleased to announce the release of 
+  The Apache Crail community is pleased to announce the release of
   Apache Crail version ${RELEASE_VERSION}-incubating.
 
   [If any] The key features of this release are:
   - x
   - y
   - z
- 
+
   Crail is a high-performance distributed data store designed for fast
   sharing of ephemeral data in distributed data processing workloads. You
   can read more about Crail on the website: https://crail.apache.org/
@@ -431,7 +443,7 @@ You can use this template to make the announcement::
   The full change log is available here:
   https://github.com/apache/incubator-crail/blob/v${RELEASE_VERSION}/HISTORY.md
 
-  We welcome any help and feedback. Check out https://crail.incubator.apache.org/community/ 
+  We welcome any help and feedback. Check out https://crail.incubator.apache.org/community/
   to get involved.
 
   Thanks to all involved for making this first release happen!
@@ -450,11 +462,11 @@ You can use this template to make the announcement::
   project has yet to be fully endorsed by the ASF.```
 
 
-The Apache annoucement list is at ``announce@apache.org``. You need to subscribe first. 
+The Apache annoucement list is at ``announce@apache.org``. You need to subscribe first.
 
-5. Update the download page on the website 
+5. Update the download page on the website
 
-6. Social media (Twitter, LinkedIn announcements)  
+6. Social media (Twitter, LinkedIn announcements)
 
 7. [Optionally] Check if docker images have been created successfully https://hub.docker.com/r/apache/incubator-crail/ and https://hub.docker.com/r/apache/incubator-crail-rdma/ with the new release tag.
 
@@ -463,4 +475,4 @@ The Apache annoucement list is at ``announce@apache.org``. You need to subscribe
 ---------------
 1. General info for release signing: https://www.apache.org/dev/release-signing.html
 2. http://tephra.incubator.apache.org/ReleaseGuide.html
-3. https://dubbo.incubator.apache.org/en-us/blog/prepare-an-apache-release.html 
+3. https://dubbo.incubator.apache.org/en-us/blog/prepare-an-apache-release.html
