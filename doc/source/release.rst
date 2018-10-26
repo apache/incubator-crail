@@ -187,25 +187,17 @@ at ``target/crail-parent-${RELEASE_VERSION}-incubating-src-release.tar.gz``.
    # binary file
    cp assembly/target/apache-crail-${RELEASE_VERSION}-incubating-bin.tar.gz ${SSD}/
    # source file
-   cp target/apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz ${SSD}/
+   cp assembly/target/apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz ${SSD}/
    # copy signature files
    cp assembly/target/apache-crail-${RELEASE_VERSION}-incubating-bin.tar.gz.asc ${SSD}/
-   cp target/apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz.asc ${SRD}/
+   cp assembly/target/apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz.asc ${SRD}/
+   # copy checksum files
+   cp assembly/target/apache-crail-${RELEASE_VERSION}-incubating-bin.tar.gz.sha512 ${SSD}/
+   cp assembly/target/apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz.sha512 ${SRD}/
    # step in the SVN staging directory
    cd ${SSD}
 
-
-7. Generate checksum files (with the checksum and the file name) for source and binary files
-
-.. code-block:: bash
-
-  sha512sum apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz > apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz.sha512
-  sha512sum apache-crail-${RELEASE_VERSION}-incubating-bin.tar.gz > apache-crail-${RELEASE_VERSION}-incubating-bin.tar.gz.sha512
-
-**NOTE:** step 7 will be automated once the [JIRA-56](https://issues.apache.org/jira/projects/CRAIL/issues/CRAIL-56) is fixed.
-
-
-8. Verify the checksums for source and binary files
+7. Verify the checksums for source and binary files
 
 .. code-block:: bash
 
@@ -213,7 +205,7 @@ at ``target/crail-parent-${RELEASE_VERSION}-incubating-src-release.tar.gz``.
   sha512sum -c apache-crail-${RELEASE_VERSION}-incubating-bin.tar.gz.sha512
 
 
-9. Verify the signatures for source and binary files
+8. Verify the signatures for source and binary files
 
 .. code-block:: bash
 
@@ -222,7 +214,7 @@ at ``target/crail-parent-${RELEASE_VERSION}-incubating-src-release.tar.gz``.
 
 
 
-10. Commit the files after verification in the SVN staging directory
+9. Commit the files after verification in the SVN staging directory
 
 .. code-block:: bash
 
@@ -230,13 +222,13 @@ at ``target/crail-parent-${RELEASE_VERSION}-incubating-src-release.tar.gz``.
    svn commit ${RELEASE_VERSION}-${RELEASE_CANDIDATE} -m "${RELEASE_VERSION}-${RELEASE_CANDIDATE} release files"
 
 
-11. Upload the artifacts to the Nexus https://repository.apache.org/index.html#welcome (login using your Apache ID) by calling
+10. Upload the artifacts to the Nexus https://repository.apache.org/index.html#welcome (login using your Apache ID) by calling
 
 .. code-block:: bash
 
    mvn release:perform -P apache-release  -Darguments="-DskipTests"
 
-12. After upload you need to
+11. After upload you need to
 
     1. Close the staging repository at https://repository.apache.org
 
@@ -251,7 +243,7 @@ at ``target/crail-parent-${RELEASE_VERSION}-incubating-src-release.tar.gz``.
     6. Copy the staging URL like ``https://repository.apache.org/content/repositories/orgapachecrail-1000/``
 
 
-13. [Optionally] Check if docker images have been created successfully https://hub.docker.com/r/apache/incubator-crail/ and
+12. [Optionally] Check if docker images have been created successfully https://hub.docker.com/r/apache/incubator-crail/ and
 https://hub.docker.com/r/apache/incubator-crail-rdma/. Make sure that the docker configuration file at
 https://github.com/apache/incubator-crail/blob/v${RELEASE_VERSION}-${RELEASE_CANDIDATE}/docker/RDMA/Dockerfile contains the right
 tag version for ``FROM crail:[RELEASE_TAG]`` and the right DiSNI version (which matches the pom file for this release)
