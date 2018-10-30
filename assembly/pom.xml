@@ -162,6 +162,7 @@
             <algorithm>SHA-512</algorithm>
           </algorithms>
           <failOnError>false</failOnError>
+          <appendFilename>true</appendFilename>
         </configuration>
       </plugin>
     </plugins>
