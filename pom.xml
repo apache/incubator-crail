@@ -109,6 +109,22 @@
   </dependencyManagement>
 
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>false</filtering>
+      </resource>
+      <resource>
+        <directory>${maven.multiModuleProjectDirectory}</directory>
+        <targetPath>META-INF/</targetPath>
+        <filtering>false</filtering>
+        <includes>
+          <include>NOTICE</include>
+          <include>LICENSE</include>
+          <include>DISCLAIMER</include>
+        </includes>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.rat</groupId>
