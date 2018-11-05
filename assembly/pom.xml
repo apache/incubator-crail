@@ -128,6 +128,8 @@
               <descriptors>
                 <descriptor>src/main/assembly/assembly.xml</descriptor>
               </descriptors>
+              <finalName>apache-crail-${project.version}</finalName>
+              <tarLongFileMode>gnu</tarLongFileMode>
             </configuration>
           </execution>
           <execution>
