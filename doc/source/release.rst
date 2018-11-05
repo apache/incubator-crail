@@ -166,7 +166,7 @@ In case, if you are not sure about some setting, try `-DdryRun=true`.  If someth
 
 **NOTE:** the binary file and associated signature (asc) and sha512 files are generated
 at ``assembly/target/crail-${RELEASE_VERSION}-incubating-bin.tar.gz``.  The source file and associated signature (asc) and sha512 files are
-at ``target/crail-parent-${RELEASE_VERSION}-incubating-src-release.tar.gz``.
+at ``assembly/target/crail-${RELEASE_VERSION}-incubating-src.tar.gz``.
 
 5. We need to upload the generated artifacts to the "Stage" SVN at https://dist.apache.org/repos/dist/dev/incubator/crail/. So lets prepare that in a SVN staging directory (SSD)
 
@@ -190,10 +190,10 @@ at ``target/crail-parent-${RELEASE_VERSION}-incubating-src-release.tar.gz``.
    cp assembly/target/apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz ${SSD}/
    # copy signature files
    cp assembly/target/apache-crail-${RELEASE_VERSION}-incubating-bin.tar.gz.asc ${SSD}/
-   cp assembly/target/apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz.asc ${SRD}/
+   cp assembly/target/apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz.asc ${SSD}/
    # copy checksum files
    cp assembly/target/apache-crail-${RELEASE_VERSION}-incubating-bin.tar.gz.sha512 ${SSD}/
-   cp assembly/target/apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz.sha512 ${SRD}/
+   cp assembly/target/apache-crail-${RELEASE_VERSION}-incubating-src.tar.gz.sha512 ${SSD}/
    # step in the SVN staging directory
    cd ${SSD}
 
@@ -343,11 +343,17 @@ After a succesfull PPMC vote, we need to call for the IPMC vote on the ``general
   Release files can be found at:
   https://dist.apache.org/repos/dist/dev/incubator/crail/${RELEASE_VERSION}-${RELEASE_CANDIDATE}/
 
-  Release artifacts have been signed with the following key:
+  The Nexus Staging URL:
+  https://repository.apache.org/content/repositories/orgapachecrail-[STAGE_ID]
+
+  Release artifacts are signed with the following key:
   https://www.apache.org/dist/incubator/crail/KEYS
 
-  The vote is open for at least 72 hours and passes if a majority of at least
-  3 +1 PMC votes are cast.
+  For information about the contents of this release, see:
+  https://git-wip-us.apache.org/repos/asf?p=incubator-crail.git;a=blob;f=HISTORY.md;h=${RELEASE_HASH}
+  or https://github.com/apache/incubator-crail/blob/v${RELEASE_VERSION}-${RELEASE_CANDIDATE}/HISTORY.md
+
+  The vote is open for at least 72 hours and passes if a majority of at least 3 +1 PMC votes are cast.
 
   [ ] +1 Release this package as Apache Crail 1.0-incubating
   [ ] -1 Do not release this package because ...
@@ -393,6 +399,8 @@ Obviosuly not all calls to vote can succeed. In case of a failed vote, announce 
   [YOUR_NAME]
 
 
+**NOTE:** If your PPMC vote fails you have to redo the IPMC vote again after fixing the issues raised in the PPMC vote. 
+ 
 4. After acceptance
 -------------------
 
