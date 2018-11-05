@@ -17,7 +17,7 @@ limitations under the License.
 {% endcomment %}
 -->
 
-## [1.1](https://github.com/apache/incubator-crail/tree/v1.1) - 22.10.2018
+## [1.1](https://github.com/apache/incubator-crail/tree/v1.1) - 05.11.2018
 
 #### New features / improvements
 
@@ -37,6 +37,8 @@ limitations under the License.
 * [[CRAIL-54](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-54)] Tar source files / scm tag is now HEAD
 * [[CRAIL-55](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-55)] Add programming documentation
 * [[CRAIL-61](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-61)] Add how to release documentation
+* [[CRAIL-74](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-74)] Top-level directory for binary tarball
+* [[CRAIL-77](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-77)] Include LICENSE, NOTICE and DISCLAIMER in meta-inf
 
 
 #### Bug fixes
