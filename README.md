@@ -38,7 +38,7 @@ Crail is implemented in Java offering a Java API which integrates directly with 
 
 ## Documentation
 
-Please check out the [documentation](https://incubator-crail.readthedocs.org) for information about how to deploy, run, test and program against Crail. 
+The documentation can be accessed by running `make html` in `/doc` and opening `/doc/build/html/index.html` for information about how to deploy, run, test and program against Crail. The latest version of the documentation can be found at https://incubator-crail.readthedocs.org.
 
 
 ## Community 
