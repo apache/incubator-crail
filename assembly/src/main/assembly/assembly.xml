@@ -42,10 +42,15 @@
       <outputDirectory>conf</outputDirectory>
     </fileSet>
     <fileSet> <!-- Create empty directory -->
-        <outputDirectory>lib</outputDirectory>
-        <excludes><exclude>**/*</exclude></excludes>
+      <outputDirectory>lib</outputDirectory>
+      <excludes><exclude>**/*</exclude></excludes>
     </fileSet>
   </fileSets>
+  <files>
+    <file><source>${project.parent.basedir}/LICENSE</source></file>
+    <file><source>${project.parent.basedir}/NOTICE</source></file>
+    <file><source>${project.parent.basedir}/DISCLAIMER</source></file>
+  </files>
 
   <dependencySets>
     <dependencySet>
