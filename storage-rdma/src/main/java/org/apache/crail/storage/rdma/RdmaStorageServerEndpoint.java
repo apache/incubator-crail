@@ -20,8 +20,8 @@ package org.apache.crail.storage.rdma;
 
 import java.io.IOException;
 
-import com.ibm.disni.rdma.verbs.*;
-import com.ibm.disni.rdma.*;
+import com.ibm.disni.verbs.*;
+import com.ibm.disni.*;
 
 public class RdmaStorageServerEndpoint extends RdmaEndpoint {
 	private RdmaStorageServer closer;

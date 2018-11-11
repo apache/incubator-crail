@@ -38,10 +38,10 @@ import org.apache.crail.utils.AtomicIntegerModulo;
 import org.apache.crail.utils.CrailUtils;
 import org.slf4j.Logger;
 
-import com.ibm.disni.rdma.verbs.*;
-import com.ibm.disni.rdma.verbs.SVCPostSend.SendWRMod;
-import com.ibm.disni.rdma.verbs.SVCPostSend.SgeMod;
-import com.ibm.disni.rdma.*;
+import com.ibm.disni.verbs.*;
+import com.ibm.disni.verbs.SVCPostSend.SendWRMod;
+import com.ibm.disni.verbs.SVCPostSend.SgeMod;
+import com.ibm.disni.*;
 
 public class RdmaStoragePassiveEndpoint extends RdmaEndpoint implements StorageEndpoint {
 	private static final Logger LOG = CrailUtils.getLogger();

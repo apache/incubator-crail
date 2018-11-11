@@ -29,7 +29,7 @@ import org.apache.crail.storage.rdma.RdmaConstants;
 import org.apache.crail.storage.rdma.RdmaStorageGroup;
 import org.apache.crail.utils.CrailUtils;
 
-import com.ibm.disni.rdma.*;
+import com.ibm.disni.*;
 
 public class RdmaStorageActiveGroup extends RdmaActiveEndpointGroup<RdmaStorageActiveEndpoint> implements RdmaStorageGroup {
 	private HashMap<InetSocketAddress, RdmaStorageLocalEndpoint> localCache;

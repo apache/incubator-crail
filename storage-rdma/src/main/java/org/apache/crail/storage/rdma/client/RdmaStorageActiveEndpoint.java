@@ -34,10 +34,10 @@ import org.apache.crail.storage.rdma.RdmaConstants;
 import org.apache.crail.storage.rdma.MrCache.DeviceMrCache;
 import org.apache.crail.utils.AtomicIntegerModulo;
 
-import com.ibm.disni.rdma.verbs.*;
-import com.ibm.disni.rdma.verbs.SVCPostSend.SendWRMod;
-import com.ibm.disni.rdma.verbs.SVCPostSend.SgeMod;
-import com.ibm.disni.rdma.*;
+import com.ibm.disni.verbs.*;
+import com.ibm.disni.verbs.SVCPostSend.SendWRMod;
+import com.ibm.disni.verbs.SVCPostSend.SgeMod;
+import com.ibm.disni.*;
 
 public class RdmaStorageActiveEndpoint extends RdmaActiveEndpoint implements StorageEndpoint {
 	private LinkedBlockingQueue<SVCPostSend> writeOps;

@@ -32,8 +32,8 @@ import org.apache.crail.storage.StorageUtils;
 import org.apache.crail.utils.CrailUtils;
 import org.slf4j.Logger;
 
-import com.ibm.disni.rdma.*;
-import com.ibm.disni.rdma.verbs.IbvMr;
+import com.ibm.disni.*;
+import com.ibm.disni.verbs.IbvMr;
 
 public class RdmaStorageServer implements Runnable, StorageServer {
 	private static final Logger LOG = CrailUtils.getLogger();

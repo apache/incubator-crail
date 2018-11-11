@@ -40,7 +40,6 @@
     <dependency>
       <groupId>com.ibm.disni</groupId>
       <artifactId>disni</artifactId>
-      <version>1.6</version>
     </dependency>
     <dependency>
       <groupId>log4j</groupId>

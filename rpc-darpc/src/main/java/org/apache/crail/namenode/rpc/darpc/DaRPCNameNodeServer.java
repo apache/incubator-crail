@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 
 import com.ibm.darpc.DaRPCServerEndpoint;
 import com.ibm.darpc.DaRPCServerGroup;
-import com.ibm.disni.rdma.RdmaServerEndpoint;
+import com.ibm.disni.RdmaServerEndpoint;
 
 public class DaRPCNameNodeServer extends RpcServer {
 	private static final Logger LOG = CrailUtils.getLogger();

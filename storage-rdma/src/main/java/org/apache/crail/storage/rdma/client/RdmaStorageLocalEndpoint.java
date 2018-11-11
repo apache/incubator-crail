@@ -40,7 +40,7 @@ import org.apache.crail.storage.rdma.RdmaConstants;
 import org.apache.crail.utils.CrailUtils;
 import org.slf4j.Logger;
 
-import com.ibm.disni.rdma.verbs.*;
+import com.ibm.disni.verbs.*;
 
 import sun.misc.Unsafe;
 

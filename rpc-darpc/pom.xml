@@ -40,7 +40,6 @@
     <dependency>
       <groupId>com.ibm.darpc</groupId>
       <artifactId>darpc</artifactId>
-      <version>1.6</version>
     </dependency>
     <dependency>
       <groupId>log4j</groupId>

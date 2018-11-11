@@ -25,8 +25,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.crail.CrailBuffer;
 
-import com.ibm.disni.rdma.verbs.IbvMr;
-import com.ibm.disni.rdma.verbs.IbvPd;
+import com.ibm.disni.verbs.IbvMr;
+import com.ibm.disni.verbs.IbvPd;
 
 public class MrCache {
 	private ConcurrentHashMap<Integer, DeviceMrCache> cache;

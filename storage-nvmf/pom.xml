@@ -40,7 +40,6 @@
     <dependency>
       <groupId>com.ibm.jnvmf</groupId>
       <artifactId>jnvmf</artifactId>
-      <version>1.4</version>
     </dependency>
     <dependency>
       <groupId>log4j</groupId>

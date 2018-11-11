@@ -20,8 +20,8 @@ package org.apache.crail.storage.rdma.client;
 
 import java.io.IOException;
 
-import com.ibm.disni.rdma.verbs.*;
-import com.ibm.disni.rdma.*;
+import com.ibm.disni.verbs.*;
+import com.ibm.disni.*;
 
 public class RdmaStorageActiveEndpointFactory implements RdmaEndpointFactory<RdmaStorageActiveEndpoint> {
 	private RdmaStorageActiveGroup group;

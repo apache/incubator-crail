@@ -19,6 +19,7 @@
 package org.apache.crail.namenode.rpc.tcp;
 
 import com.ibm.narpc.NaRPCService;
+import com.ibm.narpc.NaRPCServerChannel;
 
 import org.apache.crail.rpc.RpcErrors;
 import org.apache.crail.rpc.RpcNameNodeService;
@@ -98,5 +99,11 @@ public class TcpRpcDispatcher implements NaRPCService<TcpNameNodeRequest, TcpNam
 		}
 		
 		return response;		
+	}
+
+	public void removeEndpoint(NaRPCServerChannel channel){
+	}
+
+	public void addEndpoint(NaRPCServerChannel channel){
 	}
 }
