@@ -136,17 +136,18 @@
         <artifactId>apache-rat-plugin</artifactId>
         <version>0.12</version>
         <configuration>
-            <licenses>
-                <license implementation="org.apache.rat.analysis.license.SimplePatternBasedLicense">
-                    <licenseFamilyCategory>AL20</licenseFamilyCategory>
-                    <licenseFamilyName>Apache License, 2.0</licenseFamilyName>
-                </license>
+          <licenses>
+            <license implementation="org.apache.rat.analysis.license.SimplePatternBasedLicense">
+              <licenseFamilyCategory>AL20</licenseFamilyCategory>
+                <licenseFamilyName>Apache License, 2.0</licenseFamilyName>
+              </license>
             </licenses>
             <excludes>
-                <exclude>conf/**/*</exclude>
-                <exclude>docker/crail-site.conf</exclude>
-                <exclude>docker/RDMA/crail-site.conf</exclude>
-                <exclude>CREDITS</exclude>
+              <exclude>conf/**/*</exclude>
+              <exclude>docker/crail-site.conf</exclude>
+              <exclude>docker/RDMA/crail-site.conf</exclude>
+              <exclude>CREDITS</exclude>
+              <exclude>licenses/LICENSE.*</exclude>
             </excludes>
         </configuration>
       </plugin>
