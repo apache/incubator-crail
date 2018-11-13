@@ -17,7 +17,7 @@ limitations under the License.
 {% endcomment %}
 -->
 
-## [1.1](https://github.com/apache/incubator-crail/tree/v1.1) - 05.11.2018
+## [1.1](https://github.com/apache/incubator-crail/tree/v1.1) - 13.11.2018
 
 #### New features / improvements
 
@@ -39,6 +39,9 @@ limitations under the License.
 * [[CRAIL-61](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-61)] Add how to release documentation
 * [[CRAIL-74](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-74)] Top-level directory for binary tarball
 * [[CRAIL-77](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-77)] Include LICENSE, NOTICE and DISCLAIMER in meta-inf
+* [[CRAIL-79](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-79)] Update DiSNI and DaRPC
+* [[CRAIL-80](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-80)] Move all dependencies to parent pom for version management
+* [[CRAIL-81](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-81)] Add licenses of all dependencies
 
 
 #### Bug fixes
