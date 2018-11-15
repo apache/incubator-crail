@@ -40,6 +40,10 @@
       <directory>${project.parent.basedir}/conf</directory>
       <outputDirectory>conf</outputDirectory>
     </fileSet>
+    <fileSet>
+      <directory>${project.parent.basedir}/licenses</directory>
+      <outputDirectory>licenses</outputDirectory>
+    </fileSet>
     <fileSet> <!-- Create empty directory -->
       <outputDirectory>lib</outputDirectory>
       <excludes><exclude>**/*</exclude></excludes>
@@ -49,6 +53,8 @@
     <file><source>${project.parent.basedir}/LICENSE</source></file>
     <file><source>${project.parent.basedir}/NOTICE</source></file>
     <file><source>${project.parent.basedir}/DISCLAIMER</source></file>
+    <file><source>${project.parent.basedir}/CREDITS</source></file>
+    <file><source>${project.parent.basedir}/README.md</source></file>
   </files>
 
   <dependencySets>
