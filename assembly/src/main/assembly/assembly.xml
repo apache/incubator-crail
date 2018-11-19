@@ -50,7 +50,10 @@
     </fileSet>
   </fileSets>
   <files>
-    <file><source>${project.parent.basedir}/LICENSE</source></file>
+    <file>
+      <source>${project.parent.basedir}/LICENSE-binary</source>
+      <destName>LICENSE</destName>
+    </file>
     <file><source>${project.parent.basedir}/NOTICE</source></file>
     <file><source>${project.parent.basedir}/DISCLAIMER</source></file>
     <file><source>${project.parent.basedir}/CREDITS</source></file>
