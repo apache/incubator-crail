@@ -80,8 +80,6 @@
 
         <exclude>**/*.swp</exclude>
         <exclude>doc/build/**</exclude>
-        <exclude>LICENSE-binary</exclude>
-        <exclude>licenses/**</exclude>
       </excludes>
     </fileSet>
     <!-- LICENSE, NOTICE, DEPENDENCIES -->
