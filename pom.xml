@@ -20,7 +20,7 @@
   <groupId>org.apache.crail</groupId>
   <artifactId>crail-parent</artifactId>
   <packaging>pom</packaging>
-  <version>1.2-incubating-SNAPSHOT</version>
+  <version>1.1-incubating</version>
   <name>Crail Project Parent POM</name>
   <url>http://maven.apache.org</url>
 
@@ -34,7 +34,7 @@
     <connection>scm:git:git://git.apache.org/incubator-crail.git</connection>
     <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/incubator-crail.git</developerConnection>
     <url>https://git-wip-us.apache.org/repos/asf?p=incubator-crail.git</url>
-    <tag>HEAD</tag>
+    <tag>v1.1-rc8</tag>
   </scm>
 
   <properties>
