@@ -108,16 +108,18 @@ How to put encrypted password https://maven.apache.org/guides/mini/guide-encrypt
 
 A release consists of a doing a (i) source release; (b) binary release; (iii) uploading maven artifacts; (iv) updating documentation. To do a version release of ``x.y`` (which is referred to as ``${RELEASE_VERSION}``), follow these steps:
 
+1. Update ``GIT_COMMIT`` in ``docker/Dockerfile`` to the newest release tag, e.g. ``v1.2``. In ``docker/RDMA/Dockerfile`` update ``FROM`` to the last Crail version as defined in the parent
+   Dockerfile e.g. ``1.2`` (without "v") and ``DISNI_COMMIT`` to the DiSNI version as specified in the parent pom file.
 
-1. Go through the closed JIRAs and merge requests, and update the HISTORY.md file about what is new in the new release version.
+2. Go through the closed JIRAs and merge requests, and update the HISTORY.md file about what is new in the new release version.
 
 
-2. Perform ``mvn apache-rat:check`` and make sure it is a SUCCESS.
+3. Perform ``mvn apache-rat:check`` and make sure it is a SUCCESS.
 
 
-3. Perform ``mvn checkstyle:check``. For now it will fail, but make sure that it runs. We need to gradually fix it. [JIRA-59](https://issues.apache.org/jira/browse/CRAIL-59)
+4. Perform ``mvn checkstyle:check``. For now it will fail, but make sure that it runs. We need to gradually fix it. [JIRA-59](https://issues.apache.org/jira/browse/CRAIL-59)
 
-4. Perform maven prepare release in the interactive mode.
+5. Perform maven prepare release in the interactive mode.
 
 
 .. code-block:: bash
@@ -168,7 +170,7 @@ In case, if you are not sure about some setting, try `-DdryRun=true`.  If someth
 at ``assembly/target/crail-${RELEASE_VERSION}-incubating-bin.tar.gz``.  The source file and associated signature (asc) and sha512 files are
 at ``assembly/target/crail-${RELEASE_VERSION}-incubating-src.tar.gz``.
 
-5. We need to upload the generated artifacts to the "Stage" SVN at https://dist.apache.org/repos/dist/dev/incubator/crail/. So lets prepare that in a SVN staging directory (SSD)
+6. We need to upload the generated artifacts to the "Stage" SVN at https://dist.apache.org/repos/dist/dev/incubator/crail/. So lets prepare that in a SVN staging directory (SSD)
 
 .. code-block:: bash
 
@@ -179,7 +181,7 @@ at ``assembly/target/crail-${RELEASE_VERSION}-incubating-src.tar.gz``.
    SSD=`pwd`/${RELEASE_VERSION}-${RELEASE_CANDIDATE}
 
 
-6. Now we need to rename the artifacts to follow the naming convention. We collect all releasable artifact in the SVN staging directory (SSD)
+7. Collect all artifacts to release in the SVN staging directory (SSD)
 
 .. code-block:: bash
 
@@ -197,7 +199,7 @@ at ``assembly/target/crail-${RELEASE_VERSION}-incubating-src.tar.gz``.
    # step in the SVN staging directory
    cd ${SSD}
 
-7. Verify the checksums for source and binary files
+8. Verify the checksums for source and binary files
 
 .. code-block:: bash
 
@@ -205,7 +207,7 @@ at ``assembly/target/crail-${RELEASE_VERSION}-incubating-src.tar.gz``.
   sha512sum -c apache-crail-${RELEASE_VERSION}-incubating-bin.tar.gz.sha512
 
 
-8. Verify the signatures for source and binary files
+9. Verify the signatures for source and binary files
 
 .. code-block:: bash
 
@@ -214,7 +216,7 @@ at ``assembly/target/crail-${RELEASE_VERSION}-incubating-src.tar.gz``.
 
 
 
-9. Commit the files after verification in the SVN staging directory
+10. Commit the files after verification in the SVN staging directory
 
 .. code-block:: bash
 
@@ -222,13 +224,13 @@ at ``assembly/target/crail-${RELEASE_VERSION}-incubating-src.tar.gz``.
    svn commit ${RELEASE_VERSION}-${RELEASE_CANDIDATE} -m "${RELEASE_VERSION}-${RELEASE_CANDIDATE} release files"
 
 
-10. Upload the artifacts to the Nexus https://repository.apache.org/index.html#welcome (login using your Apache ID) by calling
+11. Upload the artifacts to the Nexus https://repository.apache.org/index.html#welcome (login using your Apache ID) by calling
 
 .. code-block:: bash
 
    mvn release:perform -P apache-release  -Darguments="-DskipTests"
 
-11. After upload you need to
+12. After upload you need to
 
     1. Close the staging repository at https://repository.apache.org
 
@@ -238,12 +240,12 @@ at ``assembly/target/crail-${RELEASE_VERSION}-incubating-src.tar.gz``.
 
     4. Find the “orgapachecrail” repo with the Crail release. Be sure to expand the contents of the repo to confirm that it contains the correct Crail artifacts.
 
-    5. Click on the “Close” button at top, and enter a brief description, such as “Apache Crail (Incubating) ${RELEASE_VERSION} release”.
+    5. Click on the “Close” button at top, and enter a brief description, such as “Apache Crail (Incubating) ${RELEASE_VERSION} release”. **Note** this might fail on the very first attempt just repeat closing it.
 
     6. Copy the staging URL like ``https://repository.apache.org/content/repositories/orgapachecrail-1000/``
 
 
-12. [Optionally] Check if docker images have been created successfully https://hub.docker.com/r/apache/incubator-crail/ and
+13. [Optionally] Check if docker images have been created successfully https://hub.docker.com/r/apache/incubator-crail/ and
 https://hub.docker.com/r/apache/incubator-crail-rdma/. Make sure that the docker configuration file at
 https://github.com/apache/incubator-crail/blob/v${RELEASE_VERSION}-${RELEASE_CANDIDATE}/docker/RDMA/Dockerfile contains the right
 tag version for ``FROM crail:[RELEASE_TAG]`` and the right DiSNI version (which matches the pom file for this release)
