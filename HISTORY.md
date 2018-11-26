@@ -17,7 +17,7 @@ limitations under the License.
 {% endcomment %}
 -->
 
-## [1.1](https://github.com/apache/incubator-crail/tree/v1.1) - 22.11.2018
+## [1.1](https://github.com/apache/incubator-crail/tree/v1.1) - 26.11.2018
 
 #### New features / improvements
 
@@ -44,6 +44,7 @@ limitations under the License.
 * [[CRAIL-81](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-81)] Add licenses of all dependencies
 
 
+
 #### Bug fixes
 
 * [[CRAIL-26](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-26)] HDFS statistics
@@ -53,8 +54,9 @@ limitations under the License.
 * [[CRAIL-46](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-46)] Clarify incubating status on website
 * [[CRAIL-51](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-51)] Fix subsitution of core-site.xml in Docker container
 * [[CRAIL-52](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-52)] Fix CRAIL_HOME in Docker container
-* [[crail-58](https://jira.apache.org/jira/projects/crail/issues/crail-58)] fix rdma docker build
-* [[crail-87](https://jira.apache.org/jira/projects/crail/issues/crail-87)] do not include category X licensed artifacts in binary release
+* [[CRAIL-58](https://jira.apache.org/jira/projects/crail/issues/crail-58)] fix rdma docker build
+* [[CRAIL-87](https://jira.apache.org/jira/projects/crail/issues/crail-87)] do not include category X licensed artifacts in binary release
+* [[CRAIL-89](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-89)] Fixed minor compilation problem
 
 ## [1.0](https://github.com/apache/incubator-crail/tree/v1.0) - 23.05.2018
 
