@@ -38,7 +38,7 @@ public class ClientTest {
 
 	@Before
 	public void init() throws Exception {
-		CrailConfiguration conf = new CrailConfiguration();
+		CrailConfiguration conf = CrailConfiguration.createConfigurationFromFile();
 		fs = CrailStore.newInstance(conf);
 		fs.create(basePath, CrailNodeType.DIRECTORY, CrailStorageClass.DEFAULT, CrailLocationClass.DEFAULT, true).get();
 	}

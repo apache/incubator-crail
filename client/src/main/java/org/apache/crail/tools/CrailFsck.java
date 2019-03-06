@@ -54,7 +54,7 @@ public class CrailFsck {
 	
 	public void getLocations(String filename, long offset, long length) throws Exception {
 		System.out.println("getLocations, filename " + filename + ", offset " + offset + ", len " + length);
-		CrailConfiguration conf = new CrailConfiguration();
+		CrailConfiguration conf = CrailConfiguration.createConfigurationFromFile();
 		CrailStore fs = CrailStore.newInstance(conf);
 		
 		CrailBlockLocation locations[] = fs.lookup(filename).get().getBlockLocations(offset, length);
@@ -66,7 +66,7 @@ public class CrailFsck {
 	
 	public void blockStatistics(String filename) throws Exception {
 		HashMap<String, AtomicInteger> stats = new HashMap<String, AtomicInteger>();
-		CrailConfiguration conf = new CrailConfiguration();
+		CrailConfiguration conf = CrailConfiguration.createConfigurationFromFile();
 		CrailStore fs = CrailStore.newInstance(conf);
 		CrailNode node = fs.lookup(filename).get();
 		
@@ -96,14 +96,14 @@ public class CrailFsck {
 	}
 
 	public void namenodeDump()  throws Exception {
-		CrailConfiguration conf = new CrailConfiguration();
+		CrailConfiguration conf = CrailConfiguration.createConfigurationFromFile();
 		CoreDataStore fs = new CoreDataStore(conf);
 		fs.dumpNameNode();
 		fs.close();
 	}
 
 	public void directoryDump(String filename, boolean randomize) throws Exception {
-		CrailConfiguration conf = new CrailConfiguration();
+		CrailConfiguration conf = CrailConfiguration.createConfigurationFromFile();
 		CrailConstants.updateConstants(conf);
 		CoreDataStore fs = new CoreDataStore(conf);		
 		DirectoryInputStream iter = fs._listEntries(filename, randomize);
@@ -121,7 +121,7 @@ public class CrailFsck {
 	}
 	
 	public void ping() throws Exception {
-		CrailConfiguration conf = new CrailConfiguration();
+		CrailConfiguration conf = CrailConfiguration.createConfigurationFromFile();
 		CrailConstants.updateConstants(conf);
 		CoreDataStore fs = new CoreDataStore(conf);
 		fs.ping();
@@ -130,7 +130,7 @@ public class CrailFsck {
 	
 	public void createDirectory(String filename, int storageClass, int locationClass) throws Exception {
 		System.out.println("createDirectory, filename " + filename + ", storageClass " + storageClass + ", locationClass " + locationClass);
-		CrailConfiguration conf = new CrailConfiguration();
+		CrailConfiguration conf = CrailConfiguration.createConfigurationFromFile();
 		CrailStore fs = CrailStore.newInstance(conf);
 		fs.create(filename, CrailNodeType.DIRECTORY, CrailStorageClass.get(storageClass), CrailLocationClass.get(locationClass), true).get().syncDir();
 		fs.close();

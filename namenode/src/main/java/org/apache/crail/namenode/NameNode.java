@@ -41,7 +41,7 @@ public class NameNode {
 	
 	public static void main(String args[]) throws Exception {
 		LOG.info("initalizing namenode ");		
-		CrailConfiguration conf = new CrailConfiguration();
+		CrailConfiguration conf = CrailConfiguration.createConfigurationFromFile();
 		CrailConstants.updateConstants(conf);
 		
 		URI uri = CrailUtils.getPrimaryNameNode();

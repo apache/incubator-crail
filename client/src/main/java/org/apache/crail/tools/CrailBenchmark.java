@@ -60,7 +60,7 @@ public class CrailBenchmark {
 	
 	public CrailBenchmark(int warmup) throws Exception {
 		this.warmup = warmup;
-		this.conf = new CrailConfiguration();
+		this.conf = CrailConfiguration.createConfigurationFromFile();
 		this.fs = null;
 	}
 	
