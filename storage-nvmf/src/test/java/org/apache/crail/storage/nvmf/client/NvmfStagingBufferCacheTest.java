@@ -36,7 +36,7 @@ public class NvmfStagingBufferCacheTest {
 
 	@BeforeClass
 	public static void init() throws IOException {
-		CrailConstants.updateConstants(new CrailConfiguration());
+		CrailConstants.updateConstants(CrailConfiguration.createConfigurationFromFile());
 	}
 
 	private static CrailBufferCache bufferCache;

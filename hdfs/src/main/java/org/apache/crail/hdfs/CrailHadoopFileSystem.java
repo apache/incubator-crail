@@ -67,7 +67,7 @@ public class CrailHadoopFileSystem extends FileSystem {
 		setConf(conf);
 		
 		try {
-			CrailConfiguration crailConf = new CrailConfiguration();
+			CrailConfiguration crailConf = CrailConfiguration.createConfigurationFromFile();
 			this.dfs = CrailStore.newInstance(crailConf);
 			Path _workingDir = new Path("/user/" + CrailConstants.USER);
 			this.workingDir = new Path("/user/" + CrailConstants.USER).makeQualified(uri, _workingDir);	

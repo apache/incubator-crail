@@ -49,7 +49,7 @@ public interface StorageServer extends Configurable, Runnable {
 	
 	public static void main(String[] args) throws Exception {
 		Logger LOG = CrailUtils.getLogger();
-		CrailConfiguration conf = new CrailConfiguration();
+		CrailConfiguration conf = CrailConfiguration.createConfigurationFromFile();
 		CrailConstants.updateConstants(conf);
 		CrailConstants.printConf();
 		CrailConstants.verify();

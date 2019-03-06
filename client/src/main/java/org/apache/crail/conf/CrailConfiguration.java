@@ -33,9 +33,32 @@ public class CrailConfiguration {
 	private static final Logger LOG = CrailUtils.getLogger();
 	private ConcurrentHashMap<String, String> conf;
 
-	public CrailConfiguration() throws IOException {
+	private CrailConfiguration() {
 		conf = new ConcurrentHashMap<>();
-		Properties properties = loadProperties("crail-site.conf");
+	}
+
+	public static CrailConfiguration createEmptyConfiguration() {
+		return new CrailConfiguration();
+	}
+
+	public static CrailConfiguration createConfigurationFromFile() throws IOException {
+		CrailConfiguration cconf = createEmptyConfiguration();
+		String base = System.getenv("CRAIL_HOME");
+		if (base == null || base.isEmpty()) {
+			throw new IllegalArgumentException("CRAIL_HOME environment variable is not set or empty");
+		}
+		cconf.loadConfigurationFromFile(base + File.separator + "conf" + File.separator + "crail-site.conf");
+		return (cconf);
+	}
+
+	public static CrailConfiguration createConfigurationFromFile(String path) throws IOException {
+		CrailConfiguration cconf = createEmptyConfiguration();
+		cconf.loadConfigurationFromFile(path);
+		return (cconf);
+	}
+
+	private void loadConfigurationFromFile(String path) throws IOException {
+		Properties properties = loadProperties(path);
 		mergeProperties(properties);
 	}
 
@@ -67,11 +90,7 @@ public class CrailConfiguration {
 	private static Properties loadProperties(String resourceName) throws IOException {
 		Properties properties = new Properties();
 
-		String base = System.getenv("CRAIL_HOME");
-		if (base == null || base.isEmpty()) {
-			throw new IllegalArgumentException("CRAIL_HOME environment variable is not set or empty");
-		}
-		FileInputStream inputStream = new FileInputStream(new File(base + "/conf/" + resourceName));
+		FileInputStream inputStream = new FileInputStream(new File(resourceName));
 
 		try {
 			properties.load(inputStream);
