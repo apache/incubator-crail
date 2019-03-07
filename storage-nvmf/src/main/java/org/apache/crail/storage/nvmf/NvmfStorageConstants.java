@@ -43,6 +43,9 @@ public class NvmfStorageConstants {
 	public static final String NQN_KEY = "nqn";
 	public static NvmeQualifiedName NQN = new NvmeQualifiedName("nqn.2017-06.io.crail:cnode");
 
+	public static final String HOST_NQN_KEY = "hostnqn";
+	public static NvmeQualifiedName HOST_NQN;
+
 	/* this is a server property, the client will get the nsid from the namenode */
 	public static NamespaceIdentifier NAMESPACE = new NamespaceIdentifier(1);
 
@@ -82,6 +85,11 @@ public class NvmfStorageConstants {
 			NQN = new NvmeQualifiedName(arg);
 		}
 
+		arg = get(conf, HOST_NQN_KEY);
+		if (arg != null) {
+			HOST_NQN = new NvmeQualifiedName(arg);
+		}
+
 		arg = get(conf, ALLOCATION_SIZE_KEY);
 		if (arg != null) {
 			ALLOCATION_SIZE = Integer.parseInt(arg);
@@ -114,6 +122,7 @@ public class NvmfStorageConstants {
 		}
 		logger.info(fullKey(PORT_KEY) + " " + PORT);
 		logger.info(fullKey(NQN_KEY) + " " + NQN);
+		logger.info(fullKey(HOST_NQN_KEY) + " " + HOST_NQN);
 		logger.info(fullKey(ALLOCATION_SIZE_KEY) + " " + ALLOCATION_SIZE);
 		logger.info(fullKey(QUEUE_SIZE_KEY) + " " + QUEUE_SIZE);
 	}
@@ -131,9 +140,11 @@ public class NvmfStorageConstants {
 			Option port = Option.builder("p").desc("target port").hasArg().type(Number.class).build();
 			Option namespace = Option.builder("n").desc("namespace id").hasArg().type(Number.class).build();
 			Option nqn = Option.builder("nqn").desc("target subsystem NQN").hasArg().build();
+			Option hostnqn = Option.builder("hostnqn").desc("host NQN").hasArg().build();
 			options.addOption(bindIp);
 			options.addOption(port);
 			options.addOption(nqn);
+			options.addOption(hostnqn);
 			options.addOption(namespace);
 			CommandLineParser parser = new DefaultParser();
 			HelpFormatter formatter = new HelpFormatter();
@@ -157,6 +168,9 @@ public class NvmfStorageConstants {
 			}
 			if (line.hasOption(nqn.getOpt())) {
 				NvmfStorageConstants.NQN = new NvmeQualifiedName(line.getOptionValue(nqn.getOpt()));
+			}
+			if (line.hasOption(hostnqn.getOpt())) {
+				NvmfStorageConstants.HOST_NQN = new NvmeQualifiedName(line.getOptionValue(hostnqn.getOpt()));
 			}
 		}
 

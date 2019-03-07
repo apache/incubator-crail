@@ -47,7 +47,13 @@ public class NvmfStorageServer implements StorageServer {
 		initialized = true;
 		NvmfStorageConstants.parseCmdLine(crailConfiguration, args);
 
-		Nvme nvme = new Nvme();
+		Nvme nvme;
+		if (NvmfStorageConstants.HOST_NQN == null) {
+			nvme = new Nvme();
+		} else {
+			nvme = new Nvme(NvmfStorageConstants.HOST_NQN);
+		}
+
 		NvmfTransportId transportId = new NvmfTransportId(
 				new InetSocketAddress(NvmfStorageConstants.IP_ADDR, NvmfStorageConstants.PORT),
 				NvmfStorageConstants.NQN);
