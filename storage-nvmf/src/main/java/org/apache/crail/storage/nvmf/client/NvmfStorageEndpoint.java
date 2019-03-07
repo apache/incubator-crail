@@ -62,7 +62,7 @@ public class NvmfStorageEndpoint implements StorageEndpoint {
 				InetAddress.getByAddress(info.getIpAddress()), info.getPort());
 		// XXX FIXME: nsid from datanodeinfo
 		NvmfTransportId transportId = new NvmfTransportId(inetSocketAddress,
-				new NvmeQualifiedName(NvmfStorageConstants.NQN.toString() + info.getPort()));
+				new NvmeQualifiedName(NvmfStorageConstants.NQN.toString()));
 		LOG.info("Connecting to NVMf target at " + transportId.toString());
 		controller = nvme.connect(transportId);
 		controller.getControllerConfiguration().setEnable(true);
