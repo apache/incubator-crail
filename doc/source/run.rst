@@ -104,6 +104,7 @@ Argument                   crail-site.conf/Description
 :code:`-p <port>`          :code:`crail.storage.nvmf.port`
 :code:`-nqn <nqn>`         :code:`crail.storage.nvmf.nqn`
 :code:`-n <namespace_id>`  Namespace id to use (default 1)
+:code:`-hostnqn <nqn>`     :code:`crail.storage.nvmf.hostnqn`
 =========================  =====================================
 
 Larger deployments

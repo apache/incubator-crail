@@ -197,6 +197,7 @@ Property                                    Default Value               Descript
 :code:`crail.storage.nvmf.port`             50025                       Port of NVMf target
 :code:`crail.storage.nvmf.nqn`              nqn.2017-06.io.crail:cnode  NVMe qualified name of NVMf controller
 :code:`crail.storage.nvmf.namespace`        1                           Namespace of NVMe device
+:code:`crail.storage.nvmf.hostnqn`          <random 128bit UUID>        NVMe qualified name of host
 ========================================    ==========================  ============================================================
 
 Advanced properties:
