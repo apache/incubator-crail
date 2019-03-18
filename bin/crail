@@ -20,7 +20,6 @@ bin=`dirname ${bin}`
 bin=`cd "$bin"; pwd`
 
 LIBEXEC_DIR="$bin"/../libexec
-JAVA=$JAVA_HOME/bin/java
 
 function print_usage(){
   echo "Usage: crail COMMAND"
@@ -78,4 +77,4 @@ if [ -f "${CONF_PATH}/crail-env.sh" ]; then
   set +a
 fi
 
-exec "$JAVA" -Dproc_$COMMAND -Dsun.nio.PageAlignDirectMemory=true $CRAIL_EXTRA_JAVA_OPTIONS $CLASS "$@"
+exec "java" -Dproc_$COMMAND -Dsun.nio.PageAlignDirectMemory=true $CRAIL_EXTRA_JAVA_OPTIONS $CLASS "$@"
