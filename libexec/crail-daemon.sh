@@ -33,6 +33,14 @@ bin=`cd "$bin"; pwd`
 
 LIBEXEC_DIR="$bin"/../libexec
 
+CONF_PATH="$bin"/../conf
+if [ -f "${CONF_PATH}/crail-env.sh" ]; then
+  # Promote all variable declarations to environment (exported) variables
+  set -a
+  . "${CONF_PATH}/crail-env.sh"
+  set +a
+fi
+
 # get arguments
 
 #default value
