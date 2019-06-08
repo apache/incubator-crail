@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+bin=`which $0`
+bin=`dirname ${bin}`
+bin=`cd "$bin"; pwd`
+
+LIBEXEC_DIR="$bin"/../libexec
+JAVA=$JAVA_HOME/bin/java
+
+function print_usage(){
+  echo "Usage: crail COMMAND"
+  echo "       where COMMAND is one of:"
+  echo "  namenode             run the Crail namenode"
+  echo "  datanode             run a Crail datanode"
+  echo "  fsck                 run a Crail file check command"
+  echo "  fs                   run a Crail shell command"
+  echo "  iobench              run a Crail benchmark/test"
+}
+
+if [ $# = 0 ]; then
+  print_usage
+  exit
+fi
+
+COMMAND=$1
+shift
+
+case $COMMAND in
+  # usage flags
+  --help|-help|-h)
+    print_usage
+    exit
+    ;;
+esac
+
+if [ "$COMMAND" = "namenode" ] ; then
+  CLASS='org.apache.crail.namenode.NameNode'
+elif [ "$COMMAND" = "datanode" ] ; then
+  CLASS='org.apache.crail.storage.StorageServer'
+elif [ "$COMMAND" = "fsck" ] ; then
+  CLASS='org.apache.crail.tools.CrailFsck'
+elif [ "$COMMAND" = "fs" ] ; then
+  CLASS=org.apache.hadoop.fs.FsShell
+elif [ "$COMMAND" = "getconf" ] ; then
+  CLASS=org.apache.crail.hdfs.GetConf
+elif [ "$COMMAND" = "iobench" ] ; then
+  CLASS=org.apache.crail.tools.CrailBenchmark  
+elif [ "$COMMAND" = "hdfsbench" ] ; then
+  CLASS=org.apache.crail.hdfs.tools.HdfsIOBenchmark    
+fi
+
+export CLASSPATH="$bin"/../jars/*:"$bin"/../conf:.
+export LD_LIBRARY_PATH="$bin/../lib:$LD_LIBRARY_PATH"
+
+exec "$JAVA" -Dproc_$COMMAND -XX:MaxDirectMemorySize=64G -Dsun.nio.PageAlignDirectMemory=true $CLASS "$@"
+#exec "$JAVA" -Dproc_$COMMAND -XX:MaxDirectMemorySize=64G -Dsun.nio.PageAlignDirectMemory=true -Xmn16G $CLASS "$@"

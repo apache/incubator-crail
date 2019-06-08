@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: crail-namenode-svc
+  labels:
+    app: crail-namenode-svc
+spec:
+  ports:
+  - port: 9070
+    name: namenode-port
+  clusterIP: None
+  selector:
+    app: crail-namenode
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: crail-namenode-deployment
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: crail-namenode
+    spec:
+      hostNetwork: false
+      hostname: crail-namenode
+      containers:
+      - name: crail-namenode
+        image: kaustav4284/kaustav-crail-namenode:latest
+        ports:
+        - containerPort: 9070
+        name: namenode-port
+        

@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: crail-data-svc
+  labels:
+    app: crail-data-svc
+spec:
+  ports:
+  - port: 50030
+    name: datanode-port
+  clusterIP: None
+  selector:
+    app: crail-datanode-namenode
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+   name: crail-datanode-dram
+spec:
+  parallelism: 1
+  template:
+    metadata:
+      labels:
+        app: crail-datanode-dram
+    spec:
+      hostNetwork: false
+      restartPolicy: "OnFailure"
+      privileged: true
+      containers:
+      - name: crail-datanode-dram
+        image: kaustav4284/kaustav-crail-datanode:latest3
+        securityContext:
+          capabilities:
+            add: ["SYS_ADMIN","NET_ADMIN","SYS_TIME"]
+          privileged: true
+          allowPrivilegeEscalation: true
+        volumeMounts:
+        - mountPath: /dev
+          name: dev
+        ports:
+        - containerPort: 50030
+      volumes:
+      - name: dev
+        hostPath:
+          path: /dev
+          type: Directory
