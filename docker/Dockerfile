@@ -43,7 +43,7 @@ RUN echo "Crail-$LOG_COMMIT clone & build Crail repo" && \
 RUN echo "Move crail to /crail" && \
     rm -rf /crail && \
     v=`xmllint --xpath "string(/*[local-name()='project']/*[local-name()='version'])" /incubator-crail/pom.xml` && \
-    mv /incubator-crail/assembly/target/crail-${v}-bin /crail
+    mv /incubator-crail/assembly/target/apache-crail-${v}-bin/apache-crail-${v} /crail
 
 ENV CRAIL_HOME /crail
 ENV PATH=${PATH}:${CRAIL_HOME}/bin
