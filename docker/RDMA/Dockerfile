@@ -18,7 +18,7 @@ FROM apache/incubator-crail:1.1
 MAINTAINER Apache Crail <dev@crail.apache.org>
 
 RUN echo "Crail-$LOG_COMMIT install rdma libraries and autotools" && \
-    apt-get install -y --no-install-recommends \
+    apt-get update && apt-get install -y --no-install-recommends \
     autoconf autotools-dev automake libtool make g++ \
     librdmacm-dev libibverbs-dev ibverbs-providers
 
