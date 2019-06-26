@@ -65,6 +65,7 @@ public class NvmfStorageClient implements StorageClient {
 				}
 			}
 		});
+		this.keepAliveThread.setDaemon(true);
 	}
 
 	boolean isAlive() {
