@@ -84,6 +84,7 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 	public void close(RdmaEndpoint ep) {
 		try {
 			allEndpoints.remove(ep.getEndpointId());
+			ep.close();
 			LOG.info("removing endpoint, connCount " + allEndpoints.size());
 		} catch (Exception e){
 			LOG.info("error closing " + e.getMessage());
