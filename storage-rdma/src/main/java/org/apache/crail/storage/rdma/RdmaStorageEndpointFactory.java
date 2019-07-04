@@ -25,9 +25,9 @@ import com.ibm.disni.verbs.*;
 
 public class RdmaStorageEndpointFactory implements RdmaEndpointFactory<RdmaStorageServerEndpoint> {
 	private RdmaStorageServer closer;
-	private RdmaPassiveEndpointGroup<RdmaStorageServerEndpoint> group;
+	private RdmaActiveEndpointGroup<RdmaStorageServerEndpoint> group;
 	
-	public RdmaStorageEndpointFactory(RdmaPassiveEndpointGroup<RdmaStorageServerEndpoint> group, RdmaStorageServer closer){
+	public RdmaStorageEndpointFactory(RdmaActiveEndpointGroup<RdmaStorageServerEndpoint> group, RdmaStorageServer closer){
 		this.group = group;
 		this.closer = closer;
 	}

@@ -39,7 +39,7 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 	private static final Logger LOG = CrailUtils.getLogger();
 	
 	private InetSocketAddress serverAddr;
-	private RdmaPassiveEndpointGroup<RdmaStorageServerEndpoint> datanodeGroup;
+	private RdmaActiveEndpointGroup<RdmaStorageServerEndpoint> datanodeGroup;
 	private RdmaServerEndpoint<RdmaStorageServerEndpoint> datanodeServerEndpoint;
 	private ConcurrentHashMap<Integer, RdmaEndpoint> allEndpoints; 
 	private boolean isAlive;
@@ -64,8 +64,8 @@ public class RdmaStorageServer implements Runnable, StorageServer {
 			LOG.info("Configured network interface " + RdmaConstants.STORAGE_RDMA_INTERFACE + " cannot be found..exiting!!!");
 			return;
 		}
-		this.datanodeGroup = new RdmaPassiveEndpointGroup<RdmaStorageServerEndpoint>(-1, RdmaConstants.STORAGE_RDMA_QUEUESIZE, 4, RdmaConstants.STORAGE_RDMA_QUEUESIZE*100);
-		this.datanodeServerEndpoint = datanodeGroup.createServerEndpoint();		
+		this.datanodeGroup = new RdmaActiveEndpointGroup<RdmaStorageServerEndpoint>(-1, false, 1, 1, 1);
+		this.datanodeServerEndpoint = datanodeGroup.createServerEndpoint();
 		datanodeGroup.init(new RdmaStorageEndpointFactory(datanodeGroup, this));
 		datanodeServerEndpoint.bind(serverAddr, RdmaConstants.STORAGE_RDMA_BACKLOG);
 		

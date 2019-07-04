@@ -23,13 +23,17 @@ import java.io.IOException;
 import com.ibm.disni.verbs.*;
 import com.ibm.disni.*;
 
-public class RdmaStorageServerEndpoint extends RdmaEndpoint {
+public class RdmaStorageServerEndpoint extends RdmaActiveEndpoint {
 	private RdmaStorageServer closer;
 
-	public RdmaStorageServerEndpoint(RdmaPassiveEndpointGroup<RdmaStorageServerEndpoint> endpointGroup, RdmaCmId idPriv, RdmaStorageServer closer, boolean serverSide) throws IOException {	
+	public RdmaStorageServerEndpoint(RdmaActiveEndpointGroup<RdmaStorageServerEndpoint> endpointGroup, RdmaCmId idPriv, RdmaStorageServer closer, boolean serverSide) throws IOException {
 		super(endpointGroup, idPriv, serverSide);
 		this.closer = closer;
 	}	
+
+	public void dispatchCqEvent(IbvWC wc) throws IOException {
+
+	}
 	
 	public synchronized void dispatchCmEvent(RdmaCmEvent cmEvent)
 			throws IOException {
