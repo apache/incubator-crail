@@ -17,7 +17,7 @@ FROM ubuntu:18.04
 MAINTAINER Apache Crail <dev@crail.apache.org>
 
 # TODO: automate update version on new release
-ARG GIT_COMMIT="master"
+ARG GIT_COMMIT="v1.2"
 ENV LOG_COMMIT=$GIT_COMMIT
 
 RUN echo "Crail-$LOG_COMMIT install openjdk8, git and envsubst" && \

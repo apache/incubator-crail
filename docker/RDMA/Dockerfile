@@ -14,7 +14,7 @@
 # limitations under the License.)
 
 # TODO: automate update version
-FROM apache/incubator-crail:1.1
+FROM apache/incubator-crail:1.2
 MAINTAINER Apache Crail <dev@crail.apache.org>
 
 RUN echo "Crail-$LOG_COMMIT install rdma libraries and autotools" && \
