@@ -21,14 +21,14 @@
   <parent>
     <groupId>org.apache.crail</groupId>
     <artifactId>crail-parent</artifactId>
-    <version>1.2-incubating</version>
+    <version>1.2-incubating-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <groupId>org.apache.crail</groupId>
   <artifactId>crail-storage</artifactId>
   <packaging>jar</packaging>
-  <version>1.2-incubating</version>
+  <version>1.2-incubating-SNAPSHOT</version>
   <name>Crail Storage Project</name>
   <url>http://maven.apache.org</url>
 
