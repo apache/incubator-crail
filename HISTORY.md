@@ -16,6 +16,27 @@ See the License for the specific language governing permissions and
 limitations under the License.
 {% endcomment %}
 -->
+## [1.2](https://github.com/apache/incubator-crail/tree/v1.2 - 26.11.2019
+
+#### New features / improvements
+
+* [[CRAIL-106](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-106)] Allow namenode as parameter instead of conf file.
+* [[CRAIL-100](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-100)] Fix DiSNI version in Dockerfile
+* [[CRAIL-96](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-96)]   Make host NQN configurable
+* [[CRAIL-90](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-90)]   Release documentation clarifications
+* [[CRAIL-83](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-83)]   Include README in binary tarball
+
+
+
+#### Bug fixes
+
+* [[CRAIL-104](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-104)] StorageServer client RDMA completion queue persists unused, if client disconnects
+* [[CRAIL-103](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-103)] StorageServer client enpoint does not get destroyed if client disconnects.
+* [[CRAIL-99](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-99)]   Docker file uses wrong naming and fails building image
+* [[CRAIL-98](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-98)]   Make keepalive thread a daemon thread
+* [[CRAIL-93](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-93)]   Do not append port to subsystem NQN
+
+
 
 ## [1.1](https://github.com/apache/incubator-crail/tree/v1.1) - 26.11.2018
 
