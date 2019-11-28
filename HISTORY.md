@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 {% endcomment %}
 -->
-## [1.2](https://github.com/apache/incubator-crail/tree/v1.2 - 26.11.2019
+## [1.2](https://github.com/apache/incubator-crail/tree/v1.2) - 26.11.2019
 
 #### New features / improvements
 
