@@ -30,6 +30,7 @@ limitations under the License.
 
 #### Bug fixes
 
+* [[CRAIL-107](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-107)] Fix RPC type for TCP and start/stop script paths in documentation
 * [[CRAIL-104](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-104)] StorageServer client RDMA completion queue persists unused, if client disconnects
 * [[CRAIL-103](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-103)] StorageServer client enpoint does not get destroyed if client disconnects.
 * [[CRAIL-99](https://jira.apache.org/jira/projects/CRAIL/issues/CRAIL-99)]   Docker file uses wrong naming and fails building image
