@@ -113,13 +113,13 @@ To run larger deployments start Crail using
 
 .. code-block:: bash
 
-   $CRAIL_HOME/start-crail.sh
+   $CRAIL_HOME/bin/start-crail.sh
 
 Similarly, Crail can be stopped by using
 
 .. code-block:: bash
 
-   $CRAIL_HOME/stop-crail.sh
+   $CRAIL_HOME/bin/stop-crail.sh
 
 For this to work include the list of machines to start datanodes in the :ref:`slaves` file.
 You can start multiple datanode of different types on the same host as follows:

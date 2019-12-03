@@ -76,7 +76,7 @@ Crail's modular architecture allows to plugin different kinds of RPC implementat
 is used to configure the RPC implementation. We currently offer two implementations:
 
 * A TCP implementation based on `narpc <https://github.com/zrlio/narpc>`_ (default):
-  **org.apache.crail.namenode.rpc.tcp.tcpnamenode**
+  **org.apache.crail.namenode.rpc.tcp.TcpNameNode**
 * A RDMA implementation based on `darpc <https://github.com/zrlio/darpc>`_:
   **org.apache.crail.namenode.rpc.darpc.DaRPCNameNode**
 
