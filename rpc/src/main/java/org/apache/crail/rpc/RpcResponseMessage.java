@@ -598,6 +598,10 @@ public class RpcResponseMessage {
 		public void setFreeBlockCount(int blockCount) {
 			this.statistics.setFreeBlockCount(blockCount);
 		}
+
+		public void setStatus(short status) {
+			this.statistics.setStatus(status);
+		}
 		
 		public short getError(){
 			return 0;
@@ -641,6 +645,51 @@ public class RpcResponseMessage {
 		}
 		
 		public void setData(int data){
+			this.data = data;
+		}
+
+		public short getError(){
+			return error;
+		}
+
+		public void setError(short error) {
+			this.error = error;
+		}
+	}
+
+	public static class RemoveDataNodeRes implements RpcProtocol.NameNodeRpcMessage, RpcRemoveDataNode {
+		public static int CSIZE = Short.BYTES;
+
+		private short data;
+		private short error;
+
+		public RemoveDataNodeRes() {
+			this.data = 0;
+			this.error = 0;
+		}
+
+		public int size() {
+			return CSIZE;
+		}
+
+		public short getType(){
+			return RpcProtocol.RES_REMOVE_DATANODE;
+		}
+
+		public int write(ByteBuffer buffer) {
+			buffer.putShort(data);
+			return CSIZE;
+		}
+
+		public void update(ByteBuffer buffer) {
+			data = buffer.getShort();
+		}
+
+		public short getData(){
+			return data;
+		}
+
+		public void setData(short data) {
 			this.data = data;
 		}
 

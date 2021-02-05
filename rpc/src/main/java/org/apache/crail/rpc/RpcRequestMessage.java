@@ -18,6 +18,8 @@
 
 package org.apache.crail.rpc;
 
+import java.io.IOException;
+import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 
@@ -571,7 +573,63 @@ public class RpcRequestMessage {
 		public void update(ByteBuffer buffer) {
 			op = buffer.getInt();
 		}		
-	}	
+	}
+
+	public static class RemoveDataNodeReq implements RpcProtocol.NameNodeRpcMessage {
+		private InetAddress ipAddr;
+		private int port;
+
+		public RemoveDataNodeReq(){
+			this.ipAddr = null;
+			this.port = 0;
+		}
+
+		public RemoveDataNodeReq(InetAddress addr, int port){
+			this.ipAddr = addr;
+			this.port = port;
+		}
+
+		public int size() {
+			//  sizeof(ip-addr) + sizeof(port)
+			return 4 + Integer.BYTES;
+		}
+
+		public short getType(){
+			return RpcProtocol.REQ_REMOVE_DATANODE;
+		}
+
+		public int write(ByteBuffer buffer) throws IOException {
+			int size = size();
+
+			checkSize(buffer.remaining());
+
+			buffer.put(this.getIPAddress().getAddress());
+			buffer.putInt(this.port());
+			return size;
+		}
+
+		private void checkSize(int remaining) throws IOException {
+			if(this.size() > remaining)
+				throw new IOException("Only " + remaining + " remaining bytes stored in buffer, however " + this.size() + " bytes are required");
+		}
+
+		public void update(ByteBuffer buffer) throws IOException {
+			checkSize(buffer.remaining());
+
+			byte[] b = new byte[4];
+			buffer.get(b);
+			this.ipAddr = InetAddress.getByAddress(b);
+			this.port = buffer.getInt();
+		}
+
+		public InetAddress getIPAddress(){
+			return this.ipAddr;
+		}
+
+		public int port(){
+			return this.port;
+		}
+	}
 	
 
 }

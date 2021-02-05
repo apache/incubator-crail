@@ -19,6 +19,7 @@
 package org.apache.crail.namenode.rpc.darpc;
 
 import java.io.IOException;
+import java.net.InetAddress;
 
 import org.apache.crail.CrailNodeType;
 import org.apache.crail.conf.CrailConstants;
@@ -35,6 +36,7 @@ import org.apache.crail.rpc.RpcGetDataNode;
 import org.apache.crail.rpc.RpcGetFile;
 import org.apache.crail.rpc.RpcGetLocation;
 import org.apache.crail.rpc.RpcPing;
+import org.apache.crail.rpc.RpcRemoveDataNode;
 import org.apache.crail.rpc.RpcProtocol;
 import org.apache.crail.rpc.RpcRenameFile;
 import org.apache.crail.rpc.RpcRequestMessage;
@@ -267,6 +269,23 @@ public class DaRPCNameNodeConnection implements RpcConnection {
 		DaRPCNameNodeFuture<RpcPing> nameNodeFuture = new DaRPCNameNodeFuture<RpcPing>(future, pingRes);
 		
 		return nameNodeFuture;	
+	}
+
+	@Override
+	public RpcFuture<RpcRemoveDataNode> removeDataNode(InetAddress ipaddr, int port) throws Exception {
+
+		RpcRequestMessage.RemoveDataNodeReq removeDataNodeReq = new RpcRequestMessage.RemoveDataNodeReq(ipaddr, port);
+		DaRPCNameNodeRequest request = new DaRPCNameNodeRequest(removeDataNodeReq);
+		request.setCommand(RpcProtocol.CMD_REMOVE_DATANODE);
+
+		RpcResponseMessage.RemoveDataNodeRes removeDataNodeRes = new RpcResponseMessage.RemoveDataNodeRes();
+		DaRPCNameNodeResponse response = new DaRPCNameNodeResponse(removeDataNodeRes);
+		
+		DaRPCFuture<DaRPCNameNodeRequest, DaRPCNameNodeResponse> future = issueRPC(request, response);
+		
+		DaRPCNameNodeFuture<RpcRemoveDataNode> nameNodeFuture = new DaRPCNameNodeFuture<RpcRemoveDataNode>(future, removeDataNodeRes);
+		
+		return nameNodeFuture;
 	}
 	
 	@Override
