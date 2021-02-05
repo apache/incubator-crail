@@ -36,7 +36,9 @@ public class DataNodeBlocks extends DataNodeInfo {
 	private ConcurrentHashMap<Long, BlockInfo> regions;
 	private LinkedBlockingQueue<NameNodeBlockInfo> freeBlocks;
 	private long token;
-	
+	private long maxBlockCount;
+	private boolean scheduleForRemoval;
+
 	public static DataNodeBlocks fromDataNodeInfo(DataNodeInfo dnInfo) throws UnknownHostException{
 		DataNodeBlocks dnInfoNn = new DataNodeBlocks(dnInfo.getStorageType(), dnInfo.getStorageClass(), dnInfo.getLocationClass(), dnInfo.getIpAddress(), dnInfo.getPort());
 		return dnInfoNn;
@@ -46,20 +48,45 @@ public class DataNodeBlocks extends DataNodeInfo {
 		super(storageType, getStorageClass, locationClass, ipAddress, port);
 		this.regions = new ConcurrentHashMap<Long, BlockInfo>();
 		this.freeBlocks = new LinkedBlockingQueue<NameNodeBlockInfo>();
+		this.scheduleForRemoval = false;
+		this.maxBlockCount = 0;
+	}
+
+	private void updateBlockCount(){
+
+		// When a datanode connects for the first time to the namenode, all of the offered storage capacities
+		// are added in the form of free blocks. By keeping track of this number (which grows block for block), we
+		// learn the maximum available capacity in this datanode. Only when the number of free blocks equals the number
+		// of all blocks, the datanode is safe to be removed.
+		if(freeBlocks.size() > this.maxBlockCount)
+			this.maxBlockCount = freeBlocks.size();
 	}
 	
 	public void addFreeBlock(NameNodeBlockInfo nnBlock) {
 		regions.put(nnBlock.getRegion().getLba(), nnBlock.getRegion());
 		freeBlocks.add(nnBlock);
+		updateBlockCount();
 	}
 
 	public NameNodeBlockInfo getFreeBlock() throws InterruptedException {
 		NameNodeBlockInfo block = this.freeBlocks.poll();
 		return block;
 	}
-	
+
+	public void scheduleForRemoval() {
+		this.scheduleForRemoval = true;
+	}
+
+	public boolean safeForRemoval() {
+		return  this.maxBlockCount == this.freeBlocks.size();
+	}
+
+	public boolean isScheduleForRemoval(){
+		return this.scheduleForRemoval;
+	}
+
 	public int getBlockCount() {
-		return freeBlocks.size();
+		return this.freeBlocks.size();
 	}
 
 	public boolean regionExists(BlockInfo region) {

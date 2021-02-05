@@ -84,7 +84,28 @@ public class BlockStore {
 		int storageClass = dnInfo.getStorageClass();
 		return storageClasses[storageClass].getDataNode(dnInfo);
 	}
-	
+
+	short removeDataNode(DataNodeInfo dn) throws Exception {
+		int storageClass = dn.getStorageClass();
+		return storageClasses[storageClass].removeDatanode(dn);
+	}
+
+	short prepareDataNodeForRemoval(DataNodeInfo dn) throws Exception {
+
+		// Despite several potential storageClasses the pair (Ip-addr,port) should
+		// nevertheless target only one running datanode instance.
+		// Therefore we can iterate over all storageClasses to check whether
+		// the requested datanode is part of one of the storageClasses.
+		for(StorageClass storageClass : storageClasses) {
+			if (storageClass.getDataNode(dn) != null) {
+				return storageClass.prepareForRemovalDatanode(dn);
+			}
+		}
+
+		LOG.error("DataNode: " + dn.toString() + " not found");
+		return RpcErrors.ERR_DATANODE_NOT_REGISTERED;
+	}
+
 }
 
 class StorageClass {
@@ -171,9 +192,33 @@ class StorageClass {
 		return RpcErrors.ERR_OK;
 
 	}
-	
+
+	short prepareForRemovalDatanode(DataNodeInfo dn) throws Exception {
+		// this will only mark it for removal
+		return _prepareOrRemoveDN(dn, true);
+	}
+
+	short removeDatanode(DataNodeInfo dn) throws Exception {
+		// this will remove it as well
+		return _prepareOrRemoveDN(dn, false);
+	}
+
 	//---------------
-	
+
+	private short _prepareOrRemoveDN(DataNodeInfo dn, boolean onlyMark) throws Exception {
+		DataNodeBlocks toBeRemoved = membership.get(dn.key());
+		if (toBeRemoved == null) {
+			LOG.error("DataNode: " + dn.toString() + " not found");
+			return RpcErrors.ERR_DATANODE_NOT_REGISTERED;
+		} else {
+			if (onlyMark)
+				toBeRemoved.scheduleForRemoval();
+			else
+				membership.remove(toBeRemoved.key());
+		}
+		return RpcErrors.ERR_OK;
+	}
+
 	private void _addDataNode(DataNodeBlocks dataNode){
 		LOG.info("adding datanode " + CrailUtils.getIPAddressFromBytes(dataNode.getIpAddress()) + ":" + dataNode.getPort() + " of type " + dataNode.getStorageType() + " to storage class " + storageClass);
 		DataNodeArray hostMap = affinitySets.get(dataNode.getLocationClass());
@@ -256,7 +301,7 @@ class StorageClass {
 					for (int i = 0; i < size; i++){
 						int index = (startIndex + i) % size;
 						DataNodeBlocks anyDn = arrayList.get(index);
-						if (anyDn.isOnline()){
+						if (anyDn.isOnline() && !anyDn.isScheduleForRemoval()){
 							block = anyDn.getFreeBlock();
 						}
 						if (block != null){

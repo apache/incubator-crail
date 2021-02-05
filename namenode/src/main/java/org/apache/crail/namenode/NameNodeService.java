@@ -412,7 +412,18 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 		if (dnInfoNn == null){
 			return RpcErrors.ERR_DATANODE_NOT_REGISTERED;
 		}
-		
+
+		if(dnInfoNn.isScheduleForRemoval()){
+			// verify that datanode does not store any remaining blocks
+			if(dnInfoNn.safeForRemoval()){
+				// remove datanode from internal datastructures and prepare response
+				blockStore.removeDataNode(dnInfo);
+				response.setServiceId(serviceId);
+				response.setStatus(RpcErrors.ERR_DATANODE_STOP);
+				return RpcErrors.ERR_OK;
+			}
+		}
+
 		dnInfoNn.touch();
 		response.setServiceId(serviceId);
 		response.setFreeBlockCount(dnInfoNn.getBlockCount());
@@ -570,10 +581,26 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 		
 		return RpcErrors.ERR_OK;
 	}
-	
+
+	@Override
+	public short removeDataNode(RpcRequestMessage.RemoveDataNodeReq request, RpcResponseMessage.RemoveDataNodeRes response, RpcNameNodeState errorState) throws Exception {
+
+		DataNodeInfo dn_info = new DataNodeInfo(0,0,0,request.getIPAddress().getAddress(), request.port());
+
+		short res = prepareDataNodeForRemoval(dn_info);
+		response.setData(res);
+
+		return RpcErrors.ERR_OK;
+	}
+
 	
 	//--------------- helper functions
-	
+
+	public short prepareDataNodeForRemoval(DataNodeInfo dn) throws Exception {
+		LOG.info("Removing data node: " + dn);
+		return blockStore.prepareDataNodeForRemoval(dn);
+	}
+
 	void appendToDeleteQueue(AbstractNode fileInfo) throws Exception {
 		if (fileInfo != null) {
 			fileInfo.setDelay(CrailConstants.TOKEN_EXPIRATION);

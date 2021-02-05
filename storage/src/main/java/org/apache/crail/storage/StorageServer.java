@@ -39,12 +39,14 @@ import org.apache.crail.metadata.DataNodeStatistics;
 import org.apache.crail.rpc.RpcClient;
 import org.apache.crail.rpc.RpcConnection;
 import org.apache.crail.rpc.RpcDispatcher;
+import org.apache.crail.rpc.RpcErrors;
 import org.apache.crail.utils.CrailUtils;
 import org.slf4j.Logger;
 
 public interface StorageServer extends Configurable, Runnable {
 	public abstract StorageResource allocateResource() throws Exception;
 	public abstract boolean isAlive();
+	public abstract void prepareToShutDown();
 	public abstract InetSocketAddress getAddress();
 	
 	public static void main(String[] args) throws Exception {
@@ -175,6 +177,7 @@ public interface StorageServer extends Configurable, Runnable {
 			DataNodeStatistics stats = storageRpc.getDataNode();
 			long newCount = stats.getFreeBlockCount();
 			long serviceId = stats.getServiceId();
+			short status = stats.getStatus();
 			
 			long oldCount = 0;
 			if (blockCount.containsKey(serviceId)){
@@ -185,7 +188,22 @@ public interface StorageServer extends Configurable, Runnable {
 			sumCount += diffCount;			
 			
 			LOG.info("datanode statistics, freeBlocks " + sumCount);
+			processStatus(server, rpcConnection, thread, status);
 			Thread.sleep(CrailConstants.STORAGE_KEEPALIVE*1000);
 		}			
+	}
+
+	public static void processStatus(StorageServer server, RpcConnection rpc, Thread thread, short status) throws Exception {
+		if (status == RpcErrors.ERR_DATANODE_STOP) {
+			server.prepareToShutDown();
+			rpc.close();
+			
+			// interrupt sleeping thread
+			try {
+				thread.interrupt();
+			} catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
 	}
 }

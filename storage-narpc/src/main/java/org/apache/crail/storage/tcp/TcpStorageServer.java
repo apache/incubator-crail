@@ -101,6 +101,20 @@ public class TcpStorageServer implements Runnable, StorageServer, NaRPCService<T
 	}
 
 	@Override
+	public void prepareToShutDown(){
+
+		LOG.info("Preparing TCP-Storage server for shutdown");
+		this.alive = false;
+		
+		try {
+			serverEndpoint.close();
+			serverGroup.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
 	public void run() {
 		try {
 			LOG.info("running TCP storage server, address " + address);
@@ -110,7 +124,11 @@ public class TcpStorageServer implements Runnable, StorageServer, NaRPCService<T
 				LOG.info("new connection " + endpoint.address());
 			}
 		} catch(Exception e){
-			e.printStackTrace();
+			// if StorageServer is still marked as running output stacktrace
+			// otherwise this is expected behaviour
+			if(this.alive) {
+				e.printStackTrace();
+			}
 		}
 	}
 
