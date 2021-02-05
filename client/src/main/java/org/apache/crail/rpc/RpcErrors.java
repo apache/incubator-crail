@@ -55,7 +55,8 @@ public class RpcErrors {
 	public static short ERR_DIR_LOCATION_AFFINITY_MISMATCH = 26;
 	public static short ERR_ADD_BLOCK_FAILED = 27;
 	public static short ERR_CREATE_FILE_BUG = 28;
-	
+	public static short ERR_DATANODE_STOP = 29;
+
 	static {
 		messages[ERR_OK] = "ERROR: No error, all fine";
 		messages[ERR_UNKNOWN] = "ERROR: Unknown error";

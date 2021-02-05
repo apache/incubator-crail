@@ -31,6 +31,7 @@ import org.apache.crail.utils.CrailUtils;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.net.InetAddress;
 
 public class TcpRpcConnection implements RpcConnection {
 	static private final Logger LOG = CrailUtils.getLogger();
@@ -182,6 +183,17 @@ public class TcpRpcConnection implements RpcConnection {
 		request.setCommand(RpcProtocol.CMD_PING_NAMENODE);
 		NaRPCFuture<TcpNameNodeRequest, TcpNameNodeResponse> future = endpoint.issueRequest(request, response);
 		return new TcpFuture<RpcPing>(future, resp);
+	}
+
+	public RpcFuture<RpcRemoveDataNode> removeDataNode(InetAddress addr, int port) throws Exception {
+		RpcRequestMessage.RemoveDataNodeReq req = new RpcRequestMessage.RemoveDataNodeReq(addr, port);
+		RpcResponseMessage.RemoveDataNodeRes resp = new RpcResponseMessage.RemoveDataNodeRes();
+
+		TcpNameNodeRequest request = new TcpNameNodeRequest(req);
+		TcpNameNodeResponse response = new TcpNameNodeResponse(resp);
+		request.setCommand(RpcProtocol.CMD_REMOVE_DATANODE);
+		NaRPCFuture<TcpNameNodeRequest, TcpNameNodeResponse> future = endpoint.issueRequest(request, response);
+		return new TcpFuture<RpcRemoveDataNode>(future, resp);
 	}
 
 }

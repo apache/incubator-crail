@@ -43,6 +43,7 @@ public class TcpNameNodeResponse extends RpcResponseMessage implements RpcNameNo
 	private RpcResponseMessage.GetLocationRes getLocationRes;	
 	private RpcResponseMessage.GetDataNodeRes getDataNodeRes;
 	private RpcResponseMessage.PingNameNodeRes pingNameNodeRes;
+	private RpcResponseMessage.RemoveDataNodeRes removeDataNodeRes;
 	
 	public TcpNameNodeResponse() {
 		this.type = 0;
@@ -56,6 +57,7 @@ public class TcpNameNodeResponse extends RpcResponseMessage implements RpcNameNo
 		this.getLocationRes = new RpcResponseMessage.GetLocationRes();
 		this.getDataNodeRes = new RpcResponseMessage.GetDataNodeRes();
 		this.pingNameNodeRes = new RpcResponseMessage.PingNameNodeRes();
+		this.removeDataNodeRes = new RpcResponseMessage.RemoveDataNodeRes();
 	}
 	
 	public TcpNameNodeResponse(RpcResponseMessage.VoidRes message) {
@@ -102,6 +104,11 @@ public class TcpNameNodeResponse extends RpcResponseMessage implements RpcNameNo
 		this.type = message.getType();
 		this.pingNameNodeRes = message;
 	}
+
+	public TcpNameNodeResponse(RpcResponseMessage.RemoveDataNodeRes message) {
+		this.type = message.getType();
+		this.removeDataNodeRes = message;
+	}
 	
 	public void setType(short type) throws Exception {
 		this.type = type;
@@ -143,7 +150,10 @@ public class TcpNameNodeResponse extends RpcResponseMessage implements RpcNameNo
 			break;			
 		case RpcProtocol.RES_PING_NAMENODE:
 			written += pingNameNodeRes.write(buffer);
-			break;			
+			break;
+		case RpcProtocol.RES_REMOVE_DATANODE:
+			written += removeDataNodeRes.write(buffer);
+			break;
 		}
 		
 		return written;
@@ -189,7 +199,11 @@ public class TcpNameNodeResponse extends RpcResponseMessage implements RpcNameNo
 		case RpcProtocol.RES_PING_NAMENODE:
 			pingNameNodeRes.update(buffer);
 			pingNameNodeRes.setError(error);
-			break;		
+			break;
+		case RpcProtocol.RES_REMOVE_DATANODE:
+			removeDataNodeRes.update(buffer);
+			removeDataNodeRes.setError(error);
+			break;
 		}
 	}
 	
@@ -239,5 +253,9 @@ public class TcpNameNodeResponse extends RpcResponseMessage implements RpcNameNo
 	
 	public RpcResponseMessage.PingNameNodeRes pingNameNode(){
 		return this.pingNameNodeRes;
+	}
+
+	public RpcResponseMessage.RemoveDataNodeRes removeDataNode(){
+		return this.removeDataNodeRes;
 	}
 }

@@ -19,6 +19,7 @@
 package org.apache.crail.rpc;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.crail.CrailNodeType;
@@ -132,6 +133,12 @@ public class RpcDispatcher implements RpcConnection {
 	@Override
 	public RpcFuture<RpcPing> pingNameNode() throws Exception {
 		return connections[0].pingNameNode();
+	}
+
+	@Override
+	public RpcFuture<RpcRemoveDataNode> removeDataNode(
+			InetAddress ipaddr, int port) throws Exception {
+		return connections[0].removeDataNode(ipaddr, port);
 	}
 
 	@Override

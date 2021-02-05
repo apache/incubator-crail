@@ -19,6 +19,7 @@
 package org.apache.crail.rpc;
 
 import java.io.IOException;
+import java.net.InetAddress;
 
 import org.apache.crail.CrailNodeType;
 import org.apache.crail.metadata.BlockInfo;
@@ -59,6 +60,9 @@ public interface RpcConnection {
 
 	public abstract RpcFuture<RpcPing> pingNameNode()
 			throws Exception;
+
+	public abstract RpcFuture<RpcRemoveDataNode> removeDataNode(
+			InetAddress ipaddr, int port) throws Exception;
 	
 	public abstract void close() throws Exception;
 	

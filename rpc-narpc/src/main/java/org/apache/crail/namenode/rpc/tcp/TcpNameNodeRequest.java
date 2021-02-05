@@ -45,6 +45,7 @@ public class TcpNameNodeRequest extends RpcRequestMessage implements NaRPCMessag
 	private RpcRequestMessage.GetDataNodeReq getDataNodeReq;
 	private RpcRequestMessage.DumpNameNodeReq dumpNameNodeReq;
 	private RpcRequestMessage.PingNameNodeReq pingNameNodeReq;
+	private RpcRequestMessage.RemoveDataNodeReq removeDataNodeReq;
 
 	public TcpNameNodeRequest() {
 		this.cmd = 0;
@@ -60,7 +61,8 @@ public class TcpNameNodeRequest extends RpcRequestMessage implements NaRPCMessag
 		this.dumpNameNodeReq = new RpcRequestMessage.DumpNameNodeReq();
 		this.pingNameNodeReq = new RpcRequestMessage.PingNameNodeReq();
 		this.getDataNodeReq = new RpcRequestMessage.GetDataNodeReq();
-	}	
+		this.removeDataNodeReq = new RpcRequestMessage.RemoveDataNodeReq();
+	}
 	
 	public TcpNameNodeRequest(RpcRequestMessage.CreateFileReq message) {
 		this.type = message.getType();
@@ -115,7 +117,12 @@ public class TcpNameNodeRequest extends RpcRequestMessage implements NaRPCMessag
 		this.type = message.getType();
 		this.pingNameNodeReq = message;
 	}
-	
+
+	public TcpNameNodeRequest(RpcRequestMessage.RemoveDataNodeReq message) {
+		this.type = message.getType();
+		this.removeDataNodeReq = message;
+	}
+
 	public void setCommand(short command) {
 		this.cmd = command;
 	}	
@@ -163,6 +170,9 @@ public class TcpNameNodeRequest extends RpcRequestMessage implements NaRPCMessag
 		case RpcProtocol.REQ_PING_NAMENODE:
 			written += pingNameNodeReq.write(buffer);
 			break;
+		case RpcProtocol.REQ_REMOVE_DATANODE:
+			written += removeDataNodeReq.write(buffer);
+			break;
 		}
 		
 		return written;
@@ -205,6 +215,9 @@ public class TcpNameNodeRequest extends RpcRequestMessage implements NaRPCMessag
 			break;		
 		case RpcProtocol.REQ_PING_NAMENODE:
 			pingNameNodeReq.update(buffer);
+			break;
+		case RpcProtocol.REQ_REMOVE_DATANODE:
+			removeDataNodeReq.update(buffer);
 			break;
 		}
 	}
@@ -259,5 +272,9 @@ public class TcpNameNodeRequest extends RpcRequestMessage implements NaRPCMessag
 	
 	public RpcRequestMessage.PingNameNodeReq pingNameNode(){
 		return this.pingNameNodeReq;
+	}
+
+	public RpcRequestMessage.RemoveDataNodeReq removeDataNode(){
+		return this.removeDataNodeReq;
 	}
 }

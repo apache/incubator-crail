@@ -40,6 +40,7 @@ public class DaRPCNameNodeResponse implements DaRPCMessage, RpcNameNodeState {
 	private RpcResponseMessage.GetLocationRes getLocationRes;	
 	private RpcResponseMessage.GetDataNodeRes getDataNodeRes;
 	private RpcResponseMessage.PingNameNodeRes pingNameNodeRes;
+	private RpcResponseMessage.RemoveDataNodeRes removeDataNodeRes;
 	
 	public DaRPCNameNodeResponse() {
 		this.type = 0;
@@ -54,6 +55,7 @@ public class DaRPCNameNodeResponse implements DaRPCMessage, RpcNameNodeState {
 		this.getLocationRes = new RpcResponseMessage.GetLocationRes();
 		this.getDataNodeRes = new RpcResponseMessage.GetDataNodeRes();
 		this.pingNameNodeRes = new RpcResponseMessage.PingNameNodeRes();
+		this.removeDataNodeRes = new RpcResponseMessage.RemoveDataNodeRes();
 	}
 	
 	public DaRPCNameNodeResponse(RpcResponseMessage.VoidRes message) {
@@ -99,6 +101,11 @@ public class DaRPCNameNodeResponse implements DaRPCMessage, RpcNameNodeState {
 	public DaRPCNameNodeResponse(RpcResponseMessage.PingNameNodeRes message) {
 		this.type = message.getType();
 		this.pingNameNodeRes = message;
+	}
+
+	public DaRPCNameNodeResponse(RpcResponseMessage.RemoveDataNodeRes message) {
+		this.type = message.getType();
+		this.removeDataNodeRes = message;
 	}
 	
 	public void setType(short type) throws Exception {
@@ -149,6 +156,11 @@ public class DaRPCNameNodeResponse implements DaRPCMessage, RpcNameNodeState {
 				throw new Exception("Response type not set");
 			}
 			break;
+		case RpcProtocol.RES_REMOVE_DATANODE:
+			if (removeDataNodeRes == null){
+				throw new Exception("Response type not set");
+			}
+			break;
 		}		
 	}	
 
@@ -188,7 +200,10 @@ public class DaRPCNameNodeResponse implements DaRPCMessage, RpcNameNodeState {
 			break;			
 		case RpcProtocol.RES_PING_NAMENODE:
 			written += pingNameNodeRes.write(buffer);
-			break;			
+			break;		
+		case RpcProtocol.RES_REMOVE_DATANODE:
+			written += removeDataNodeRes.write(buffer);
+			break;		
 		}
 		
 		return written;
@@ -234,6 +249,10 @@ public class DaRPCNameNodeResponse implements DaRPCMessage, RpcNameNodeState {
 		case RpcProtocol.RES_PING_NAMENODE:
 			pingNameNodeRes.update(buffer);
 			pingNameNodeRes.setError(error);
+			break;		
+		case RpcProtocol.RES_REMOVE_DATANODE:
+			removeDataNodeRes.update(buffer);
+			removeDataNodeRes.setError(error);
 			break;		
 		}
 	}
@@ -284,5 +303,9 @@ public class DaRPCNameNodeResponse implements DaRPCMessage, RpcNameNodeState {
 	
 	public RpcResponseMessage.PingNameNodeRes pingNameNode(){
 		return this.pingNameNodeRes;
+	}
+
+	public RpcResponseMessage.RemoveDataNodeRes removeDataNode(){
+		return this.removeDataNodeRes;
 	}
 }
