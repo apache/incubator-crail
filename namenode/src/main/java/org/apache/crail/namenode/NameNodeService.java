@@ -434,7 +434,7 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 		if (!RpcProtocol.verifyProtocol(RpcProtocol.CMD_SET_BLOCK, request, response)){
 			return RpcErrors.ERR_PROTOCOL_MISMATCH;
 		}		
-		
+
 		//get params
 		BlockInfo region = new BlockInfo();
 		region.setBlockInfo(request.getBlockInfo());
@@ -550,6 +550,26 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 		response.setBlockInfo(block);
 		
 		return RpcErrors.ERR_OK;
+	}
+
+	public double getStorageUsage() throws Exception {
+		return this.blockStore.getStorageUsage();
+	}
+
+	public int getBlockUsage() throws Exception {
+		return this.blockStore.getBlockUsage();
+	}
+
+	public int getBlockCapacity() throws Exception {
+		return this.blockStore.getBlockCapacity();
+	}
+
+	public int getNumberDatanodes() {
+		return this.blockStore.getNumberDatanodes();
+	}
+
+	public DataNodeBlocks identifyRemoveCandidate() {
+		return  this.blockStore.identifyRemoveCandidate();
 	}
 
 	//------------------------

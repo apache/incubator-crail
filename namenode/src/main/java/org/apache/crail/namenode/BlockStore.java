@@ -20,7 +20,7 @@ package org.apache.crail.namenode;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -107,6 +107,85 @@ public class BlockStore {
 		return RpcErrors.ERR_DATANODE_NOT_REGISTERED;
 	}
 
+	public double getStorageUsage() throws Exception {
+		long total = 0;
+		long free = 0;
+		for(StorageClass storageClass : storageClasses) {
+			total += storageClass.getTotalCapacity();
+			free += storageClass.getFreeCapacity();
+		}
+
+		// if there is no available capacity (i.e. total number of available blocks is 0),
+		// return 1.0 which tells that all storage is used
+		if(total != 0) {
+			double available = (double) free / (double) total;
+			return 1.0 - available;
+		} else {
+			return 1.0;
+		}
+
+	}
+
+	public int getBlockUsage() throws Exception {
+		int total = 0;
+
+		for(StorageClass storageClass: storageClasses) {
+			total += (storageClass.getTotalCapacity() - storageClass.getFreeCapacity());
+		}
+
+		return total;
+	}
+
+	public int getBlockCapacity() throws Exception {
+		int total = 0;
+
+		for(StorageClass storageClass: storageClasses) {
+			total += storageClass.getTotalCapacity();
+		}
+
+		return total;
+	}
+
+	public int getNumberDatanodes() {
+		int total = 0;
+
+		for(StorageClass storageClass : storageClasses) {
+			total += storageClass.getRunningDatanodes();
+		}
+
+		return total;
+	}
+
+	public DataNodeBlocks identifyRemoveCandidate() {
+
+		ArrayList<DataNodeBlocks> dataNodeBlocks = new ArrayList<DataNodeBlocks>();
+		for(StorageClass storageClass : storageClasses) {
+			dataNodeBlocks.addAll(storageClass.getDataNodeBlocks());
+		}
+
+		// sort all datanodes by increasing numbers of available datablocks
+		Collections.sort(dataNodeBlocks, new Comparator<DataNodeBlocks>() {
+			public int compare(DataNodeBlocks d1, DataNodeBlocks d2) {
+				if(d1.getBlockCount() < d2.getBlockCount()) {
+					return 1;
+				} else if (d1.getBlockCount() > d2.getBlockCount()) {
+					return -1;
+				} else return 0;
+			}
+		});
+
+		// iterate over datanodes and return first datanode which is not already scheduled for removal
+		for(DataNodeBlocks candidate: dataNodeBlocks) {
+			if(!candidate.isScheduleForRemoval()) {
+				return candidate;
+			}
+		}
+
+		// return null if there is no available candidate
+		return null;
+
+	}
+
 }
 
 class StorageClass {
@@ -124,6 +203,8 @@ class StorageClass {
 		this.affinitySets = new ConcurrentHashMap<Integer, DataNodeArray>();
 		if (CrailConstants.NAMENODE_BLOCKSELECTION.equalsIgnoreCase("roundrobin")){
 			this.blockSelection = new RoundRobinBlockSelection();
+		} else if (CrailConstants.NAMENODE_BLOCKSELECTION.equalsIgnoreCase("sequential")) {
+			this.blockSelection = new SequentialBlockSelection();
 		} else {
 			this.blockSelection = new RandomBlockSelection();
 		}
@@ -222,6 +303,33 @@ class StorageClass {
 
 	//---------------
 
+	public long getTotalCapacity() {
+		long capacity = 0;
+
+		for(DataNodeBlocks datanode : membership.values()) {
+			capacity += datanode.getMaxBlockCount();
+		}
+
+		return capacity;
+	}
+
+	public long getFreeCapacity() {
+		long capacity = 0;
+
+		for(DataNodeBlocks datanode : membership.values()) {
+			capacity += datanode.getBlockCount();
+		}
+
+		return capacity;
+	}
+
+	public Collection<DataNodeBlocks> getDataNodeBlocks() {
+		return this.membership.values();
+	}
+
+	public int getRunningDatanodes() {
+		return this.membership.size();
+	}
 
 	private void _addDataNode(DataNodeBlocks dataNode){
 		LOG.info("adding datanode " + CrailUtils.getIPAddressFromBytes(dataNode.getIpAddress()) + ":" + dataNode.getPort() + " of type " + dataNode.getStorageType() + " to storage class " + storageClass);
@@ -273,7 +381,18 @@ class StorageClass {
 		public int getNext(int size) {
 			return ThreadLocalRandom.current().nextInt(size);
 		}
-	}	
+	}
+	
+	public class SequentialBlockSelection implements BlockSelection {
+		public SequentialBlockSelection(){
+			LOG.info("sequential block selection");
+		}
+
+		@Override
+		public int getNext(int size) {
+			return 0;
+		}
+	}
 	
 	private class DataNodeArray {
 		private ArrayList<DataNodeBlocks> arrayList;
