@@ -270,11 +270,11 @@ public class DaRPCNameNodeRequest implements DaRPCMessage {
 		return this.dumpNameNodeReq;
 	}
 	
-	public RpcRequestMessage.PingNameNodeReq pingNameNode(){
+	public RpcRequestMessage.PingNameNodeReq pingNameNode() {
 		return this.pingNameNodeReq;
 	}
 
-	public RpcRequestMessage.RemoveDataNodeReq removeDataNode(){
+	public RpcRequestMessage.RemoveDataNodeReq removeDataNode() {
 		return this.removeDataNodeReq;
 	}
 }

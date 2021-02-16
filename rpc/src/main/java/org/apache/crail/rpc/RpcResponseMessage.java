@@ -660,11 +660,11 @@ public class RpcResponseMessage {
 	public static class RemoveDataNodeRes implements RpcProtocol.NameNodeRpcMessage, RpcRemoveDataNode {
 		public static int CSIZE = Short.BYTES;
 
-		private short data;
+		private short rpcStatus;
 		private short error;
 
 		public RemoveDataNodeRes() {
-			this.data = 0;
+			this.rpcStatus = 0;
 			this.error = 0;
 		}
 
@@ -672,28 +672,28 @@ public class RpcResponseMessage {
 			return CSIZE;
 		}
 
-		public short getType(){
+		public short getType() {
 			return RpcProtocol.RES_REMOVE_DATANODE;
 		}
 
 		public int write(ByteBuffer buffer) {
-			buffer.putShort(data);
+			buffer.putShort(rpcStatus);
 			return CSIZE;
 		}
 
 		public void update(ByteBuffer buffer) {
-			data = buffer.getShort();
+			rpcStatus = buffer.getShort();
 		}
 
-		public short getData(){
-			return data;
+		public short getRpcStatus() {
+			return rpcStatus;
 		}
 
-		public void setData(short data) {
-			this.data = data;
+		public void setRpcStatus(short rpcStatus) {
+			this.rpcStatus = rpcStatus;
 		}
 
-		public short getError(){
+		public short getError() {
 			return error;
 		}
 

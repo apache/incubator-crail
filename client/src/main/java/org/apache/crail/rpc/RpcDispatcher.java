@@ -138,6 +138,9 @@ public class RpcDispatcher implements RpcConnection {
 	@Override
 	public RpcFuture<RpcRemoveDataNode> removeDataNode(
 			InetAddress ipaddr, int port) throws Exception {
+		if(connections.length > 1) {
+			throw new Exception("removeDataNode RPC currently not supported in multi-namenode environments");
+		}
 		return connections[0].removeDataNode(ipaddr, port);
 	}
 
