@@ -36,6 +36,7 @@ import org.apache.crail.conf.Configurable;
 import org.apache.crail.conf.CrailConfiguration;
 import org.apache.crail.conf.CrailConstants;
 import org.apache.crail.metadata.DataNodeStatistics;
+import org.apache.crail.metadata.DataNodeStatus;
 import org.apache.crail.rpc.RpcClient;
 import org.apache.crail.rpc.RpcConnection;
 import org.apache.crail.rpc.RpcDispatcher;
@@ -177,7 +178,7 @@ public interface StorageServer extends Configurable, Runnable {
 			DataNodeStatistics stats = storageRpc.getDataNode();
 			long newCount = stats.getFreeBlockCount();
 			long serviceId = stats.getServiceId();
-			short status = stats.getStatus();
+			short status = stats.getStatus().getStatus();
 			
 			long oldCount = 0;
 			if (blockCount.containsKey(serviceId)){
@@ -194,7 +195,7 @@ public interface StorageServer extends Configurable, Runnable {
 	}
 
 	public static void processStatus(StorageServer server, RpcConnection rpc, Thread thread, short status) throws Exception {
-		if (status == RpcErrors.ERR_DATANODE_STOP) {
+		if (status == DataNodeStatus.STATUS_DATANODE_STOP) {
 			server.prepareToShutDown();
 			rpc.close();
 			

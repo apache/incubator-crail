@@ -70,7 +70,7 @@ public class RemoveDataNode {
         LOG.info("Trying to remove datanode at " + ipaddr.getHostName() + ":" + port);
 
         Future<RpcRemoveDataNode> res = rpcConnection.removeDataNode(ipaddr, port);
-        short response = res.get().getData();
+        short response = res.get().getRpcStatus();
 
         rpcConnection.close();
 

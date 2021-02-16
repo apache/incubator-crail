@@ -27,10 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.crail.CrailNodeType;
 import org.apache.crail.conf.CrailConstants;
-import org.apache.crail.metadata.BlockInfo;
-import org.apache.crail.metadata.DataNodeInfo;
-import org.apache.crail.metadata.FileInfo;
-import org.apache.crail.metadata.FileName;
+import org.apache.crail.metadata.*;
 import org.apache.crail.rpc.RpcErrors;
 import org.apache.crail.rpc.RpcNameNodeService;
 import org.apache.crail.rpc.RpcNameNodeState;
@@ -419,7 +416,7 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 				// remove datanode from internal datastructures and prepare response
 				blockStore.removeDataNode(dnInfo);
 				response.setServiceId(serviceId);
-				response.setStatus(RpcErrors.ERR_DATANODE_STOP);
+				response.setStatus(DataNodeStatus.STATUS_DATANODE_STOP);
 				return RpcErrors.ERR_OK;
 			}
 		}
@@ -588,7 +585,7 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 		DataNodeInfo dn_info = new DataNodeInfo(0,0,0,request.getIPAddress().getAddress(), request.port());
 
 		short res = prepareDataNodeForRemoval(dn_info);
-		response.setData(res);
+		response.setRpcStatus(res);
 
 		return RpcErrors.ERR_OK;
 	}
