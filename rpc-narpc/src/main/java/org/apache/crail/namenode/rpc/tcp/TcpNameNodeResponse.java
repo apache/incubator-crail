@@ -250,12 +250,12 @@ public class TcpNameNodeResponse extends RpcResponseMessage implements RpcNameNo
 	public RpcResponseMessage.GetDataNodeRes getDataNode() {
 		return getDataNodeRes;
 	}	
-	
-	public RpcResponseMessage.PingNameNodeRes pingNameNode(){
+
+	public RpcResponseMessage.PingNameNodeRes pingNameNode() {
 		return this.pingNameNodeRes;
 	}
 
-	public RpcResponseMessage.RemoveDataNodeRes removeDataNode(){
+	public RpcResponseMessage.RemoveDataNodeRes removeDataNode() {
 		return this.removeDataNodeRes;
 	}
 }

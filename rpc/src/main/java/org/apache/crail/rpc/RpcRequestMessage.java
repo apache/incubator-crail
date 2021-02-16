@@ -579,12 +579,12 @@ public class RpcRequestMessage {
 		private InetAddress ipAddr;
 		private int port;
 
-		public RemoveDataNodeReq(){
+		public RemoveDataNodeReq() {
 			this.ipAddr = null;
 			this.port = 0;
 		}
 
-		public RemoveDataNodeReq(InetAddress addr, int port){
+		public RemoveDataNodeReq(InetAddress addr, int port) {
 			this.ipAddr = addr;
 			this.port = port;
 		}
@@ -594,7 +594,7 @@ public class RpcRequestMessage {
 			return 4 + Integer.BYTES;
 		}
 
-		public short getType(){
+		public short getType() {
 			return RpcProtocol.REQ_REMOVE_DATANODE;
 		}
 
@@ -622,11 +622,11 @@ public class RpcRequestMessage {
 			this.port = buffer.getInt();
 		}
 
-		public InetAddress getIPAddress(){
+		public InetAddress getIPAddress() {
 			return this.ipAddr;
 		}
 
-		public int port(){
+		public int port() {
 			return this.port;
 		}
 	}
