@@ -195,17 +195,17 @@ class StorageClass {
 
 	short prepareForRemovalDatanode(DataNodeInfo dn) throws Exception {
 		// this will only mark it for removal
-		return _prepareOrRemoveDN(dn, true);
+		return prepareOrRemoveDN(dn, true);
 	}
 
 	short removeDatanode(DataNodeInfo dn) throws Exception {
 		// this will remove it as well
-		return _prepareOrRemoveDN(dn, false);
+		return prepareOrRemoveDN(dn, false);
 	}
 
 	//---------------
 
-	private short _prepareOrRemoveDN(DataNodeInfo dn, boolean onlyMark) throws Exception {
+	private short prepareOrRemoveDN(DataNodeInfo dn, boolean onlyMark) throws Exception {
 		DataNodeBlocks toBeRemoved = membership.get(dn.key());
 		if (toBeRemoved == null) {
 			LOG.error("DataNode: " + dn.toString() + " not found");
