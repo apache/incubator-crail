@@ -36,6 +36,7 @@ public class RemoveDataNode {
             port = Integer.parseInt(line.getOptionValue(portOption.getOpt()));
         } catch(Exception e) {
             formatter.printHelp("RemoveDataNode", options);
+            System.exit(-1);
         }
 
         Logger LOG = CrailUtils.getLogger();
