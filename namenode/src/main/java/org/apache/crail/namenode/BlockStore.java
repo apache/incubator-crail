@@ -18,6 +18,7 @@
 
 package org.apache.crail.namenode;
 
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
@@ -85,12 +86,12 @@ public class BlockStore {
 		return storageClasses[storageClass].getDataNode(dnInfo);
 	}
 
-	short removeDataNode(DataNodeInfo dn) throws Exception {
+	short removeDataNode(DataNodeInfo dn) throws IOException {
 		int storageClass = dn.getStorageClass();
 		return storageClasses[storageClass].removeDatanode(dn);
 	}
 
-	short prepareDataNodeForRemoval(DataNodeInfo dn) throws Exception {
+	short prepareDataNodeForRemoval(DataNodeInfo dn) throws IOException {
 
 		// Despite several potential storageClasses the pair (Ip-addr,port) should
 		// nevertheless target only one running datanode instance.
@@ -193,28 +194,29 @@ class StorageClass {
 
 	}
 
-	short prepareForRemovalDatanode(DataNodeInfo dn) throws Exception {
+	short prepareForRemovalDatanode(DataNodeInfo dn) throws IOException {
 		// this will only mark it for removal
 		return prepareOrRemoveDN(dn, true);
 	}
 
-	short removeDatanode(DataNodeInfo dn) throws Exception {
+	short removeDatanode(DataNodeInfo dn) throws IOException {
 		// this will remove it as well
 		return prepareOrRemoveDN(dn, false);
 	}
 
 	//---------------
 
-	private short prepareOrRemoveDN(DataNodeInfo dn, boolean onlyMark) throws Exception {
+	private short prepareOrRemoveDN(DataNodeInfo dn, boolean onlyMark) throws IOException {
 		DataNodeBlocks toBeRemoved = membership.get(dn.key());
 		if (toBeRemoved == null) {
 			LOG.error("DataNode: " + dn.toString() + " not found");
 			return RpcErrors.ERR_DATANODE_NOT_REGISTERED;
 		} else {
-			if (onlyMark)
+			if (onlyMark) {
 				toBeRemoved.scheduleForRemoval();
-			else
+			} else {
 				membership.remove(toBeRemoved.key());
+			}
 		}
 		return RpcErrors.ERR_OK;
 	}

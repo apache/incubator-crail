@@ -58,8 +58,9 @@ public class DataNodeBlocks extends DataNodeInfo {
 		// are added in the form of free blocks. By keeping track of this number (which grows block for block), we
 		// learn the maximum available capacity in this datanode. Only when the number of free blocks equals the number
 		// of all blocks, the datanode is safe to be removed.
-		if(freeBlocks.size() > this.maxBlockCount)
+		if(freeBlocks.size() > this.maxBlockCount) {
 			this.maxBlockCount = freeBlocks.size();
+		}
 	}
 	
 	public void addFreeBlock(NameNodeBlockInfo nnBlock) {

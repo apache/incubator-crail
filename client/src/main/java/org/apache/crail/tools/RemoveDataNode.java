@@ -15,33 +15,27 @@ import java.util.concurrent.Future;
 
 public class RemoveDataNode {
 
-    RemoveDataNode() {}
-
     public static void main(String[] args) throws Exception {
 
         InetAddress ipaddr = null;
         int port = -1;
 
-        Option ipOption = Option.builder("i").desc("Ip address").hasArg().build();
-        Option portOption = Option.builder("p").desc("port").hasArg().build();
+        Option ipOption = Option.builder("i").desc("Ip address").hasArg().required().build();
+        Option portOption = Option.builder("p").desc("port").hasArg().required().build();
 
         Options options = new Options();
         options.addOption(ipOption);
         options.addOption(portOption);
 
+        HelpFormatter formatter = new HelpFormatter();
         CommandLineParser parser = new DefaultParser();
-        CommandLine line = parser.parse(options, Arrays.copyOfRange(args, 0, args.length));
+        CommandLine line = parser.parse(options, args);
 
-        if(line.hasOption(ipOption.getOpt())) {
+        try {
             ipaddr = InetAddress.getByName(line.getOptionValue(ipOption.getOpt()));
-        } else {
-            throw new Exception("Missing Ip-Address specification");
-        }
-
-        if(line.hasOption(portOption.getOpt())) {
             port = Integer.parseInt(line.getOptionValue(portOption.getOpt()));
-        } else {
-            throw new Exception("Missing port specification");
+        } catch(Exception e) {
+            formatter.printHelp("RemoveDataNode", options);
         }
 
         Logger LOG = CrailUtils.getLogger();
