@@ -195,31 +195,33 @@ class StorageClass {
 	}
 
 	short prepareForRemovalDatanode(DataNodeInfo dn) throws IOException {
-		// this will only mark it for removal
-		return prepareOrRemoveDN(dn, true);
-	}
 
-	short removeDatanode(DataNodeInfo dn) throws IOException {
-		// this will remove it as well
-		return prepareOrRemoveDN(dn, false);
-	}
-
-	//---------------
-
-	private short prepareOrRemoveDN(DataNodeInfo dn, boolean onlyMark) throws IOException {
+		// this will only mark the datanode for removal
 		DataNodeBlocks toBeRemoved = membership.get(dn.key());
 		if (toBeRemoved == null) {
 			LOG.error("DataNode: " + dn.toString() + " not found");
 			return RpcErrors.ERR_DATANODE_NOT_REGISTERED;
 		} else {
-			if (onlyMark) {
-				toBeRemoved.scheduleForRemoval();
-			} else {
-				membership.remove(toBeRemoved.key());
-			}
+			toBeRemoved.scheduleForRemoval();
+			return RpcErrors.ERR_OK;
 		}
-		return RpcErrors.ERR_OK;
 	}
+
+	short removeDatanode(DataNodeInfo dn) throws IOException {
+
+		// this will remove the datanode once it does not store any remaining data blocks
+		DataNodeBlocks toBeRemoved = membership.get(dn.key());
+		if (toBeRemoved == null) {
+			LOG.error("DataNode: " + dn.toString() + " not found");
+			return RpcErrors.ERR_DATANODE_NOT_REGISTERED;
+		} else {
+			membership.remove(toBeRemoved.key());
+			return RpcErrors.ERR_OK;
+		}
+	}
+
+	//---------------
+
 
 	private void _addDataNode(DataNodeBlocks dataNode){
 		LOG.info("adding datanode " + CrailUtils.getIPAddressFromBytes(dataNode.getIpAddress()) + ":" + dataNode.getPort() + " of type " + dataNode.getStorageType() + " to storage class " + storageClass);
