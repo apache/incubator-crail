@@ -119,6 +119,9 @@ public class DaRPCServiceDispatcher extends DaRPCNameNodeProtocol implements DaR
 				error = this.stats(request.pingNameNode(), response.pingNameNode(), response);
 				error = service.ping(request.pingNameNode(), response.pingNameNode(), response);
 				break;
+			case RpcProtocol.CMD_REMOVE_DATANODE:
+				error = service.removeDataNode(request.removeDataNode(), response.removeDataNode(), response);
+				break;
 			default:
 				error = RpcErrors.ERR_INVALID_RPC_CMD;
 				LOG.info("Rpc command not valid, opcode " + request.getCmd());

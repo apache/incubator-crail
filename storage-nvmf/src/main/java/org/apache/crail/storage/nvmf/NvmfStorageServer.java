@@ -96,8 +96,11 @@ public class NvmfStorageServer implements StorageServer {
 				Thread.sleep(NvmfStorageConstants.KEEP_ALIVE_INTERVAL_MS);
 				controller.keepAlive();
 			} catch (Exception e) {
-				e.printStackTrace();
-				isAlive = false;
+				// if StorageServer is still marked as running output stacktrace
+				// otherwise this is expected behaviour
+				if(this.isAlive){
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -125,5 +128,19 @@ public class NvmfStorageServer implements StorageServer {
 	@Override
 	public boolean isAlive() {
 		return isAlive;
+	}
+
+	public void prepareToShutDown(){
+
+		LOG.info("Preparing Nvmf-Storage server for shutdown");
+
+		this.isAlive = false;
+
+		// stop jnvmf controller
+		try {
+			this.controller.free();
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

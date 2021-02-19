@@ -18,6 +18,7 @@
 
 package org.apache.crail.namenode;
 
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,7 +85,28 @@ public class BlockStore {
 		int storageClass = dnInfo.getStorageClass();
 		return storageClasses[storageClass].getDataNode(dnInfo);
 	}
-	
+
+	short removeDataNode(DataNodeInfo dn) throws IOException {
+		int storageClass = dn.getStorageClass();
+		return storageClasses[storageClass].removeDatanode(dn);
+	}
+
+	short prepareDataNodeForRemoval(DataNodeInfo dn) throws IOException {
+
+		// Despite several potential storageClasses the pair (Ip-addr,port) should
+		// nevertheless target only one running datanode instance.
+		// Therefore we can iterate over all storageClasses to check whether
+		// the requested datanode is part of one of the storageClasses.
+		for(StorageClass storageClass : storageClasses) {
+			if (storageClass.getDataNode(dn) != null) {
+				return storageClass.prepareForRemovalDatanode(dn);
+			}
+		}
+
+		LOG.error("DataNode: " + dn.toString() + " not found");
+		return RpcErrors.ERR_DATANODE_NOT_REGISTERED;
+	}
+
 }
 
 class StorageClass {
@@ -171,9 +193,36 @@ class StorageClass {
 		return RpcErrors.ERR_OK;
 
 	}
-	
+
+	short prepareForRemovalDatanode(DataNodeInfo dn) throws IOException {
+
+		// this will only mark the datanode for removal
+		DataNodeBlocks toBeRemoved = membership.get(dn.key());
+		if (toBeRemoved == null) {
+			LOG.error("DataNode: " + dn.toString() + " not found");
+			return RpcErrors.ERR_DATANODE_NOT_REGISTERED;
+		} else {
+			toBeRemoved.scheduleForRemoval();
+			return RpcErrors.ERR_OK;
+		}
+	}
+
+	short removeDatanode(DataNodeInfo dn) throws IOException {
+
+		// this will remove the datanode once it does not store any remaining data blocks
+		DataNodeBlocks toBeRemoved = membership.get(dn.key());
+		if (toBeRemoved == null) {
+			LOG.error("DataNode: " + dn.toString() + " not found");
+			return RpcErrors.ERR_DATANODE_NOT_REGISTERED;
+		} else {
+			membership.remove(toBeRemoved.key());
+			return RpcErrors.ERR_OK;
+		}
+	}
+
 	//---------------
-	
+
+
 	private void _addDataNode(DataNodeBlocks dataNode){
 		LOG.info("adding datanode " + CrailUtils.getIPAddressFromBytes(dataNode.getIpAddress()) + ":" + dataNode.getPort() + " of type " + dataNode.getStorageType() + " to storage class " + storageClass);
 		DataNodeArray hostMap = affinitySets.get(dataNode.getLocationClass());
@@ -256,7 +305,7 @@ class StorageClass {
 					for (int i = 0; i < size; i++){
 						int index = (startIndex + i) % size;
 						DataNodeBlocks anyDn = arrayList.get(index);
-						if (anyDn.isOnline()){
+						if (anyDn.isOnline() && !anyDn.isScheduleForRemoval()){
 							block = anyDn.getFreeBlock();
 						}
 						if (block != null){

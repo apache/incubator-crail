@@ -28,6 +28,7 @@ import org.apache.crail.rpc.RpcRequestMessage.GetDataNodeReq;
 import org.apache.crail.rpc.RpcRequestMessage.GetFileReq;
 import org.apache.crail.rpc.RpcRequestMessage.GetLocationReq;
 import org.apache.crail.rpc.RpcRequestMessage.PingNameNodeReq;
+import org.apache.crail.rpc.RpcRequestMessage.RemoveDataNodeReq;
 import org.apache.crail.rpc.RpcRequestMessage.RemoveFileReq;
 import org.apache.crail.rpc.RpcRequestMessage.RenameFileReq;
 import org.apache.crail.rpc.RpcRequestMessage.SetBlockReq;
@@ -39,6 +40,7 @@ import org.apache.crail.rpc.RpcResponseMessage.GetDataNodeRes;
 import org.apache.crail.rpc.RpcResponseMessage.GetFileRes;
 import org.apache.crail.rpc.RpcResponseMessage.GetLocationRes;
 import org.apache.crail.rpc.RpcResponseMessage.PingNameNodeRes;
+import org.apache.crail.rpc.RpcResponseMessage.RemoveDataNodeRes;
 import org.apache.crail.rpc.RpcResponseMessage.RenameRes;
 import org.apache.crail.rpc.RpcResponseMessage.VoidRes;
 
@@ -135,5 +137,11 @@ public class LogDispatcher implements RpcNameNodeService {
 			RpcNameNodeState errorState) throws Exception {
 		return service.ping(request, response, errorState);
 	}
-	
+
+	@Override
+	public short removeDataNode(RemoveDataNodeReq request, RemoveDataNodeRes response,
+			RpcNameNodeState errorState) throws Exception {
+		return service.removeDataNode(request, response, errorState);
+	}
+
 }
