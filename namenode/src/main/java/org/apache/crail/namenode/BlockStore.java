@@ -107,12 +107,12 @@ public class BlockStore {
 		return RpcErrors.ERR_DATANODE_NOT_REGISTERED;
 	}
 
-	public double getStorageUsage() throws Exception {
+	public double getStorageUsedPercentage() throws Exception {
 		long total = 0;
 		long free = 0;
 		for(StorageClass storageClass : storageClasses) {
-			total += storageClass.getTotalCapacity();
-			free += storageClass.getFreeCapacity();
+			total += storageClass.getTotalBlockCount();
+			free += storageClass.getFreeBlockCount();
 		}
 
 		// if there is no available capacity (i.e. total number of available blocks is 0),
@@ -126,31 +126,31 @@ public class BlockStore {
 
 	}
 
-	public int getBlockUsage() throws Exception {
+	public long getNumberOfBlocksUsed() throws Exception {
 		int total = 0;
 
 		for(StorageClass storageClass: storageClasses) {
-			total += (storageClass.getTotalCapacity() - storageClass.getFreeCapacity());
+			total += (storageClass.getTotalBlockCount() - storageClass.getFreeBlockCount());
 		}
 
 		return total;
 	}
 
-	public int getBlockCapacity() throws Exception {
+	public long getNumberOfBlocks() throws Exception {
 		int total = 0;
 
 		for(StorageClass storageClass: storageClasses) {
-			total += storageClass.getTotalCapacity();
+			total += storageClass.getTotalBlockCount();
 		}
 
 		return total;
 	}
 
-	public int getNumberDatanodes() {
+	public int getNumberOfRunningDatanodes() {
 		int total = 0;
 
 		for(StorageClass storageClass : storageClasses) {
-			total += storageClass.getRunningDatanodes();
+			total += storageClass.getNumberOfRunningDatanodes();
 		}
 
 		return total;
@@ -303,17 +303,17 @@ class StorageClass {
 
 	//---------------
 
-	public long getTotalCapacity() {
+	public long getTotalBlockCount() {
 		long capacity = 0;
 
 		for(DataNodeBlocks datanode : membership.values()) {
-			capacity += datanode.getMaxBlockCount();
+			capacity += datanode.getTotalNumberOfBlocks();
 		}
 
 		return capacity;
 	}
 
-	public long getFreeCapacity() {
+	public long getFreeBlockCount() {
 		long capacity = 0;
 
 		for(DataNodeBlocks datanode : membership.values()) {
@@ -327,7 +327,7 @@ class StorageClass {
 		return this.membership.values();
 	}
 
-	public int getRunningDatanodes() {
+	public int getNumberOfRunningDatanodes() {
 		return this.membership.size();
 	}
 

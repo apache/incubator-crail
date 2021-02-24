@@ -86,7 +86,7 @@ public class DataNodeBlocks extends DataNodeInfo {
 		return this.scheduleForRemoval;
 	}
 
-	public long getMaxBlockCount() {
+	public long getTotalNumberOfBlocks() {
 		return this.maxBlockCount;
 	}
 

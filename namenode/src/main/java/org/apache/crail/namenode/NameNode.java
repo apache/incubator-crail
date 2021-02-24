@@ -83,12 +83,7 @@ public class NameNode {
 		CrailConstants.verify();
 
 		RpcNameNodeService service;
-
-		if(CrailConstants.ELASTICSTORE) {
-			service = RpcNameNodeService.createInstance(CrailConstants.ELASTIC_NAMENODE_RPC_SERVICE);
-		} else {
-			service = RpcNameNodeService.createInstance(CrailConstants.NAMENODE_RPC_SERVICE);
-		}
+		service = RpcNameNodeService.createInstance(CrailConstants.NAMENODE_RPC_SERVICE);
 
 		if (!CrailConstants.NAMENODE_LOG.isEmpty()){
 			LogDispatcher logDispatcher = new LogDispatcher(service);

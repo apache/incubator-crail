@@ -11,7 +11,7 @@ public class FreeCapacityPolicy extends PolicyRunner {
     int maxDataNodes;
     int datanodes; // maintains the desired number of datanodes (i.e. a datanode might be still starting / terminating)
     boolean updated; // shows whether a launch/terminate datanode operation returned
-    int lastCapacity; // maintains the capacity that was available when the launch/terminate datanode operation was issued
+    long lastCapacity; // maintains the capacity that was available when the launch/terminate datanode operation was issued
 
     FreeCapacityPolicy(RpcNameNodeService service, double scaleUp, double scaleDown, int minDataNodes, int maxDataNodes) {
         super(service);
@@ -30,16 +30,16 @@ public class FreeCapacityPolicy extends PolicyRunner {
         try {
 
             // log current usage information
-            double usage = this.service.getStorageUsage();
+            double usage = this.service.getStorageUsedPercentage();
 
             if(CrailConstants.ELASTICSTORE_LOGGING) {
-                LOG.info("Current block usage: " + this.service.getBlockUsage() + "/" + this.service.getBlockCapacity());
+                LOG.info("Current block usage: " + this.service.getNumberOfBlocksUsed() + "/" + this.service.getNumberOfBlocks());
                 LOG.info("Current storage usage: " + 100*usage + "%");
                 LOG.info("Current number of datanodes: " + this.datanodes);
             }
 
             // check whether datanode launch/terminate operation finished
-            if(!this.updated && this.lastCapacity != this.service.getBlockCapacity()) {
+            if(!this.updated && this.lastCapacity != this.service.getNumberOfBlocks()) {
                 this.updated = true;
             }
 
@@ -51,7 +51,7 @@ public class FreeCapacityPolicy extends PolicyRunner {
                     DataNodeBlocks removeCandidate = this.service.identifyRemoveCandidate();
     
                     if(removeCandidate != null) {
-                        this.lastCapacity = this.service.getBlockCapacity();
+                        this.lastCapacity = this.service.getNumberOfBlocks();
                         this.updated = false;
                         this.service.prepareDataNodeForRemoval(removeCandidate);
                         this.datanodes--;
@@ -60,7 +60,7 @@ public class FreeCapacityPolicy extends PolicyRunner {
     
                 if(usage > this.scaleUp && this.datanodes < maxDataNodes) {
                     LOG.info("Scale up detected");
-                    this.lastCapacity = this.service.getBlockCapacity();
+                    this.lastCapacity = this.service.getNumberOfBlocks();
                     this.updated = false;
                     launchDatanode();
                     this.datanodes++;

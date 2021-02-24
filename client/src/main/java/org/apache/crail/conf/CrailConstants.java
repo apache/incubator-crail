@@ -119,11 +119,6 @@ public class CrailConstants {
 	public static int STORAGE_KEEPALIVE = 2;
 
 	// elasticstore
-	public static final String ELASTIC_NAMENODE_RPC_SERVICE = "org.apache.crail.namenode.ElasticNameNodeService";
-
-	public static final String ELASTICSTORE_KEY = "crail.elasticstore";
-	public static boolean ELASTICSTORE = false;
-
 	public static final String ELASTICSTORE_SCALEUP_KEY = "crail.elasticstore.scaleup";
 	public static double ELASTICSTORE_SCALEUP = 0.4;
 
@@ -215,6 +210,9 @@ public class CrailConstants {
 		if (conf.get(NAMENODE_RPC_TYPE_KEY) != null) {
 			NAMENODE_RPC_TYPE = conf.get(NAMENODE_RPC_TYPE_KEY);
 		}
+		if(conf.get(NAMENODE_RPC_SERVICE_KEY) != null) {
+			NAMENODE_RPC_SERVICE = conf.get(NAMENODE_RPC_SERVICE_KEY);
+		}
 		if (conf.get(NAMENODE_LOG_KEY) != null) {
 			NAMENODE_LOG = conf.get(NAMENODE_LOG_KEY);
 		}
@@ -236,9 +234,6 @@ public class CrailConstants {
 		}
 
 		//elasticstore
-		if(conf.get(ELASTICSTORE_KEY) != null) {
-			ELASTICSTORE = Boolean.parseBoolean(conf.get(ELASTICSTORE_KEY));
-		}
 		if (conf.get(ELASTICSTORE_SCALEUP_KEY) != null) {
 			ELASTICSTORE_SCALEUP = Double.parseDouble(conf.get(ELASTICSTORE_SCALEUP_KEY));
 		}
@@ -287,12 +282,12 @@ public class CrailConstants {
 		LOG.info(NAMENODE_BLOCKSELECTION_KEY + " " + NAMENODE_BLOCKSELECTION);
 		LOG.info(NAMENODE_FILEBLOCKS_KEY + " " + NAMENODE_FILEBLOCKS);
 		LOG.info(NAMENODE_RPC_TYPE_KEY + " " + NAMENODE_RPC_TYPE);
+		LOG.info(NAMENODE_RPC_SERVICE_KEY + " " + NAMENODE_RPC_SERVICE);
 		LOG.info(NAMENODE_LOG_KEY + " " + NAMENODE_LOG);
 		LOG.info(STORAGE_TYPES_KEY + " " + STORAGE_TYPES);
 		LOG.info(STORAGE_CLASSES_KEY + " " + STORAGE_CLASSES);
 		LOG.info(STORAGE_ROOTCLASS_KEY + " " + STORAGE_ROOTCLASS);
 		LOG.info(STORAGE_KEEPALIVE_KEY + " " + STORAGE_KEEPALIVE);
-		LOG.info(ELASTICSTORE_KEY + " " + ELASTICSTORE);
 		LOG.info(ELASTICSTORE_SCALEUP_KEY + " " + ELASTICSTORE_SCALEUP);
 		LOG.info(ELASTICSTORE_SCALEDOWN_KEY + " " + ELASTICSTORE_SCALEDOWN);
 		LOG.info(ELASTICSTORE_MAXNODES_KEY + " " + ELASTICSTORE_MAXNODES);
