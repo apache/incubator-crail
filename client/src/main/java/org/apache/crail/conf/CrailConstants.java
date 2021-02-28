@@ -210,7 +210,7 @@ public class CrailConstants {
 		if (conf.get(NAMENODE_RPC_TYPE_KEY) != null) {
 			NAMENODE_RPC_TYPE = conf.get(NAMENODE_RPC_TYPE_KEY);
 		}
-		if(conf.get(NAMENODE_RPC_SERVICE_KEY) != null) {
+		if (conf.get(NAMENODE_RPC_SERVICE_KEY) != null) {
 			NAMENODE_RPC_SERVICE = conf.get(NAMENODE_RPC_SERVICE_KEY);
 		}
 		if (conf.get(NAMENODE_LOG_KEY) != null) {
@@ -252,7 +252,7 @@ public class CrailConstants {
 		if (conf.get(ELASTICSTORE_POLICYRUNNER_INTERVAL_KEY) != null) {
 			ELASTICSTORE_POLICYRUNNER_INTERVAL = Integer.parseInt(conf.get(ELASTICSTORE_POLICYRUNNER_INTERVAL_KEY));
 		}
-		if(conf.get(ELASTICSTORE_LOGGING_KEY) != null) {
+		if (conf.get(ELASTICSTORE_LOGGING_KEY) != null) {
 			ELASTICSTORE_LOGGING = Boolean.parseBoolean(conf.get(ELASTICSTORE_LOGGING_KEY));
 		}
 	}

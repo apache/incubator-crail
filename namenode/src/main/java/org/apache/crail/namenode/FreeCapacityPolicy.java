@@ -32,25 +32,25 @@ public class FreeCapacityPolicy extends PolicyRunner {
             // log current usage information
             double usage = this.service.getStorageUsedPercentage();
 
-            if(CrailConstants.ELASTICSTORE_LOGGING) {
+            if (CrailConstants.ELASTICSTORE_LOGGING) {
                 LOG.info("Current block usage: " + this.service.getNumberOfBlocksUsed() + "/" + this.service.getNumberOfBlocks());
                 LOG.info("Current storage usage: " + 100*usage + "%");
                 LOG.info("Current number of datanodes: " + this.datanodes);
             }
 
             // check whether datanode launch/terminate operation finished
-            if(!this.updated && this.lastCapacity != this.service.getNumberOfBlocks()) {
+            if (!this.updated && this.lastCapacity != this.service.getNumberOfBlocks()) {
                 this.updated = true;
             }
 
             // check whether scaling up or down is possible
-            if(this.updated) {
-                if(usage < scaleDown && this.datanodes > minDataNodes) {
+            if (this.updated) {
+                if (usage < scaleDown && this.datanodes > minDataNodes) {
                     LOG.info("Scale down detected");
     
                     DataNodeBlocks removeCandidate = this.service.identifyRemoveCandidate();
     
-                    if(removeCandidate != null) {
+                    if (removeCandidate != null) {
                         this.lastCapacity = this.service.getNumberOfBlocks();
                         this.updated = false;
                         this.service.prepareDataNodeForRemoval(removeCandidate);
@@ -58,7 +58,7 @@ public class FreeCapacityPolicy extends PolicyRunner {
                     }
                 }
     
-                if(usage > this.scaleUp && this.datanodes < maxDataNodes) {
+                if (usage > this.scaleUp && this.datanodes < maxDataNodes) {
                     LOG.info("Scale up detected");
                     this.lastCapacity = this.service.getNumberOfBlocks();
                     this.updated = false;

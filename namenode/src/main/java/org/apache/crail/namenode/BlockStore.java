@@ -97,7 +97,7 @@ public class BlockStore {
 		// nevertheless target only one running datanode instance.
 		// Therefore we can iterate over all storageClasses to check whether
 		// the requested datanode is part of one of the storageClasses.
-		for(StorageClass storageClass : storageClasses) {
+		for (StorageClass storageClass : storageClasses) {
 			if (storageClass.getDataNode(dn) != null) {
 				return storageClass.prepareForRemovalDatanode(dn);
 			}
@@ -110,14 +110,14 @@ public class BlockStore {
 	public double getStorageUsedPercentage() throws Exception {
 		long total = 0;
 		long free = 0;
-		for(StorageClass storageClass : storageClasses) {
+		for (StorageClass storageClass : storageClasses) {
 			total += storageClass.getTotalBlockCount();
 			free += storageClass.getFreeBlockCount();
 		}
 
 		// if there is no available capacity (i.e. total number of available blocks is 0),
 		// return 1.0 which tells that all storage is used
-		if(total != 0) {
+		if (total != 0) {
 			double available = (double) free / (double) total;
 			return 1.0 - available;
 		} else {
@@ -129,7 +129,7 @@ public class BlockStore {
 	public long getNumberOfBlocksUsed() throws Exception {
 		int total = 0;
 
-		for(StorageClass storageClass: storageClasses) {
+		for (StorageClass storageClass: storageClasses) {
 			total += (storageClass.getTotalBlockCount() - storageClass.getFreeBlockCount());
 		}
 
@@ -139,7 +139,7 @@ public class BlockStore {
 	public long getNumberOfBlocks() throws Exception {
 		int total = 0;
 
-		for(StorageClass storageClass: storageClasses) {
+		for (StorageClass storageClass: storageClasses) {
 			total += storageClass.getTotalBlockCount();
 		}
 
@@ -149,7 +149,7 @@ public class BlockStore {
 	public int getNumberOfRunningDatanodes() {
 		int total = 0;
 
-		for(StorageClass storageClass : storageClasses) {
+		for (StorageClass storageClass : storageClasses) {
 			total += storageClass.getNumberOfRunningDatanodes();
 		}
 
@@ -159,14 +159,14 @@ public class BlockStore {
 	public DataNodeBlocks identifyRemoveCandidate() {
 
 		ArrayList<DataNodeBlocks> dataNodeBlocks = new ArrayList<DataNodeBlocks>();
-		for(StorageClass storageClass : storageClasses) {
+		for (StorageClass storageClass : storageClasses) {
 			dataNodeBlocks.addAll(storageClass.getDataNodeBlocks());
 		}
 
 		// sort all datanodes by increasing numbers of available datablocks
 		Collections.sort(dataNodeBlocks, new Comparator<DataNodeBlocks>() {
 			public int compare(DataNodeBlocks d1, DataNodeBlocks d2) {
-				if(d1.getBlockCount() < d2.getBlockCount()) {
+				if (d1.getBlockCount() < d2.getBlockCount()) {
 					return 1;
 				} else if (d1.getBlockCount() > d2.getBlockCount()) {
 					return -1;
@@ -175,8 +175,8 @@ public class BlockStore {
 		});
 
 		// iterate over datanodes and return first datanode which is not already scheduled for removal
-		for(DataNodeBlocks candidate: dataNodeBlocks) {
-			if(!candidate.isScheduleForRemoval()) {
+		for (DataNodeBlocks candidate: dataNodeBlocks) {
+			if (!candidate.isScheduleForRemoval()) {
 				return candidate;
 			}
 		}
@@ -306,7 +306,7 @@ class StorageClass {
 	public long getTotalBlockCount() {
 		long capacity = 0;
 
-		for(DataNodeBlocks datanode : membership.values()) {
+		for (DataNodeBlocks datanode : membership.values()) {
 			capacity += datanode.getTotalNumberOfBlocks();
 		}
 
@@ -316,7 +316,7 @@ class StorageClass {
 	public long getFreeBlockCount() {
 		long capacity = 0;
 
-		for(DataNodeBlocks datanode : membership.values()) {
+		for (DataNodeBlocks datanode : membership.values()) {
 			capacity += datanode.getBlockCount();
 		}
 

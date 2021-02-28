@@ -81,10 +81,8 @@ public class NameNode {
 		CrailConstants.NAMENODE_ADDRESS = namenode + "?id=" + serviceId + "&size=" + serviceSize;
 		CrailConstants.printConf();
 		CrailConstants.verify();
-
-		RpcNameNodeService service;
-		service = RpcNameNodeService.createInstance(CrailConstants.NAMENODE_RPC_SERVICE);
-
+		
+		RpcNameNodeService service = RpcNameNodeService.createInstance(CrailConstants.NAMENODE_RPC_SERVICE);
 		if (!CrailConstants.NAMENODE_LOG.isEmpty()){
 			LogDispatcher logDispatcher = new LogDispatcher(service);
 			service = logDispatcher;

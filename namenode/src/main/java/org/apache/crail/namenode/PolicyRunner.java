@@ -21,7 +21,7 @@ public abstract class PolicyRunner implements Runnable {
 
     public void run() {
 
-        while(true) {
+        while (true) {
             checkPolicy();
 
             try {

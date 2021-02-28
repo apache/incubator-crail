@@ -434,7 +434,7 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 		if (!RpcProtocol.verifyProtocol(RpcProtocol.CMD_SET_BLOCK, request, response)){
 			return RpcErrors.ERR_PROTOCOL_MISMATCH;
 		}		
-
+		
 		//get params
 		BlockInfo region = new BlockInfo();
 		region.setBlockInfo(request.getBlockInfo());
