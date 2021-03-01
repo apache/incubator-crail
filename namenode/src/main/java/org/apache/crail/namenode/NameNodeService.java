@@ -552,6 +552,26 @@ public class NameNodeService implements RpcNameNodeService, Sequencer {
 		return RpcErrors.ERR_OK;
 	}
 
+	public double getStorageUsedPercentage() throws Exception {
+		return this.blockStore.getStorageUsedPercentage();
+	}
+
+	public long getNumberOfBlocksUsed() throws Exception {
+		return this.blockStore.getNumberOfBlocksUsed();
+	}
+
+	public long getNumberOfBlocks() throws Exception {
+		return this.blockStore.getNumberOfBlocks();
+	}
+
+	public int getNumberOfRunningDatanodes() {
+		return this.blockStore.getNumberOfRunningDatanodes();
+	}
+
+	public DataNodeBlocks identifyRemoveCandidate() {
+		return  this.blockStore.identifyRemoveCandidate();
+	}
+
 	//------------------------
 	
 	@Override

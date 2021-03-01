@@ -20,7 +20,7 @@ package org.apache.crail.namenode;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -97,7 +97,7 @@ public class BlockStore {
 		// nevertheless target only one running datanode instance.
 		// Therefore we can iterate over all storageClasses to check whether
 		// the requested datanode is part of one of the storageClasses.
-		for(StorageClass storageClass : storageClasses) {
+		for (StorageClass storageClass : storageClasses) {
 			if (storageClass.getDataNode(dn) != null) {
 				return storageClass.prepareForRemovalDatanode(dn);
 			}
@@ -105,6 +105,85 @@ public class BlockStore {
 
 		LOG.error("DataNode: " + dn.toString() + " not found");
 		return RpcErrors.ERR_DATANODE_NOT_REGISTERED;
+	}
+
+	public double getStorageUsedPercentage() throws Exception {
+		long total = 0;
+		long free = 0;
+		for (StorageClass storageClass : storageClasses) {
+			total += storageClass.getTotalBlockCount();
+			free += storageClass.getFreeBlockCount();
+		}
+
+		// if there is no available capacity (i.e. total number of available blocks is 0),
+		// return 1.0 which tells that all storage is used
+		if (total != 0) {
+			double available = (double) free / (double) total;
+			return 1.0 - available;
+		} else {
+			return 1.0;
+		}
+
+	}
+
+	public long getNumberOfBlocksUsed() throws Exception {
+		int total = 0;
+
+		for (StorageClass storageClass: storageClasses) {
+			total += (storageClass.getTotalBlockCount() - storageClass.getFreeBlockCount());
+		}
+
+		return total;
+	}
+
+	public long getNumberOfBlocks() throws Exception {
+		int total = 0;
+
+		for (StorageClass storageClass: storageClasses) {
+			total += storageClass.getTotalBlockCount();
+		}
+
+		return total;
+	}
+
+	public int getNumberOfRunningDatanodes() {
+		int total = 0;
+
+		for (StorageClass storageClass : storageClasses) {
+			total += storageClass.getNumberOfRunningDatanodes();
+		}
+
+		return total;
+	}
+
+	public DataNodeBlocks identifyRemoveCandidate() {
+
+		ArrayList<DataNodeBlocks> dataNodeBlocks = new ArrayList<DataNodeBlocks>();
+		for (StorageClass storageClass : storageClasses) {
+			dataNodeBlocks.addAll(storageClass.getDataNodeBlocks());
+		}
+
+		// sort all datanodes by increasing numbers of available datablocks
+		Collections.sort(dataNodeBlocks, new Comparator<DataNodeBlocks>() {
+			public int compare(DataNodeBlocks d1, DataNodeBlocks d2) {
+				if (d1.getBlockCount() < d2.getBlockCount()) {
+					return 1;
+				} else if (d1.getBlockCount() > d2.getBlockCount()) {
+					return -1;
+				} else return 0;
+			}
+		});
+
+		// iterate over datanodes and return first datanode which is not already scheduled for removal
+		for (DataNodeBlocks candidate: dataNodeBlocks) {
+			if (!candidate.isScheduleForRemoval()) {
+				return candidate;
+			}
+		}
+
+		// return null if there is no available candidate
+		return null;
+
 	}
 
 }
@@ -124,6 +203,8 @@ class StorageClass {
 		this.affinitySets = new ConcurrentHashMap<Integer, DataNodeArray>();
 		if (CrailConstants.NAMENODE_BLOCKSELECTION.equalsIgnoreCase("roundrobin")){
 			this.blockSelection = new RoundRobinBlockSelection();
+		} else if (CrailConstants.NAMENODE_BLOCKSELECTION.equalsIgnoreCase("sequential")) {
+			this.blockSelection = new SequentialBlockSelection();
 		} else {
 			this.blockSelection = new RandomBlockSelection();
 		}
@@ -222,6 +303,33 @@ class StorageClass {
 
 	//---------------
 
+	public long getTotalBlockCount() {
+		long capacity = 0;
+
+		for (DataNodeBlocks datanode : membership.values()) {
+			capacity += datanode.getTotalNumberOfBlocks();
+		}
+
+		return capacity;
+	}
+
+	public long getFreeBlockCount() {
+		long capacity = 0;
+
+		for (DataNodeBlocks datanode : membership.values()) {
+			capacity += datanode.getBlockCount();
+		}
+
+		return capacity;
+	}
+
+	public Collection<DataNodeBlocks> getDataNodeBlocks() {
+		return this.membership.values();
+	}
+
+	public int getNumberOfRunningDatanodes() {
+		return this.membership.size();
+	}
 
 	private void _addDataNode(DataNodeBlocks dataNode){
 		LOG.info("adding datanode " + CrailUtils.getIPAddressFromBytes(dataNode.getIpAddress()) + ":" + dataNode.getPort() + " of type " + dataNode.getStorageType() + " to storage class " + storageClass);
@@ -273,7 +381,18 @@ class StorageClass {
 		public int getNext(int size) {
 			return ThreadLocalRandom.current().nextInt(size);
 		}
-	}	
+	}
+	
+	public class SequentialBlockSelection implements BlockSelection {
+		public SequentialBlockSelection(){
+			LOG.info("sequential block selection");
+		}
+
+		@Override
+		public int getNext(int size) {
+			return 0;
+		}
+	}
 	
 	private class DataNodeArray {
 		private ArrayList<DataNodeBlocks> arrayList;

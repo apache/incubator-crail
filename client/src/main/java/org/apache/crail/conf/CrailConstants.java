@@ -118,6 +118,25 @@ public class CrailConstants {
 	public static final String STORAGE_KEEPALIVE_KEY = "crail.storage.keepalive";
 	public static int STORAGE_KEEPALIVE = 2;
 
+	// elasticstore
+	public static final String ELASTICSTORE_SCALEUP_KEY = "crail.elasticstore.scaleup";
+	public static double ELASTICSTORE_SCALEUP = 0.4;
+
+	public static final String ELASTICSTORE_SCALEDOWN_KEY = "crail.elasticstore.scaledown";
+	public static double ELASTICSTORE_SCALEDOWN = 0.1;
+
+	public static final String ELASTICSTORE_MINNODES_KEY = "crail.elasticstore.minnodes";
+	public static int ELASTICSTORE_MINNODES = 1;
+	
+	public static final String ELASTICSTORE_MAXNODES_KEY = "crail.elasticstore.maxnodes";
+	public static int ELASTICSTORE_MAXNODES = 10;
+
+	public static final String ELASTICSTORE_POLICYRUNNER_INTERVAL_KEY = "crail.elasticstore.policyrunner.interval";
+	public static int ELASTICSTORE_POLICYRUNNER_INTERVAL = 1000;
+
+	public static final String ELASTICSTORE_LOGGING_KEY = "crail.elasticstore.logging";
+	public static boolean ELASTICSTORE_LOGGING = false;
+
 	public static void updateConstants(CrailConfiguration conf){
 		//general
 		if (conf.get(DIRECTORY_DEPTH_KEY) != null) {
@@ -191,6 +210,9 @@ public class CrailConstants {
 		if (conf.get(NAMENODE_RPC_TYPE_KEY) != null) {
 			NAMENODE_RPC_TYPE = conf.get(NAMENODE_RPC_TYPE_KEY);
 		}
+		if (conf.get(NAMENODE_RPC_SERVICE_KEY) != null) {
+			NAMENODE_RPC_SERVICE = conf.get(NAMENODE_RPC_SERVICE_KEY);
+		}
 		if (conf.get(NAMENODE_LOG_KEY) != null) {
 			NAMENODE_LOG = conf.get(NAMENODE_LOG_KEY);
 		}
@@ -209,6 +231,29 @@ public class CrailConstants {
 		}
 		if (conf.get(STORAGE_KEEPALIVE_KEY) != null) {
 			STORAGE_KEEPALIVE = Integer.parseInt(conf.get(STORAGE_KEEPALIVE_KEY));
+		}
+
+		//elasticstore
+		if (conf.get(ELASTICSTORE_SCALEUP_KEY) != null) {
+			ELASTICSTORE_SCALEUP = Double.parseDouble(conf.get(ELASTICSTORE_SCALEUP_KEY));
+		}
+
+		if (conf.get(ELASTICSTORE_SCALEDOWN_KEY) != null) {
+			ELASTICSTORE_SCALEDOWN = Double.parseDouble(conf.get(ELASTICSTORE_SCALEDOWN_KEY));
+		}
+
+		if (conf.get(ELASTICSTORE_MINNODES_KEY) != null) {
+			ELASTICSTORE_MINNODES = Integer.parseInt(conf.get(ELASTICSTORE_MINNODES_KEY));
+		}
+
+		if (conf.get(ELASTICSTORE_MAXNODES_KEY) != null) {
+			ELASTICSTORE_MAXNODES = Integer.parseInt(conf.get(ELASTICSTORE_MAXNODES_KEY));
+		}
+		if (conf.get(ELASTICSTORE_POLICYRUNNER_INTERVAL_KEY) != null) {
+			ELASTICSTORE_POLICYRUNNER_INTERVAL = Integer.parseInt(conf.get(ELASTICSTORE_POLICYRUNNER_INTERVAL_KEY));
+		}
+		if (conf.get(ELASTICSTORE_LOGGING_KEY) != null) {
+			ELASTICSTORE_LOGGING = Boolean.parseBoolean(conf.get(ELASTICSTORE_LOGGING_KEY));
 		}
 	}
 
@@ -237,11 +282,18 @@ public class CrailConstants {
 		LOG.info(NAMENODE_BLOCKSELECTION_KEY + " " + NAMENODE_BLOCKSELECTION);
 		LOG.info(NAMENODE_FILEBLOCKS_KEY + " " + NAMENODE_FILEBLOCKS);
 		LOG.info(NAMENODE_RPC_TYPE_KEY + " " + NAMENODE_RPC_TYPE);
+		LOG.info(NAMENODE_RPC_SERVICE_KEY + " " + NAMENODE_RPC_SERVICE);
 		LOG.info(NAMENODE_LOG_KEY + " " + NAMENODE_LOG);
 		LOG.info(STORAGE_TYPES_KEY + " " + STORAGE_TYPES);
 		LOG.info(STORAGE_CLASSES_KEY + " " + STORAGE_CLASSES);
 		LOG.info(STORAGE_ROOTCLASS_KEY + " " + STORAGE_ROOTCLASS);
 		LOG.info(STORAGE_KEEPALIVE_KEY + " " + STORAGE_KEEPALIVE);
+		LOG.info(ELASTICSTORE_SCALEUP_KEY + " " + ELASTICSTORE_SCALEUP);
+		LOG.info(ELASTICSTORE_SCALEDOWN_KEY + " " + ELASTICSTORE_SCALEDOWN);
+		LOG.info(ELASTICSTORE_MAXNODES_KEY + " " + ELASTICSTORE_MAXNODES);
+		LOG.info(ELASTICSTORE_MINNODES_KEY + " " + ELASTICSTORE_MINNODES);
+		LOG.info(ELASTICSTORE_POLICYRUNNER_INTERVAL_KEY + " " + ELASTICSTORE_POLICYRUNNER_INTERVAL);
+		LOG.info(ELASTICSTORE_LOGGING_KEY + " " + ELASTICSTORE_LOGGING);
 	}
 
 	public static void verify() throws IOException {
