@@ -417,7 +417,7 @@ Obviosuly not all calls to vote can succeed. In case of a failed vote, announce 
    mkdir ${RELEASE_VERSION}-incubating
    cd ${RELEASE_VERSION}-incubating
    # copy the tar.gz. asc. and sha512 files for the src and binary releases
-
+   # Remove old releases and commit
 
 3. Release nexus artifacts. Follow the step 12 in the release process but this time press the ``release`` button.
 
