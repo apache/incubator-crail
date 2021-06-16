@@ -54,10 +54,14 @@ public class DirectoryRecord {
 		int tmplimit = buffer.position() + CrailConstants.DIRECTORY_RECORD;
 		buffer.limit(tmplimit);
 		valid = buffer.getInt();
-		int length = buffer.getInt();
-		byte barray[] = new byte[length];
-		buffer.get(barray);
-		filename = new String(barray);
+		if (valid == 1) {
+			int length = buffer.getInt();
+			byte barray[] = new byte[length];
+			buffer.get(barray);
+			filename = new String(barray);
+		} else {
+			filename = null;
+		}
 		buffer.position(tmplimit);
 		buffer.limit(oldlimit);
 	}
